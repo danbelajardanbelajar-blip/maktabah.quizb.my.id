@@ -494,16 +494,18 @@ function hlText(text, q) {
 }
 
 // ── Book card with stagger animation ─────────────────────────
-function bookCardStagger(b, i) {
+function bookCardStagger(b, i, q = '') {
   const title  = b.title || 'بدون عنوان';
   const author = b.author || 'مجهول';
   const cat    = b.category_name || '';
   const pages  = b.pages ? b.pages + ' hal.' : '';
+  const titleHtml  = hlText(title, q);
+  const authorHtml = author ? hlText(author, q) : '';
   return `
-    <div class="book-card search-card-stagger bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer"
+    <div class="book-card search-card-stagger bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
          style="animation-delay:${i*40}ms" onclick="navigate('/kitab?id=${b.bkid}')">
-      <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${escHtml(title)}</div>
-      <div class="text-primary/55 text-xs line-clamp-1">${escHtml(author)}</div>
+      <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
+      <div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         ${cat   ? `<span class="text-xs bg-primary/8 text-primary/60 px-2 py-0.5 rounded-full truncate max-w-[60%]">${escHtml(cat)}</span>` : '<span></span>'}
         ${pages ? `<span class="text-xs text-gold font-medium">${pages}</span>` : ''}
@@ -518,15 +520,17 @@ function contentCard(b, q) {
   const cat     = b.category_name || '';
   const snippet = b.snippet       || '';
   const page    = b.match_page    ? `hal. ${b.match_page}` : '';
+  const titleHtml  = hlText(title, q);
+  const authorHtml = author ? hlText(author, q) : '';
   const hlSnip  = snippet ? hlText(snippet, q) : '';
   // Include match_page and query so reader opens on the correct page with highlight
   const pageParam = b.match_page ? `&page=${b.match_page}` : '';
   const qParam    = q ? `&q=${encodeURIComponent(q)}` : '';
   return `
-    <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer"
+    <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
          onclick="navigate('/kitab?id=${b.bkid}${pageParam}${qParam}')">
-      <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${escHtml(title)}</div>
-      ${author ? `<div class="text-primary/55 text-xs line-clamp-1">${escHtml(author)}</div>` : ''}
+      <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
+      ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}…</div>` : ''}
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         ${cat  ? `<span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(cat)}</span>` : '<span></span>'}
@@ -609,7 +613,7 @@ async function execSearch() {
       if (!body) return;
       body.innerHTML = res.data.length
         ? `<div class="search-section-enter">
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i)).join('')}</div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>
             ${paginationHtml(res.page, res.total_pages, 'goSearchBookPage')}</div>`
         : noResultBlock('Tidak ada kitab yang cocok pada judul atau pengarang.');
       reicons();
@@ -642,7 +646,7 @@ window.goSearchBookPage = function(p) {
       patchHeader('sec-books','book-open','Judul Kitab', res.total);
       if (!body) return;
       body.innerHTML = res.data.length
-        ? `<div class="search-section-enter"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i)).join('')}</div>${paginationHtml(res.page,res.total_pages,'goSearchBookPage')}</div>`
+        ? `<div class="search-section-enter"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>${paginationHtml(res.page,res.total_pages,'goSearchBookPage')}</div>`
         : noResultBlock('Tidak ada hasil.');
       reicons(); $('#sec-books')?.scrollIntoView({behavior:'smooth',block:'start'});
     }).catch(()=>{});

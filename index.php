@@ -134,11 +134,19 @@
 
     /* Highlight match */
     mark.hl {
-      background: linear-gradient(120deg, rgba(201,168,76,.30) 0%, rgba(201,168,76,.15) 100%);
+      background: linear-gradient(135deg, rgba(252,233,189,.72) 0%, rgba(201,168,76,.35) 100%);
       color: #1a3a2a;
-      border-radius: 3px;
+      border-radius: 4px;
+      padding: 0 3px;
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px rgba(201,168,76,.16);
+    }
+    .reader-text mark.hl {
+      background: rgba(249,214,150,.35);
+      color: #1a3a2a;
       padding: 0 2px;
-      font-weight: 600;
+      border-radius: 3px;
+      font-weight: 700;
     }
 
     /* Section badge pill */
@@ -203,12 +211,15 @@
 
     /* Content snippet card */
     .snippet-bar {
-      border-left: 3px solid rgba(201,168,76,.45);
-      padding-left: 10px;
-      margin-top: 6px;
+      border-left: 3px solid rgba(201,168,76,.60);
+      background: rgba(255,244,223,.85);
+      padding: 12px 14px 10px;
+      margin-top: 8px;
       font-size: 12px;
-      line-height: 1.65;
-      color: rgba(26,58,42,.65);
+      line-height: 1.75;
+      color: rgba(26,58,42,.78);
+      border-radius: 16px;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.75);
     }
 
     /* Search stats bar */
