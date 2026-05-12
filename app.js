@@ -476,18 +476,22 @@ function contentCard(b, q) {
   const snippet = b.snippet       || '';
   const page    = b.match_page    ? `hal. ${b.match_page}` : '';
   const hlSnip  = snippet ? hlText(snippet, q) : '';
+  // Include match_page and query so reader opens on the correct page with highlight
+  const pageParam = b.match_page ? `&page=${b.match_page}` : '';
+  const qParam    = q ? `&q=${encodeURIComponent(q)}` : '';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer"
-         onclick="navigate('/kitab?id=${b.bkid}')">
+         onclick="navigate('/kitab?id=${b.bkid}${pageParam}${qParam}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${escHtml(title)}</div>
       ${author ? `<div class="text-primary/55 text-xs line-clamp-1">${escHtml(author)}</div>` : ''}
       ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}…</div>` : ''}
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         ${cat  ? `<span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(cat)}</span>` : '<span></span>'}
-        ${page ? `<span class="text-xs text-gold font-medium">${page}</span>` : ''}
+        ${page ? `<span class="text-xs text-gold font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${page}</span>` : ''}
       </div>
     </div>`;
 }
+
 
 // ── Patch a section header in place ──────────────────────────
 function patchHeader(secId, icon, label, total) {
@@ -625,13 +629,16 @@ window.goSearchContPage = function(p) {
 const readerState = { bkid: null, page: 1, total: 0 };
 
 async function renderDetail(params) {
-  const id = params.get('id');
+  const id       = params.get('id');
+  const jumpPage = parseInt(params.get('page') || '1') || 1;
+  const searchQ  = (params.get('q') || '').trim();
   if (!id) { render404(); return; }
 
   // Reset reader
   readerState.bkid  = parseInt(id);
   readerState.page  = 1;
   readerState.total = 0;
+
 
   app().innerHTML = `
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -740,8 +747,26 @@ async function renderDetail(params) {
     reicons();
 
     if (contentPgs > 0) {
-      // load first page
-      loadReaderPage(readerState.bkid, 1);
+      // Open at jump page (from search result), with keyword highlight
+      loadReaderPage(readerState.bkid, jumpPage, searchQ);
+
+      // If arriving from search, show a dismissible info banner above reader
+      if (searchQ) {
+        setTimeout(() => {
+          const readerWrap = $('#reader-area')?.parentElement;
+          if (readerWrap) {
+            const banner = document.createElement('div');
+            banner.id = 'search-jump-banner';
+            banner.className = 'flex items-center gap-2 mb-4 px-3 py-2 rounded-xl bg-gold/10 border border-gold/20 text-xs text-primary/70';
+            banner.innerHTML = `<i data-lucide="search" class="w-3.5 h-3.5 text-gold shrink-0"></i>
+              Ditemukan di hal. <strong class="text-primary mx-1">${jumpPage}</strong> &mdash; kata kunci: <mark class="hl mx-1">${escHtml(searchQ)}</mark>
+              <button onclick="document.getElementById('search-jump-banner').remove()" class="ml-auto text-primary/30 hover:text-primary transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+            readerWrap.prepend(banner);
+            reicons();
+          }
+        }, 100);
+      }
+
 
       // nav buttons
       $('#reader-prev')?.addEventListener('click', () => {
@@ -775,7 +800,8 @@ async function renderDetail(params) {
 }
 
 // Load a single page of content into the reader
-async function loadReaderPage(bkid, page) {
+// highlightQ: optional keyword to highlight in gold
+async function loadReaderPage(bkid, page, highlightQ = '') {
   const area  = $('#reader-area');
   const label = $('#reader-label');
   const inp   = $('#reader-page-input');
@@ -795,11 +821,18 @@ async function loadReaderPage(bkid, page) {
     const res = await apiFetch({ action: 'content', bkid, page });
 
     if (res.content) {
-      // Render content — preserve line breaks
-      // Normalise line endings (\r\n → \n, stray \r → \n) then let
-      // white-space: pre-wrap do all the work — no brittle regex needed.
       const normalised = res.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      area.innerHTML = `<div class="reader-text">${escHtml(normalised)}</div>`;
+      // Apply keyword highlight when coming from search, otherwise plain text
+      const rendered = highlightQ ? hlText(normalised, highlightQ) : escHtml(normalised);
+      area.innerHTML = `<div class="reader-text">${rendered}</div>`;
+      // Auto-scroll to first highlighted word
+      if (highlightQ) {
+        setTimeout(() => {
+          const first = area.querySelector('mark.hl');
+          if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
+      }
+
     } else {
       area.innerHTML = `<p class="text-center text-primary/30 py-6 text-sm">Halaman ini kosong.</p>`;
     }
