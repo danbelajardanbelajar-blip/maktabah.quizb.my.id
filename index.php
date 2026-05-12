@@ -498,6 +498,7 @@ $sessionUser = $_SESSION['user'] ?? null;
             <li><a href="/" data-route="/" class="hover:text-gold transition-colors">Beranda</a></li>
             <li><a href="/katalog" data-route="/katalog" class="hover:text-gold transition-colors">Katalog Kitab</a></li>
             <li><a href="/about" data-route="/about" class="hover:text-gold transition-colors">Tentang Kami</a></li>
+            <li><a href="/privacy" data-route="/privacy" class="hover:text-gold transition-colors">Kebijakan Privasi</a></li>
           </ul>
         </div>
 
@@ -514,6 +515,8 @@ $sessionUser = $_SESSION['user'] ?? null;
     </div>
     <div class="border-t border-white/10 py-4 text-center text-xs text-white/30">
       &copy; <?= date('Y') ?> المكتبة السنية &mdash; Semua hak dilindungi.
+      &ensp;&middot;&ensp;
+      <a href="/privacy" data-route="/privacy" class="hover:text-white/60 transition-colors">Kebijakan Privasi</a>
     </div>
   </footer>
 
