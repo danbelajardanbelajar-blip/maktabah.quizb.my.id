@@ -8,6 +8,48 @@
 // ── Config ────────────────────────────────────────────────────
 const API = '/api.php';
 
+// ── Reader font configuration ─────────────────────────────────
+const FONTS_LATIN = [
+  { key: 'Lato',            label: 'Lato' },
+  { key: 'Inter',           label: 'Inter' },
+  { key: 'Roboto',          label: 'Roboto' },
+  { key: 'Open Sans',       label: 'Open Sans' },
+  { key: 'Poppins',         label: 'Poppins' },
+  { key: 'Nunito',          label: 'Nunito' },
+  { key: 'Raleway',         label: 'Raleway' },
+  { key: 'Merriweather',    label: 'Merriweather' },
+  { key: 'Playfair Display',label: 'Playfair Display' },
+  { key: 'Source Sans 3',   label: 'Source Sans 3' },
+];
+const FONTS_ARABIC = [
+  { key: 'Amiri',                label: 'أميري — Amiri' },
+  { key: 'Noto Naskh Arabic',    label: 'نوتو نسخ' },
+  { key: 'Cairo',                label: 'القاهرة — Cairo' },
+  { key: 'Tajawal',              label: 'تجوّل — Tajawal' },
+  { key: 'Scheherazade New',     label: 'شهرزاد' },
+  { key: 'Reem Kufi',            label: 'ريم كوفي' },
+  { key: 'Lateef',               label: 'لطيف — Lateef' },
+  { key: 'Aref Ruqaa',           label: 'عارف رقعة' },
+  { key: 'El Messiri',           label: 'المسيري' },
+  { key: 'IBM Plex Sans Arabic', label: 'IBM عربي' },
+];
+
+// Load saved preferences from localStorage
+const _rfDef = { latin: 'Lato', arabic: 'Amiri', size: 18 };
+const readerFontState = Object.assign({}, _rfDef,
+  JSON.parse(localStorage.getItem('readerFonts') || '{}'));
+
+function applyReaderFont(save = true) {
+  const root = document.documentElement;
+  root.style.setProperty('--font-r-latin',  `'${readerFontState.latin}', sans-serif`);
+  root.style.setProperty('--font-r-arabic', `'${readerFontState.arabic}', 'Amiri', serif`);
+  root.style.setProperty('--font-r-size',   readerFontState.size + 'px');
+  if (save) localStorage.setItem('readerFonts', JSON.stringify(readerFontState));
+}
+// Apply on page load
+applyReaderFont(false);
+
+
 // ── Utility helpers ───────────────────────────────────────────
 const $  = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
@@ -709,12 +751,20 @@ async function renderDetail(params) {
                 <input id="reader-page-input" type="number" min="1" max="${contentPgs}" value="1"
                   class="w-14 text-center border border-gold/30 rounded-lg px-2 py-1 text-sm text-primary focus:outline-none focus:border-gold" />
                 <span class="text-primary/40 text-xs">dari ${contentPgs}</span>
+                <!-- Font Settings Gear Button -->
+                <button id="font-settings-btn" title="Pengaturan Font"
+                  class="ml-2 p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary">
+                  <i data-lucide="settings-2" class="w-4 h-4"></i>
+                </button>
               </div>
             </div>
 
-            <!-- Content area -->
+            <!-- Font settings panel (slide-down) -->
+            <div id="font-panel-wrap">${renderFontPanel()}</div>
+
+            <!-- Content area — direction & font controlled by CSS vars + unicode-bidi -->
             <div id="reader-area"
-              class="bg-cream rounded-2xl p-6 md:p-8 min-h-48 text-primary arabic text-lg md:text-xl leading-loose text-right transition-opacity duration-200">
+              class="bg-cream rounded-2xl p-6 md:p-8 min-h-48 text-primary leading-loose transition-opacity duration-200">
               <div class="flex justify-center py-8">
                 <div class="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" style="border-width:2px"></div>
               </div>
@@ -747,6 +797,14 @@ async function renderDetail(params) {
     reicons();
 
     if (contentPgs > 0) {
+      // Wire up font settings gear button
+      $('#font-settings-btn')?.addEventListener('click', () => {
+        const panel = $('#font-panel');
+        if (panel) panel.classList.toggle('open');
+      });
+      // Wire up font size slider
+      initFontPanelEvents();
+
       // Open at jump page (from search result), with keyword highlight
       loadReaderPage(readerState.bkid, jumpPage, searchQ);
 
@@ -856,6 +914,87 @@ async function loadReaderPage(bkid, page, highlightQ = '') {
   }
   reicons();
 }
+
+// ── Font Settings Panel renderer ──────────────────────────────
+function renderFontPanel() {
+  const latinChips = FONTS_LATIN.map(f => `
+    <button class="font-chip ${readerFontState.latin === f.key ? 'active' : ''}"
+      style="font-family:'${f.key}',sans-serif"
+      onclick="window._setLatinFont('${f.key}')">${f.label}</button>`).join('');
+
+  const arabicChips = FONTS_ARABIC.map(f => `
+    <button class="font-chip ar ${readerFontState.arabic === f.key ? 'active' : ''}"
+      style="font-family:'${f.key}','Amiri',serif"
+      onclick="window._setArabicFont('${f.key}')">${f.label}</button>`).join('');
+
+  return `
+    <div class="font-panel" id="font-panel">
+      <div class="bg-white border border-gold/20 rounded-2xl p-5 shadow-card mb-4">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+          <!-- Latin LTR -->
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="type" class="w-3.5 h-3.5 text-gold shrink-0"></i>
+              <span class="text-xs font-bold text-primary/50 uppercase tracking-wider">Font Latin (LTR)</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">${latinChips}</div>
+          </div>
+          <!-- Arabic RTL -->
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="type" class="w-3.5 h-3.5 text-gold shrink-0"></i>
+              <span class="text-xs font-bold text-primary/50 uppercase tracking-wider">فونت عربي (RTL)</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">${arabicChips}</div>
+          </div>
+        </div>
+
+        <!-- Size slider -->
+        <div class="border-t border-cream-dark pt-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-primary/50 uppercase tracking-wider flex items-center gap-1">
+              <i data-lucide="a-large-small" class="w-3.5 h-3.5 text-gold"></i> Ukuran Teks
+            </span>
+            <span id="font-size-label" class="text-xs font-bold text-gold">${readerFontState.size}px</span>
+          </div>
+          <input type="range" class="font-range" id="font-size-slider"
+            min="14" max="28" step="1" value="${readerFontState.size}">
+          <div class="flex justify-between text-[10px] text-primary/25 mt-1">
+            <span>A</span><span style="font-size:14px">A</span>
+          </div>
+        </div>
+
+      </div>
+    </div>`;
+}
+
+// Font setter globals (called from onclick in font chips)
+window._setLatinFont = function(key) {
+  readerFontState.latin = key;
+  applyReaderFont();
+  // re-render panel to update active chips
+  const panel = $('#font-panel');
+  if (panel) { const parent = panel.parentElement; parent.innerHTML = renderFontPanel(); initFontPanelEvents(); reicons(); panel.classList.add('open'); $('#font-panel').classList.add('open'); }
+};
+window._setArabicFont = function(key) {
+  readerFontState.arabic = key;
+  applyReaderFont();
+  const panel = $('#font-panel');
+  if (panel) { const parent = panel.parentElement; parent.innerHTML = renderFontPanel(); initFontPanelEvents(); reicons(); $('#font-panel').classList.add('open'); }
+};
+
+function initFontPanelEvents() {
+  const slider = $('#font-size-slider');
+  const lbl    = $('#font-size-label');
+  if (!slider) return;
+  slider.addEventListener('input', () => {
+    readerFontState.size = parseInt(slider.value);
+    if (lbl) lbl.textContent = readerFontState.size + 'px';
+    applyReaderFont();
+  });
+}
+
 
 window.loadReaderPage = loadReaderPage;
 

@@ -34,7 +34,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700;900&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;600;700&family=Cairo:wght@400;600;700&family=Tajawal:wght@400;500;700&family=Scheherazade+New:wght@400;700&family=Reem+Kufi:wght@400;600&family=Lateef:wght@400;700&family=Aref+Ruqaa&family=El+Messiri:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;600&family=Lato:wght@300;400;700;900&family=Inter:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Raleway:wght@300;400;600;700&family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
   <!-- Lucide Icons (CDN) -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -221,6 +221,54 @@
       flex-wrap: wrap;
       padding: 6px 0 14px;
     }
+
+    /* ── Reader Font Settings ─────────────────────────────────── */
+    :root {
+      --font-r-latin:  'Lato', sans-serif;
+      --font-r-arabic: 'Amiri', 'Noto Naskh Arabic', serif;
+      --font-r-size:   18px;
+    }
+
+    /* Reader text uses CSS vars + auto-direction per paragraph */
+    .reader-text {
+      font-size: var(--font-r-size) !important;
+      direction: auto;
+      unicode-bidi: plaintext;
+    }
+    /* Arabic paragraphs (first strong char = RTL) → use Arabic font */
+    .reader-text { font-family: var(--font-r-arabic); }
+    /* Inline spans for detected Latin blocks */
+    .reader-latin { font-family: var(--font-r-latin); direction: ltr; unicode-bidi: embed; }
+
+    /* Font settings slide panel */
+    .font-panel {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height .35s cubic-bezier(.22,.61,.36,1), opacity .25s ease;
+    }
+    .font-panel.open { max-height: 500px; opacity: 1; }
+
+    /* Font chip button */
+    .font-chip {
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1.5px solid rgba(201,168,76,.2);
+      background: #fff;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .15s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+    }
+    .font-chip:hover { border-color: rgba(201,168,76,.5); background: rgba(201,168,76,.06); }
+    .font-chip.active { border-color: #c9a84c; background: rgba(201,168,76,.14); color: #1a3a2a; font-weight: 700; }
+    .font-chip.ar { text-align: right; direction: rtl; }
+
+    /* Font size range */
+    input[type=range].font-range { accent-color: #c9a84c; width: 100%; cursor: pointer; }
   </style>
 </head>
 
