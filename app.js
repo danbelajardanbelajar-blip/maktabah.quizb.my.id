@@ -592,8 +592,10 @@ async function loadReaderPage(bkid, page) {
 
     if (res.content) {
       // Render content — preserve line breaks
-      const formatted = escHtml(res.content).replace(/\n{2,}/g, '</p><p class="mt-4">').replace(/\n/g, '<br>');
-      area.innerHTML = `<p>${formatted}</p>`;
+      // Normalise line endings (\r\n → \n, stray \r → \n) then let
+      // white-space: pre-wrap do all the work — no brittle regex needed.
+      const normalised = res.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      area.innerHTML = `<div class="reader-text">${escHtml(normalised)}</div>`;
     } else {
       area.innerHTML = `<p class="text-center text-primary/30 py-6 text-sm">Halaman ini kosong.</p>`;
     }

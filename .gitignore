@@ -1,0 +1,55 @@
+# ============================================================
+#  Al-Maktabah As-Sunniyyah — .gitignore
+# ============================================================
+
+# -- Kredensial & konfigurasi sensitif --
+koneksi.php
+.env
+.env.*
+config.local.php
+
+# -- Dependensi / vendor --
+/vendor/
+node_modules/
+
+# -- File PDF & media kitab (terlalu besar untuk Git) --
+/files/
+/uploads/
+/media/
+*.pdf
+*.epub
+*.djvu
+
+# -- Cache & log --
+/cache/
+/logs/
+*.log
+error_log
+php_errorlog
+
+# -- OS & editor --
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# -- Build & temp --
+/tmp/
+/temp/
+*.tmp
+*.bak
+*.orig
+
+# -- Composer (jika digunakan) --
+composer.lock
+
+# -- Backup database --
+*.sql.gz
+*.sql.zip
+*_backup.sql
