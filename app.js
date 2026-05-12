@@ -1068,7 +1068,60 @@ function renderAbout() {
           <h2 class="text-primary font-bold text-base mb-3 flex items-center gap-2">
             <i data-lucide="globe" class="w-4 h-4 text-gold"></i> Kontak & Akses
           </h2>
-          <p>Anda dapat mengakses perpustakaan ini di: <a href="https://lib.quizb.my.id" class="text-gold hover:underline font-medium">lib.quizb.my.id</a></p>
+          <p class="mb-4">Anda dapat mengakses perpustakaan ini di: <a href="https://lib.quizb.my.id" class="text-gold hover:underline font-medium">lib.quizb.my.id</a></p>
+
+          <!-- Founder & Developer cards -->
+          <div class="grid sm:grid-cols-2 gap-4 mt-4">
+
+            <!-- Founder -->
+            <div class="rounded-2xl border border-border bg-surface p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+                  <i data-lucide="star" class="w-3.5 h-3.5 text-gold"></i>
+                </div>
+                <span class="text-xs font-bold tracking-widest uppercase text-gold">Founder</span>
+              </div>
+              <div class="space-y-2.5 text-sm">
+                <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                  <span class="text-muted">Nama</span>
+                  <span class="font-semibold text-primary">Cak Zen</span>
+                </div>
+                <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                  <span class="text-muted">Email</span>
+                  <a href="mailto:akhmadzaeni535@gmail.com" class="font-semibold text-primary hover:text-gold transition-colors">akhmadzaeni535@gmail.com</a>
+                </div>
+                <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                  <span class="text-muted">Facebook</span>
+                  <a href="https://facebook.com/akhnadzaeni" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">akhnadzaeni</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Developer -->
+            <div class="rounded-2xl border border-border bg-surface p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+                  <i data-lucide="code-2" class="w-3.5 h-3.5 text-gold"></i>
+                </div>
+                <span class="text-xs font-bold tracking-widest uppercase text-gold">Developer</span>
+              </div>
+              <div class="space-y-2.5 text-sm">
+                <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                  <span class="text-muted">Website</span>
+                  <a href="https://hakimz.site" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">hakimz.site</a>
+                </div>
+                <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                  <span class="text-muted">Email</span>
+                  <a href="mailto:zenhkm@gmail.com" class="font-semibold text-primary hover:text-gold transition-colors">zenhkm@gmail.com</a>
+                </div>
+                <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                  <span class="text-muted">Instagram</span>
+                  <a href="https://instagram.com/zainul.hakim" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">@zainul.hakim</a>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
 
       </div>
