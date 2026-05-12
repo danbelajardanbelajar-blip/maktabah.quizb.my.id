@@ -489,7 +489,15 @@ function noResultBlock(msg) {
 // ── Keyword highlight helper ──────────────────────────────────
 function hlText(text, q) {
   if (!q || !text) return escHtml(text || '');
-  const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  // Extract phrase from quotes if present
+  let searchTerm = q;
+  const phraseMatch = q.match(/^"(.+)"$/);
+  if (phraseMatch) {
+    searchTerm = phraseMatch[1];
+  }
+  
+  const safe = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return escHtml(text).replace(new RegExp('(' + safe + ')', 'gi'), '<mark class="hl">$1</mark>');
 }
 
@@ -673,7 +681,7 @@ window.goSearchContPage = function(p) {
 // ══════════════════════════════════════════════════════════════
 
 // Reader state (module-level so nav buttons can reference it)
-const readerState = { bkid: null, page: 1, total: 0 };
+const readerState = { bkid: null, page: 1, total: 0, searchQ: '' };
 
 async function renderDetail(params) {
   const id       = params.get('id');
@@ -685,6 +693,7 @@ async function renderDetail(params) {
   readerState.bkid  = parseInt(id);
   readerState.page  = 1;
   readerState.total = 0;
+  readerState.searchQ = searchQ;
 
 
   app().innerHTML = `
