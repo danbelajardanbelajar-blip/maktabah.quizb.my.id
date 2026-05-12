@@ -400,7 +400,7 @@ function renderSearch(params) {
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
-        <p class="mt-3 text-xs text-primary/50">Untuk pencarian frasa persis, gunakan tanda kutip: "kata yang dicari".</p>
+        <p class="mt-3 text-xs text-primary/50">Pencarian premium: gunakan tanda kutip untuk frasa persis — hasil cepat, akurat, dan modern.</p>
         <div id="search-stats" class="search-stats"></div>
       </div>
       <div id="search-results">
