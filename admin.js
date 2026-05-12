@@ -385,15 +385,36 @@ window.openBookModal = function(book) {
   if (typeof book === 'number' || (typeof book === 'string' && !isNaN(book))) {
     book = _booksMap.get(+book) || null;
   }
-  document.getElementById('bk-modal-ttl').textContent = book ? 'Edit Kitab' : 'Tambah Kitab Baru';
-  document.getElementById('bm-bkid').value   = book?.bkid   || '';
-  document.getElementById('bm-title').value  = book?.title  || '';
-  document.getElementById('bm-author').value = book?.author || '';
-  document.getElementById('bm-iso').value    = book?.iso    || 'ar';
-  const cs = document.getElementById('bm-cat');
-  if (cs) cs.value = book?.category_id || '';
+
+  // Reset form bersih dulu (penting agar Tambah selalu kosong)
+  const form = document.getElementById('bk-form');
+  if (form) form.reset();
+  document.getElementById('bm-bkid').value = '';
+
+  const isEdit = !!book;
+  document.getElementById('bk-modal-ttl').textContent = isEdit ? 'Edit Kitab' : 'Tambah Kitab Baru';
+
+  // Isi data hanya saat Edit
+  if (isEdit) {
+    document.getElementById('bm-bkid').value   = book.bkid   ?? '';
+    document.getElementById('bm-title').value  = book.title  ?? '';
+    document.getElementById('bm-author').value = book.author ?? '';
+    const isoEl = document.getElementById('bm-iso');
+    if (isoEl) isoEl.value = book.iso || 'ar';
+    const catEl = document.getElementById('bm-cat');
+    if (catEl) catEl.value = book.category_id ? String(book.category_id) : '';
+  }
+
+  // Sembunyikan pesan error/sukses sebelumnya
   const msg = document.getElementById('bm-msg');
   if (msg) msg.className = 'hidden text-sm rounded-xl px-4 py-2.5';
+
+  // Perbarui label tombol Simpan
+  const btn = document.getElementById('bk-submit-btn');
+  if (btn) btn.innerHTML = isEdit
+    ? '<i data-lucide="save" class="w-4 h-4"></i> Simpan Perubahan'
+    : '<i data-lucide="plus" class="w-4 h-4"></i> Tambah Kitab';
+
   document.getElementById('bk-modal').classList.remove('hidden');
   setTimeout(() => document.getElementById('bm-title')?.focus(), 60);
   reicons();
