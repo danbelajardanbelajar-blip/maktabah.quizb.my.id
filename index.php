@@ -80,15 +80,29 @@
     /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #f0ece0; } ::-webkit-scrollbar-thumb { background: #c9a84c; border-radius: 3px; }
 
-    /* Mobile nav drawer */
-    #mobile-menu { transition: transform .3s ease, opacity .3s ease; }
-    #mobile-menu.hidden-menu { transform: translateY(-10px); opacity: 0; pointer-events: none; }
-
-    /* Active nav link */
+    /* Active desktop nav link */
     .nav-link.active { color: #c9a84c !important; }
     .nav-link.active::after { width: 100%; }
     .nav-link::after { content:''; display:block; height:2px; background:#c9a84c; border-radius:1px; width:0; transition:width .25s ease; }
     .nav-link:hover::after { width:100%; }
+
+    /* Bottom mobile nav */
+    #bottom-nav {
+      box-shadow: 0 -1px 24px rgba(26,58,42,.10);
+      /* iOS safe area */
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .bnav-item {
+      color: #1a3a2a;
+      opacity: .4;
+      transition: opacity .2s ease, color .2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bnav-item.active {
+      opacity: 1;
+      color: #c9a84c;
+    }
+    .bnav-item:active { opacity: .7; }
   </style>
 </head>
 
@@ -117,24 +131,14 @@
           <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Tentang</a>
         </div>
 
-        <!-- Search + Mobile toggle -->
+        <!-- Search (desktop) -->
         <div class="flex items-center gap-3">
           <button id="nav-search-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Cari Kitab">
             <i data-lucide="search" class="w-5 h-5 text-primary"></i>
           </button>
-          <button id="mobile-toggle" class="md:hidden p-2 rounded-lg hover:bg-cream-dark transition-colors">
-            <i data-lucide="menu" class="w-5 h-5 text-primary" id="menu-icon"></i>
-          </button>
         </div>
 
       </div>
-    </div>
-
-    <!-- Mobile Menu -->
-    <div id="mobile-menu" class="hidden-menu md:hidden bg-cream border-t border-gold/20 px-4 pb-4 pt-2 space-y-1">
-      <a href="/" data-route="/"          class="nav-link block py-2 text-sm font-medium text-primary/80 hover:text-primary border-b border-gold/10">Beranda</a>
-      <a href="/katalog" data-route="/katalog" class="nav-link block py-2 text-sm font-medium text-primary/80 hover:text-primary border-b border-gold/10">Katalog</a>
-      <a href="/about"   data-route="/about"   class="nav-link block py-2 text-sm font-medium text-primary/80 hover:text-primary">Tentang</a>
     </div>
 
     <!-- Global Search Bar (slide-down) -->
@@ -151,7 +155,7 @@
   </nav>
 
   <!-- ===================== MAIN SPA CONTAINER ===================== -->
-  <main id="app-content" class="flex-1 pt-16">
+  <main id="app-content" class="flex-1 pt-16 pb-20 md:pb-0">
     <!-- JS renders pages here -->
     <div id="page-loader" class="flex items-center justify-center min-h-[60vh]">
       <div class="flex flex-col items-center gap-3">
@@ -161,8 +165,35 @@
     </div>
   </main>
 
+  <!-- ===================== BOTTOM NAV (mobile only) ===================== -->
+  <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gold/20">
+    <div class="flex items-stretch h-16">
+
+      <a href="/" data-route="/" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Beranda</span>
+      </a>
+
+      <a href="/search" data-route="/search" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="search" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Cari</span>
+      </a>
+
+      <a href="/katalog" data-route="/katalog" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="library" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Katalog</span>
+      </a>
+
+      <a href="/about" data-route="/about" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="info" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Tentang</span>
+      </a>
+
+    </div>
+  </nav>
+
   <!-- ===================== FOOTER ===================== -->
-  <footer class="bg-primary text-white mt-16">
+  <footer class="bg-primary text-white mt-16 hidden md:block">
     <div class="gold-line"></div>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">

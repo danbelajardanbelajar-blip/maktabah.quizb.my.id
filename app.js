@@ -61,8 +61,15 @@ document.addEventListener('click', e => {
 });
 
 function setActiveNav(base) {
+  // Desktop top nav
   $$('.nav-link').forEach(a => {
     a.classList.toggle('active', a.getAttribute('data-route') === base);
+  });
+  // Mobile bottom nav — /search counts as "Cari" active
+  $$('.bnav-item').forEach(a => {
+    const route = a.getAttribute('data-route');
+    const isActive = route === base || (base === '/search' && route === '/search');
+    a.classList.toggle('active', isActive);
   });
 }
 
@@ -71,13 +78,7 @@ window.addEventListener('scroll', () => {
   $('#navbar')?.classList.toggle('scrolled', window.scrollY > 20);
 });
 
-function toggleMobileMenu() {
-  const m = $('#mobile-menu');
-  m.classList.toggle('hidden-menu');
-}
 document.addEventListener('DOMContentLoaded', () => {
-  $('#mobile-toggle')?.addEventListener('click', toggleMobileMenu);
-
   // Global search bar
   $('#nav-search-btn')?.addEventListener('click', () => {
     const sb = $('#search-bar');
