@@ -328,29 +328,32 @@ window.goKatalogPage = function(p) {
 };
 
 // ══════════════════════════════════════════════════════════════
-//  PAGE: SEARCH
+//  PAGE: SEARCH  — tiga section: Kategori · Judul Kitab · Isi
 // ══════════════════════════════════════════════════════════════
-let searchState = { q: '', page: 1 };
+const searchState = { q: '', bookPage: 1, contPage: 1 };
 
 async function renderSearch(params) {
-  searchState.q    = params.get('q') || '';
-  searchState.page = parseInt(params.get('page')) || 1;
+  searchState.q        = params.get('q') || '';
+  searchState.bookPage = 1;
+  searchState.contPage = 1;
 
   app().innerHTML = `
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+      <!-- Search input -->
       <div class="max-w-2xl mx-auto mb-8">
         <div class="relative">
           <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/40"></i>
           <input id="search-input" type="text" value="${escHtml(searchState.q)}"
-            placeholder="Cari judul atau pengarang…"
+            placeholder="Cari kategori, judul, pengarang, atau isi kitab…"
             class="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gold/30 bg-white text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all shadow-card" />
         </div>
       </div>
-      <div id="search-info" class="text-sm text-primary/50 mb-4 text-center"></div>
-      <div id="search-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        ${searchState.q ? skeletonCards(8) : ''}
+
+      <!-- Results container -->
+      <div id="search-results">
+        ${searchState.q ? skeletonSearchResults() : emptySearchPrompt()}
       </div>
-      <div id="search-pagination"></div>
     </div>`;
 
   reicons();
@@ -358,60 +361,181 @@ async function renderSearch(params) {
   let timer;
   $('#search-input')?.addEventListener('input', e => {
     clearTimeout(timer);
-    searchState.q = e.target.value.trim();
-    searchState.page = 1;
-    timer = setTimeout(execSearch, 400);
+    searchState.q        = e.target.value.trim();
+    searchState.bookPage = 1;
+    searchState.contPage = 1;
+    if (searchState.q.length >= 2) timer = setTimeout(execSearch, 450);
+    else if (!searchState.q) $('#search-results').innerHTML = emptySearchPrompt();
   });
   $('#search-input')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') { clearTimeout(timer); execSearch(); }
   });
 
-  if (searchState.q) execSearch();
-  else {
-    $('#search-info').textContent = 'Masukkan kata kunci untuk mencari.';
-    $('#search-grid').innerHTML = `<div class="col-span-full flex flex-col items-center py-16 text-primary/30">
-      <i data-lucide="book-open" class="w-16 h-16 mb-4"></i>
-      <p>Cari judul kitab atau pengarang</p>
-    </div>`;
-    reicons();
-  }
+  if (searchState.q.length >= 2) execSearch();
 }
 
+// ── Skeleton placeholder for all three sections ───────────────
+function skeletonSearchResults() {
+  return ['Kategori', 'Nama Kitab', 'Isi Kitab'].map(label => `
+    <div class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="skeleton h-4 w-4 rounded"></div>
+        <div class="skeleton h-4 w-40 rounded"></div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">${skeletonCards(4)}</div>
+    </div>`).join(sectionDivider());
+}
+
+// ── Empty state ───────────────────────────────────────────────
+function emptySearchPrompt() {
+  return `<div class="flex flex-col items-center py-16 text-primary/30">
+    <i data-lucide="search" class="w-14 h-14 mb-4 opacity-30"></i>
+    <p class="text-sm">Masukkan kata kunci untuk mencari</p>
+  </div>`;
+}
+
+// ── Gold divider with label ───────────────────────────────────
+function sectionDivider() {
+  return `<div class="flex items-center gap-3 my-8">
+    <div class="flex-1 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent"></div>
+  </div>`;
+}
+
+// ── Section header ─────────────────────────────────────────────
+function sectionHeader(icon, label, total) {
+  const badge = total > 0
+    ? `<span class="ml-2 px-2 py-0.5 rounded-full bg-gold/15 text-gold text-xs font-semibold">${total.toLocaleString('id-ID')}</span>`
+    : '';
+  return `<div class="flex items-center gap-2 mb-5">
+    <i data-lucide="${icon}" class="w-4 h-4 text-gold shrink-0"></i>
+    <h2 class="text-sm font-bold text-primary uppercase tracking-wider">${label}</h2>
+    ${badge}
+  </div>`;
+}
+
+// ── No result state for one section ──────────────────────────
+function noResultBlock(msg) {
+  return `<p class="text-primary/35 text-sm py-4 flex items-center gap-2">
+    <i data-lucide="minus-circle" class="w-4 h-4 shrink-0"></i>${msg}
+  </p>`;
+}
+
+// ── Content-result card (book + snippet) ──────────────────────
+function contentCard(b, q) {
+  const title   = b.title         || 'بدون عنوان';
+  const author  = b.author        || '';
+  const cat     = b.category_name || '';
+  const snippet = b.snippet       || '';
+  const page    = b.match_page    ? `hal. ${b.match_page}` : '';
+
+  // Highlight query in snippet
+  const highlighted = snippet
+    ? escHtml(snippet).replace(
+        new RegExp('(' + escHtml(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'),
+        '<mark class="bg-gold/25 text-primary rounded px-0.5">$1</mark>'
+      )
+    : '';
+
+  return `
+    <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer"
+         onclick="navigate('/kitab?id=${b.bkid}')">
+      <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${escHtml(title)}</div>
+      ${author ? `<div class="text-primary/55 text-xs line-clamp-1">${escHtml(author)}</div>` : ''}
+      ${highlighted
+        ? `<p class="reader-text text-primary/65 text-xs leading-relaxed line-clamp-3 mt-1 border-l-2 border-gold/40 pl-2">${highlighted}…</p>`
+        : ''}
+      <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
+        ${cat  ? `<span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(cat)}</span>` : '<span></span>'}
+        ${page ? `<span class="text-xs text-gold font-medium">${page}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+// ── Main search executor ──────────────────────────────────────
 async function execSearch() {
-  const grid = $('#search-grid');
-  const info = $('#search-info');
-  const pag  = $('#search-pagination');
-  if (!grid || searchState.q.length < 2) return;
+  const wrap = $('#search-results');
+  if (!wrap || searchState.q.length < 2) return;
 
-  grid.innerHTML = skeletonCards(8);
-  if (info) info.textContent = 'Mencari…';
-  if (pag) pag.innerHTML = '';
-
+  wrap.innerHTML = skeletonSearchResults();
+  reicons();
   history.replaceState({}, '', '/search?q=' + encodeURIComponent(searchState.q));
 
   try {
-    const res = await apiFetch({ action: 'search', q: searchState.q, page: searchState.page, limit: 24 });
-    if (info) info.innerHTML = res.total > 0
-      ? `Ditemukan <strong>${res.total.toLocaleString('id-ID')}</strong> kitab untuk "<em>${escHtml(searchState.q)}</em>"`
-      : `Tidak ditemukan kitab untuk "<em>${escHtml(searchState.q)}</em>"`;
-    grid.innerHTML = res.data.length
-      ? res.data.map(bookCard).join('')
-      : `<div class="col-span-full py-12 text-center text-primary/40">
-           <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
-           <p>Tidak ada hasil yang ditemukan.</p>
-         </div>`;
-    if (pag) pag.innerHTML = paginationHtml(res.page, res.total_pages, 'goSearchPage');
-  } catch {
-    if (info) info.textContent = '';
-    grid.innerHTML = '<p class="col-span-full text-center text-red-500 text-sm py-8">Terjadi kesalahan. Coba lagi.</p>';
+    const res = await apiFetch({
+      action:       'search',
+      q:            searchState.q,
+      book_page:    searchState.bookPage,
+      content_page: searchState.contPage,
+    });
+
+    const q = res.query || searchState.q;
+
+    // ── Section 1: Kategori ──────────────────────────────────
+    const catHtml = res.categories.length
+      ? `<div class="flex flex-wrap gap-2">
+           ${res.categories.map(c => `
+             <button onclick="navigate('/katalog?cat=${c.id}')"
+               class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gold/30 text-sm text-primary/80 hover:bg-primary hover:text-white hover:border-primary transition-all">
+               <i data-lucide="folder" class="w-3.5 h-3.5"></i>
+               ${escHtml(c.name)}
+               <span class="text-gold text-xs ml-0.5">${c.book_count}</span>
+             </button>`).join('')}
+         </div>`
+      : noResultBlock('Tidak ada kategori yang cocok.');
+
+    // ── Section 2: Nama Kitab ────────────────────────────────
+    const booksGrid = res.books.data.length
+      ? `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+           ${res.books.data.map(bookCard).join('')}
+         </div>
+         ${paginationHtml(res.books.page, res.books.total_pages, 'goSearchBookPage')}`
+      : noResultBlock('Tidak ada kitab yang cocok pada judul atau pengarang.');
+
+    // ── Section 3: Isi Kitab ─────────────────────────────────
+    const contGrid = res.content.data.length
+      ? `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+           ${res.content.data.map(b => contentCard(b, q)).join('')}
+         </div>
+         ${paginationHtml(res.content.page, res.content.total_pages, 'goSearchContPage')}`
+      : noResultBlock('Tidak ada kecocokan pada isi kitab.');
+
+    wrap.innerHTML = `
+      <!-- SECTION 1 -->
+      <div id="sec-cat">
+        ${sectionHeader('folder-open', 'Hasil Pencarian Kategori', res.categories.length)}
+        ${catHtml}
+      </div>
+
+      ${sectionDivider()}
+
+      <!-- SECTION 2 -->
+      <div id="sec-books">
+        ${sectionHeader('book-open', 'Hasil Pencarian Nama Kitab', res.books.total)}
+        ${booksGrid}
+      </div>
+
+      ${sectionDivider()}
+
+      <!-- SECTION 3 -->
+      <div id="sec-content">
+        ${sectionHeader('file-text', 'Hasil Pencarian Isi Kitab', res.content.total)}
+        ${contGrid}
+      </div>`;
+
+  } catch (err) {
+    wrap.innerHTML = `<p class="text-center text-red-500 text-sm py-12">Terjadi kesalahan. Coba lagi.</p>`;
   }
+
   reicons();
 }
 
-window.goSearchPage = function(p) {
-  searchState.page = p;
-  execSearch();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+window.goSearchBookPage = function(p) {
+  searchState.bookPage = p;
+  execSearch().then(() => $('#sec-books')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+};
+window.goSearchContPage = function(p) {
+  searchState.contPage = p;
+  execSearch().then(() => $('#sec-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 };
 
 // ══════════════════════════════════════════════════════════════

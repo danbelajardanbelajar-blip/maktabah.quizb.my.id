@@ -150,97 +150,144 @@ function handleCategories(): void {
 }
 
 // =============================================================
-// 4. SEARCH — fulltext + LIKE fallback, with cache
+// 6. SEARCH — tiga section: kategori · judul kitab · isi kitab
 // =============================================================
 function handleSearch(): void {
-    $pdo   = getPDO();
-    $q     = trim($_GET['q'] ?? '');
-    $page  = max(1, (int)($_GET['page'] ?? 1));
-    $limit = min(48, max(1, (int)($_GET['limit'] ?? 24)));
+    $pdo      = getPDO();
+    $q        = trim($_GET['q'] ?? '');
+    $bookPage = max(1, (int)($_GET['book_page']    ?? 1));
+    $contPage = max(1, (int)($_GET['content_page'] ?? 1));
+    $limit    = 12;
 
-    if (strlen($q) < 2) {
-        echo json_encode(['data' => [], 'total' => 0, 'page' => 1, 'limit' => $limit, 'total_pages' => 0]);
-        return;
-    }
+    $empty = [
+        'query'      => $q,
+        'categories' => [],
+        'books'      => ['data' => [], 'total' => 0, 'page' => 1, 'total_pages' => 0],
+        'content'    => ['data' => [], 'total' => 0, 'page' => 1, 'total_pages' => 0],
+    ];
 
-    $hash   = hash('sha256', strtolower($q));
-    $offset = ($page - 1) * $limit;
+    if (strlen($q) < 2) { echo json_encode($empty); return; }
 
-    // -- check cache (first page only for simplicity) --
-    if ($page === 1) {
-        $cs = $pdo->prepare("SELECT results_json, result_count FROM search_cache WHERE query_hash = :h AND expires_at > NOW() LIMIT 1");
-        $cs->execute([':h' => $hash]);
-        $cached = $cs->fetch();
-        if ($cached) {
-            $all   = json_decode($cached['results_json'], true);
-            $slice = array_slice($all, $offset, $limit);
-            echo json_encode([
-                'data'        => $slice,
-                'total'       => (int)$cached['result_count'],
-                'page'        => $page,
-                'limit'       => $limit,
-                'total_pages' => (int)ceil($cached['result_count'] / $limit),
-                'cached'      => true,
-            ]);
-            return;
-        }
-    }
+    $like = '%' . $q . '%';
+    $qStar = $q . '*';
 
-    // -- fulltext search --
-    $likePct = '%' . $q . '%';
-    $sql = "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
-                   MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
-            FROM books b
-            WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
-               OR b.title  LIKE :lk
-               OR b.author LIKE :la
-            ORDER BY rel DESC, b.title ASC
-            LIMIT :lim OFFSET :off";
+    // ── 1. KATEGORI ──────────────────────────────────────────
+    $stmtCat = $pdo->prepare(
+        "SELECT c.id, c.name, COUNT(b.bkid) AS book_count
+         FROM categories c
+         LEFT JOIN books b ON b.category_id = c.id
+         WHERE c.name LIKE :lk
+         GROUP BY c.id
+         ORDER BY book_count DESC
+         LIMIT 20"
+    );
+    $stmtCat->execute([':lk' => $like]);
+    $categories = $stmtCat->fetchAll();
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(':q1',  $q . '*', PDO::PARAM_STR);
-    $stmt->bindValue(':q2',  $q . '*', PDO::PARAM_STR);
-    $stmt->bindValue(':lk',  $likePct, PDO::PARAM_STR);
-    $stmt->bindValue(':la',  $likePct, PDO::PARAM_STR);
-    $stmt->bindValue(':lim', $limit,   PDO::PARAM_INT);
-    $stmt->bindValue(':off', $offset,  PDO::PARAM_INT);
-    $stmt->execute();
-    $books = $stmt->fetchAll();
+    // ── 2. JUDUL / PENGARANG KITAB ───────────────────────────
+    $bookOffset = ($bookPage - 1) * $limit;
 
-    // count
-    $stmtC = $pdo->prepare(
+    $stmtBooks = $pdo->prepare(
+        "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
+                MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+         FROM books b
+         WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
+            OR b.title  LIKE :lk
+            OR b.author LIKE :la
+         ORDER BY rel DESC, b.title ASC
+         LIMIT :lim OFFSET :off"
+    );
+    $stmtBooks->bindValue(':q1',  $qStar, PDO::PARAM_STR);
+    $stmtBooks->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+    $stmtBooks->bindValue(':lk',  $like,  PDO::PARAM_STR);
+    $stmtBooks->bindValue(':la',  $like,  PDO::PARAM_STR);
+    $stmtBooks->bindValue(':lim', $limit, PDO::PARAM_INT);
+    $stmtBooks->bindValue(':off', $bookOffset, PDO::PARAM_INT);
+    $stmtBooks->execute();
+    $books = $stmtBooks->fetchAll();
+
+    $stmtBooksCount = $pdo->prepare(
         "SELECT COUNT(*) FROM books
          WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)
             OR title LIKE :lk OR author LIKE :la"
     );
-    $stmtC->execute([':q' => $q . '*', ':lk' => $likePct, ':la' => $likePct]);
-    $total = (int)$stmtC->fetchColumn();
+    $stmtBooksCount->execute([':q' => $qStar, ':lk' => $like, ':la' => $like]);
+    $booksTotal = (int)$stmtBooksCount->fetchColumn();
 
-    // -- store cache (first page only) --
-    if ($page === 1 && $total > 0) {
-        $allStmt = $pdo->prepare(
-            "SELECT bkid, title, author, pages, iso, category_id, category_name
-             FROM books
-             WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)
-                OR title LIKE :lk OR author LIKE :la
-             ORDER BY MATCH(title) AGAINST (:q2 IN BOOLEAN MODE) DESC, title ASC
-             LIMIT 500"
-        );
-        $allStmt->execute([':q' => $q . '*', ':lk' => $likePct, ':la' => $likePct, ':q2' => $q . '*']);
-        $allResults = $allStmt->fetchAll();
+    // -- cache buku (opsional, tetap berguna) --
+    if ($bookPage === 1 && $booksTotal > 0) {
+        $hash = hash('sha256', 'books:' . strtolower($q));
         $pdo->prepare(
             "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
              VALUES (:h, :qt, :rj, :rc, DATE_ADD(NOW(), INTERVAL 1 HOUR))
-             ON DUPLICATE KEY UPDATE results_json=VALUES(results_json), result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
-        )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($allResults), ':rc' => $total]);
+             ON DUPLICATE KEY UPDATE results_json=VALUES(results_json),
+             result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
+        )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($books), ':rc' => $booksTotal]);
     }
 
+    // ── 3. ISI KITAB (book_content) ──────────────────────────
+    $contOffset = ($contPage - 1) * $limit;
+
+    // Ambil buku unik yang isinya cocok, sertakan cuplikan halaman pertama yang cocok
+    $stmtContent = $pdo->prepare(
+        "SELECT b.bkid, b.title, b.author, b.pages, b.category_name,
+                (SELECT bc2.page
+                 FROM book_content bc2
+                 WHERE bc2.bkid = b.bkid
+                   AND (MATCH(bc2.content) AGAINST (:qs1 IN BOOLEAN MODE) OR bc2.content LIKE :ls1)
+                 ORDER BY MATCH(bc2.content) AGAINST (:qs2 IN BOOLEAN MODE) DESC
+                 LIMIT 1) AS match_page,
+                (SELECT LEFT(bc2.content, 260)
+                 FROM book_content bc2
+                 WHERE bc2.bkid = b.bkid
+                   AND (MATCH(bc2.content) AGAINST (:qs3 IN BOOLEAN MODE) OR bc2.content LIKE :ls2)
+                 ORDER BY MATCH(bc2.content) AGAINST (:qs4 IN BOOLEAN MODE) DESC
+                 LIMIT 1) AS snippet
+         FROM books b
+         WHERE EXISTS (
+             SELECT 1 FROM book_content bc
+             WHERE bc.bkid = b.bkid
+               AND (MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE) OR bc.content LIKE :lk)
+         )
+         ORDER BY b.title ASC
+         LIMIT :lim OFFSET :off"
+    );
+    $stmtContent->bindValue(':qs1', $qStar, PDO::PARAM_STR);
+    $stmtContent->bindValue(':qs2', $qStar, PDO::PARAM_STR);
+    $stmtContent->bindValue(':qs3', $qStar, PDO::PARAM_STR);
+    $stmtContent->bindValue(':qs4', $qStar, PDO::PARAM_STR);
+    $stmtContent->bindValue(':ls1', $like,  PDO::PARAM_STR);
+    $stmtContent->bindValue(':ls2', $like,  PDO::PARAM_STR);
+    $stmtContent->bindValue(':q',   $qStar, PDO::PARAM_STR);
+    $stmtContent->bindValue(':lk',  $like,  PDO::PARAM_STR);
+    $stmtContent->bindValue(':lim', $limit, PDO::PARAM_INT);
+    $stmtContent->bindValue(':off', $contOffset, PDO::PARAM_INT);
+    $stmtContent->execute();
+    $contentBooks = $stmtContent->fetchAll();
+
+    $stmtContCount = $pdo->prepare(
+        "SELECT COUNT(DISTINCT bc.bkid) FROM book_content bc
+         WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE) OR bc.content LIKE :lk"
+    );
+    $stmtContCount->execute([':q' => $qStar, ':lk' => $like]);
+    $contTotal = (int)$stmtContCount->fetchColumn();
+
+    // ── Respon ───────────────────────────────────────────────
     echo json_encode([
-        'data'        => $books,
-        'total'       => $total,
-        'page'        => $page,
-        'limit'       => $limit,
-        'total_pages' => (int)ceil($total / $limit),
+        'query'      => $q,
+        'categories' => $categories,
+        'books'      => [
+            'data'        => $books,
+            'total'       => $booksTotal,
+            'page'        => $bookPage,
+            'total_pages' => (int)ceil($booksTotal / $limit),
+        ],
+        'content'    => [
+            'data'        => $contentBooks,
+            'total'       => $contTotal,
+            'page'        => $contPage,
+            'total_pages' => (int)ceil($contTotal / $limit),
+        ],
     ]);
 }
 
