@@ -51,7 +51,7 @@
     #navbar.scrolled { box-shadow: 0 2px 20px rgba(26,58,42,.12); background: rgba(250,248,243,.97); backdrop-filter: blur(10px); }
 
     /* SPA page transitions */
-    #app-content { animation: fadeIn .3s ease; }
+    #app-content { animation: fadeIn .3s ease; text-align: justify; text-justify: inter-word; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
     /* Card hover */
@@ -297,10 +297,13 @@
           <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Tentang</a>
         </div>
 
-        <!-- Search (desktop) -->
-        <div class="flex items-center gap-3">
+        <!-- Search + Settings (desktop) -->
+        <div class="flex items-center gap-2">
           <button id="nav-search-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Cari Kitab">
             <i data-lucide="search" class="w-5 h-5 text-primary"></i>
+          </button>
+          <button id="nav-font-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Pengaturan Font">
+            <i data-lucide="settings-2" class="w-5 h-5 text-primary"></i>
           </button>
         </div>
 
@@ -350,13 +353,29 @@
         <span class="text-[10px] font-medium">Katalog</span>
       </a>
 
-      <a href="/about" data-route="/about" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
-        <i data-lucide="info" class="w-5 h-5"></i>
-        <span class="text-[10px] font-medium">Tentang</span>
-      </a>
+      <button id="bnav-font-btn" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5" style="background:none;border:none;cursor:pointer;">
+        <i data-lucide="settings-2" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Setting</span>
+      </button>
 
     </div>
   </nav>
+
+  <!-- ===================== FONT SETTINGS MODAL ===================== -->
+  <div id="font-modal-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(15,34,24,.55);backdrop-filter:blur(4px);" onclick="if(event.target===this)closeFontModal()">
+    <div id="font-modal" style="position:absolute;bottom:0;left:0;right:0;max-height:90vh;overflow-y:auto;background:#faf8f3;border-radius:1.5rem 1.5rem 0 0;padding:1.5rem 1.25rem 2rem;box-shadow:0 -8px 40px rgba(26,58,42,.18);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <i data-lucide="settings-2" style="width:18px;height:18px;color:#c9a84c;"></i>
+          <span style="font-weight:700;font-size:15px;color:#1a3a2a;">Pengaturan Font Pembaca</span>
+        </div>
+        <button onclick="closeFontModal()" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(26,58,42,.4);">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+      <div id="font-modal-body"><!-- filled by JS --></div>
+    </div>
+  </div>
 
   <!-- ===================== FOOTER ===================== -->
   <footer class="bg-primary text-white mt-16 hidden md:block">

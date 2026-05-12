@@ -16,6 +16,26 @@ function ftEscape(string $q): string {
     return preg_replace('/[+\-><()~*"@]+/', ' ', $q);
 }
 
+function isPhraseQuery(string $q): bool {
+    return preg_match('/^"(.+)"$/u', trim($q)) === 1;
+}
+
+function searchPhraseText(string $q): string {
+    $q = trim($q);
+    if (isPhraseQuery($q)) {
+        return trim(substr($q, 1, -1));
+    }
+    return $q;
+}
+
+function booleanSearchTerm(string $q): string {
+    $q = trim($q);
+    if (isPhraseQuery($q)) {
+        return '"' . ftEscape(searchPhraseText($q)) . '"';
+    }
+    return ftEscape($q) . '*';
+}
+
 // --- Router ---
 $action = $_GET['action'] ?? '';
 
@@ -163,8 +183,9 @@ function handleCategories(): void {
 // =============================================================
 function handleSearchCategories(): void {
     header('Cache-Control: public, max-age=120');
-    $pdo  = getPDO();
-    $q    = trim($_GET['q'] ?? '');
+    $pdo       = getPDO();
+    $qRaw      = trim($_GET['q'] ?? '');
+    $q         = searchPhraseText($qRaw);
     if (strlen($q) < 2) { echo json_encode(['data' => []]); return; }
 
     $like = '%' . $q . '%';
@@ -187,7 +208,8 @@ function handleSearchCategories(): void {
 function handleSearchBooks(): void {
     header('Cache-Control: public, max-age=120');
     $pdo   = getPDO();
-    $q     = trim($_GET['q'] ?? '');
+    $qRaw  = trim($_GET['q'] ?? '');
+    $q     = searchPhraseText($qRaw);
     $page  = max(1, (int)($_GET['page'] ?? 1));
     $limit = 12;
     $offset = ($page - 1) * $limit;
@@ -197,8 +219,8 @@ function handleSearchBooks(): void {
         return;
     }
 
-    $hash  = 'books:' . hash('sha256', strtolower($q));
-    $qStar = ftEscape($q) . '*';
+    $hash  = 'books:' . hash('sha256', strtolower($qRaw));
+    $qStar = booleanSearchTerm($qRaw);
     $like  = '%' . $q . '%';
 
     // --- Cache hit (page 1 only) ---
@@ -279,7 +301,8 @@ function handleSearchBooks(): void {
 function handleSearchContent(): void {
     header('Cache-Control: public, max-age=120');
     $pdo   = getPDO();
-    $q     = trim($_GET['q'] ?? '');
+    $qRaw  = trim($_GET['q'] ?? '');
+    $q     = searchPhraseText($qRaw);
     $page  = max(1, (int)($_GET['page'] ?? 1));
     $limit = 12;
     $offset = ($page - 1) * $limit;
@@ -289,8 +312,8 @@ function handleSearchContent(): void {
         return;
     }
 
-    $qStar = ftEscape($q) . '*';
-    $hash  = 'content:' . hash('sha256', strtolower($q));
+    $qStar = booleanSearchTerm($qRaw);
+    $hash  = 'content:' . hash('sha256', strtolower($qRaw));
 
     // --- Cache hit ---
     if ($page === 1) {
