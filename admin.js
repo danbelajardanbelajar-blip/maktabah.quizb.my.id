@@ -162,6 +162,7 @@ function dashCard(route, icon, title, sub, admin) {
 // ══════════════════════════════════════════════════════════════
 
 const booksAS = { page: 1, q: '', cat: '', total: 0 };
+const _booksMap = new Map(); // id → book object, for safe onclick lookup
 
 async function renderAdminBooks() {
   if (!adminGuard()) return;
@@ -258,6 +259,7 @@ async function bksLoad() {
       res = await apiFetch(p);
     }
     booksAS.total = res.total || 0;
+    _booksMap.clear(); (res.books||[]).forEach(b => _booksMap.set(b.bkid, b));
     const books = res.data || [];
 
     wrap.innerHTML = `
@@ -296,7 +298,7 @@ async function bksLoad() {
                     <td class="px-4 py-3 text-center text-primary/40 text-xs hidden lg:table-cell">${b.pages||0}</td>
                     <td class="px-4 py-3">
                       <div class="flex items-center justify-center gap-1">
-                        <button title="Edit Kitab" onclick='openBookModal(${JSON.stringify(b).replace(/'/g,"\\'")})'
+                        <button title="Edit Kitab" onclick="openBookModal(${b.bkid})" 
                           class="p-2 rounded-lg hover:bg-primary/8 text-primary/40 hover:text-primary transition-colors">
                           <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                         </button>
@@ -379,6 +381,10 @@ function bookModalHtml() {
 }
 
 window.openBookModal = function(book) {
+  // Accept numeric ID (from safe onclick) or a book object directly
+  if (typeof book === 'number' || (typeof book === 'string' && !isNaN(book))) {
+    book = _booksMap.get(+book) || null;
+  }
   document.getElementById('bk-modal-ttl').textContent = book ? 'Edit Kitab' : 'Tambah Kitab Baru';
   document.getElementById('bm-bkid').value   = book?.bkid   || '';
   document.getElementById('bm-title').value  = book?.title  || '';
