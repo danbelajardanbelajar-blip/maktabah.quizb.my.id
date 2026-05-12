@@ -328,11 +328,28 @@ window.goKatalogPage = function(p) {
 };
 
 // ══════════════════════════════════════════════════════════════
-//  PAGE: SEARCH  — tiga section: Kategori · Judul Kitab · Isi
+//  PAGE: SEARCH — parallel fetch · progressive rendering
 // ══════════════════════════════════════════════════════════════
+
+// State
 const searchState = { q: '', bookPage: 1, contPage: 1 };
 
-async function renderSearch(params) {
+// AbortController pool — cancels in-flight fetches when user retypes
+let _abortPool = [];
+function abortAll() {
+  _abortPool.forEach(c => { try { c.abort(); } catch (_) {} });
+  _abortPool = [];
+}
+function sfetch(params) {
+  const ctrl = new AbortController();
+  _abortPool.push(ctrl);
+  const url = API + '?' + new URLSearchParams(params).toString();
+  return fetch(url, { signal: ctrl.signal })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+}
+
+// ── Render the page shell (input + 3 skeleton sections) ──────
+function renderSearch(params) {
   searchState.q        = params.get('q') || '';
   searchState.bookPage = 1;
   searchState.contPage = 1;
@@ -364,8 +381,8 @@ async function renderSearch(params) {
     searchState.q        = e.target.value.trim();
     searchState.bookPage = 1;
     searchState.contPage = 1;
-    if (searchState.q.length >= 2) timer = setTimeout(execSearch, 450);
-    else if (!searchState.q) $('#search-results').innerHTML = emptySearchPrompt();
+    if (searchState.q.length >= 2) timer = setTimeout(execSearch, 400);
+    else if (!searchState.q) { abortAll(); $('#search-results').innerHTML = emptySearchPrompt(); reicons(); }
   });
   $('#search-input')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') { clearTimeout(timer); execSearch(); }
@@ -374,16 +391,24 @@ async function renderSearch(params) {
   if (searchState.q.length >= 2) execSearch();
 }
 
-// ── Skeleton placeholder for all three sections ───────────────
+// ── Skeleton placeholder ──────────────────────────────────────
 function skeletonSearchResults() {
-  return ['Kategori', 'Nama Kitab', 'Isi Kitab'].map(label => `
-    <div class="mb-10">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="skeleton h-4 w-4 rounded"></div>
-        <div class="skeleton h-4 w-40 rounded"></div>
-      </div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">${skeletonCards(4)}</div>
-    </div>`).join(sectionDivider());
+  const skel = (n) => `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">${skeletonCards(n)}</div>`;
+  return `
+    <div id="sec-cat">
+      ${sectionHeader('folder-open','Hasil Pencarian Kategori', null)}
+      <div id="sec-cat-body">${skel(3)}</div>
+    </div>
+    ${sectionDivider()}
+    <div id="sec-books">
+      ${sectionHeader('book-open','Hasil Pencarian Nama Kitab', null)}
+      <div id="sec-books-body">${skel(4)}</div>
+    </div>
+    ${sectionDivider()}
+    <div id="sec-content">
+      ${sectionHeader('file-text','Hasil Pencarian Isi Kitab', null)}
+      <div id="sec-content-body">${skel(4)}</div>
+    </div>`;
 }
 
 // ── Empty state ───────────────────────────────────────────────

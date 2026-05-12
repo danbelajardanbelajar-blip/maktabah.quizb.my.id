@@ -15,12 +15,15 @@ $action = $_GET['action'] ?? '';
 
 try {
     switch ($action) {
-        case 'books':      handleBooks();      break;
-        case 'book':       handleBook();       break;
-        case 'content':    handleContent();    break;
-        case 'categories': handleCategories(); break;
-        case 'search':     handleSearch();     break;
-        case 'latest':     handleLatest();     break;
+        case 'books':             handleBooks();            break;
+        case 'book':              handleBook();             break;
+        case 'content':           handleContent();          break;
+        case 'categories':        handleCategories();       break;
+        case 'latest':            handleLatest();           break;
+        // Search — tiga endpoint terpisah untuk parallel fetch
+        case 'search_categories': handleSearchCategories(); break;
+        case 'search_books':      handleSearchBooks();      break;
+        case 'search_content':    handleSearchContent();    break;
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Unknown action.']);
@@ -150,7 +153,254 @@ function handleCategories(): void {
 }
 
 // =============================================================
-// 6. SEARCH — tiga section: kategori · judul kitab · isi kitab
+// 6a. SEARCH — KATEGORI  (fast: simple LIKE on small table)
+// =============================================================
+function handleSearchCategories(): void {
+    $pdo  = getPDO();
+    $q    = trim($_GET['q'] ?? '');
+    if (strlen($q) < 2) { echo json_encode(['data' => []]); return; }
+
+    $like = '%' . $q . '%';
+    $stmt = $pdo->prepare(
+        "SELECT c.id, c.name, COUNT(b.bkid) AS book_count
+         FROM categories c
+         LEFT JOIN books b ON b.category_id = c.id
+         WHERE c.name LIKE :lk
+         GROUP BY c.id
+         ORDER BY book_count DESC
+         LIMIT 20"
+    );
+    $stmt->execute([':lk' => $like]);
+    echo json_encode(['data' => $stmt->fetchAll()]);
+}
+
+// =============================================================
+// 6b. SEARCH — JUDUL / PENGARANG  (fulltext + cache)
+// =============================================================
+function handleSearchBooks(): void {
+    $pdo   = getPDO();
+    $q     = trim($_GET['q'] ?? '');
+    $page  = max(1, (int)($_GET['page'] ?? 1));
+    $limit = 12;
+    $offset = ($page - 1) * $limit;
+
+    if (strlen($q) < 2) {
+        echo json_encode(['data' => [], 'total' => 0, 'page' => 1, 'total_pages' => 0]);
+        return;
+    }
+
+    $hash  = 'books:' . hash('sha256', strtolower($q));
+    $qStar = $q . '*';
+    $like  = '%' . $q . '%';
+
+    // --- Cache hit (page 1 only) ---
+    if ($page === 1) {
+        $cs = $pdo->prepare(
+            "SELECT results_json, result_count FROM search_cache
+             WHERE query_hash = :h AND expires_at > NOW() LIMIT 1"
+        );
+        $cs->execute([':h' => $hash]);
+        if ($row = $cs->fetch()) {
+            $all = json_decode($row['results_json'], true) ?? [];
+            echo json_encode([
+                'data'        => array_slice($all, 0, $limit),
+                'total'       => (int)$row['result_count'],
+                'page'        => 1,
+                'total_pages' => (int)ceil($row['result_count'] / $limit),
+                'cached'      => true,
+            ]);
+            return;
+        }
+    }
+
+    // --- Query ---
+    $stmt = $pdo->prepare(
+        "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
+                MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+         FROM books b
+         WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
+            OR b.title  LIKE :lk
+            OR b.author LIKE :la
+         ORDER BY rel DESC, b.title ASC
+         LIMIT :lim OFFSET :off"
+    );
+    $stmt->bindValue(':q1',  $qStar, PDO::PARAM_STR);
+    $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+    $stmt->bindValue(':lk',  $like,  PDO::PARAM_STR);
+    $stmt->bindValue(':la',  $like,  PDO::PARAM_STR);
+    $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $books = $stmt->fetchAll();
+
+    $countStmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM books
+         WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)
+            OR title LIKE :lk OR author LIKE :la"
+    );
+    $countStmt->execute([':q' => $qStar, ':lk' => $like, ':la' => $like]);
+    $total = (int)$countStmt->fetchColumn();
+
+    // --- Cache store ---
+    if ($page === 1 && $total > 0) {
+        $pdo->prepare(
+            "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
+             VALUES (:h, :qt, :rj, :rc, DATE_ADD(NOW(), INTERVAL 1 HOUR))
+             ON DUPLICATE KEY UPDATE results_json=VALUES(results_json),
+             result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
+        )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($books), ':rc' => $total]);
+    }
+
+    echo json_encode([
+        'data'        => $books,
+        'total'       => $total,
+        'page'        => $page,
+        'total_pages' => (int)ceil($total / $limit),
+    ]);
+}
+
+// =============================================================
+// 6c. SEARCH — ISI KITAB  (2-step optimised, fulltext only)
+//
+//  Step 1 — GROUP BY bkid dengan FULLTEXT: hasilkan daftar bkid
+//            terurut relevansi, tanpa menyentuh tabel books.
+//  Step 2 — JOIN ke books + ambil cuplikan halaman terbaik via
+//            window function ROW_NUMBER (MariaDB 10.2+).
+//            Hanya ~LIMIT baris yang diproses, bukan semua baris.
+// =============================================================
+function handleSearchContent(): void {
+    $pdo   = getPDO();
+    $q     = trim($_GET['q'] ?? '');
+    $page  = max(1, (int)($_GET['page'] ?? 1));
+    $limit = 12;
+    $offset = ($page - 1) * $limit;
+
+    if (strlen($q) < 2) {
+        echo json_encode(['data' => [], 'total' => 0, 'page' => 1, 'total_pages' => 0]);
+        return;
+    }
+
+    $qStar = $q . '*';
+    $hash  = 'content:' . hash('sha256', strtolower($q));
+
+    // --- Cache hit ---
+    if ($page === 1) {
+        $cs = $pdo->prepare(
+            "SELECT results_json, result_count FROM search_cache
+             WHERE query_hash = :h AND expires_at > NOW() LIMIT 1"
+        );
+        $cs->execute([':h' => $hash]);
+        if ($row = $cs->fetch()) {
+            $all = json_decode($row['results_json'], true) ?? [];
+            echo json_encode([
+                'data'        => array_slice($all, 0, $limit),
+                'total'       => (int)$row['result_count'],
+                'page'        => 1,
+                'total_pages' => (int)ceil($row['result_count'] / $limit),
+                'cached'      => true,
+            ]);
+            return;
+        }
+    }
+
+    // --- Step 1: Top bkids via fulltext GROUP BY (uses FULLTEXT index, very fast) ---
+    $step1 = $pdo->prepare(
+        "SELECT bkid, MAX(MATCH(content) AGAINST (:q1 IN BOOLEAN MODE)) AS rel
+         FROM book_content
+         WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
+         GROUP BY bkid
+         ORDER BY rel DESC
+         LIMIT :lim OFFSET :off"
+    );
+    $step1->bindValue(':q1',  $qStar, PDO::PARAM_STR);
+    $step1->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+    $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
+    $step1->bindValue(':off', $offset, PDO::PARAM_INT);
+    $step1->execute();
+    $topRows = $step1->fetchAll();
+
+    if (empty($topRows)) {
+        echo json_encode(['data' => [], 'total' => 0, 'page' => $page, 'total_pages' => 0]);
+        return;
+    }
+
+    $bkidInts = array_map('intval', array_column($topRows, 'bkid'));
+    $relMap   = array_column($topRows, 'rel', 'bkid');
+    $inClause = implode(',', $bkidInts); // safe — all ints
+
+    // --- Step 2: Books info + best snippet (window function, only LIMIT rows) ---
+    $step2 = $pdo->query(
+        "SELECT b.bkid, b.title, b.author, b.pages, b.category_name,
+                s.match_page, s.snippet
+         FROM books b
+         JOIN (
+             SELECT bkid, match_page, LEFT(content_text, 280) AS snippet
+             FROM (
+                 SELECT bc.bkid,
+                        bc.page  AS match_page,
+                        bc.content AS content_text,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY bc.bkid
+                            ORDER BY MATCH(bc.content) AGAINST ('$qStar' IN BOOLEAN MODE) DESC
+                        ) AS rn
+                 FROM book_content bc
+                 WHERE bc.bkid IN ($inClause)
+                   AND MATCH(bc.content) AGAINST ('$qStar' IN BOOLEAN MODE)
+             ) ranked
+             WHERE rn = 1
+         ) s ON s.bkid = b.bkid
+         WHERE b.bkid IN ($inClause)"
+    );
+    $rows = $step2->fetchAll();
+
+    // Restore relevance order from step 1
+    usort($rows, fn($a, $b) =>
+        ($relMap[$b['bkid']] ?? 0) <=> ($relMap[$a['bkid']] ?? 0)
+    );
+
+    // --- Count total (cached separately, expensive on huge tables) ---
+    $countHash = 'cnt_content:' . hash('sha256', strtolower($q));
+    $ccRow = $pdo->prepare(
+        "SELECT result_count FROM search_cache WHERE query_hash = :h AND expires_at > NOW() LIMIT 1"
+    );
+    $ccRow->execute([':h' => $countHash]);
+    if ($countCached = $ccRow->fetchColumn()) {
+        $total = (int)$countCached;
+    } else {
+        $countStmt = $pdo->prepare(
+            "SELECT COUNT(DISTINCT bkid) FROM book_content
+             WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)"
+        );
+        $countStmt->execute([':q' => $qStar]);
+        $total = (int)$countStmt->fetchColumn();
+        // Cache the count for 2 hours
+        $pdo->prepare(
+            "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
+             VALUES (:h, :qt, '[]', :rc, DATE_ADD(NOW(), INTERVAL 2 HOUR))
+             ON DUPLICATE KEY UPDATE result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
+        )->execute([':h' => $countHash, ':qt' => 'cnt:' . $q, ':rc' => $total]);
+    }
+
+    // Cache page-1 results
+    if ($page === 1 && !empty($rows)) {
+        $pdo->prepare(
+            "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
+             VALUES (:h, :qt, :rj, :rc, DATE_ADD(NOW(), INTERVAL 1 HOUR))
+             ON DUPLICATE KEY UPDATE results_json=VALUES(results_json),
+             result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
+        )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($rows), ':rc' => $total]);
+    }
+
+    echo json_encode([
+        'data'        => $rows,
+        'total'       => $total,
+        'page'        => $page,
+        'total_pages' => (int)ceil($total / $limit),
+    ]);
+}
+
+// =============================================================
+// 6-legacy. SEARCH (deprecated — kept for safety, not used)
 // =============================================================
 function handleSearch(): void {
     $pdo      = getPDO();
