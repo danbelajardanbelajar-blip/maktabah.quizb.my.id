@@ -10,7 +10,7 @@ Object.assign(window._adminRoutes = window._adminRoutes || {}, {
   '/admin':            () => navigate('/admin/books', true),
   '/admin/books':      renderAdminBooks,
   '/admin/categories': renderAdminCategories,
-  '/admin/content':    renderAdminContent,
+  '/admin/content':    () => navigate('/admin/books', true),
 });
 
 // Patch router setelah app.js selesai load
@@ -79,7 +79,6 @@ function adminNavBar(active) {
     { r: '/dashboard',        icon: 'layout-dashboard', label: 'Dashboard' },
     { r: '/admin/books',      icon: 'book',             label: 'Kelola Kitab' },
     { r: '/admin/categories', icon: 'folder',           label: 'Kelola Kategori' },
-    { r: '/admin/content',    icon: 'file-text',        label: 'Kelola Isi Kitab' },
   ];
   return `
     <div class="bg-white border-b border-gold/15 sticky top-16 z-40 shadow-sm">
@@ -128,7 +127,6 @@ function renderDashboard() {
         ${dashCard('/search',           'search',         'Cari Kitab',        'Cari judul & isi',          false)}
         ${isAdmin ? dashCard('/admin/books',      'book',           'Kelola Kitab',      'Tambah / edit / hapus',     true)  : ''}
         ${isAdmin ? dashCard('/admin/categories', 'folder',         'Kelola Kategori',   'Atur kategori kitab',       true)  : ''}
-        ${isAdmin ? `<div class="col-span-2 sm:col-span-1">${dashCard('/admin/content', 'file-text', 'Kelola Isi Kitab', 'Edit konten per halaman', true)}</div>` : ''}
       </div>
 
       <div class="text-center">
@@ -161,48 +159,68 @@ function dashCard(route, icon, title, sub, admin) {
 //  KELOLA KITAB  /admin/books
 // ══════════════════════════════════════════════════════════════
 
+// ══════════════════════════════════════════════════════════════
+//  KELOLA KITAB + ISI KITAB  /admin/books
+// ══════════════════════════════════════════════════════════════
+
 const booksAS = { page: 1, q: '', cat: '', total: 0 };
-const _booksMap = new Map(); // id → book object, for safe onclick lookup
+const _booksMap = new Map();
+const contAS   = { bkid: null, page: 1, q: '' };
+let _ctrlS = null;
+
+// Aktif view: 'books' | 'content'
+let _booksActiveView = 'books';
 
 async function renderAdminBooks() {
   if (!adminGuard()) return;
+  _booksActiveView = contAS.bkid ? 'content' : 'books';
 
   app().innerHTML = adminNavBar('/admin/books') + `
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
 
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-xl font-bold text-primary flex items-center gap-2">
-            <i data-lucide="book" class="w-5 h-5 text-gold"></i> Kelola Kitab
-          </h1>
-          <p class="text-primary/40 text-xs mt-1">Tambah, edit, dan hapus kitab perpustakaan</p>
+      <!-- ── VIEW: DAFTAR KITAB ─────────────────────────────── -->
+      <div id="view-books">
+
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-primary flex items-center gap-2">
+              <i data-lucide="book" class="w-5 h-5 text-gold"></i> Kelola Kitab
+            </h1>
+            <p class="text-primary/40 text-xs mt-1">Tambah, edit, hapus, dan kelola isi kitab</p>
+          </div>
+          <button onclick="openBookModal(null)"
+            class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm">
+            <i data-lucide="plus" class="w-4 h-4"></i> Tambah Kitab
+          </button>
         </div>
-        <button onclick="openBookModal(null)"
-          class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm">
-          <i data-lucide="plus" class="w-4 h-4"></i> Tambah Kitab
-        </button>
+
+        <!-- Filter bar -->
+        <div class="bg-white rounded-2xl shadow-card p-4 mb-5 flex flex-col sm:flex-row gap-3">
+          <div class="flex-1 relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/30"></i>
+            <input id="bks-q" type="text" value="${escHtml(booksAS.q)}" placeholder="Cari judul atau pengarang…"
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15 bg-cream/50" />
+          </div>
+          <select id="bks-cat"
+            class="w-full sm:w-52 px-3 py-2.5 rounded-xl border border-gold/25 text-sm bg-cream/50 focus:outline-none focus:border-gold">
+            <option value="">Semua Kategori</option>
+          </select>
+          <button onclick="bksSearch()"
+            class="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors">
+            Cari
+          </button>
+        </div>
+
+        <!-- Table card -->
+        <div id="bks-wrap" class="bg-white rounded-2xl shadow-card overflow-hidden">
+          ${adminSpinner()}
+        </div>
+
       </div>
 
-      <!-- Filter bar -->
-      <div class="bg-white rounded-2xl shadow-card p-4 mb-5 flex flex-col sm:flex-row gap-3">
-        <div class="flex-1 relative">
-          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/30"></i>
-          <input id="bks-q" type="text" value="${escHtml(booksAS.q)}" placeholder="Cari judul atau pengarang…"
-            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15 bg-cream/50" />
-        </div>
-        <select id="bks-cat"
-          class="w-full sm:w-52 px-3 py-2.5 rounded-xl border border-gold/25 text-sm bg-cream/50 focus:outline-none focus:border-gold">
-          <option value="">Semua Kategori</option>
-        </select>
-        <button onclick="bksSearch()"
-          class="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors">
-          Cari
-        </button>
-      </div>
-
-      <!-- Table card -->
-      <div id="bks-wrap" class="bg-white rounded-2xl shadow-card overflow-hidden">
-        ${adminSpinner()}
+      <!-- ── VIEW: EDITOR ISI KITAB ─────────────────────────── -->
+      <div id="view-content" class="hidden">
+        <div id="cont-body"></div>
       </div>
 
     </div>
@@ -211,7 +229,7 @@ async function renderAdminBooks() {
 
   reicons();
 
-  // Load kategori
+  // Load kategori untuk filter + modal
   try {
     const r = await apiFetch({ action: 'categories' });
     const sel = document.getElementById('bks-cat');
@@ -221,7 +239,6 @@ async function renderAdminBooks() {
       if (String(c.id) === String(booksAS.cat)) o.selected = true;
       sel.appendChild(o);
     });
-    // Juga isi modal select
     const ms = document.getElementById('bm-cat');
     if (ms) (r.data || []).forEach(c => {
       const o = document.createElement('option');
@@ -233,8 +250,25 @@ async function renderAdminBooks() {
   document.getElementById('bk-form')?.addEventListener('submit', async e => { e.preventDefault(); await bkSubmit(); });
 
   await bksLoad();
+
+  // Jika ada bkid aktif, langsung buka editor
+  if (contAS.bkid) _switchToContent();
 }
 
+/* ── Ganti view ──────────────────────────────────────────── */
+function _switchToContent() {
+  document.getElementById('view-books')?.classList.add('hidden');
+  document.getElementById('view-content')?.classList.remove('hidden');
+  _booksActiveView = 'content';
+}
+
+function _switchToBooks() {
+  document.getElementById('view-content')?.classList.add('hidden');
+  document.getElementById('view-books')?.classList.remove('hidden');
+  _booksActiveView = 'books';
+}
+
+/* ── Search & pagination ─────────────────────────────────── */
 window.bksSearch = function() {
   booksAS.q   = document.getElementById('bks-q')?.value.trim() || '';
   booksAS.cat = document.getElementById('bks-cat')?.value || '';
@@ -298,7 +332,7 @@ async function bksLoad() {
                     <td class="px-4 py-3 text-center text-primary/40 text-xs hidden lg:table-cell">${b.pages||0}</td>
                     <td class="px-4 py-3">
                       <div class="flex items-center justify-center gap-1">
-                        <button title="Edit Kitab" onclick="openBookModal(${b.bkid})" 
+                        <button title="Edit Kitab" onclick="openBookModal(${b.bkid})"
                           class="p-2 rounded-lg hover:bg-primary/8 text-primary/40 hover:text-primary transition-colors">
                           <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                         </button>
@@ -324,6 +358,7 @@ async function bksLoad() {
   }
 }
 
+/* ── Book modal HTML ─────────────────────────────────────── */
 function bookModalHtml() {
   return `
     <div id="bk-modal" class="fixed inset-0 z-[300] hidden" style="background:rgba(15,34,24,.6);backdrop-filter:blur(5px);">
@@ -380,13 +415,11 @@ function bookModalHtml() {
     </div>`;
 }
 
+/* ── openBookModal ───────────────────────────────────────── */
 window.openBookModal = function(book) {
-  // Accept numeric ID (from safe onclick) or a book object directly
   if (typeof book === 'number' || (typeof book === 'string' && !isNaN(book))) {
     book = _booksMap.get(+book) || null;
   }
-
-  // Reset form bersih dulu (penting agar Tambah selalu kosong)
   const form = document.getElementById('bk-form');
   if (form) form.reset();
   document.getElementById('bm-bkid').value = '';
@@ -394,7 +427,6 @@ window.openBookModal = function(book) {
   const isEdit = !!book;
   document.getElementById('bk-modal-ttl').textContent = isEdit ? 'Edit Kitab' : 'Tambah Kitab Baru';
 
-  // Isi data hanya saat Edit
   if (isEdit) {
     document.getElementById('bm-bkid').value   = book.bkid   ?? '';
     document.getElementById('bm-title').value  = book.title  ?? '';
@@ -405,11 +437,9 @@ window.openBookModal = function(book) {
     if (catEl) catEl.value = book.category_id ? String(book.category_id) : '';
   }
 
-  // Sembunyikan pesan error/sukses sebelumnya
   const msg = document.getElementById('bm-msg');
   if (msg) msg.className = 'hidden text-sm rounded-xl px-4 py-2.5';
 
-  // Perbarui label tombol Simpan
   const btn = document.getElementById('bk-submit-btn');
   if (btn) btn.innerHTML = isEdit
     ? '<i data-lucide="save" class="w-4 h-4"></i> Simpan Perubahan'
@@ -466,9 +496,213 @@ window.bkDelete = async function(bkid, title) {
   else adminToast(data.error || 'Gagal', 'error');
 };
 
-window.gotoContent = function(bkid) {
+/* ── Buka editor isi kitab (inline, tanpa pindah halaman) ── */
+window.gotoContent = async function(bkid) {
   contAS.bkid = bkid; contAS.page = 1;
-  navigate('/admin/content');
+  _switchToContent();
+  await contLoadEditor();
+};
+
+/* ── Content editor ─────────────────────────────────────── */
+async function contLoadEditor() {
+  const body = document.getElementById('cont-body');
+  if (!body) return;
+  if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
+  body.innerHTML = adminSpinner();
+
+  try {
+    const bkid = contAS.bkid;
+    const pg   = contAS.page;
+    const [bkRes, ctRes] = await Promise.all([
+      apiFetch({ action: 'book', id: bkid }),
+      apiFetch({ action: 'content', bkid, page: pg }),
+    ]);
+    const book    = bkRes.data;
+    const total   = ctRes.total_pages || 0;
+    const hasCont = ctRes.content !== null;
+    const pageNum = ctRes.page_number ?? pg;
+
+    body.innerHTML = `
+      <!-- Header strip -->
+      <div class="bg-white rounded-2xl shadow-card p-4 mb-5 flex items-center gap-3">
+        <button onclick="contBack()"
+          class="p-2 rounded-lg hover:bg-cream-dark text-primary/45 hover:text-primary transition-colors shrink-0"
+          title="Kembali ke daftar kitab">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        </button>
+        <div class="flex-1 min-w-0">
+          <div class="arabic font-bold text-primary text-sm line-clamp-1">${escHtml(book.title)}</div>
+          <div class="text-xs text-primary/35 mt-0.5">
+            ${escHtml(book.author||'')}
+            · <span id="cont-total-lbl">${total}</span> halaman tersimpan
+          </div>
+        </div>
+        <button onclick="contAddPage()"
+          class="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-xl text-xs font-semibold hover:bg-primary-light transition-colors shrink-0">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Halaman Baru
+        </button>
+      </div>
+
+      <!-- Layout: sidebar + editor -->
+      <div class="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-5">
+
+        <!-- Sidebar: page list -->
+        <div class="bg-white rounded-2xl shadow-card overflow-hidden hidden lg:flex flex-col">
+          <div class="px-4 py-3 bg-cream/40 border-b border-cream-dark flex items-center justify-between">
+            <span class="text-xs font-semibold text-primary/50">Halaman</span>
+            <span class="text-xs text-primary/30">${total}</span>
+          </div>
+          <div id="cont-page-nav" class="overflow-y-auto flex-1" style="max-height:600px;">
+            ${buildPageNav(total, pg)}
+          </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="space-y-4">
+          <div class="lg:hidden">${paginationHtml(pg, total, 'contGoPage')}</div>
+
+          <div class="bg-white rounded-2xl shadow-card p-6">
+            <div class="flex items-center justify-between mb-5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-sm shrink-0">${pg}</div>
+                <div>
+                  <div class="font-bold text-primary text-sm">${hasCont ? `Halaman ke-${pg}` : 'Halaman Kosong'}</div>
+                  <div class="text-xs text-primary/35">${hasCont ? 'Ctrl+S untuk simpan cepat' : 'Belum ada konten pada halaman ini'}</div>
+                </div>
+              </div>
+              ${hasCont ? `
+              <button onclick="contDeletePage(${bkid},${pageNum})"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 text-red-400 text-xs font-medium hover:bg-red-50 hover:text-red-600 transition-colors">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus
+              </button>` : ''}
+            </div>
+
+            <div class="flex items-center gap-4 mb-4">
+              <div>
+                <label class="block text-xs font-semibold text-primary/50 mb-1.5">No. Halaman DB</label>
+                <input id="cont-pgnum" type="number" min="1" value="${pageNum}"
+                  class="w-28 px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15" />
+              </div>
+              <div class="text-xs text-primary/30 self-end pb-2">Navigasi: <strong>${pg}</strong> dari <strong>${total}</strong></div>
+            </div>
+
+            <div class="mb-5">
+              <label class="block text-xs font-semibold text-primary/50 mb-1.5">Isi Konten</label>
+              <textarea id="cont-text" rows="18" dir="auto"
+                placeholder="Ketik atau tempel isi halaman kitab di sini…"
+                class="w-full px-4 py-3 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15 resize-y leading-relaxed font-arabic"
+                style="min-height:340px;">${hasCont ? escHtml(ctRes.content) : ''}</textarea>
+              <div class="flex justify-between mt-1.5">
+                <span id="cont-chars" class="text-xs text-primary/30">0 karakter</span>
+                <span class="text-xs text-primary/25">Teks Arab otomatis RTL • Ctrl+S simpan</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <button onclick="contSave()"
+                class="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors">
+                <i data-lucide="save" class="w-4 h-4"></i> Simpan
+              </button>
+              <span id="cont-save-lbl" class="text-xs text-primary/35 hidden"></span>
+            </div>
+          </div>
+
+          <div class="hidden lg:block">${paginationHtml(pg, total, 'contGoPage')}</div>
+        </div>
+      </div>`;
+
+    reicons();
+
+    const ta = document.getElementById('cont-text');
+    const cc = document.getElementById('cont-chars');
+    if (ta && cc) {
+      const upd = () => { cc.textContent = ta.value.length.toLocaleString('id') + ' karakter'; };
+      ta.addEventListener('input', upd); upd();
+    }
+
+    _ctrlS = e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); contSave(); }
+    };
+    document.addEventListener('keydown', _ctrlS);
+
+  } catch(e) {
+    body.innerHTML = `<div class="bg-white rounded-2xl shadow-card p-6 text-red-500 text-sm">Gagal: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function buildPageNav(total, current) {
+  if (!total) return `<div class="p-4 text-center text-primary/25 text-xs">Belum ada halaman</div>`;
+  const max = Math.min(total, 300);
+  let html = '';
+  for (let p = 1; p <= max; p++) {
+    const on = p === current;
+    html += `<button onclick="contGoPage(${p})"
+      class="w-full px-4 py-2.5 text-left text-xs transition-colors flex items-center gap-2
+        ${on ? 'bg-primary text-white font-bold' : 'hover:bg-cream/60 text-primary/65'}">
+      <span class="font-mono w-7 shrink-0 ${on ? 'text-white/60' : 'text-primary/25'}">${String(p).padStart(3,'0')}</span>
+      Halaman ${p}
+    </button>`;
+  }
+  if (total > 300) html += `<div class="p-3 text-center text-xs text-primary/25">…${total-300} halaman lainnya</div>`;
+  return html;
+}
+
+window.contGoPage = async function(p) {
+  if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
+  contAS.page = p;
+  await contLoadEditor();
+};
+
+window.contBack = function() {
+  if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
+  contAS.bkid = null; contAS.page = 1;
+  _switchToBooks();
+};
+
+window.contSave = async function() {
+  const bkid    = contAS.bkid;
+  const pageNum = +document.getElementById('cont-pgnum')?.value || contAS.page;
+  const content = document.getElementById('cont-text')?.value ?? '';
+  const lbl     = document.getElementById('cont-save-lbl');
+  const btn     = document.querySelector('button[onclick="contSave()"]');
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Menyimpan…'; }
+
+  try {
+    const data = await adminPost('admin_save_content', { bkid, page: pageNum, content });
+    if (data.success) {
+      adminToast('Tersimpan ✓');
+      if (lbl) { lbl.textContent = 'Tersimpan ✓'; lbl.className = 'text-xs text-green-600'; setTimeout(() => { if(lbl) lbl.className='text-xs text-primary/35 hidden'; }, 3000); }
+    } else adminToast(data.error || 'Gagal simpan', 'error');
+  } catch(e) { adminToast('Error: ' + e.message, 'error'); }
+  finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan'; reicons(); }
+  }
+};
+
+window.contDeletePage = async function(bkid, page) {
+  if (!confirm(`Hapus halaman ${page}? Konten akan hilang permanen.`)) return;
+  if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
+  const data = await adminPost('admin_delete_content', { bkid, page }).catch(e => ({ error: e.message }));
+  if (data.success) {
+    adminToast('Halaman dihapus');
+    contAS.page = Math.max(1, contAS.page - 1);
+    await contLoadEditor();
+  } else adminToast(data.error || 'Gagal', 'error');
+};
+
+window.contAddPage = async function() {
+  const bkid = contAS.bkid;
+  let total = 0;
+  try { const r = await apiFetch({ action: 'content', bkid, page: 1 }); total = r.total_pages || 0; } catch {}
+  const newPg = total + 1;
+  const data = await adminPost('admin_save_content', { bkid, page: newPg, content: '' }).catch(e => ({ error: e.message }));
+  if (data.success) {
+    adminToast(`Halaman ${newPg} dibuat`);
+    if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
+    contAS.page = newPg;
+    await contLoadEditor();
+  } else adminToast(data.error || 'Gagal buat halaman', 'error');
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -654,306 +888,3 @@ window.catDelete = async function(id, name, cnt) {
   else adminToast(data.error || 'Gagal', 'error');
 };
 
-// ══════════════════════════════════════════════════════════════
-//  KELOLA ISI KITAB  /admin/content
-// ══════════════════════════════════════════════════════════════
-
-const contAS = { bkid: null, page: 1, q: '' };
-let _ctrlS = null;
-
-async function renderAdminContent() {
-  if (!adminGuard()) return;
-
-  app().innerHTML = adminNavBar('/admin/content') + `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-      <div class="mb-6">
-        <h1 class="text-xl font-bold text-primary flex items-center gap-2">
-          <i data-lucide="file-text" class="w-5 h-5 text-gold"></i> Kelola Isi Kitab
-        </h1>
-        <p class="text-primary/40 text-xs mt-1">Pilih kitab lalu tambah / edit / hapus halaman konten</p>
-      </div>
-      <div id="cont-body"></div>
-    </div>`;
-  reicons();
-
-  if (contAS.bkid) await contLoadEditor();
-  else await contLoadPicker();
-}
-
-/* ── Book picker ── */
-async function contLoadPicker() {
-  const body = document.getElementById('cont-body');
-  if (!body) return;
-  body.innerHTML = `
-    <div class="bg-white rounded-2xl shadow-card p-5 mb-5">
-      <p class="text-sm font-medium text-primary/60 mb-3">Pilih kitab yang ingin dikelola:</p>
-      <div class="flex gap-3">
-        <div class="flex-1 relative">
-          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/30"></i>
-          <input id="cont-search" type="text" value="${escHtml(contAS.q)}" placeholder="Cari judul kitab…"
-            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15 bg-cream/50" />
-        </div>
-        <button onclick="contSearch()"
-          class="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors">
-          Cari
-        </button>
-      </div>
-    </div>
-    <div id="cont-book-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>`;
-  reicons();
-  document.getElementById('cont-search')?.addEventListener('keydown', e => { if (e.key === 'Enter') contSearch(); });
-  await contFetchBooks(contAS.q);
-}
-
-window.contSearch = async function() {
-  contAS.q = document.getElementById('cont-search')?.value.trim() || '';
-  await contFetchBooks(contAS.q);
-};
-
-async function contFetchBooks(q) {
-  const el = document.getElementById('cont-book-list');
-  if (!el) return;
-  el.innerHTML = `<div class="col-span-full">${adminSpinner()}</div>`;
-  try {
-    const p = q ? { action: 'search_books', q } : { action: 'books', limit: 24 };
-    const res = await apiFetch(p);
-    const books = res.data || [];
-    el.innerHTML = books.length === 0
-      ? `<div class="col-span-full text-center py-10 text-primary/30 text-sm">Tidak ada kitab ditemukan.</div>`
-      : books.map(b => `
-          <div class="book-card bg-white rounded-2xl shadow-card p-5 cursor-pointer flex flex-col gap-3"
-               onclick="contSelectBook(${b.bkid})">
-            <div class="flex-1">
-              <div class="arabic font-semibold text-primary text-sm leading-snug line-clamp-2 mb-1">${escHtml(b.title)}</div>
-              <div class="text-xs text-primary/45 truncate">${escHtml(b.author||'—')}</div>
-            </div>
-            <div class="flex items-center justify-between pt-2 border-t border-cream-dark">
-              ${b.category_name ? `<span class="text-xs bg-primary/7 text-primary/50 px-2 py-0.5 rounded-full truncate max-w-[55%]">${escHtml(b.category_name)}</span>` : '<span></span>'}
-              <span class="text-xs text-gold font-semibold flex items-center gap-1">
-                <i data-lucide="file-text" class="w-3 h-3"></i>${b.pages||0} hal
-              </span>
-            </div>
-          </div>`).join('');
-    reicons();
-  } catch(e) {
-    el.innerHTML = `<div class="col-span-full text-red-500 text-sm p-4">${escHtml(e.message)}</div>`;
-  }
-}
-
-window.contSelectBook = async function(bkid) {
-  contAS.bkid = bkid; contAS.page = 1;
-  await contLoadEditor();
-};
-
-/* ── Content editor ── */
-async function contLoadEditor() {
-  const body = document.getElementById('cont-body');
-  if (!body) return;
-  if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
-  body.innerHTML = adminSpinner();
-
-  try {
-    const bkid = contAS.bkid;
-    const pg   = contAS.page;
-    const [bkRes, ctRes] = await Promise.all([
-      apiFetch({ action: 'book', id: bkid }),
-      apiFetch({ action: 'content', bkid, page: pg }),
-    ]);
-    const book     = bkRes.data;
-    const total    = ctRes.total_pages || 0;
-    const hasCont  = ctRes.content !== null;
-    const pageNum  = ctRes.page_number ?? pg;
-
-    body.innerHTML = `
-      <!-- Header strip -->
-      <div class="bg-white rounded-2xl shadow-card p-4 mb-5 flex items-center gap-3">
-        <button onclick="contBack()"
-          class="p-2 rounded-lg hover:bg-cream-dark text-primary/45 hover:text-primary transition-colors shrink-0">
-          <i data-lucide="arrow-left" class="w-4 h-4"></i>
-        </button>
-        <div class="flex-1 min-w-0">
-          <div class="arabic font-bold text-primary text-sm line-clamp-1">${escHtml(book.title)}</div>
-          <div class="text-xs text-primary/35 mt-0.5">
-            ${escHtml(book.author||'')}
-            · <span id="cont-total-lbl">${total}</span> halaman tersimpan
-          </div>
-        </div>
-        <button onclick="contAddPage()"
-          class="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-xl text-xs font-semibold hover:bg-primary-light transition-colors shrink-0">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Halaman Baru
-        </button>
-      </div>
-
-      <!-- Layout: sidebar + editor -->
-      <div class="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-5">
-
-        <!-- Sidebar: page list -->
-        <div class="bg-white rounded-2xl shadow-card overflow-hidden hidden lg:flex flex-col">
-          <div class="px-4 py-3 bg-cream/40 border-b border-cream-dark flex items-center justify-between">
-            <span class="text-xs font-semibold text-primary/50">Halaman</span>
-            <span class="text-xs text-primary/30">${total}</span>
-          </div>
-          <div id="cont-page-nav" class="overflow-y-auto flex-1" style="max-height:600px;">
-            ${buildPageNav(total, pg)}
-          </div>
-        </div>
-
-        <!-- Editor -->
-        <div class="space-y-4">
-          <!-- Mobile nav -->
-          <div class="lg:hidden">
-            ${paginationHtml(pg, total, 'contGoPage')}
-          </div>
-
-          <div class="bg-white rounded-2xl shadow-card p-6">
-            <!-- Page header row -->
-            <div class="flex items-center justify-between mb-5">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-sm shrink-0">${pg}</div>
-                <div>
-                  <div class="font-bold text-primary text-sm">${hasCont ? `Halaman ke-${pg}` : 'Halaman Kosong'}</div>
-                  <div class="text-xs text-primary/35">${hasCont ? 'Ctrl+S untuk simpan cepat' : 'Belum ada konten pada halaman ini'}</div>
-                </div>
-              </div>
-              ${hasCont ? `
-              <button onclick="contDeletePage(${bkid},${pageNum})"
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 text-red-400 text-xs font-medium hover:bg-red-50 hover:text-red-600 transition-colors">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus
-              </button>` : ''}
-            </div>
-
-            <!-- No. halaman -->
-            <div class="flex items-center gap-4 mb-4">
-              <div>
-                <label class="block text-xs font-semibold text-primary/50 mb-1.5">No. Halaman DB</label>
-                <input id="cont-pgnum" type="number" min="1" value="${pageNum}"
-                  class="w-28 px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15" />
-              </div>
-              <div class="text-xs text-primary/30 self-end pb-2">Navigasi: <strong>${pg}</strong> dari <strong>${total}</strong></div>
-            </div>
-
-            <!-- Textarea -->
-            <div class="mb-5">
-              <label class="block text-xs font-semibold text-primary/50 mb-1.5">Isi Konten</label>
-              <textarea id="cont-text" rows="18" dir="auto"
-                placeholder="Ketik atau tempel isi halaman kitab di sini…"
-                class="w-full px-4 py-3 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15 resize-y leading-relaxed font-arabic"
-                style="min-height:340px;">${hasCont ? escHtml(ctRes.content) : ''}</textarea>
-              <div class="flex justify-between mt-1.5">
-                <span id="cont-chars" class="text-xs text-primary/30">0 karakter</span>
-                <span class="text-xs text-primary/25">Teks Arab otomatis RTL • Ctrl+S simpan</span>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-3">
-              <button onclick="contSave()"
-                class="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors">
-                <i data-lucide="save" class="w-4 h-4"></i> Simpan
-              </button>
-              <span id="cont-save-lbl" class="text-xs text-primary/35 hidden"></span>
-            </div>
-          </div>
-
-          <!-- Desktop page nav -->
-          <div class="hidden lg:block">
-            ${paginationHtml(pg, total, 'contGoPage')}
-          </div>
-        </div>
-      </div>`;
-
-    reicons();
-
-    // Char counter
-    const ta = document.getElementById('cont-text');
-    const cc = document.getElementById('cont-chars');
-    if (ta && cc) {
-      const upd = () => { cc.textContent = ta.value.length.toLocaleString('id') + ' karakter'; };
-      ta.addEventListener('input', upd); upd();
-    }
-
-    // Ctrl+S
-    _ctrlS = e => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); contSave(); }
-    };
-    document.addEventListener('keydown', _ctrlS);
-
-  } catch(e) {
-    body.innerHTML = `<div class="bg-white rounded-2xl shadow-card p-6 text-red-500 text-sm">Gagal: ${escHtml(e.message)}</div>`;
-  }
-}
-
-function buildPageNav(total, current) {
-  if (!total) return `<div class="p-4 text-center text-primary/25 text-xs">Belum ada halaman</div>`;
-  const max = Math.min(total, 300);
-  let html = '';
-  for (let p = 1; p <= max; p++) {
-    const on = p === current;
-    html += `<button onclick="contGoPage(${p})"
-      class="w-full px-4 py-2.5 text-left text-xs transition-colors flex items-center gap-2
-        ${on ? 'bg-primary text-white font-bold' : 'hover:bg-cream/60 text-primary/65'}">
-      <span class="font-mono w-7 shrink-0 ${on ? 'text-white/60' : 'text-primary/25'}">${String(p).padStart(3,'0')}</span>
-      Halaman ${p}
-    </button>`;
-  }
-  if (total > 300) html += `<div class="p-3 text-center text-xs text-primary/25">…${total-300} halaman lainnya</div>`;
-  return html;
-}
-
-window.contGoPage = async function(p) {
-  if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
-  contAS.page = p;
-  await contLoadEditor();
-};
-
-window.contBack = function() {
-  if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
-  contAS.bkid = null; contAS.page = 1;
-  contLoadPicker();
-};
-
-window.contSave = async function() {
-  const bkid    = contAS.bkid;
-  const pageNum = +document.getElementById('cont-pgnum')?.value || contAS.page;
-  const content = document.getElementById('cont-text')?.value ?? '';
-  const lbl     = document.getElementById('cont-save-lbl');
-  const btn     = document.querySelector('button[onclick="contSave()"]');
-
-  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Menyimpan…'; }
-
-  try {
-    const data = await adminPost('admin_save_content', { bkid, page: pageNum, content });
-    if (data.success) {
-      adminToast('Tersimpan ✓');
-      if (lbl) { lbl.textContent = 'Tersimpan ✓'; lbl.className = 'text-xs text-green-600'; setTimeout(() => { if(lbl) lbl.className='text-xs text-primary/35 hidden'; }, 3000); }
-    } else adminToast(data.error || 'Gagal simpan', 'error');
-  } catch(e) { adminToast('Error: ' + e.message, 'error'); }
-  finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan'; reicons(); }
-  }
-};
-
-window.contDeletePage = async function(bkid, page) {
-  if (!confirm(`Hapus halaman ${page}? Konten akan hilang permanen.`)) return;
-  if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
-  const data = await adminPost('admin_delete_content', { bkid, page }).catch(e => ({ error: e.message }));
-  if (data.success) {
-    adminToast('Halaman dihapus');
-    contAS.page = Math.max(1, contAS.page - 1);
-    await contLoadEditor();
-  } else adminToast(data.error || 'Gagal', 'error');
-};
-
-window.contAddPage = async function() {
-  const bkid = contAS.bkid;
-  let total = 0;
-  try { const r = await apiFetch({ action: 'content', bkid, page: 1 }); total = r.total_pages || 0; } catch {}
-  const newPg = total + 1;
-  const data = await adminPost('admin_save_content', { bkid, page: newPg, content: '' }).catch(e => ({ error: e.message }));
-  if (data.success) {
-    adminToast(`Halaman ${newPg} dibuat`);
-    if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
-    contAS.page = newPg;
-    await contLoadEditor();
-  } else adminToast(data.error || 'Gagal buat halaman', 'error');
-};
