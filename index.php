@@ -1,3 +1,7 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+$sessionUser = $_SESSION['user'] ?? null;
+?>
 <!DOCTYPE html>
 <html lang="ar" dir="ltr">
 <head>
@@ -308,7 +312,7 @@
           <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Tentang</a>
         </div>
 
-        <!-- Search + Settings (desktop) -->
+        <!-- Search + Settings + Auth (desktop) -->
         <div class="flex items-center gap-2">
           <button id="nav-search-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Cari Kitab">
             <i data-lucide="search" class="w-5 h-5 text-primary"></i>
@@ -316,6 +320,60 @@
           <button id="nav-font-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Pengaturan Font">
             <i data-lucide="settings-2" class="w-5 h-5 text-primary"></i>
           </button>
+
+          <?php if ($sessionUser): ?>
+            <!-- User menu (logged in) -->
+            <div class="relative" id="user-menu-wrap">
+              <button id="user-menu-btn" class="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-cream-dark transition-colors">
+                <?php if (!empty($sessionUser['picture'])): ?>
+                  <img src="<?= htmlspecialchars($sessionUser['picture']) ?>" alt="Avatar"
+                       class="w-7 h-7 rounded-full object-cover border-2 border-gold/40" />
+                <?php else: ?>
+                  <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+                    <?= htmlspecialchars(mb_strtoupper(mb_substr($sessionUser['name'], 0, 1))) ?>
+                  </div>
+                <?php endif; ?>
+                <span class="text-sm font-medium text-primary max-w-[100px] truncate hidden sm:block">
+                  <?= htmlspecialchars($sessionUser['name']) ?>
+                </span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-primary/50"></i>
+              </button>
+
+              <!-- Dropdown -->
+              <div id="user-dropdown" class="hidden absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gold/15 py-2 z-50">
+                <div class="px-4 py-2 border-b border-cream-dark">
+                  <div class="text-sm font-semibold text-primary truncate"><?= htmlspecialchars($sessionUser['name']) ?></div>
+                  <div class="text-xs text-primary/50 truncate"><?= htmlspecialchars($sessionUser['email']) ?></div>
+                  <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
+                    <?= $sessionUser['role'] === 'admin' ? 'bg-gold/20 text-gold-dark' : 'bg-primary/8 text-primary/60' ?>">
+                    <?= $sessionUser['role'] === 'admin' ? '👑 Admin' : 'User' ?>
+                  </span>
+                </div>
+                <a href="/dashboard" data-route="/dashboard"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="layout-dashboard" class="w-4 h-4 text-primary/50"></i> Dashboard
+                </a>
+                <?php if ($sessionUser['role'] === 'admin'): ?>
+                <a href="/admin" data-route="/admin"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="shield-check" class="w-4 h-4 text-gold/70"></i> Panel Admin
+                </a>
+                <?php endif; ?>
+                <div class="border-t border-cream-dark mt-1"></div>
+                <a href="/auth.php?action=logout"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
+                  <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+                </a>
+              </div>
+            </div>
+          <?php else: ?>
+            <!-- Login button (not logged in) -->
+            <a href="/auth.php?action=login"
+               class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-light transition-colors shadow-sm">
+              <i data-lucide="log-in" class="w-4 h-4"></i>
+              <span>Masuk</span>
+            </a>
+          <?php endif; ?>
         </div>
 
       </div>
@@ -368,6 +426,23 @@
         <i data-lucide="settings-2" class="w-5 h-5"></i>
         <span class="text-[10px] font-medium">Setting</span>
       </button>
+
+      <?php if ($sessionUser): ?>
+      <a href="/dashboard" data-route="/dashboard" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <?php if (!empty($sessionUser['picture'])): ?>
+          <img src="<?= htmlspecialchars($sessionUser['picture']) ?>" alt="Avatar"
+               class="w-5 h-5 rounded-full object-cover border border-gold/40" />
+        <?php else: ?>
+          <i data-lucide="user-circle" class="w-5 h-5"></i>
+        <?php endif; ?>
+        <span class="text-[10px] font-medium">Akun</span>
+      </a>
+      <?php else: ?>
+      <a href="/auth.php?action=login" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="log-in" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Masuk</span>
+      </a>
+      <?php endif; ?>
 
     </div>
   </nav>
@@ -428,8 +503,24 @@
 
   <!-- ===================== SCRIPTS ===================== -->
   <script>
+    // Inject session user dari PHP ke JS global
+    window.SESSION_USER = <?= $sessionUser ? json_encode($sessionUser) : 'null' ?>;
+
     // Init Lucide icons after DOM ready — re-called after each SPA render
-    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+
+      // Toggle user dropdown (desktop)
+      const menuBtn  = document.getElementById('user-menu-btn');
+      const dropdown = document.getElementById('user-dropdown');
+      if (menuBtn && dropdown) {
+        menuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => dropdown.classList.add('hidden'));
+      }
+    });
   </script>
   <script src="/app.js"></script>
 </body>

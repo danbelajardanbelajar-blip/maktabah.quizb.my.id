@@ -5,10 +5,29 @@
 
 require_once __DIR__ . '/koneksi.php';
 
+// Session untuk auth check
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // --- CORS & Headers ---
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Cache-Control: public, max-age=60');
+
+// ── Auth helpers ──────────────────────────────────────────────
+function getSessionUser(): ?array {
+    return $_SESSION['user'] ?? null;
+}
+
+function requireAdmin(): void {
+    $user = getSessionUser();
+    if (!$user || $user['role'] !== 'admin') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Akses ditolak. Diperlukan hak admin.']);
+        exit;
+    }
+}
 
 // Helper — escape FULLTEXT boolean wildcards safely
 function ftEscape(string $q): string {
@@ -61,6 +80,17 @@ try {
         case 'search_categories': handleSearchCategories(); break;
         case 'search_books':      handleSearchBooks();      break;
         case 'search_content':    handleSearchContent();    break;
+        // Auth
+        case 'auth_me':           handleAuthMe();           break;
+        // Admin — CRUD Kitab
+        case 'admin_save_book':    requireAdmin(); handleAdminSaveBook();    break;
+        case 'admin_delete_book':  requireAdmin(); handleAdminDeleteBook();  break;
+        // Admin — CRUD Kategori
+        case 'admin_save_category':   requireAdmin(); handleAdminSaveCategory();   break;
+        case 'admin_delete_category': requireAdmin(); handleAdminDeleteCategory(); break;
+        // Admin — CRUD Konten Kitab
+        case 'admin_save_content':   requireAdmin(); handleAdminSaveContent();   break;
+        case 'admin_delete_content': requireAdmin(); handleAdminDeleteContent(); break;
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Unknown action.']);
@@ -626,5 +656,224 @@ function handleLatest(): void {
     $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
     $stmt->execute();
     echo json_encode(['data' => $stmt->fetchAll()]);
+}
+
+// =============================================================
+//  AUTH — kembalikan data user session saat ini
+// =============================================================
+function handleAuthMe(): void {
+    header('Cache-Control: no-store');
+    $user = getSessionUser();
+    if ($user) {
+        echo json_encode(['loggedIn' => true, 'user' => $user]);
+    } else {
+        echo json_encode(['loggedIn' => false]);
+    }
+}
+
+// =============================================================
+//  ADMIN — CRUD KITAB
+// =============================================================
+
+/** Tambah atau edit kitab. POST body: title, author, pages, iso, category_id, [bkid] */
+function handleAdminSaveBook(): void {
+    $pdo  = getPDO();
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+    $title      = trim($data['title']       ?? '');
+    $author     = trim($data['author']      ?? '');
+    $pages      = (int)($data['pages']      ?? 0);
+    $iso        = trim($data['iso']         ?? 'ar');
+    $categoryId = (int)($data['category_id'] ?? 0);
+    $bkid       = isset($data['bkid']) ? (int)$data['bkid'] : 0;
+
+    if (!$title) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Judul kitab tidak boleh kosong.']);
+        return;
+    }
+
+    // Ambil nama kategori
+    $catName = '';
+    if ($categoryId > 0) {
+        $cs = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
+        $cs->execute([':id' => $categoryId]);
+        $catName = (string)($cs->fetchColumn() ?: '');
+    }
+
+    if ($bkid > 0) {
+        // UPDATE
+        $stmt = $pdo->prepare(
+            "UPDATE books SET title=:t, author=:a, pages=:p, iso=:i,
+                              category_id=:cid, category_name=:cname
+             WHERE bkid=:id"
+        );
+        $stmt->execute([
+            ':t'     => $title,
+            ':a'     => $author,
+            ':p'     => $pages,
+            ':i'     => $iso,
+            ':cid'   => $categoryId ?: null,
+            ':cname' => $catName,
+            ':id'    => $bkid,
+        ]);
+        echo json_encode(['success' => true, 'bkid' => $bkid, 'action' => 'updated']);
+    } else {
+        // INSERT
+        $stmt = $pdo->prepare(
+            "INSERT INTO books (title, author, pages, iso, category_id, category_name)
+             VALUES (:t, :a, :p, :i, :cid, :cname)"
+        );
+        $stmt->execute([
+            ':t'     => $title,
+            ':a'     => $author,
+            ':p'     => $pages,
+            ':i'     => $iso,
+            ':cid'   => $categoryId ?: null,
+            ':cname' => $catName,
+        ]);
+        $newId = (int)$pdo->lastInsertId();
+        echo json_encode(['success' => true, 'bkid' => $newId, 'action' => 'created']);
+    }
+}
+
+/** Hapus kitab beserta seluruh isinya */
+function handleAdminDeleteBook(): void {
+    $pdo  = getPDO();
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $bkid = (int)($data['bkid'] ?? 0);
+
+    if ($bkid <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'bkid tidak valid.']);
+        return;
+    }
+
+    $pdo->prepare("DELETE FROM book_content WHERE bkid = :id")->execute([':id' => $bkid]);
+    $pdo->prepare("DELETE FROM books WHERE bkid = :id")->execute([':id' => $bkid]);
+
+    echo json_encode(['success' => true, 'deleted_bkid' => $bkid]);
+}
+
+// =============================================================
+//  ADMIN — CRUD KATEGORI
+// =============================================================
+
+/** Tambah atau edit kategori. POST body: name, catord, lvl, [id] */
+function handleAdminSaveCategory(): void {
+    $pdo  = getPDO();
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+    $name   = trim($data['name']   ?? '');
+    $catord = (int)($data['catord'] ?? 0);
+    $lvl    = (int)($data['lvl']    ?? 1);
+    $id     = isset($data['id']) ? (int)$data['id'] : 0;
+
+    if (!$name) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Nama kategori tidak boleh kosong.']);
+        return;
+    }
+
+    if ($id > 0) {
+        $pdo->prepare("UPDATE categories SET name=:n, catord=:o, lvl=:l WHERE id=:id")
+            ->execute([':n' => $name, ':o' => $catord, ':l' => $lvl, ':id' => $id]);
+        // Sync category_name di tabel books
+        $pdo->prepare("UPDATE books SET category_name=:n WHERE category_id=:id")
+            ->execute([':n' => $name, ':id' => $id]);
+        echo json_encode(['success' => true, 'id' => $id, 'action' => 'updated']);
+    } else {
+        $pdo->prepare("INSERT INTO categories (name, catord, lvl) VALUES (:n, :o, :l)")
+            ->execute([':n' => $name, ':o' => $catord, ':l' => $lvl]);
+        $newId = (int)$pdo->lastInsertId();
+        echo json_encode(['success' => true, 'id' => $newId, 'action' => 'created']);
+    }
+}
+
+/** Hapus kategori (kitab dalam kategori menjadi tidak berkategori) */
+function handleAdminDeleteCategory(): void {
+    $pdo  = getPDO();
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $id   = (int)($data['id'] ?? 0);
+
+    if ($id <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID kategori tidak valid.']);
+        return;
+    }
+
+    // Lepas relasi di books dulu
+    $pdo->prepare("UPDATE books SET category_id=NULL, category_name='' WHERE category_id=:id")
+        ->execute([':id' => $id]);
+    $pdo->prepare("DELETE FROM categories WHERE id=:id")->execute([':id' => $id]);
+
+    echo json_encode(['success' => true, 'deleted_id' => $id]);
+}
+
+// =============================================================
+//  ADMIN — CRUD KONTEN KITAB
+// =============================================================
+
+/** Simpan/update halaman konten. POST body: bkid, page, content */
+function handleAdminSaveContent(): void {
+    $pdo  = getPDO();
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+    $bkid    = (int)($data['bkid']    ?? 0);
+    $page    = (int)($data['page']    ?? 0);
+    $content = $data['content'] ?? '';
+
+    if ($bkid <= 0 || $page <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'bkid dan page harus valid.']);
+        return;
+    }
+
+    // Cek kitab ada
+    $bs = $pdo->prepare("SELECT bkid FROM books WHERE bkid=:id LIMIT 1");
+    $bs->execute([':id' => $bkid]);
+    if (!$bs->fetch()) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Kitab tidak ditemukan.']);
+        return;
+    }
+
+    $pdo->prepare(
+        "INSERT INTO book_content (bkid, page, content)
+         VALUES (:b, :p, :c)
+         ON DUPLICATE KEY UPDATE content = VALUES(content)"
+    )->execute([':b' => $bkid, ':p' => $page, ':c' => $content]);
+
+    // Update kolom pages di books agar sesuai jumlah konten
+    $pdo->prepare(
+        "UPDATE books SET pages = (SELECT COUNT(*) FROM book_content WHERE bkid=:b) WHERE bkid=:b2"
+    )->execute([':b' => $bkid, ':b2' => $bkid]);
+
+    echo json_encode(['success' => true, 'bkid' => $bkid, 'page' => $page]);
+}
+
+/** Hapus satu halaman konten. POST body: bkid, page */
+function handleAdminDeleteContent(): void {
+    $pdo  = getPDO();
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+    $bkid = (int)($data['bkid'] ?? 0);
+    $page = (int)($data['page'] ?? 0);
+
+    if ($bkid <= 0 || $page <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'bkid dan page harus valid.']);
+        return;
+    }
+
+    $pdo->prepare("DELETE FROM book_content WHERE bkid=:b AND page=:p")
+        ->execute([':b' => $bkid, ':p' => $page]);
+
+    // Sinkronisasi jumlah halaman
+    $pdo->prepare(
+        "UPDATE books SET pages = (SELECT COUNT(*) FROM book_content WHERE bkid=:b) WHERE bkid=:b2"
+    )->execute([':b' => $bkid, ':b2' => $bkid]);
+
+    echo json_encode(['success' => true, 'deleted' => ['bkid' => $bkid, 'page' => $page]]);
 }
 
