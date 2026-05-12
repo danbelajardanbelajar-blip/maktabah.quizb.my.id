@@ -10,6 +10,12 @@ header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Cache-Control: public, max-age=60');
 
+// Helper — escape FULLTEXT boolean wildcards safely
+function ftEscape(string $q): string {
+    // Strip chars that could break boolean mode, keep Arabic/Latin safely
+    return preg_replace('/[+\-><()~*"@]+/', ' ', $q);
+}
+
 // --- Router ---
 $action = $_GET['action'] ?? '';
 
@@ -156,6 +162,7 @@ function handleCategories(): void {
 // 6a. SEARCH — KATEGORI  (fast: simple LIKE on small table)
 // =============================================================
 function handleSearchCategories(): void {
+    header('Cache-Control: public, max-age=120');
     $pdo  = getPDO();
     $q    = trim($_GET['q'] ?? '');
     if (strlen($q) < 2) { echo json_encode(['data' => []]); return; }
@@ -178,6 +185,7 @@ function handleSearchCategories(): void {
 // 6b. SEARCH — JUDUL / PENGARANG  (fulltext + cache)
 // =============================================================
 function handleSearchBooks(): void {
+    header('Cache-Control: public, max-age=120');
     $pdo   = getPDO();
     $q     = trim($_GET['q'] ?? '');
     $page  = max(1, (int)($_GET['page'] ?? 1));
@@ -190,7 +198,7 @@ function handleSearchBooks(): void {
     }
 
     $hash  = 'books:' . hash('sha256', strtolower($q));
-    $qStar = $q . '*';
+    $qStar = ftEscape($q) . '*';
     $like  = '%' . $q . '%';
 
     // --- Cache hit (page 1 only) ---
@@ -266,9 +274,10 @@ function handleSearchBooks(): void {
 //            terurut relevansi, tanpa menyentuh tabel books.
 //  Step 2 — JOIN ke books + ambil cuplikan halaman terbaik via
 //            window function ROW_NUMBER (MariaDB 10.2+).
-//            Hanya ~LIMIT baris yang diproses, bukan semua baris.
+//            Semua parameter di-bind untuk keamanan (no injection).
 // =============================================================
 function handleSearchContent(): void {
+    header('Cache-Control: public, max-age=120');
     $pdo   = getPDO();
     $q     = trim($_GET['q'] ?? '');
     $page  = max(1, (int)($_GET['page'] ?? 1));
@@ -280,7 +289,7 @@ function handleSearchContent(): void {
         return;
     }
 
-    $qStar = $q . '*';
+    $qStar = ftEscape($q) . '*';
     $hash  = 'content:' . hash('sha256', strtolower($q));
 
     // --- Cache hit ---
@@ -328,29 +337,33 @@ function handleSearchContent(): void {
     $relMap   = array_column($topRows, 'rel', 'bkid');
     $inClause = implode(',', $bkidInts); // safe — all ints
 
-    // --- Step 2: Books info + best snippet (window function, only LIMIT rows) ---
-    $step2 = $pdo->query(
+    // --- Step 2: Best snippet per bkid using window function (all params bound) ---
+    // Build parameterized placeholders for the MATCH() calls in subquery
+    $step2 = $pdo->prepare(
         "SELECT b.bkid, b.title, b.author, b.pages, b.category_name,
                 s.match_page, s.snippet
          FROM books b
          JOIN (
-             SELECT bkid, match_page, LEFT(content_text, 280) AS snippet
+             SELECT bkid, match_page, LEFT(content_text, 300) AS snippet
              FROM (
                  SELECT bc.bkid,
                         bc.page  AS match_page,
                         bc.content AS content_text,
                         ROW_NUMBER() OVER (
                             PARTITION BY bc.bkid
-                            ORDER BY MATCH(bc.content) AGAINST ('$qStar' IN BOOLEAN MODE) DESC
+                            ORDER BY MATCH(bc.content) AGAINST (:q3 IN BOOLEAN MODE) DESC
                         ) AS rn
                  FROM book_content bc
                  WHERE bc.bkid IN ($inClause)
-                   AND MATCH(bc.content) AGAINST ('$qStar' IN BOOLEAN MODE)
+                   AND MATCH(bc.content) AGAINST (:q4 IN BOOLEAN MODE)
              ) ranked
              WHERE rn = 1
          ) s ON s.bkid = b.bkid
          WHERE b.bkid IN ($inClause)"
     );
+    $step2->bindValue(':q3', $qStar, PDO::PARAM_STR);
+    $step2->bindValue(':q4', $qStar, PDO::PARAM_STR);
+    $step2->execute();
     $rows = $step2->fetchAll();
 
     // Restore relevance order from step 1
