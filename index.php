@@ -84,6 +84,10 @@ $sessionUser = $_SESSION['user'] ?? null;
     /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #f0ece0; } ::-webkit-scrollbar-thumb { background: #c9a84c; border-radius: 3px; }
 
+    /* Admin nav scrollbar hidden */
+    .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+
     /* Active desktop nav link */
     .nav-link.active { color: #c9a84c !important; }
     .nav-link.active::after { width: 100%; }
@@ -354,9 +358,21 @@ $sessionUser = $_SESSION['user'] ?? null;
                   <i data-lucide="layout-dashboard" class="w-4 h-4 text-primary/50"></i> Dashboard
                 </a>
                 <?php if ($sessionUser['role'] === 'admin'): ?>
-                <a href="/admin" data-route="/admin"
+                <div class="border-t border-cream-dark/60 mx-3 my-1"></div>
+                <div class="px-4 py-1.5">
+                  <span class="text-[10px] font-bold uppercase tracking-widest text-gold/70">Panel Admin</span>
+                </div>
+                <a href="/admin/books" data-route="/admin/books"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="shield-check" class="w-4 h-4 text-gold/70"></i> Panel Admin
+                  <i data-lucide="book" class="w-4 h-4 text-gold/60"></i> Kelola Kitab
+                </a>
+                <a href="/admin/categories" data-route="/admin/categories"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="folder" class="w-4 h-4 text-gold/60"></i> Kelola Kategori
+                </a>
+                <a href="/admin/content" data-route="/admin/content"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="file-text" class="w-4 h-4 text-gold/60"></i> Kelola Isi Kitab
                 </a>
                 <?php endif; ?>
                 <div class="border-t border-cream-dark mt-1"></div>
@@ -523,5 +539,6 @@ $sessionUser = $_SESSION['user'] ?? null;
     });
   </script>
   <script src="/app.js"></script>
+  <script src="/admin.js"></script>
 </body>
 </html>
