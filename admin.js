@@ -293,7 +293,7 @@ async function bksLoad() {
       res = await apiFetch(p);
     }
     booksAS.total = res.total || 0;
-    _booksMap.clear(); (res.books||[]).forEach(b => _booksMap.set(b.bkid, b));
+    _booksMap.clear(); (res.data||[]).forEach(b => _booksMap.set(b.bkid, b));
     const books = res.data || [];
 
     wrap.innerHTML = `
