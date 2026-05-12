@@ -219,9 +219,10 @@ function handleSearchBooks(): void {
         return;
     }
 
-    $hash  = 'books:' . hash('sha256', strtolower($qRaw));
-    $qStar = booleanSearchTerm($qRaw);
-    $like  = '%' . $q . '%';
+    $hash       = 'books:' . hash('sha256', strtolower($qRaw));
+    $qStar      = booleanSearchTerm($qRaw);
+    $like       = '%' . $q . '%';
+    $phraseLike = isPhraseQuery($qRaw) ? $like : null;
 
     // --- Cache hit (page 1 only) ---
     if ($page === 1) {
@@ -244,31 +245,56 @@ function handleSearchBooks(): void {
     }
 
     // --- Query ---
-    $stmt = $pdo->prepare(
-        "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
-                MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
-         FROM books b
-         WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
-            OR b.title  LIKE :lk
-            OR b.author LIKE :la
-         ORDER BY rel DESC, b.title ASC
-         LIMIT :lim OFFSET :off"
-    );
-    $stmt->bindValue(':q1',  $qStar, PDO::PARAM_STR);
-    $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
-    $stmt->bindValue(':lk',  $like,  PDO::PARAM_STR);
-    $stmt->bindValue(':la',  $like,  PDO::PARAM_STR);
+    if ($phraseLike !== null) {
+        $stmt = $pdo->prepare(
+            "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
+                    MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+             FROM books b
+             WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
+                OR b.title LIKE :ph
+                OR b.author LIKE :ph
+             ORDER BY rel DESC, b.title ASC
+             LIMIT :lim OFFSET :off"
+        );
+        $stmt->bindValue(':q1',  $qStar, PDO::PARAM_STR);
+        $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+        $stmt->bindValue(':ph',  $phraseLike, PDO::PARAM_STR);
+    } else {
+        $stmt = $pdo->prepare(
+            "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
+                    MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+             FROM books b
+             WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
+                OR b.title  LIKE :lk
+                OR b.author LIKE :la
+             ORDER BY rel DESC, b.title ASC
+             LIMIT :lim OFFSET :off"
+        );
+        $stmt->bindValue(':q1',  $qStar, PDO::PARAM_STR);
+        $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+        $stmt->bindValue(':lk',  $like,  PDO::PARAM_STR);
+        $stmt->bindValue(':la',  $like,  PDO::PARAM_STR);
+    }
     $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $books = $stmt->fetchAll();
 
-    $countStmt = $pdo->prepare(
-        "SELECT COUNT(*) FROM books
-         WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)
-            OR title LIKE :lk OR author LIKE :la"
-    );
-    $countStmt->execute([':q' => $qStar, ':lk' => $like, ':la' => $like]);
+    if ($phraseLike !== null) {
+        $countStmt = $pdo->prepare(
+            "SELECT COUNT(*) FROM books
+             WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)
+                OR title LIKE :ph OR author LIKE :ph"
+        );
+        $countStmt->execute([':q' => $qStar, ':ph' => $phraseLike]);
+    } else {
+        $countStmt = $pdo->prepare(
+            "SELECT COUNT(*) FROM books
+             WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)
+                OR title LIKE :lk OR author LIKE :la"
+        );
+        $countStmt->execute([':q' => $qStar, ':lk' => $like, ':la' => $like]);
+    }
     $total = (int)$countStmt->fetchColumn();
 
     // --- Cache store ---
@@ -312,8 +338,9 @@ function handleSearchContent(): void {
         return;
     }
 
-    $qStar = booleanSearchTerm($qRaw);
-    $hash  = 'content:' . hash('sha256', strtolower($qRaw));
+    $qStar      = booleanSearchTerm($qRaw);
+    $hash       = 'content:' . hash('sha256', strtolower($qRaw));
+    $phraseLike = isPhraseQuery($qRaw) ? '%' . $q . '%' : null;
 
     // --- Cache hit ---
     if ($page === 1) {
@@ -336,16 +363,31 @@ function handleSearchContent(): void {
     }
 
     // --- Step 1: Top bkids via fulltext GROUP BY (uses FULLTEXT index, very fast) ---
-    $step1 = $pdo->prepare(
-        "SELECT bkid, MAX(MATCH(content) AGAINST (:q1 IN BOOLEAN MODE)) AS rel
-         FROM book_content
-         WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
-         GROUP BY bkid
-         ORDER BY rel DESC
-         LIMIT :lim OFFSET :off"
-    );
-    $step1->bindValue(':q1',  $qStar, PDO::PARAM_STR);
-    $step1->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+    if ($phraseLike !== null) {
+        $step1 = $pdo->prepare(
+            "SELECT bkid, MAX(MATCH(content) AGAINST (:q1 IN BOOLEAN MODE)) AS rel
+             FROM book_content
+             WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
+                OR content LIKE :ph
+             GROUP BY bkid
+             ORDER BY rel DESC
+             LIMIT :lim OFFSET :off"
+        );
+        $step1->bindValue(':q1',  $qStar, PDO::PARAM_STR);
+        $step1->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+        $step1->bindValue(':ph',  $phraseLike, PDO::PARAM_STR);
+    } else {
+        $step1 = $pdo->prepare(
+            "SELECT bkid, MAX(MATCH(content) AGAINST (:q1 IN BOOLEAN MODE)) AS rel
+             FROM book_content
+             WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
+             GROUP BY bkid
+             ORDER BY rel DESC
+             LIMIT :lim OFFSET :off"
+        );
+        $step1->bindValue(':q1',  $qStar, PDO::PARAM_STR);
+        $step1->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+    }
     $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
     $step1->bindValue(':off', $offset, PDO::PARAM_INT);
     $step1->execute();
@@ -378,7 +420,9 @@ function handleSearchContent(): void {
                         ) AS rn
                  FROM book_content bc
                  WHERE bc.bkid IN ($inClause)
-                   AND MATCH(bc.content) AGAINST (:q4 IN BOOLEAN MODE)
+                   AND (MATCH(bc.content) AGAINST (:q4 IN BOOLEAN MODE)" .
+                   ($phraseLike !== null ? " OR bc.content LIKE :ph" : "") .
+                   ")
              ) ranked
              WHERE rn = 1
          ) s ON s.bkid = b.bkid
@@ -386,6 +430,9 @@ function handleSearchContent(): void {
     );
     $step2->bindValue(':q3', $qStar, PDO::PARAM_STR);
     $step2->bindValue(':q4', $qStar, PDO::PARAM_STR);
+    if ($phraseLike !== null) {
+        $step2->bindValue(':ph', $phraseLike, PDO::PARAM_STR);
+    }
     $step2->execute();
     $rows = $step2->fetchAll();
 
@@ -403,11 +450,20 @@ function handleSearchContent(): void {
     if ($countCached = $ccRow->fetchColumn()) {
         $total = (int)$countCached;
     } else {
-        $countStmt = $pdo->prepare(
-            "SELECT COUNT(DISTINCT bkid) FROM book_content
-             WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)"
-        );
-        $countStmt->execute([':q' => $qStar]);
+        if ($phraseLike !== null) {
+            $countStmt = $pdo->prepare(
+                "SELECT COUNT(DISTINCT bkid) FROM book_content
+                 WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)
+                    OR content LIKE :ph"
+            );
+            $countStmt->execute([':q' => $qStar, ':ph' => $phraseLike]);
+        } else {
+            $countStmt = $pdo->prepare(
+                "SELECT COUNT(DISTINCT bkid) FROM book_content
+                 WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)"
+            );
+            $countStmt->execute([':q' => $qStar]);
+        }
         $total = (int)$countStmt->fetchColumn();
         // Cache the count for 2 hours
         $pdo->prepare(
