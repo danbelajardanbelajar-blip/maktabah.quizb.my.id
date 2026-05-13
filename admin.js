@@ -26,6 +26,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Shared helpers ────────────────────────────────────────────
 
+// Deteksi RTL (Arab/Ibrani/dll) berdasarkan karakter pertama yang kuat
+const _RTL_RE = /[֑-߿יִ-﷽ﹰ-ﻼ]/;
+function autoDir(el, text) {
+  if (!el) return;
+  const val = text !== undefined ? text : el.value;
+  el.dir = _RTL_RE.test(val.trim()) ? 'rtl' : 'ltr';
+}
+// Pasang listener "input" agar arah berubah saat user mengetik
+function bindAutoDir(el) {
+  if (!el) return;
+  autoDir(el);
+  el.addEventListener('input', () => autoDir(el));
+}
+
+
 function adminGuard() {
   const u = window.SESSION_USER;
   if (!u) { window.location.href = '/auth.php?action=login'; return false; }
@@ -198,7 +213,7 @@ async function renderAdminBooks() {
         <div class="bg-white rounded-2xl shadow-card p-4 mb-5 flex flex-col sm:flex-row gap-3">
           <div class="flex-1 relative">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/30"></i>
-            <input id="bks-q" type="text" value="${escHtml(booksAS.q)}" placeholder="Cari judul atau pengarang…"
+            <input id="bks-q" type="text" value="${escHtml(booksAS.q)}" placeholder="Cari judul atau pengarang…" dir="auto"
               class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15 bg-cream/50" />
           </div>
           <select id="bks-cat"
@@ -248,6 +263,10 @@ async function renderAdminBooks() {
 
   document.getElementById('bks-q')?.addEventListener('keydown', e => { if (e.key === 'Enter') bksSearch(); });
   document.getElementById('bk-form')?.addEventListener('submit', async e => { e.preventDefault(); await bkSubmit(); });
+  // Auto RTL/LTR untuk semua input teks di modal dan search bar
+  bindAutoDir(document.getElementById('bks-q'));
+  bindAutoDir(document.getElementById('bm-title'));
+  bindAutoDir(document.getElementById('bm-author'));
 
   await bksLoad();
 
@@ -456,8 +475,10 @@ window.openBookModal = async function(bookOrId) {
 
     document.getElementById('bk-modal-ttl').textContent = 'Edit Kitab';
     document.getElementById('bm-bkid').value   = book.bkid   ?? '';
-    document.getElementById('bm-title').value  = book.title  ?? '';
-    document.getElementById('bm-author').value = book.author ?? '';
+    const titleEl  = document.getElementById('bm-title');
+    const authorEl = document.getElementById('bm-author');
+    if (titleEl)  { titleEl.value  = book.title  ?? ''; autoDir(titleEl); }
+    if (authorEl) { authorEl.value = book.author ?? ''; autoDir(authorEl); }
     const isoEl = document.getElementById('bm-iso');
     if (isoEl) isoEl.value = book.iso || 'ar';
     const catEl = document.getElementById('bm-cat');
@@ -647,6 +668,8 @@ async function contLoadEditor() {
       const upd = () => { cc.textContent = ta.value.length.toLocaleString('id') + ' karakter'; };
       ta.addEventListener('input', upd); upd();
     }
+    // Auto RTL/LTR pada textarea editor
+    if (ta) { autoDir(ta); bindAutoDir(ta); }
 
     _ctrlS = e => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); contSave(); }
