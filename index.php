@@ -288,6 +288,117 @@ $sessionUser = $_SESSION['user'] ?? null;
 
     /* Font size range */
     input[type=range].font-range { accent-color: #c9a84c; width: 100%; cursor: pointer; }
+    /* ══════════════════════════════════════════════════════
+       DARK MODE
+    ══════════════════════════════════════════════════════ */
+    html.dark body {
+      background: #0e1a12 !important;
+      color: #d4c5a0 !important;
+    }
+    /* Navbar & bottom nav */
+    html.dark #navbar,
+    html.dark nav { background: #0b1510 !important; border-color: rgba(201,168,76,.1) !important; }
+    html.dark .bnav-wrap { background: #0b1510 !important; border-color: rgba(201,168,76,.1) !important; }
+
+    /* Cards & surfaces */
+    html.dark .bg-white  { background: #162419 !important; }
+    html.dark .bg-cream  { background: #0e1a12 !important; }
+    html.dark [class*="bg-cream"] { background: #162419 !important; }
+    html.dark .bg-surface { background: #162419 !important; }
+    html.dark .bg-background { background: #0e1a12 !important; }
+
+    /* Borders */
+    html.dark .border-cream-dark,
+    html.dark [class*="border-cream"] { border-color: rgba(201,168,76,.12) !important; }
+    html.dark .border-border { border-color: rgba(201,168,76,.12) !important; }
+    html.dark [class*="border-gold"] { border-color: rgba(201,168,76,.2) !important; }
+
+    /* Text */
+    html.dark .text-primary   { color: #d4c5a0 !important; }
+    html.dark .text-secondary { color: #a09070 !important; }
+    html.dark .text-muted     { color: #7a8e78 !important; }
+    html.dark [class*="text-primary/"] { color: rgba(212,197,160,.65) !important; }
+
+    /* Shadows */
+    html.dark .shadow-card { box-shadow: 0 2px 20px rgba(0,0,0,.5) !important; }
+    html.dark [class*="shadow"] { box-shadow: 0 2px 16px rgba(0,0,0,.4) !important; }
+
+    /* Inputs & selects */
+    html.dark input, html.dark textarea, html.dark select {
+      background: #0e1a12 !important;
+      color: #d4c5a0 !important;
+      border-color: rgba(201,168,76,.25) !important;
+    }
+    html.dark input::placeholder, html.dark textarea::placeholder {
+      color: rgba(212,197,160,.35) !important;
+    }
+    html.dark .book-card { background: #162419 !important; }
+
+    /* Footer */
+    html.dark footer { background: #060e08 !important; }
+
+    /* Global settings panel */
+    html.dark #settings-drawer { background: #0e1a12 !important; }
+    html.dark .sdw-title { color: #d4c5a0 !important; }
+    html.dark #settings-drawer [style*="color:#1a3a2a"] { color: #d4c5a0 !important; }
+    html.dark #settings-drawer [style*="color:rgba(26,58,42"] { color: rgba(212,197,160,.45) !important; }
+    html.dark #settings-drawer .sdw-card { background: #162419 !important; border-color: rgba(201,168,76,.12) !important; }
+    html.dark .font-chip { background: #0e1a12 !important; color: #d4c5a0 !important; border-color: rgba(201,168,76,.2) !important; }
+    html.dark .font-chip.active { background: rgba(201,168,76,.18) !important; color: #c9a84c !important; }
+
+    /* Settings drawer */
+    #settings-overlay {
+      position: fixed; inset: 0; z-index: 800;
+      background: rgba(0,0,0,.4); backdrop-filter: blur(3px);
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    #settings-overlay.open { opacity: 1; pointer-events: all; }
+
+    #settings-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; z-index: 801;
+      width: min(360px, 92vw);
+      background: #faf8f3;
+      box-shadow: -4px 0 40px rgba(0,0,0,.18);
+      transform: translateX(100%);
+      transition: transform .3s cubic-bezier(.22,.61,.36,1);
+      overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+    #settings-drawer.open { transform: translateX(0); }
+
+    .sdw-card {
+      background: #fff;
+      border: 1px solid rgba(201,168,76,.18);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .sdw-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: rgba(26,58,42,.45);
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 12px;
+    }
+    /* Theme toggle pill */
+    .theme-pill {
+      display: flex; background: rgba(26,58,42,.07);
+      border-radius: 12px; padding: 4px; gap: 4px;
+    }
+    .theme-btn {
+      flex: 1; padding: 8px 10px; border-radius: 9px;
+      border: none; cursor: pointer; font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all .2s ease; color: rgba(26,58,42,.5); background: transparent;
+    }
+    .theme-btn.active {
+      background: #fff; color: #1a3a2a;
+      box-shadow: 0 1px 6px rgba(0,0,0,.12);
+    }
+    html.dark .theme-pill { background: rgba(212,197,160,.08); }
+    html.dark .theme-btn.active { background: #1c2f1e; color: #d4c5a0; }
+    html.dark .sdw-label { color: rgba(212,197,160,.45); }
   </style>
 </head>
 
@@ -521,6 +632,82 @@ $sessionUser = $_SESSION['user'] ?? null;
     </div>
   </footer>
 
+
+  <!-- ===================== SETTINGS DRAWER ===================== -->
+  <div id="settings-overlay" onclick="closeSettings()"></div>
+
+  <div id="settings-drawer" role="dialog" aria-label="Pengaturan">
+
+    <!-- Header -->
+    <div style="padding:20px 20px 0; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(201,168,76,.15); padding-bottom:16px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:#1a3a2a;display:flex;align-items:center;justify-content:center;">
+          <i data-lucide="settings-2" style="width:17px;height:17px;color:#c9a84c;"></i>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:15px;color:#1a3a2a;" class="sdw-title">Pengaturan</div>
+          <div style="font-size:11px;color:rgba(26,58,42,.45);">Tampilan & Aksesibilitas</div>
+        </div>
+      </div>
+      <button onclick="closeSettings()" style="padding:8px;border-radius:10px;border:none;background:transparent;cursor:pointer;" class="hover:bg-cream-dark">
+        <i data-lucide="x" style="width:18px;height:18px;color:rgba(26,58,42,.4);"></i>
+      </button>
+    </div>
+
+    <div style="padding:0 16px 24px; flex:1;">
+
+      <!-- Tema -->
+      <div class="sdw-card">
+        <div class="sdw-label">
+          <i data-lucide="sun-moon" style="width:12px;height:12px;color:#c9a84c;"></i>
+          Tema Tampilan
+        </div>
+        <div class="theme-pill">
+          <button id="sdw-theme-light" class="theme-btn active" onclick="setTheme('light')">
+            <i data-lucide="sun" style="width:14px;height:14px;"></i> Terang
+          </button>
+          <button id="sdw-theme-dark" class="theme-btn" onclick="setTheme('dark')">
+            <i data-lucide="moon" style="width:14px;height:14px;"></i> Gelap
+          </button>
+        </div>
+      </div>
+
+      <!-- Ukuran Teks -->
+      <div class="sdw-card">
+        <div class="sdw-label" style="justify-content:space-between;">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <i data-lucide="a-large-small" style="width:12px;height:12px;color:#c9a84c;"></i>
+            Ukuran Teks
+          </span>
+          <span id="sdw-size-lbl" style="font-size:11px;font-weight:700;color:#c9a84c;">18px</span>
+        </div>
+        <input type="range" class="font-range" id="sdw-size-slider" min="14" max="28" step="1" value="18">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(26,58,42,.3);margin-top:4px;">
+          <span style="font-size:12px;">A</span><span style="font-size:17px;">A</span>
+        </div>
+      </div>
+
+      <!-- Font Latin -->
+      <div class="sdw-card">
+        <div class="sdw-label">
+          <i data-lucide="type" style="width:12px;height:12px;color:#c9a84c;"></i>
+          Font Latin (LTR)
+        </div>
+        <div id="sdw-latin-chips" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+      </div>
+
+      <!-- Font Arab -->
+      <div class="sdw-card">
+        <div class="sdw-label">
+          <i data-lucide="type" style="width:12px;height:12px;color:#c9a84c;"></i>
+          فونت عربي (RTL)
+        </div>
+        <div id="sdw-arabic-chips" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ===================== SCRIPTS ===================== -->
   <script>
     // Inject session user dari PHP ke JS global
@@ -530,6 +717,127 @@ $sessionUser = $_SESSION['user'] ?? null;
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
 
+      // ── GLOBAL SETTINGS (tema, font, ukuran) ──────────────────
+      const FONTS_LAT = ['Lato','Inter','Roboto','Open Sans','Poppins','Nunito','Raleway','Merriweather','Playfair Display','Source Sans 3'];
+      const FONTS_AR  = [
+        {k:'Amiri',             l:'أميري — Amiri'},
+        {k:'Noto Naskh Arabic', l:'نوتو نسخ'},
+        {k:'Cairo',             l:'القاهرة — Cairo'},
+        {k:'Tajawal',           l:'تجوّل — Tajawal'},
+        {k:'Scheherazade New',  l:'شهرزاد'},
+        {k:'Reem Kufi',         l:'ريم كوفي'},
+        {k:'Lateef',            l:'لطيف — Lateef'},
+        {k:'Aref Ruqaa',        l:'عارف رقعة'},
+        {k:'El Messiri',        l:'المسيري'},
+        {k:'IBM Plex Sans Arabic', l:'IBM عربي'},
+      ];
+
+      // Load saved settings
+      let _settings = Object.assign(
+        { theme: 'light', latin: 'Lato', arabic: 'Amiri', size: 18 },
+        JSON.parse(localStorage.getItem('siteSettings') || '{}')
+      );
+
+      function _applySettings(save = true) {
+        // Theme
+        document.documentElement.classList.toggle('dark', _settings.theme === 'dark');
+        const lBtn = document.getElementById('sdw-theme-light');
+        const dBtn = document.getElementById('sdw-theme-dark');
+        if (lBtn) lBtn.classList.toggle('active', _settings.theme === 'light');
+        if (dBtn) dBtn.classList.toggle('active', _settings.theme === 'dark');
+        // Sync with app.js readerFontState if available
+        if (window.readerFontState) {
+          window.readerFontState.latin  = _settings.latin;
+          window.readerFontState.arabic = _settings.arabic;
+          window.readerFontState.size   = _settings.size;
+          if (typeof window.applyReaderFont === 'function') window.applyReaderFont(false);
+        } else {
+          // Apply CSS vars directly (before app.js loads)
+          const r = document.documentElement;
+          r.style.setProperty('--font-r-latin',  `'${_settings.latin}', sans-serif`);
+          r.style.setProperty('--font-r-arabic', `'${_settings.arabic}', 'Amiri', serif`);
+          r.style.setProperty('--font-r-size',   _settings.size + 'px');
+        }
+        // Update slider label
+        const lbl = document.getElementById('sdw-size-lbl');
+        const sld = document.getElementById('sdw-size-slider');
+        if (lbl) lbl.textContent = _settings.size + 'px';
+        if (sld) sld.value = _settings.size;
+        // Update chip actives
+        document.querySelectorAll('#sdw-latin-chips .font-chip').forEach(c => {
+          c.classList.toggle('active', c.dataset.key === _settings.latin);
+        });
+        document.querySelectorAll('#sdw-arabic-chips .font-chip').forEach(c => {
+          c.classList.toggle('active', c.dataset.key === _settings.arabic);
+        });
+        if (save) localStorage.setItem('siteSettings', JSON.stringify(_settings));
+        // Keep readerFonts in sync (used by reader page in app.js)
+        localStorage.setItem('readerFonts', JSON.stringify({ latin: _settings.latin, arabic: _settings.arabic, size: _settings.size }));
+      }
+
+      function _buildChips() {
+        const latEl = document.getElementById('sdw-latin-chips');
+        const arEl  = document.getElementById('sdw-arabic-chips');
+        if (!latEl || !arEl) return;
+        latEl.innerHTML = FONTS_LAT.map(f => `
+          <button class="font-chip ${_settings.latin === f ? 'active' : ''}"
+            data-key="${f}" style="font-family:'${f}',sans-serif"
+            onclick="window._sdwSetLatin('${f}')">${f}</button>`).join('');
+        arEl.innerHTML = FONTS_AR.map(f => `
+          <button class="font-chip ar ${_settings.arabic === f.k ? 'active' : ''}"
+            data-key="${f.k}" style="font-family:'${f.k}','Amiri',serif"
+            onclick="window._sdwSetArabic('${f.k}')">${f.l}</button>`).join('');
+      }
+
+      window.setTheme = function(t) {
+        _settings.theme = t; _applySettings();
+      };
+      window._sdwSetLatin = function(k) {
+        _settings.latin = k; _applySettings();
+        if (typeof window._setLatinFont === 'function') window._setLatinFont(k);
+      };
+      window._sdwSetArabic = function(k) {
+        _settings.arabic = k; _applySettings();
+        if (typeof window._setArabicFont === 'function') window._setArabicFont(k);
+      };
+
+      window.openSettings = function() {
+        _buildChips();
+        _applySettings(false);
+        document.getElementById('settings-overlay').classList.add('open');
+        document.getElementById('settings-drawer').classList.add('open');
+        lucide.createIcons();
+      };
+      window.closeSettings = function() {
+        document.getElementById('settings-overlay').classList.remove('open');
+        document.getElementById('settings-drawer').classList.remove('open');
+      };
+
+      // Size slider
+      const sdwSlider = document.getElementById('sdw-size-slider');
+      if (sdwSlider) {
+        sdwSlider.addEventListener('input', () => {
+          _settings.size = parseInt(sdwSlider.value);
+          _applySettings();
+        });
+      }
+
+      // Apply on page load (before app.js fully runs)
+      _applySettings(false);
+
+      // Wire nav settings buttons
+      ['nav-font-btn', 'bnav-font-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', () => window.openSettings());
+      });
+
+      // Keyboard: Escape closes drawer
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') window.closeSettings();
+      });
+
+
+
       // Toggle user dropdown (desktop)
       const menuBtn  = document.getElementById('user-menu-btn');
       const dropdown = document.getElementById('user-dropdown');
@@ -538,11 +846,4 @@ $sessionUser = $_SESSION['user'] ?? null;
           e.stopPropagation();
           dropdown.classList.toggle('hidden');
         });
-        document.addEventListener('click', () => dropdown.classList.add('hidden'));
-      }
-    });
-  </script>
-  <script src="/app.js"></script>
-  <script src="/admin.js"></script>
-</body>
-</html>
+        document.a
