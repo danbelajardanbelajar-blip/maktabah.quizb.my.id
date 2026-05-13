@@ -65,7 +65,10 @@ const reicons = () => { if (window.lucide) lucide.createIcons(); };
 async function apiFetch(params) {
   const url = API + '?' + new URLSearchParams(params).toString();
   const res = await fetch(url);
-  if (!res.ok) throw new Error('API error ' + res.status);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error('API error ' + res.status + ': ' + text);
+  }
   return res.json();
 }
 

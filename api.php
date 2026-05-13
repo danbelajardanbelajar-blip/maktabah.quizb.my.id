@@ -546,7 +546,7 @@ function handleSearchAdvanced(): void {
 
     $cats = [];
     if (isset($_GET['cats']) && $_GET['cats'] !== '') {
-        foreach (explode(',', $_GET['cats']) as $catId) {
+        foreach (explode(',', (string)$_GET['cats']) as $catId) {
             $catId = (int) trim($catId);
             if ($catId > 0) {
                 $cats[] = $catId;
@@ -554,72 +554,73 @@ function handleSearchAdvanced(): void {
         }
     }
 
-    $qStar = booleanSearchQueryFromFields($fields);
-    if ($qStar === '') {
-        echo json_encode(['data' => [], 'total' => 0, 'page' => $page, 'total_pages' => 0]);
-        return;
+    $params = [];
+    $whereConditions = [];
+    
+    // Build LIKE conditions for all search fields
+    foreach ($fields as $idx => $field) {
+        $key = ':like' . $idx;
+        $params[$key] = '%' . $field . '%';
+        $whereConditions[] = "bc.content LIKE $key";
+    }
+    
+    $whereClause = count($whereConditions) > 0 
+        ? "(" . implode(" AND ", $whereConditions) . ")" 
+        : "1";
+    
+    // Add category filter
+    if (!empty($cats)) {
+        $catPlaceholders = [];
+        foreach ($cats as $idx => $catId) {
+            $key = ':cat' . $idx;
+            $catPlaceholders[] = $key;
+            $params[$key] = $catId;
+        }
+        $whereClause .= ' AND b.category_id IN (' . implode(',', $catPlaceholders) . ')';
     }
 
     $sql = "SELECT bc.bkid, b.title, b.author, b.pages, b.category_name,
                 bc.page AS match_page,
-                LEFT(REPLACE(REPLACE(bc.content, '\n', ' '), '\r', ' '), 280) AS snippet,
-                MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE) AS rel
+                LEFT(REPLACE(REPLACE(bc.content, '\n', ' '), '\r', ' '), 280) AS snippet
          FROM book_content bc
          JOIN books b ON b.bkid = bc.bkid
-         WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE)";
+         WHERE $whereClause
+         ORDER BY b.title ASC, bc.page ASC
+         LIMIT :lim OFFSET :off";
     
-    $params = [':q' => $qStar];
-    
-    if (!empty($cats)) {
-        $placeholders = array_fill(0, count($cats), '?');
-        $sql .= ' AND b.category_id IN (' . implode(',', $placeholders) . ')';
-    }
-    
-    $sql .= " ORDER BY rel DESC, b.title ASC, bc.page ASC LIMIT ? OFFSET ?";
-    
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(':q', $qStar, PDO::PARAM_STR);
-    
-    $bindIdx = 1;
-    if (!empty($cats)) {
-        foreach ($cats as $catId) {
-            $stmt->bindValue($bindIdx, $catId, PDO::PARAM_INT);
-            $bindIdx += 1;
-        }
-    }
-    $stmt->bindValue($bindIdx, $limit, PDO::PARAM_INT);
-    $stmt->bindValue($bindIdx + 1, $offset, PDO::PARAM_INT);
+    $params[':lim'] = $limit;
+    $params[':off'] = $offset;
     
     try {
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
         $stmt->execute();
         $rows = $stmt->fetchAll();
     } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['error' => 'Search query failed: ' . $e->getMessage()]);
+        echo json_encode(['error' => 'Query error: ' . $e->getMessage()]);
         return;
     }
 
+    // Count total
     $countSql = "SELECT COUNT(*) FROM book_content bc 
                  JOIN books b ON b.bkid = bc.bkid
-                 WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE)";
+                 WHERE $whereClause";
     
-    if (!empty($cats)) {
-        $placeholders = array_fill(0, count($cats), '?');
-        $countSql .= ' AND b.category_id IN (' . implode(',', $placeholders) . ')';
-    }
-    
-    $countStmt = $pdo->prepare($countSql);
-    $countStmt->bindValue(':q', $qStar, PDO::PARAM_STR);
-    
-    $bindIdx = 1;
-    if (!empty($cats)) {
-        foreach ($cats as $catId) {
-            $countStmt->bindValue($bindIdx, $catId, PDO::PARAM_INT);
-            $bindIdx += 1;
+    $countParams = [];
+    foreach ($params as $key => $value) {
+        if ($key !== ':lim' && $key !== ':off') {
+            $countParams[$key] = $value;
         }
     }
     
     try {
+        $countStmt = $pdo->prepare($countSql);
+        foreach ($countParams as $key => $value) {
+            $countStmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
         $countStmt->execute();
         $total = (int)$countStmt->fetchColumn();
     } catch (Exception $e) {
