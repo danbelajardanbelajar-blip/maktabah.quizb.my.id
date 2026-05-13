@@ -694,12 +694,12 @@ function handleSearch(): void {
     // 3. Content
     $contOffset = ($contPage - 1) * $limit;
     $stmtCont = $pdo->prepare(
-        "SELECT bc.bkid, bc.match_page, b.title, b.author, b.category_name,
-                LEFT(bc.content_text, 300) AS snippet
+        "SELECT bc.bkid, bc.page AS match_page, b.title, b.author, b.category_name,
+                LEFT(bc.content, 300) AS snippet
          FROM book_content bc
          JOIN books b ON b.bkid = bc.bkid
-         WHERE bc.content_text LIKE :lk
-         ORDER BY bc.bkid DESC, bc.match_page ASC
+         WHERE bc.content LIKE :lk
+         ORDER BY bc.bkid DESC, bc.page ASC
          LIMIT :lim OFFSET :off"
     );
     $stmtCont->bindValue(':lk',  $like, PDO::PARAM_STR);
@@ -709,7 +709,7 @@ function handleSearch(): void {
     $content = $stmtCont->fetchAll();
 
     $stmtContCount = $pdo->prepare(
-        "SELECT COUNT(*) FROM book_content WHERE content_text LIKE :lk"
+        "SELECT COUNT(*) FROM book_content WHERE content LIKE :lk"
     );
     $stmtContCount->execute([':lk' => $like]);
     $contTotal = (int)$stmtContCount->fetchColumn();
@@ -836,9 +836,9 @@ function handleAdminSaveContent(): void {
     if (!$bkid || !$page) { http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return; }
 
     $pdo->prepare(
-        "INSERT INTO book_content (bkid, match_page, content_text)
+        "INSERT INTO book_content (bkid, page, content)
          VALUES (:bkid, :page, :content)
-         ON DUPLICATE KEY UPDATE content_text = VALUES(content_text)"
+         ON DUPLICATE KEY UPDATE content = VALUES(content)"
     )->execute([':bkid' => $bkid, ':page' => $page, ':content' => $content]);
 
     // Sync halaman count di tabel books
@@ -860,7 +860,7 @@ function handleAdminDeleteContent(): void {
     $page = (int)($data['page'] ?? 0);
     if (!$bkid || !$page) { http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return; }
 
-    $pdo->prepare("DELETE FROM book_content WHERE bkid = :bkid AND match_page = :page")
+    $pdo->prepare("DELETE FROM book_content WHERE bkid = :bkid AND page = :page")
         ->execute([':bkid' => $bkid, ':page' => $page]);
 
     $cnt = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :bkid");
@@ -913,7 +913,7 @@ function handleAdminImportBook(): void {
 
         // Insert semua halaman
         $stmtPage = $pdo->prepare(
-            "INSERT INTO book_content (bkid, match_page, content_text)
+            "INSERT INTO book_content (bkid, page, content)
              VALUES (:bkid, :page, :content)"
         );
         foreach ($pages as $i => $pageText) {
