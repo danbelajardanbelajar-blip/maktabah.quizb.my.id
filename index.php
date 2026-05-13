@@ -541,9 +541,9 @@ $sessionUser = $_SESSION['user'] ?? null;
         <span class="text-[10px] font-medium">Beranda</span>
       </a>
 
-      <a href="/search" data-route="/search" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
-        <i data-lucide="search" class="w-5 h-5"></i>
-        <span class="text-[10px] font-medium">Cari</span>
+      <a href="/search-advanced" data-route="/search-advanced" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="search-check" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Cari Lanjutan</span>
       </a>
 
       <a href="/katalog" data-route="/katalog" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
