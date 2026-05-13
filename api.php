@@ -244,6 +244,40 @@ function handleCategories(): void {
 // =============================================================
 // 6a. SEARCH — KATEGORI  (fast: simple LIKE on small table)
 // =============================================================
+
+// =============================================================
+// 5a. LATEST — kitab terbaru (untuk halaman beranda)
+// =============================================================
+function handleLatest(): void {
+    $pdo   = getPDO();
+    $limit = min(48, max(1, (int)($_GET['limit'] ?? 12)));
+
+    $stmt = $pdo->prepare(
+        "SELECT bkid, title, author, pages, iso, category_id, category_name
+         FROM books
+         ORDER BY bkid DESC
+         LIMIT :lim"
+    );
+    $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+
+    echo json_encode(['data' => $stmt->fetchAll()]);
+}
+
+// =============================================================
+// 5b. AUTH ME — kembalikan session user saat ini
+// =============================================================
+function handleAuthMe(): void {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    $user = getSessionUser();
+    if ($user) {
+        echo json_encode(['loggedIn' => true, 'user' => $user]);
+    } else {
+        echo json_encode(['loggedIn' => false]);
+    }
+}
+
 function handleSearchCategories(): void {
     header('Cache-Control: public, max-age=120');
     $pdo       = getPDO();

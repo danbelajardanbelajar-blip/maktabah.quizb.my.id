@@ -1634,3 +1634,243 @@ function render404() {
 
 // ── Export navigate for admin.js ──────────────────────────────
 window.navigate = navigate;
+              </div>
+              <div class="space-y-2.5 text-sm">
+                <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                  <span class="text-muted">Website</span>
+                  <a href="https://hakimz.site" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">hakimz.site</a>
+                </div>
+                <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                  <span class="text-muted">Email</span>
+                  <a href="mailto:zenhkm@gmail.com" class="font-semibold text-primary hover:text-gold transition-colors">zenhkm@gmail.com</a>
+                </div>
+                <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                  <span class="text-muted">Instagram</span>
+                  <a href="https://instagram.com/zainul.hakim" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">@zainul.hakim</a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>`;
+  reicons();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  PAGE: KEBIJAKAN PRIVASI
+// ══════════════════════════════════════════════════════════════
+function renderPrivacy() {
+  const LAST_UPDATED = '13 Mei 2026';
+  const SITE_URL     = 'https://lib.quizb.my.id';
+  const CONTACT      = 'admin@quizb.my.id';
+
+  app().innerHTML = `
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 py-12 pb-20">
+
+      <!-- Header -->
+      <div class="mb-10">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+            <i data-lucide="shield-check" class="w-5 h-5 text-gold"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-primary leading-tight">Kebijakan Privasi</h1>
+            <p class="text-sm text-muted">Al-Maktabah As-Sunniyyah</p>
+          </div>
+        </div>
+        <p class="text-sm text-muted">Terakhir diperbarui: <span class="font-medium text-primary">${LAST_UPDATED}</span></p>
+        <p class="mt-3 text-base text-secondary leading-relaxed">
+          Kebijakan Privasi ini menjelaskan bagaimana Al-Maktabah As-Sunniyyah
+          (<a href="${SITE_URL}" class="text-gold hover:underline font-medium">${SITE_URL}</a>)
+          mengumpulkan, menggunakan, dan melindungi informasi pribadi Anda ketika menggunakan layanan kami.
+        </p>
+      </div>
+
+      <!-- Sections -->
+      <div class="space-y-6">
+
+        ${privacySection('database', 'Informasi yang Kami Kumpulkan', `
+          <p class="text-secondary mb-4">Saat Anda masuk menggunakan akun Google, kami menerima informasi berikut dari Google:</p>
+          <div class="grid sm:grid-cols-2 gap-3">
+            ${privacySubCard('user', 'Nama Lengkap', 'Nama yang terdaftar pada akun Google Anda.')}
+            ${privacySubCard('mail', 'Alamat Email', 'Email utama akun Google Anda.')}
+            ${privacySubCard('image', 'Foto Profil', 'URL foto profil publik Google Anda.')}
+            ${privacySubCard('key', 'ID Google', 'Identitas unik dari Google (tidak dapat digunakan di luar layanan ini).')}
+          </div>
+          <p class="text-secondary mt-4 text-sm">Kami <strong>tidak</strong> menyimpan kata sandi Anda. Otentikasi sepenuhnya ditangani oleh Google.</p>
+        `)}
+
+        ${privacySection('settings', 'Cara Kami Menggunakan Informasi', `
+          <ul class="space-y-2 text-secondary">
+            ${privacyItem('Membuat dan mengelola akun pengguna Anda di platform ini.')}
+            ${privacyItem('Menampilkan nama dan foto profil Anda di antarmuka aplikasi.')}
+            ${privacyItem('Menentukan hak akses Anda (pengguna biasa atau administrator).')}
+            ${privacyItem('Mencatat waktu login terakhir untuk keperluan keamanan.')}
+            ${privacyItem('Kami tidak menggunakan data Anda untuk iklan, analitik pihak ketiga, atau tujuan komersial.')}
+          </ul>
+        `)}
+
+        ${privacySection('share-2', 'Berbagi Data dengan Pihak Ketiga', `
+          <p class="text-secondary mb-3">Kami <strong>tidak menjual, menyewakan, atau membagikan</strong> data pribadi Anda kepada pihak ketiga, kecuali:</p>
+          <ul class="space-y-2 text-secondary">
+            ${privacyItem('Google LLC — sebagai penyedia layanan autentikasi OAuth 2.0.')}
+            ${privacyItem('Penyedia hosting server — hanya memiliki akses teknis ke infrastruktur, bukan data pengguna secara individual.')}
+            ${privacyItem('Kewajiban hukum — apabila diwajibkan oleh peraturan perundang-undangan yang berlaku.')}
+          </ul>
+        `)}
+
+        ${privacySection('cookie', 'Cookie & Sesi', `
+          <p class="text-secondary mb-3">Kami menggunakan cookie sesi PHP standar untuk:</p>
+          <ul class="space-y-2 text-secondary">
+            ${privacyItem('Mempertahankan status login Anda selama sesi aktif.')}
+            ${privacyItem('Melindungi dari serangan CSRF (Cross-Site Request Forgery) selama proses login.')}
+          </ul>
+          <p class="text-secondary mt-4 text-sm">Cookie sesi dihapus otomatis ketika Anda keluar (logout) atau menutup browser. Kami tidak menggunakan cookie pelacak atau cookie pihak ketiga.</p>
+        `)}
+
+        ${privacySection('shield', 'Keamanan Data', `
+          <div class="grid sm:grid-cols-3 gap-3">
+            ${privacyRightCard('lock', 'Enkripsi HTTPS', 'Seluruh komunikasi antara browser dan server dienkripsi menggunakan TLS/SSL.')}
+            ${privacyRightCard('database', 'PDO Prepared Statements', 'Semua kueri database menggunakan prepared statements untuk mencegah SQL injection.')}
+            ${privacyRightCard('shield-check', 'CSRF Protection', 'Token state divalidasi pada setiap proses autentikasi OAuth.')}
+          </div>
+        `)}
+
+        ${privacySection('user-check', 'Hak Pengguna', `
+          <p class="text-secondary mb-3">Anda memiliki hak atas data pribadi Anda, termasuk:</p>
+          <ul class="space-y-2 text-secondary">
+            ${privacyItem('Hak akses: Melihat informasi yang kami simpan tentang Anda melalui halaman profil.')}
+            ${privacyItem('Hak penghapusan: Menghubungi kami untuk menghapus akun dan seluruh data Anda secara permanen.')}
+            ${privacyItem('Hak pencabutan: Mencabut izin akses aplikasi ini dari pengaturan akun Google Anda kapan saja.')}
+            ${privacyItem('Hak koreksi: Data profil diperbarui otomatis dari Google setiap kali Anda login.')}
+          </ul>
+        `)}
+
+        ${privacySection('users', 'Pengguna di Bawah Umur', `
+          <p class="text-secondary">
+            Layanan ini tidak ditujukan secara khusus untuk anak-anak di bawah 13 tahun.
+            Kami tidak secara sengaja mengumpulkan data dari anak di bawah umur.
+            Jika Anda adalah orang tua atau wali dan mengetahui bahwa anak Anda telah memberikan informasi pribadi kepada kami,
+            silakan hubungi kami agar kami dapat menghapus data tersebut.
+          </p>
+        `)}
+
+        ${privacySection('mail', 'Hubungi Kami', `
+          <p class="text-secondary mb-4">Jika Anda memiliki pertanyaan, permintaan, atau kekhawatiran mengenai kebijakan privasi ini, silakan hubungi kami:</p>
+          <div class="bg-surface rounded-xl p-4 border border-border">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+                <i data-lucide="mail" class="w-4 h-4 text-gold"></i>
+              </div>
+              <div>
+                <p class="text-sm text-muted">Email</p>
+                <a href="mailto:${CONTACT}" class="font-medium text-primary hover:text-gold transition-colors">${CONTACT}</a>
+              </div>
+            </div>
+          </div>
+        `)}
+
+        ${privacySection('refresh-cw', 'Perubahan Kebijakan', `
+          <p class="text-secondary">
+            Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu.
+            Setiap perubahan akan dipublikasikan di halaman ini dengan tanggal pembaruan yang baru.
+            Penggunaan layanan secara berkelanjutan setelah perubahan diterbitkan berarti Anda menyetujui kebijakan yang diperbarui.
+          </p>
+          <p class="text-secondary mt-3 text-sm">
+            Versi saat ini berlaku sejak <strong>${LAST_UPDATED}</strong>.
+          </p>
+        `)}
+
+      </div>
+
+      <!-- Footer note -->
+      <div class="mt-12 pt-6 border-t border-border text-center">
+        <p class="text-sm text-muted">
+          <i data-lucide="heart" class="w-3.5 h-3.5 inline text-gold mr-1"></i>
+          Al-Maktabah As-Sunniyyah — perpustakaan digital kitab-kitab Islam klasik
+        </p>
+        <p class="text-xs text-muted mt-1">
+          <a href="/" data-route="/" class="hover:text-gold transition-colors">Kembali ke Beranda</a>
+          <span class="mx-2">·</span>
+          <a href="/katalog" data-route="/katalog" class="hover:text-gold transition-colors">Jelajahi Katalog</a>
+        </p>
+      </div>
+
+    </div>`;
+  reicons();
+}
+
+// ── Helper: section card ──────────────────────────────────────
+function privacySection(icon, title, bodyHtml) {
+  return `
+    <div class="bg-surface rounded-2xl border border-border p-6 shadow-sm">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+          <i data-lucide="${icon}" class="w-4 h-4 text-gold"></i>
+        </div>
+        <h2 class="text-lg font-semibold text-primary">${title}</h2>
+      </div>
+      <div class="text-sm leading-relaxed">${bodyHtml}</div>
+    </div>`;
+}
+
+// ── Helper: sub info card ─────────────────────────────────────
+function privacySubCard(icon, title, bodyHtml) {
+  return `
+    <div class="flex items-start gap-3 bg-background rounded-xl p-3 border border-border">
+      <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+        <i data-lucide="${icon}" class="w-3.5 h-3.5 text-gold"></i>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-primary">${title}</p>
+        <p class="text-xs text-muted mt-0.5">${bodyHtml}</p>
+      </div>
+    </div>`;
+}
+
+// ── Helper: list item ─────────────────────────────────────────
+function privacyItem(text) {
+  return `
+    <li class="flex items-start gap-2">
+      <i data-lucide="check-circle" class="w-4 h-4 text-gold mt-0.5 flex-shrink-0"></i>
+      <span>${text}</span>
+    </li>`;
+}
+
+// ── Helper: right card (security pillars etc.) ────────────────
+function privacyRightCard(icon, title, desc) {
+  return `
+    <div class="bg-background rounded-xl p-4 border border-border text-center">
+      <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="${icon}" class="w-5 h-5 text-gold"></i>
+      </div>
+      <p class="text-sm font-semibold text-primary mb-1">${title}</p>
+      <p class="text-xs text-muted leading-relaxed">${desc}</p>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PAGE: 404
+// ══════════════════════════════════════════════════════════════
+function render404() {
+  app().innerHTML = `
+    <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+      <div class="w-20 h-20 rounded-2xl bg-surface border border-border flex items-center justify-center mb-6">
+        <i data-lucide="file-question" class="w-10 h-10 text-muted"></i>
+      </div>
+      <h1 class="text-4xl font-bold text-primary mb-2">404</h1>
+      <p class="text-muted text-lg mb-6">Halaman tidak ditemukan</p>
+      <button onclick="navigate('/')"
+        class="px-6 py-2.5 bg-gold text-white rounded-xl font-medium hover:bg-yellow-600 transition-colors">
+        Kembali ke Beranda
+      </button>
+    </div>`;
+  reicons();
+}
+
+// ── Export navigate for admin.js ──────────────────────────────
+window.navigate = navigate;
