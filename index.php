@@ -849,6 +849,10 @@ $sessionUser = $_SESSION['user'] ?? null;
       const menuBtn  = document.getElementById('user-menu-btn');
       const dropdown = document.getElementById('user-dropdown');
       if (menuBtn && dropdown) {
+        menuBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          dropdown.classList.toggle('hidden');
+        });
         document.addEventListener('click', e => {
           if (!menuBtn.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.classList.add('hidden');
