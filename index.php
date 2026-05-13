@@ -849,8 +849,27 @@ $sessionUser = $_SESSION['user'] ?? null;
       const menuBtn  = document.getElementById('user-menu-btn');
       const dropdown = document.getElementById('user-dropdown');
       if (menuBtn && dropdown) {
-        menuBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          dropdown.classList.toggle('hidden');
+        document.addEventListener('click', e => {
+          if (!menuBtn.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add('hidden');
+          }
         });
-        document.a
+      }
+
+      // Mobile menu toggle
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenu    = document.getElementById('mobile-menu');
+      if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden-menu');
+          lucide.createIcons();
+        });
+      }
+
+    }); // end DOMContentLoaded
+  </script>
+
+  <script src="/app.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>
