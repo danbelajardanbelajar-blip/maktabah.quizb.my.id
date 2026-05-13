@@ -72,12 +72,13 @@ async function apiFetch(params) {
 // ── Router ────────────────────────────────────────────────────
 // Rute admin didaftarkan oleh admin.js setelah DOM ready
 const routes = {
-  '/':        renderHome,
-  '/katalog': renderKatalog,
-  '/about':   renderAbout,
-  '/search':  renderSearch,
-  '/kitab':   renderDetail,
-  '/privacy': renderPrivacy,
+  '/':              renderHome,
+  '/katalog':       renderKatalog,
+  '/about':         renderAbout,
+  '/search':        renderSearch,
+  '/search-advanced': renderSearchAdvanced,
+  '/kitab':         renderDetail,
+  '/privacy':       renderPrivacy,
 };
 
 function navigate(path, push = true) {
@@ -383,6 +384,285 @@ function abortAll() {
 
 // searchState declared here (used by renderSearch, execSearch, pagination)
 const searchState = { q: '', bookPage: 1, contPage: 1 };
+const searchAdvancedState = {
+  terms: ['', '', '', '', ''],
+  cats: [],
+  page: 1,
+  categories: [],
+};
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function hlTextMulti(text, terms) {
+  if (!text) return escHtml('');
+  let escaped = escHtml(text);
+  const patterns = [];
+  (terms || []).forEach(raw => {
+    const term = String(raw || '').trim();
+    if (!term) return;
+    const unquoted = term.replace(/^"|"$/g, '').trim();
+    if (!unquoted) return;
+    patterns.push(escapeRegex(unquoted));
+  });
+  if (!patterns.length) return escaped;
+  const regex = new RegExp('(' + patterns.sort((a, b) => b.length - a.length).join('|') + ')', 'gi');
+  return escaped.replace(regex, '<mark class="hl">$1</mark>');
+}
+
+async function getSearchAdvancedCategories() {
+  if (searchAdvancedState.categories.length) return searchAdvancedState.categories;
+  try {
+    const res = await apiFetch({ action: 'categories' });
+    searchAdvancedState.categories = res.data || [];
+  } catch {
+    searchAdvancedState.categories = [];
+  }
+  return searchAdvancedState.categories;
+}
+
+function updateAdvancedPageUrl() {
+  const params = new URLSearchParams();
+  searchAdvancedState.terms.forEach((value, idx) => {
+    if (value.trim()) params.set('q' + (idx + 1), value.trim());
+  });
+  if (searchAdvancedState.cats.length) {
+    params.set('cats', searchAdvancedState.cats.join(','));
+  }
+  if (searchAdvancedState.page > 1) {
+    params.set('page', searchAdvancedState.page);
+  }
+  const query = params.toString();
+  history.replaceState({}, '', '/search-advanced' + (query ? '?' + query : ''));
+}
+
+function buildAdvancedSearchQuery() {
+  return searchAdvancedState.terms
+    .map(q => String(q || '').trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
+function advancedContentCard(book) {
+  const titleHtml = hlTextMulti(book.title || 'بدون عنوان', searchAdvancedState.terms);
+  const authorHtml = book.author ? hlTextMulti(book.author, searchAdvancedState.terms) : '';
+  const snippetHtml = book.snippet ? hlTextMulti(book.snippet, searchAdvancedState.terms) : '';
+  const pageLabel = book.match_page ? `hal. ${book.match_page}` : '';
+  return `
+    <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-3 cursor-pointer hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
+         onclick="navigate('/kitab?id=${book.bkid}&page=${book.match_page || 1}&q=${encodeURIComponent(buildAdvancedSearchQuery())}')">
+      <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
+      ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
+      ${snippetHtml ? `<div class="snippet-bar reader-text line-clamp-4">${snippetHtml}…</div>` : ''}
+      <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
+        <span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(book.category_name || '')}</span>
+        ${pageLabel ? `<span class="text-xs text-gold font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${escHtml(pageLabel)}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+function renderAdvancedCategories(categories) {
+  const wrapper = $('#adv-categories');
+  if (!wrapper) return;
+  if (!categories.length) {
+    wrapper.innerHTML = `<p class="text-sm text-primary/40 col-span-full">Tidak ada kategori untuk ditampilkan.</p>`;
+    return;
+  }
+  wrapper.innerHTML = categories.map(cat => {
+    const checked = searchAdvancedState.cats.includes(String(cat.id)) ? 'checked' : '';
+    return `
+      <label class="flex items-center gap-3 rounded-2xl border border-cream-dark bg-white px-3 py-2 cursor-pointer hover:border-gold/30 transition-colors">
+        <input type="checkbox" class="adv-cat-checkbox" value="${cat.id}" ${checked} />
+        <span class="text-sm text-primary">${escHtml(cat.name)}</span>
+      </label>`;
+  }).join('');
+}
+
+function applyAdvancedCheckboxState() {
+  $$('.adv-cat-checkbox').forEach(input => {
+    input.checked = searchAdvancedState.cats.includes(input.value);
+  });
+}
+
+function updateAdvancedSearchStateFromInputs() {
+  $$('.adv-term-input').forEach((input, idx) => {
+    searchAdvancedState.terms[idx] = input.value;
+  });
+}
+
+async function execAdvancedSearch() {
+  const wrap = $('#adv-results');
+  const stats = $('#adv-search-stats');
+  if (!wrap) return;
+  updateAdvancedSearchStateFromInputs();
+  const searchTerms = searchAdvancedState.terms.filter(term => term.trim());
+  if (!searchTerms.length) {
+    wrap.innerHTML = `<div class="text-center py-20 text-primary/40">Isi minimal satu kolom pencarian untuk memulai.</div>`;
+    if (stats) stats.textContent = '';
+    updateAdvancedPageUrl();
+    return;
+  }
+
+  abortAll();
+  wrap.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${skeletonCards(6)}</div>`;
+  reicons();
+  searchAdvancedState.page = Math.max(1, searchAdvancedState.page || 1);
+
+  const params = { action: 'search_advanced', page: searchAdvancedState.page };
+  searchAdvancedState.terms.forEach((value, idx) => {
+    if (value.trim()) params['q' + (idx + 1)] = value.trim();
+  });
+  if (searchAdvancedState.cats.length) params.cats = searchAdvancedState.cats.join(',');
+
+  try {
+    const res = await apiFetch(params);
+    updateAdvancedPageUrl();
+    const total = res.total || 0;
+    const page = res.page || 1;
+    const totalPages = res.total_pages || 1;
+    const queryLabel = searchTerms.length === 1 ? searchTerms[0] : searchTerms.join(' + ');
+    if (stats) {
+      stats.innerHTML = `<span class="text-sm text-primary/60">Menemukan ${total.toLocaleString('id-ID')} halaman di ${totalPages} halaman hasil untuk <strong>${escHtml(queryLabel)}</strong>.</span>`;
+    }
+    wrap.innerHTML = res.data.length
+      ? `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book)).join('')}</div>
+         ${paginationHtml(page, totalPages, 'goAdvancedPage')}`
+      : `<div class="text-center py-20 text-primary/40">Maaf, tidak ditemukan halaman yang cocok dengan kata kunci dan kategori yang dipilih.</div>`;
+    reicons();
+  } catch (err) {
+    wrap.innerHTML = `<p class="text-center py-20 text-sm text-red-500">Gagal memuat hasil pencarian. Silakan coba lagi.</p>`;
+    if (stats) stats.textContent = '';
+  }
+}
+
+window.goAdvancedPage = function(p) {
+  searchAdvancedState.page = p;
+  execAdvancedSearch();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderSearchAdvanced(params) {
+  searchAdvancedState.terms = ['', '', '', '', ''];
+  searchAdvancedState.cats = [];
+  searchAdvancedState.page = Math.max(1, parseInt(params.get('page') || '1', 10));
+  for (let i = 0; i < 5; i += 1) {
+    searchAdvancedState.terms[i] = params.get('q' + (i + 1)) || '';
+  }
+  const catsParam = params.get('cats') || '';
+  if (catsParam) {
+    searchAdvancedState.cats = catsParam.split(',').map(id => String(parseInt(id, 10))).filter(id => id && id !== '0');
+  }
+
+  app().innerHTML = `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div class="mb-8">
+        <div class="flex flex-col gap-3">
+          <div class="text-sm uppercase tracking-[.2em] text-gold font-bold">Pencarian Lanjutan</div>
+          <h1 class="text-3xl md:text-4xl font-bold text-primary">Cari halaman kitab dengan kata kunci dan kategori</h1>
+          <p class="text-sm text-primary/60 max-w-3xl">Masukkan hingga 5 kolom. Jika sebuah kolom berisi beberapa kata, sistem akan mencocokkan frasa persis pada satu halaman. Jika beberapa kolom diisi, semua kata/frasanya harus hadir di halaman yang sama.</p>
+        </div>
+      </div>
+
+      <div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div class="space-y-5 bg-white rounded-3xl border border-cream-dark p-6 shadow-card">
+          <div class="grid gap-3">
+            ${Array.from({ length: 5 }, (_, idx) => `
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-primary">Kolom ${idx + 1}</label>
+                <input type="text" id="adv-term-${idx + 1}" data-idx="${idx}" value="${escHtml(searchAdvancedState.terms[idx])}"
+                  class="adv-term-input w-full rounded-2xl border border-gold/20 bg-cream/70 px-4 py-3 text-sm text-primary focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/20 transition" 
+                  placeholder="Masukkan kata atau frasa" />
+              </div>
+            `).join('')}
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="text-sm text-primary/70">Pilih kategori pilihan untuk mempersempit pencarian.</div>
+            <div class="flex flex-wrap gap-2">
+              <button id="adv-select-all" type="button" class="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-gold/5 transition">Tandai semua</button>
+              <button id="adv-clear-all" type="button" class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5 transition">Hapus semua</button>
+            </div>
+          </div>
+          <div id="adv-categories" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[360px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-cream-dark p-6 shadow-card">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold text-primary">Kontrol Pencarian</h2>
+                <p class="text-sm text-primary/60">Tekan cari untuk memulai.</p>
+              </div>
+            </div>
+            <div class="grid gap-3">
+              <button id="adv-search-btn" class="w-full rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-light transition">Cari</button>
+              <button id="adv-reset-btn" class="w-full rounded-2xl border border-primary/20 bg-white px-5 py-3 text-sm font-semibold text-primary hover:bg-cream-dark transition">Reset Form</button>
+            </div>
+            <div id="adv-search-stats" class="text-sm text-primary/60"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="adv-results" class="mt-8"></div>
+    </div>`;
+
+  reicons();
+
+  getSearchAdvancedCategories().then(categories => {
+    renderAdvancedCategories(categories);
+    applyAdvancedCheckboxState();
+
+    $$('.adv-cat-checkbox').forEach(input => {
+      input.addEventListener('change', () => {
+        if (input.checked) {
+          if (!searchAdvancedState.cats.includes(input.value)) searchAdvancedState.cats.push(input.value);
+        } else {
+          searchAdvancedState.cats = searchAdvancedState.cats.filter(id => id !== input.value);
+        }
+        updateAdvancedPageUrl();
+      });
+    });
+  });
+
+  $('#adv-select-all')?.addEventListener('click', async () => {
+    const categories = await getSearchAdvancedCategories();
+    searchAdvancedState.cats = categories.map(cat => String(cat.id));
+    applyAdvancedCheckboxState();
+    updateAdvancedPageUrl();
+  });
+
+  $('#adv-clear-all')?.addEventListener('click', () => {
+    searchAdvancedState.cats = [];
+    applyAdvancedCheckboxState();
+    updateAdvancedPageUrl();
+  });
+
+  $('#adv-search-btn')?.addEventListener('click', () => { searchAdvancedState.page = 1; execAdvancedSearch(); });
+  $('#adv-reset-btn')?.addEventListener('click', () => {
+    searchAdvancedState.terms = ['', '', '', '', ''];
+    searchAdvancedState.cats = [];
+    searchAdvancedState.page = 1;
+    Array.from(document.querySelectorAll('.adv-term-input')).forEach(input => input.value = '');
+    applyAdvancedCheckboxState();
+    $('#adv-search-stats').textContent = '';
+    $('#adv-results').innerHTML = `<div class="text-center py-20 text-primary/40">Isi minimal satu kolom pencarian untuk memulai.</div>`;
+    updateAdvancedPageUrl();
+  });
+
+  $$('.adv-term-input').forEach(input => {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchAdvancedState.page = 1;
+        execAdvancedSearch();
+      }
+    });
+  });
+
+  if (searchAdvancedState.terms.some(term => term.trim()) || searchAdvancedState.cats.length) {
+    execAdvancedSearch();
+  }
+}
 
 // ── Render search page ───────────────────────────────────────
 function renderSearch(params) {
@@ -403,6 +683,12 @@ function renderSearch(params) {
           </button>
         </div>
         <p class="mt-3 text-xs text-primary/50">Pencarian premium: gunakan tanda kutip untuk frasa persis — hasil cepat, akurat, dan modern.</p>
+        <div class="mt-3 text-right">
+          <a href="/search-advanced" data-route="/search-advanced" class="inline-flex items-center gap-2 text-sm font-semibold text-gold hover:text-gold-dark transition">
+            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+            Pencarian Lanjutan
+          </a>
+        </div>
         <div id="search-stats" class="search-stats"></div>
       </div>
       <div id="search-results">

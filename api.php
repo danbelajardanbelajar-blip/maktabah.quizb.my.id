@@ -66,6 +66,40 @@ function booleanSearchTerm(string $q): string {
     return $parts ? implode(' ', $parts) : ftEscape($q) . '*';
 }
 
+function booleanSearchTermForAdvanced(string $q): string {
+    $q = trim($q);
+    if ($q === '') {
+        return '';
+    }
+    if (isPhraseQuery($q)) {
+        return '"' . ftEscape(searchPhraseText($q)) . '"';
+    }
+    if (preg_match('/\s+/u', $q)) {
+        return '"' . ftEscape($q) . '"';
+    }
+    $terms = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
+    $parts = [];
+    foreach ($terms as $term) {
+        $term = ftEscape($term);
+        if ($term === '') {
+            continue;
+        }
+        $parts[] = '+' . $term . '*';
+    }
+    return $parts ? implode(' ', $parts) : '';
+}
+
+function booleanSearchQueryFromFields(array $fields): string {
+    $parts = [];
+    foreach ($fields as $field) {
+        $term = booleanSearchTermForAdvanced($field);
+        if ($term !== '') {
+            $parts[] = $term;
+        }
+    }
+    return implode(' ', $parts);
+}
+
 // --- Router ---
 $action = $_GET['action'] ?? '';
 
@@ -80,6 +114,7 @@ try {
         case 'search_categories': handleSearchCategories(); break;
         case 'search_books':      handleSearchBooks();      break;
         case 'search_content':    handleSearchContent();    break;
+        case 'search_advanced':   handleSearchAdvanced();   break;
         // Auth
         case 'auth_me':           handleAuthMe();           break;
         // Admin — CRUD Kitab
@@ -492,6 +527,90 @@ function handleSearchContent(): void {
              result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
         )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($rows), ':rc' => $total]);
     }
+
+    echo json_encode([
+        'data'        => $rows,
+        'total'       => $total,
+        'page'        => $page,
+        'total_pages' => (int)ceil($total / $limit),
+    ]);
+}
+
+// =============================================================
+// 6d. SEARCH ADVANCED — page-level konten dengan banyak kolom + kategori
+// =============================================================
+function handleSearchAdvanced(): void {
+    header('Cache-Control: public, max-age=120');
+    $pdo    = getPDO();
+    $page   = max(1, (int)($_GET['page'] ?? 1));
+    $limit  = 12;
+    $offset = ($page - 1) * $limit;
+
+    $fields = [];
+    for ($i = 1; $i <= 5; $i += 1) {
+        $val = trim((string)($_GET['q' . $i] ?? ''));
+        if ($val !== '') {
+            $fields[] = $val;
+        }
+    }
+
+    if (empty($fields)) {
+        echo json_encode(['data' => [], 'total' => 0, 'page' => $page, 'total_pages' => 0]);
+        return;
+    }
+
+    $cats = [];
+    if (isset($_GET['cats']) && $_GET['cats'] !== '') {
+        foreach (explode(',', $_GET['cats']) as $catId) {
+            $catId = (int) trim($catId);
+            if ($catId > 0) {
+                $cats[] = $catId;
+            }
+        }
+    }
+
+    $qStar = booleanSearchQueryFromFields($fields);
+    if ($qStar === '') {
+        echo json_encode(['data' => [], 'total' => 0, 'page' => $page, 'total_pages' => 0]);
+        return;
+    }
+
+    $where = 'WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE)';
+    $params = [':q' => $qStar];
+    if (!empty($cats)) {
+        $placeholders = implode(',', array_fill(0, count($cats), '?'));
+        $where .= " AND b.category_id IN ($placeholders)";
+        $params = array_merge($params, $cats);
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT bc.bkid, b.title, b.author, b.pages, b.category_name,
+                bc.page AS match_page,
+                LEFT(REPLACE(bc.content, '\n', ' '), 280) AS snippet,
+                MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE) AS rel
+         FROM book_content bc
+         JOIN books b ON b.bkid = bc.bkid
+         $where
+         ORDER BY rel DESC, b.title ASC, bc.page ASC
+         LIMIT :lim OFFSET :off"
+    );
+    $stmt->bindValue(':q', $qStar, PDO::PARAM_STR);
+    foreach ($cats as $idx => $catId) {
+        $stmt->bindValue($idx + 1, $catId, PDO::PARAM_INT);
+    }
+    $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $rows = $stmt->fetchAll();
+
+    $countSql = "SELECT COUNT(*) FROM book_content bc JOIN books b ON b.bkid = bc.bkid $where";
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->bindValue(':q', $qStar, PDO::PARAM_STR);
+    foreach ($cats as $idx => $catId) {
+        $countStmt->bindValue($idx + 1, $catId, PDO::PARAM_INT);
+    }
+    $countStmt->execute();
+    $total = (int)$countStmt->fetchColumn();
 
     echo json_encode([
         'data'        => $rows,
