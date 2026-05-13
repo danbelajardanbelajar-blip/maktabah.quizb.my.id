@@ -111,6 +111,8 @@ try {
         // Admin — CRUD Konten Kitab
         case 'admin_save_content':   requireAdmin(); handleAdminSaveContent();   break;
         case 'admin_delete_content': requireAdmin(); handleAdminDeleteContent(); break;
+        // Admin — Import Word
+        case 'admin_import_book':     requireAdmin(); handleAdminImportBook();     break;
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Unknown action.']);
@@ -654,360 +656,279 @@ function handleSearch(): void {
 
     if (strlen($q) < 2) { echo json_encode($empty); return; }
 
-    $like = '%' . $q . '%';
+    $like  = '%' . $q . '%';
     $qStar = $q . '*';
 
-    // ── 1. KATEGORI ──────────────────────────────────────────
+    // 1. Categories
     $stmtCat = $pdo->prepare(
         "SELECT c.id, c.name, COUNT(b.bkid) AS book_count
          FROM categories c
          LEFT JOIN books b ON b.category_id = c.id
          WHERE c.name LIKE :lk
-         GROUP BY c.id
-         ORDER BY book_count DESC
-         LIMIT 20"
+         GROUP BY c.id ORDER BY book_count DESC LIMIT 20"
     );
     $stmtCat->execute([':lk' => $like]);
     $categories = $stmtCat->fetchAll();
 
-    // ── 2. JUDUL / PENGARANG KITAB ───────────────────────────
+    // 2. Books by title/author
     $bookOffset = ($bookPage - 1) * $limit;
-
     $stmtBooks = $pdo->prepare(
-        "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
-                MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+        "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name
          FROM books b
-         WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
-            OR b.title  LIKE :lk
-            OR b.author LIKE :la
-         ORDER BY rel DESC, b.title ASC
-         LIMIT :lim OFFSET :off"
+         WHERE b.title LIKE :lk OR b.author LIKE :lk2
+         ORDER BY b.bkid DESC LIMIT :lim OFFSET :off"
     );
-    $stmtBooks->bindValue(':q1',  $qStar, PDO::PARAM_STR);
-    $stmtBooks->bindValue(':q2',  $qStar, PDO::PARAM_STR);
-    $stmtBooks->bindValue(':lk',  $like,  PDO::PARAM_STR);
-    $stmtBooks->bindValue(':la',  $like,  PDO::PARAM_STR);
+    $stmtBooks->bindValue(':lk',  $like, PDO::PARAM_STR);
+    $stmtBooks->bindValue(':lk2', $like, PDO::PARAM_STR);
     $stmtBooks->bindValue(':lim', $limit, PDO::PARAM_INT);
     $stmtBooks->bindValue(':off', $bookOffset, PDO::PARAM_INT);
     $stmtBooks->execute();
     $books = $stmtBooks->fetchAll();
 
     $stmtBooksCount = $pdo->prepare(
-        "SELECT COUNT(*) FROM books
-         WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)
-            OR title LIKE :lk OR author LIKE :la"
+        "SELECT COUNT(*) FROM books WHERE title LIKE :lk OR author LIKE :lk2"
     );
-    $stmtBooksCount->execute([':q' => $qStar, ':lk' => $like, ':la' => $like]);
+    $stmtBooksCount->execute([':lk' => $like, ':lk2' => $like]);
     $booksTotal = (int)$stmtBooksCount->fetchColumn();
 
-    // -- cache buku (opsional, tetap berguna) --
-    if ($bookPage === 1 && $booksTotal > 0) {
-        $hash = hash('sha256', 'books:' . strtolower($q));
-        $pdo->prepare(
-            "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
-             VALUES (:h, :qt, :rj, :rc, DATE_ADD(NOW(), INTERVAL 1 HOUR))
-             ON DUPLICATE KEY UPDATE results_json=VALUES(results_json),
-             result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
-        )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($books), ':rc' => $booksTotal]);
-    }
-
-    // ── 3. ISI KITAB (book_content) ──────────────────────────
+    // 3. Content
     $contOffset = ($contPage - 1) * $limit;
-
-    // Ambil buku unik yang isinya cocok, sertakan cuplikan halaman pertama yang cocok
-    $stmtContent = $pdo->prepare(
-        "SELECT b.bkid, b.title, b.author, b.pages, b.category_name,
-                (SELECT bc2.page
-                 FROM book_content bc2
-                 WHERE bc2.bkid = b.bkid
-                   AND (MATCH(bc2.content) AGAINST (:qs1 IN BOOLEAN MODE) OR bc2.content LIKE :ls1)
-                 ORDER BY MATCH(bc2.content) AGAINST (:qs2 IN BOOLEAN MODE) DESC
-                 LIMIT 1) AS match_page,
-                (SELECT LEFT(bc2.content, 260)
-                 FROM book_content bc2
-                 WHERE bc2.bkid = b.bkid
-                   AND (MATCH(bc2.content) AGAINST (:qs3 IN BOOLEAN MODE) OR bc2.content LIKE :ls2)
-                 ORDER BY MATCH(bc2.content) AGAINST (:qs4 IN BOOLEAN MODE) DESC
-                 LIMIT 1) AS snippet
-         FROM books b
-         WHERE EXISTS (
-             SELECT 1 FROM book_content bc
-             WHERE bc.bkid = b.bkid
-               AND (MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE) OR bc.content LIKE :lk)
-         )
-         ORDER BY b.title ASC
+    $stmtCont = $pdo->prepare(
+        "SELECT bc.bkid, bc.match_page, b.title, b.author, b.category_name,
+                LEFT(bc.content_text, 300) AS snippet
+         FROM book_content bc
+         JOIN books b ON b.bkid = bc.bkid
+         WHERE bc.content_text LIKE :lk
+         ORDER BY bc.bkid DESC, bc.match_page ASC
          LIMIT :lim OFFSET :off"
     );
-    $stmtContent->bindValue(':qs1', $qStar, PDO::PARAM_STR);
-    $stmtContent->bindValue(':qs2', $qStar, PDO::PARAM_STR);
-    $stmtContent->bindValue(':qs3', $qStar, PDO::PARAM_STR);
-    $stmtContent->bindValue(':qs4', $qStar, PDO::PARAM_STR);
-    $stmtContent->bindValue(':ls1', $like,  PDO::PARAM_STR);
-    $stmtContent->bindValue(':ls2', $like,  PDO::PARAM_STR);
-    $stmtContent->bindValue(':q',   $qStar, PDO::PARAM_STR);
-    $stmtContent->bindValue(':lk',  $like,  PDO::PARAM_STR);
-    $stmtContent->bindValue(':lim', $limit, PDO::PARAM_INT);
-    $stmtContent->bindValue(':off', $contOffset, PDO::PARAM_INT);
-    $stmtContent->execute();
-    $contentBooks = $stmtContent->fetchAll();
+    $stmtCont->bindValue(':lk',  $like, PDO::PARAM_STR);
+    $stmtCont->bindValue(':lim', $limit, PDO::PARAM_INT);
+    $stmtCont->bindValue(':off', $contOffset, PDO::PARAM_INT);
+    $stmtCont->execute();
+    $content = $stmtCont->fetchAll();
 
     $stmtContCount = $pdo->prepare(
-        "SELECT COUNT(DISTINCT bc.bkid) FROM book_content bc
-         WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE) OR bc.content LIKE :lk"
+        "SELECT COUNT(*) FROM book_content WHERE content_text LIKE :lk"
     );
-    $stmtContCount->execute([':q' => $qStar, ':lk' => $like]);
+    $stmtContCount->execute([':lk' => $like]);
     $contTotal = (int)$stmtContCount->fetchColumn();
 
-    // ── Respon ───────────────────────────────────────────────
     echo json_encode([
         'query'      => $q,
         'categories' => $categories,
         'books'      => [
-            'data'        => $books,
-            'total'       => $booksTotal,
-            'page'        => $bookPage,
-            'total_pages' => (int)ceil($booksTotal / $limit),
+            'data' => $books, 'total' => $booksTotal,
+            'page' => $bookPage, 'total_pages' => (int)ceil($booksTotal / $limit),
         ],
         'content'    => [
-            'data'        => $contentBooks,
-            'total'       => $contTotal,
-            'page'        => $contPage,
-            'total_pages' => (int)ceil($contTotal / $limit),
+            'data' => $content, 'total' => $contTotal,
+            'page' => $contPage, 'total_pages' => (int)ceil($contTotal / $limit),
         ],
     ]);
 }
 
 // =============================================================
-// 5. LATEST — recent additions for Hero section
+// ADMIN — Simpan / Update Kitab
 // =============================================================
-function handleLatest(): void {
-    $pdo   = getPDO();
-    $limit = min(12, max(1, (int)($_GET['limit'] ?? 8)));
-    $stmt  = $pdo->prepare(
-        "SELECT bkid, title, author, pages, iso, category_name
-         FROM books ORDER BY bkid DESC LIMIT :lim"
-    );
-    $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
-    $stmt->execute();
-    echo json_encode(['data' => $stmt->fetchAll()]);
-}
-
-// =============================================================
-//  AUTH — kembalikan data user session saat ini
-// =============================================================
-function handleAuthMe(): void {
-    header('Cache-Control: no-store');
-    $user = getSessionUser();
-    if ($user) {
-        echo json_encode(['loggedIn' => true, 'user' => $user]);
-    } else {
-        echo json_encode(['loggedIn' => false]);
-    }
-}
-
-// =============================================================
-//  ADMIN — CRUD KITAB
-// =============================================================
-
-/** Tambah atau edit kitab. POST body: title, author, pages, iso, category_id, [bkid] */
 function handleAdminSaveBook(): void {
     $pdo  = getPDO();
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $bkid   = (int)($data['bkid']        ?? 0);
+    $title  = trim($data['title']        ?? '');
+    $author = trim($data['author']       ?? '');
+    $catId  = (int)($data['category_id'] ?? 0);
+    $iso    = $data['iso'] ?? 'ar';
 
-    $title      = trim($data['title']       ?? '');
-    $author     = trim($data['author']      ?? '');
-    $pages      = (int)($data['pages']      ?? 0);
-    $iso        = trim($data['iso']         ?? 'ar');
-    $categoryId = (int)($data['category_id'] ?? 0);
-    $bkid       = isset($data['bkid']) ? (int)$data['bkid'] : 0;
+    if (!$title) { http_response_code(400); echo json_encode(['error' => 'Judul wajib diisi.']); return; }
 
-    if (!$title) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Judul kitab tidak boleh kosong.']);
-        return;
-    }
-
-    // Ambil nama kategori
     $catName = '';
-    if ($categoryId > 0) {
+    if ($catId) {
         $cs = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
-        $cs->execute([':id' => $categoryId]);
-        $catName = (string)($cs->fetchColumn() ?: '');
+        $cs->execute([':id' => $catId]);
+        $catName = $cs->fetchColumn() ?: '';
     }
 
-    if ($bkid > 0) {
-        // UPDATE
+    if ($bkid) {
         $stmt = $pdo->prepare(
-            "UPDATE books SET title=:t, author=:a, pages=:p, iso=:i,
-                              category_id=:cid, category_name=:cname
-             WHERE bkid=:id"
+            "UPDATE books SET title=:title, author=:author, category_id=:catid,
+             category_name=:catname, iso=:iso WHERE bkid=:bkid"
         );
         $stmt->execute([
-            ':t'     => $title,
-            ':a'     => $author,
-            ':p'     => $pages,
-            ':i'     => $iso,
-            ':cid'   => $categoryId ?: null,
-            ':cname' => $catName,
-            ':id'    => $bkid,
+            ':title'   => $title,  ':author'  => $author,
+            ':catid'   => $catId ?: null, ':catname' => $catName,
+            ':iso'     => $iso,    ':bkid'    => $bkid,
         ]);
-        echo json_encode(['success' => true, 'bkid' => $bkid, 'action' => 'updated']);
+        echo json_encode(['success' => true, 'bkid' => $bkid]);
     } else {
-        // INSERT
         $stmt = $pdo->prepare(
-            "INSERT INTO books (title, author, pages, iso, category_id, category_name)
-             VALUES (:t, :a, :p, :i, :cid, :cname)"
+            "INSERT INTO books (title, author, category_id, category_name, iso, pages)
+             VALUES (:title, :author, :catid, :catname, :iso, 0)"
         );
         $stmt->execute([
-            ':t'     => $title,
-            ':a'     => $author,
-            ':p'     => $pages,
-            ':i'     => $iso,
-            ':cid'   => $categoryId ?: null,
-            ':cname' => $catName,
+            ':title'   => $title, ':author'  => $author,
+            ':catid'   => $catId ?: null, ':catname' => $catName,
+            ':iso'     => $iso,
         ]);
-        $newId = (int)$pdo->lastInsertId();
-        echo json_encode(['success' => true, 'bkid' => $newId, 'action' => 'created']);
+        echo json_encode(['success' => true, 'bkid' => (int)$pdo->lastInsertId()]);
     }
 }
 
-/** Hapus kitab beserta seluruh isinya */
+// =============================================================
+// ADMIN — Hapus Kitab (cascade ke book_content)
+// =============================================================
 function handleAdminDeleteBook(): void {
     $pdo  = getPDO();
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $bkid = (int)($data['bkid'] ?? 0);
-
-    if ($bkid <= 0) {
-        http_response_code(400);
-        echo json_encode(['error' => 'bkid tidak valid.']);
-        return;
-    }
-
-    $pdo->prepare("DELETE FROM book_content WHERE bkid = :id")->execute([':id' => $bkid]);
-    $pdo->prepare("DELETE FROM books WHERE bkid = :id")->execute([':id' => $bkid]);
-
-    echo json_encode(['success' => true, 'deleted_bkid' => $bkid]);
+    if (!$bkid) { http_response_code(400); echo json_encode(['error' => 'bkid wajib diisi.']); return; }
+    $pdo->prepare("DELETE FROM book_content WHERE bkid = :bkid")->execute([':bkid' => $bkid]);
+    $pdo->prepare("DELETE FROM books WHERE bkid = :bkid")->execute([':bkid' => $bkid]);
+    echo json_encode(['success' => true]);
 }
 
 // =============================================================
-//  ADMIN — CRUD KATEGORI
+// ADMIN — Simpan / Update Kategori
 // =============================================================
-
-/** Tambah atau edit kategori. POST body: name, catord, lvl, [id] */
 function handleAdminSaveCategory(): void {
     $pdo  = getPDO();
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $id     = (int)($data['id']   ?? 0);
+    $name   = trim($data['name']  ?? '');
+    $ord    = (int)($data['catord'] ?? 0);
+    $level  = (int)($data['lvl']  ?? 0);
+    if (!$name) { http_response_code(400); echo json_encode(['error' => 'Nama kategori wajib diisi.']); return; }
 
-    $name   = trim($data['name']   ?? '');
-    $catord = (int)($data['catord'] ?? 0);
-    $lvl    = (int)($data['lvl']    ?? 1);
-    $id     = isset($data['id']) ? (int)$data['id'] : 0;
-
-    if (!$name) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Nama kategori tidak boleh kosong.']);
-        return;
-    }
-
-    if ($id > 0) {
-        $pdo->prepare("UPDATE categories SET name=:n, catord=:o, lvl=:l WHERE id=:id")
-            ->execute([':n' => $name, ':o' => $catord, ':l' => $lvl, ':id' => $id]);
-        // Sync category_name di tabel books
-        $pdo->prepare("UPDATE books SET category_name=:n WHERE category_id=:id")
-            ->execute([':n' => $name, ':id' => $id]);
-        echo json_encode(['success' => true, 'id' => $id, 'action' => 'updated']);
+    if ($id) {
+        $pdo->prepare("UPDATE categories SET name=:name, catord=:ord, level=:lvl WHERE id=:id")
+            ->execute([':name' => $name, ':ord' => $ord, ':lvl' => $level, ':id' => $id]);
+        echo json_encode(['success' => true, 'id' => $id]);
     } else {
-        $pdo->prepare("INSERT INTO categories (name, catord, lvl) VALUES (:n, :o, :l)")
-            ->execute([':n' => $name, ':o' => $catord, ':l' => $lvl]);
-        $newId = (int)$pdo->lastInsertId();
-        echo json_encode(['success' => true, 'id' => $newId, 'action' => 'created']);
+        $pdo->prepare("INSERT INTO categories (name, catord, level) VALUES (:name, :ord, :lvl)")
+            ->execute([':name' => $name, ':ord' => $ord, ':lvl' => $level]);
+        echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
     }
 }
 
-/** Hapus kategori (kitab dalam kategori menjadi tidak berkategori) */
+// =============================================================
+// ADMIN — Hapus Kategori
+// =============================================================
 function handleAdminDeleteCategory(): void {
     $pdo  = getPDO();
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $id   = (int)($data['id'] ?? 0);
-
-    if ($id <= 0) {
-        http_response_code(400);
-        echo json_encode(['error' => 'ID kategori tidak valid.']);
-        return;
-    }
-
-    // Lepas relasi di books dulu
-    $pdo->prepare("UPDATE books SET category_id=NULL, category_name='' WHERE category_id=:id")
+    if (!$id) { http_response_code(400); echo json_encode(['error' => 'id wajib diisi.']); return; }
+    $pdo->prepare("UPDATE books SET category_id = NULL, category_name = '' WHERE category_id = :id")
         ->execute([':id' => $id]);
-    $pdo->prepare("DELETE FROM categories WHERE id=:id")->execute([':id' => $id]);
-
-    echo json_encode(['success' => true, 'deleted_id' => $id]);
+    $pdo->prepare("DELETE FROM categories WHERE id = :id")->execute([':id' => $id]);
+    echo json_encode(['success' => true]);
 }
 
 // =============================================================
-//  ADMIN — CRUD KONTEN KITAB
+// ADMIN — Simpan Konten Halaman
 // =============================================================
-
-/** Simpan/update halaman konten. POST body: bkid, page, content */
 function handleAdminSaveContent(): void {
     $pdo  = getPDO();
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
-
     $bkid    = (int)($data['bkid']    ?? 0);
     $page    = (int)($data['page']    ?? 0);
     $content = $data['content'] ?? '';
-
-    if ($bkid <= 0 || $page <= 0) {
-        http_response_code(400);
-        echo json_encode(['error' => 'bkid dan page harus valid.']);
-        return;
-    }
-
-    // Cek kitab ada
-    $bs = $pdo->prepare("SELECT bkid FROM books WHERE bkid=:id LIMIT 1");
-    $bs->execute([':id' => $bkid]);
-    if (!$bs->fetch()) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Kitab tidak ditemukan.']);
-        return;
-    }
+    if (!$bkid || !$page) { http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return; }
 
     $pdo->prepare(
-        "INSERT INTO book_content (bkid, page, content)
-         VALUES (:b, :p, :c)
-         ON DUPLICATE KEY UPDATE content = VALUES(content)"
-    )->execute([':b' => $bkid, ':p' => $page, ':c' => $content]);
+        "INSERT INTO book_content (bkid, match_page, content_text)
+         VALUES (:bkid, :page, :content)
+         ON DUPLICATE KEY UPDATE content_text = VALUES(content_text)"
+    )->execute([':bkid' => $bkid, ':page' => $page, ':content' => $content]);
 
-    // Update kolom pages di books agar sesuai jumlah konten
-    $pdo->prepare(
-        "UPDATE books SET pages = (SELECT COUNT(*) FROM book_content WHERE bkid=:b) WHERE bkid=:b2"
-    )->execute([':b' => $bkid, ':b2' => $bkid]);
+    // Sync halaman count di tabel books
+    $cnt = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :bkid");
+    $cnt->execute([':bkid' => $bkid]);
+    $pdo->prepare("UPDATE books SET pages = :pages WHERE bkid = :bkid")
+        ->execute([':pages' => (int)$cnt->fetchColumn(), ':bkid' => $bkid]);
 
-    echo json_encode(['success' => true, 'bkid' => $bkid, 'page' => $page]);
+    echo json_encode(['success' => true]);
 }
 
-/** Hapus satu halaman konten. POST body: bkid, page */
+// =============================================================
+// ADMIN — Hapus Konten Halaman
+// =============================================================
 function handleAdminDeleteContent(): void {
     $pdo  = getPDO();
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
-
     $bkid = (int)($data['bkid'] ?? 0);
     $page = (int)($data['page'] ?? 0);
+    if (!$bkid || !$page) { http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return; }
 
-    if ($bkid <= 0 || $page <= 0) {
-        http_response_code(400);
-        echo json_encode(['error' => 'bkid dan page harus valid.']);
-        return;
-    }
+    $pdo->prepare("DELETE FROM book_content WHERE bkid = :bkid AND match_page = :page")
+        ->execute([':bkid' => $bkid, ':page' => $page]);
 
-    $pdo->prepare("DELETE FROM book_content WHERE bkid=:b AND page=:p")
-        ->execute([':b' => $bkid, ':p' => $page]);
+    $cnt = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :bkid");
+    $cnt->execute([':bkid' => $bkid]);
+    $pdo->prepare("UPDATE books SET pages = :pages WHERE bkid = :bkid")
+        ->execute([':pages' => (int)$cnt->fetchColumn(), ':bkid' => $bkid]);
 
-    // Sinkronisasi jumlah halaman
-    $pdo->prepare(
-        "UPDATE books SET pages = (SELECT COUNT(*) FROM book_content WHERE bkid=:b) WHERE bkid=:b2"
-    )->execute([':b' => $bkid, ':b2' => $bkid]);
-
-    echo json_encode(['success' => true, 'deleted' => ['bkid' => $bkid, 'page' => $page]]);
+    echo json_encode(['success' => true]);
 }
 
+// =============================================================
+// ADMIN — Import Kitab dari Word (bulk insert)
+// =============================================================
+function handleAdminImportBook(): void {
+    $pdo  = getPDO();
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+    $title   = trim($data['title']   ?? '');
+    $author  = trim($data['author']  ?? '');
+    $catId   = (int)($data['category_id'] ?? 0);
+    $iso     = $data['iso'] ?? 'ar';
+    $pages   = $data['pages'] ?? [];   // array of strings (satu per halaman)
+
+    if (!$title)        { http_response_code(400); echo json_encode(['error' => 'Judul wajib diisi.']); return; }
+    if (empty($pages))  { http_response_code(400); echo json_encode(['error' => 'Tidak ada halaman untuk diimpor.']); return; }
+
+    $catName = '';
+    if ($catId) {
+        $cs = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
+        $cs->execute([':id' => $catId]);
+        $catName = $cs->fetchColumn() ?: '';
+    }
+
+    $pdo->beginTransaction();
+    try {
+        // Buat record kitab
+        $stmtBook = $pdo->prepare(
+            "INSERT INTO books (title, author, category_id, category_name, iso, pages)
+             VALUES (:title, :author, :catid, :catname, :iso, :pages)"
+        );
+        $stmtBook->execute([
+            ':title'   => $title,
+            ':author'  => $author,
+            ':catid'   => $catId ?: null,
+            ':catname' => $catName,
+            ':iso'     => $iso,
+            ':pages'   => count($pages),
+        ]);
+        $bkid = (int)$pdo->lastInsertId();
+
+        // Insert semua halaman
+        $stmtPage = $pdo->prepare(
+            "INSERT INTO book_content (bkid, match_page, content_text)
+             VALUES (:bkid, :page, :content)"
+        );
+        foreach ($pages as $i => $pageText) {
+            $stmtPage->execute([
+                ':bkid'    => $bkid,
+                ':page'    => $i + 1,
+                ':content' => $pageText,
+            ]);
+        }
+
+        $pdo->commit();
+        echo json_encode(['success' => true, 'bkid' => $bkid, 'pages_imported' => count($pages)]);
+    } catch (\Exception $e) {
+        $pdo->rollBack();
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+}
