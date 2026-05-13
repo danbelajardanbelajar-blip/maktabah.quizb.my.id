@@ -416,18 +416,45 @@ function bookModalHtml() {
 }
 
 /* ── openBookModal ───────────────────────────────────────── */
-window.openBookModal = function(book) {
-  if (typeof book === 'number' || (typeof book === 'string' && !isNaN(book))) {
-    book = _booksMap.get(+book) || null;
-  }
-  const form = document.getElementById('bk-form');
+// Jika dipanggil dengan ID (angka), fetch data segar dari API
+// Jika dipanggil dengan null, buka form kosong (Tambah)
+window.openBookModal = async function(bookOrId) {
+  const modal = document.getElementById('bk-modal');
+  const form  = document.getElementById('bk-form');
+  const btn   = document.getElementById('bk-submit-btn');
+  const msg   = document.getElementById('bm-msg');
+
+  // Tampilkan modal segera dengan spinner agar tidak terasa lag
   if (form) form.reset();
   document.getElementById('bm-bkid').value = '';
+  if (msg) msg.className = 'hidden text-sm rounded-xl px-4 py-2.5';
+  modal.classList.remove('hidden');
 
-  const isEdit = !!book;
-  document.getElementById('bk-modal-ttl').textContent = isEdit ? 'Edit Kitab' : 'Tambah Kitab Baru';
+  const isEdit = bookOrId !== null && bookOrId !== undefined;
 
   if (isEdit) {
+    // Tunjukkan loading sementara fetch
+    document.getElementById('bk-modal-ttl').textContent = 'Memuat data…';
+    if (btn) btn.disabled = true;
+
+    let book = null;
+    try {
+      // Fetch langsung dari API — tidak bergantung pada cache/map
+      const res = await apiFetch({ action: 'book', id: +bookOrId });
+      book = res.data || null;
+    } catch(e) {
+      document.getElementById('bk-modal-ttl').textContent = 'Gagal memuat data';
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    if (!book) {
+      document.getElementById('bk-modal-ttl').textContent = 'Kitab tidak ditemukan';
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    document.getElementById('bk-modal-ttl').textContent = 'Edit Kitab';
     document.getElementById('bm-bkid').value   = book.bkid   ?? '';
     document.getElementById('bm-title').value  = book.title  ?? '';
     document.getElementById('bm-author').value = book.author ?? '';
@@ -435,17 +462,18 @@ window.openBookModal = function(book) {
     if (isoEl) isoEl.value = book.iso || 'ar';
     const catEl = document.getElementById('bm-cat');
     if (catEl) catEl.value = book.category_id ? String(book.category_id) : '';
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan Perubahan';
+    }
+  } else {
+    document.getElementById('bk-modal-ttl').textContent = 'Tambah Kitab Baru';
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="plus" class="w-4 h-4"></i> Tambah Kitab';
+    }
   }
 
-  const msg = document.getElementById('bm-msg');
-  if (msg) msg.className = 'hidden text-sm rounded-xl px-4 py-2.5';
-
-  const btn = document.getElementById('bk-submit-btn');
-  if (btn) btn.innerHTML = isEdit
-    ? '<i data-lucide="save" class="w-4 h-4"></i> Simpan Perubahan'
-    : '<i data-lucide="plus" class="w-4 h-4"></i> Tambah Kitab';
-
-  document.getElementById('bk-modal').classList.remove('hidden');
   setTimeout(() => document.getElementById('bm-title')?.focus(), 60);
   reicons();
 };
