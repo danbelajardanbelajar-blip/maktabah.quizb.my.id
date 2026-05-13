@@ -531,6 +531,7 @@ async function execAdvancedSearch() {
       : `<div class="text-center py-20 text-primary/40">Maaf, tidak ditemukan halaman yang cocok dengan kata kunci dan kategori yang dipilih.</div>`;
     reicons();
   } catch (err) {
+    console.error('Advanced search API error:', err, 'Params:', params);
     wrap.innerHTML = `<p class="text-center py-20 text-sm text-red-500">Gagal memuat hasil pencarian. Silakan coba lagi.</p>`;
     if (stats) stats.textContent = '';
   }

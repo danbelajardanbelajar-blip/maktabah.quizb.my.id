@@ -71,22 +71,7 @@ function booleanSearchTermForAdvanced(string $q): string {
     if ($q === '') {
         return '';
     }
-    if (isPhraseQuery($q)) {
-        return '"' . ftEscape(searchPhraseText($q)) . '"';
-    }
-    if (preg_match('/\s+/u', $q)) {
-        return '"' . ftEscape($q) . '"';
-    }
-    $terms = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
-    $parts = [];
-    foreach ($terms as $term) {
-        $term = ftEscape($term);
-        if ($term === '') {
-            continue;
-        }
-        $parts[] = '+' . $term . '*';
-    }
-    return $parts ? implode(' ', $parts) : '';
+    return '+' . ftEscape($q) . '*';
 }
 
 function booleanSearchQueryFromFields(array $fields): string {
@@ -575,53 +560,71 @@ function handleSearchAdvanced(): void {
         return;
     }
 
-    $where = 'WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE)';
-    $params = [':q' => $qStar];
-    
-    if (!empty($cats)) {
-        $catPlaceholders = [];
-        foreach ($cats as $idx => $catId) {
-            $paramKey = ':cat' . ($idx + 1);
-            $catPlaceholders[] = $paramKey;
-            $params[$paramKey] = $catId;
-        }
-        $where .= ' AND b.category_id IN (' . implode(',', $catPlaceholders) . ')';
-    }
-
     $sql = "SELECT bc.bkid, b.title, b.author, b.pages, b.category_name,
                 bc.page AS match_page,
-                LEFT(REPLACE(bc.content, '\n', ' '), 280) AS snippet,
+                LEFT(REPLACE(REPLACE(bc.content, '\n', ' '), '\r', ' '), 280) AS snippet,
                 MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE) AS rel
          FROM book_content bc
          JOIN books b ON b.bkid = bc.bkid
-         $where
-         ORDER BY rel DESC, b.title ASC, bc.page ASC
-         LIMIT :lim OFFSET :off";
+         WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE)";
+    
+    $params = [':q' => $qStar];
+    
+    if (!empty($cats)) {
+        $placeholders = array_fill(0, count($cats), '?');
+        $sql .= ' AND b.category_id IN (' . implode(',', $placeholders) . ')';
+    }
+    
+    $sql .= " ORDER BY rel DESC, b.title ASC, bc.page ASC LIMIT ? OFFSET ?";
     
     $stmt = $pdo->prepare($sql);
-    foreach ($params as $key => $value) {
-        if ($key === ':q') {
-            $stmt->bindValue($key, $value, PDO::PARAM_STR);
-        } else {
-            $stmt->bindValue($key, $value, PDO::PARAM_INT);
+    $stmt->bindValue(':q', $qStar, PDO::PARAM_STR);
+    
+    $bindIdx = 1;
+    if (!empty($cats)) {
+        foreach ($cats as $catId) {
+            $stmt->bindValue($bindIdx, $catId, PDO::PARAM_INT);
+            $bindIdx += 1;
         }
     }
-    $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
-    $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
-    $stmt->execute();
-    $rows = $stmt->fetchAll();
+    $stmt->bindValue($bindIdx, $limit, PDO::PARAM_INT);
+    $stmt->bindValue($bindIdx + 1, $offset, PDO::PARAM_INT);
+    
+    try {
+        $stmt->execute();
+        $rows = $stmt->fetchAll();
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Search query failed: ' . $e->getMessage()]);
+        return;
+    }
 
-    $countSql = "SELECT COUNT(*) FROM book_content bc JOIN books b ON b.bkid = bc.bkid $where";
+    $countSql = "SELECT COUNT(*) FROM book_content bc 
+                 JOIN books b ON b.bkid = bc.bkid
+                 WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE)";
+    
+    if (!empty($cats)) {
+        $placeholders = array_fill(0, count($cats), '?');
+        $countSql .= ' AND b.category_id IN (' . implode(',', $placeholders) . ')';
+    }
+    
     $countStmt = $pdo->prepare($countSql);
-    foreach ($params as $key => $value) {
-        if ($key === ':q') {
-            $countStmt->bindValue($key, $value, PDO::PARAM_STR);
-        } else {
-            $countStmt->bindValue($key, $value, PDO::PARAM_INT);
+    $countStmt->bindValue(':q', $qStar, PDO::PARAM_STR);
+    
+    $bindIdx = 1;
+    if (!empty($cats)) {
+        foreach ($cats as $catId) {
+            $countStmt->bindValue($bindIdx, $catId, PDO::PARAM_INT);
+            $bindIdx += 1;
         }
     }
-    $countStmt->execute();
-    $total = (int)$countStmt->fetchColumn();
+    
+    try {
+        $countStmt->execute();
+        $total = (int)$countStmt->fetchColumn();
+    } catch (Exception $e) {
+        $total = 0;
+    }
 
     echo json_encode([
         'data'        => $rows,
