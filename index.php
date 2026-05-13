@@ -433,8 +433,9 @@ $sessionUser = $_SESSION['user'] ?? null;
           <button id="nav-search-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Cari Kitab">
             <i data-lucide="search" class="w-5 h-5 text-primary"></i>
           </button>
-          <button id="nav-font-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Pengaturan Font">
-            <i data-lucide="settings-2" class="w-5 h-5 text-primary"></i>
+          <button id="nav-theme-btn" onclick="window.setTheme(document.documentElement.classList.contains('dark')?'light':'dark')"
+            class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Ganti Tema">
+            <i id="nav-theme-icon" data-lucide="sun" class="w-5 h-5 text-primary"></i>
           </button>
 
           <?php if ($sessionUser): ?>
@@ -740,11 +741,18 @@ $sessionUser = $_SESSION['user'] ?? null;
 
       function _applySettings(save = true) {
         // Theme
-        document.documentElement.classList.toggle('dark', _settings.theme === 'dark');
+        const isDark = _settings.theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
         const lBtn = document.getElementById('sdw-theme-light');
         const dBtn = document.getElementById('sdw-theme-dark');
-        if (lBtn) lBtn.classList.toggle('active', _settings.theme === 'light');
-        if (dBtn) dBtn.classList.toggle('active', _settings.theme === 'dark');
+        if (lBtn) lBtn.classList.toggle('active', !isDark);
+        if (dBtn) dBtn.classList.toggle('active', isDark);
+        // Update navbar theme icon: sun = terang aktif, moon = gelap aktif
+        const themeIcon = document.getElementById('nav-theme-icon');
+        if (themeIcon) {
+          themeIcon.setAttribute('data-lucide', isDark ? 'moon' : 'sun');
+          lucide.createIcons({ nodes: [themeIcon] });
+        }
         // Sync with app.js readerFontState if available
         if (window.readerFontState) {
           window.readerFontState.latin  = _settings.latin;
@@ -826,10 +834,9 @@ $sessionUser = $_SESSION['user'] ?? null;
       _applySettings(false);
 
       // Wire nav settings buttons
-      ['nav-font-btn', 'bnav-font-btn'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', () => window.openSettings());
-      });
+      // bnav-font-btn (bottom nav) → buka settings drawer
+      const _bnavFont = document.getElementById('bnav-font-btn');
+      if (_bnavFont) _bnavFont.addEventListener('click', () => window.openSettings());
 
       // Keyboard: Escape closes drawer
       document.addEventListener('keydown', e => {
