@@ -577,14 +577,18 @@ function handleSearchAdvanced(): void {
 
     $where = 'WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE)';
     $params = [':q' => $qStar];
+    
     if (!empty($cats)) {
-        $placeholders = implode(',', array_fill(0, count($cats), '?'));
-        $where .= " AND b.category_id IN ($placeholders)";
-        $params = array_merge($params, $cats);
+        $catPlaceholders = [];
+        foreach ($cats as $idx => $catId) {
+            $paramKey = ':cat' . ($idx + 1);
+            $catPlaceholders[] = $paramKey;
+            $params[$paramKey] = $catId;
+        }
+        $where .= ' AND b.category_id IN (' . implode(',', $catPlaceholders) . ')';
     }
 
-    $stmt = $pdo->prepare(
-        "SELECT bc.bkid, b.title, b.author, b.pages, b.category_name,
+    $sql = "SELECT bc.bkid, b.title, b.author, b.pages, b.category_name,
                 bc.page AS match_page,
                 LEFT(REPLACE(bc.content, '\n', ' '), 280) AS snippet,
                 MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE) AS rel
@@ -592,11 +596,15 @@ function handleSearchAdvanced(): void {
          JOIN books b ON b.bkid = bc.bkid
          $where
          ORDER BY rel DESC, b.title ASC, bc.page ASC
-         LIMIT :lim OFFSET :off"
-    );
-    $stmt->bindValue(':q', $qStar, PDO::PARAM_STR);
-    foreach ($cats as $idx => $catId) {
-        $stmt->bindValue($idx + 1, $catId, PDO::PARAM_INT);
+         LIMIT :lim OFFSET :off";
+    
+    $stmt = $pdo->prepare($sql);
+    foreach ($params as $key => $value) {
+        if ($key === ':q') {
+            $stmt->bindValue($key, $value, PDO::PARAM_STR);
+        } else {
+            $stmt->bindValue($key, $value, PDO::PARAM_INT);
+        }
     }
     $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
@@ -605,9 +613,12 @@ function handleSearchAdvanced(): void {
 
     $countSql = "SELECT COUNT(*) FROM book_content bc JOIN books b ON b.bkid = bc.bkid $where";
     $countStmt = $pdo->prepare($countSql);
-    $countStmt->bindValue(':q', $qStar, PDO::PARAM_STR);
-    foreach ($cats as $idx => $catId) {
-        $countStmt->bindValue($idx + 1, $catId, PDO::PARAM_INT);
+    foreach ($params as $key => $value) {
+        if ($key === ':q') {
+            $countStmt->bindValue($key, $value, PDO::PARAM_STR);
+        } else {
+            $countStmt->bindValue($key, $value, PDO::PARAM_INT);
+        }
     }
     $countStmt->execute();
     $total = (int)$countStmt->fetchColumn();
