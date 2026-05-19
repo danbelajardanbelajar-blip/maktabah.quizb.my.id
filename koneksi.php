@@ -5,8 +5,8 @@
 
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'quic1934_maktabah');
-define('DB_USER', 'quic1934_maktabah');
-define('DB_PASS', '[MASUKKAN_PASSWORD_ANDA_DI_SINI]');
+define('DB_USER', 'quic1934_zenhkm');
+define('DB_PASS', '03Maret1990');
 define('DB_CHARSET', 'utf8mb4');
 
 function getPDO(): PDO {

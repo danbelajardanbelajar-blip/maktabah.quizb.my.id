@@ -53,3 +53,4 @@ composer.lock
 *.sql.gz
 *.sql.zip
 *_backup.sql
+auth.php

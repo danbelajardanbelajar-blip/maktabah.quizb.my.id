@@ -1425,7 +1425,7 @@ function renderAbout() {
 // ══════════════════════════════════════════════════════════════
 function renderPrivacy() {
   const LAST_UPDATED = '13 Mei 2026';
-  const SITE_URL     = 'https://lib.quizb.my.id';
+  const SITE_URL     = 'https://maktabah.quizb.my.id';
   const CONTACT      = 'admin@quizb.my.id';
 
   app().innerHTML = `
