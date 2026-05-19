@@ -8,6 +8,8 @@ $sessionUser = $_SESSION['user'] ?? null;
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="المكتبة السنية — perpustakaan digital Islam memuat ribuan kitab salaf." />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
   <title>المكتبة السنية — Al-Maktabah As-Sunniyyah</title>
 
   <!-- Tailwind CSS CDN -->
