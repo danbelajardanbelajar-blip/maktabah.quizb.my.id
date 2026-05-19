@@ -498,7 +498,7 @@ $sessionUser = $_SESSION['user'] ?? null;
           <?php else: ?>
             <!-- Login button (not logged in) -->
             <a href="/auth.php?action=login"
-               class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-light transition-colors shadow-sm">
+               class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-light transition-colors shadow-sm">
               <i data-lucide="log-in" class="w-4 h-4"></i>
               <span>Masuk</span>
             </a>
