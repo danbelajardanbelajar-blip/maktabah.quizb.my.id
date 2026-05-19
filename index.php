@@ -108,8 +108,6 @@ $sessionUser = $_SESSION['user'] ?? null;
     @media (max-width: 767px) {
       #navbar,
       #search-bar,
-      #settings-drawer,
-      #settings-overlay,
       #font-modal-overlay,
       footer {
         display: none !important;
