@@ -48,7 +48,7 @@ $sessionUser = $_SESSION['user'] ?? null;
     html { scroll-behavior: smooth; }
     body { font-family: 'Lato', sans-serif; background: #faf8f3; color: #1c1c1e; }
 
-    .arabic { font-family: 'Amiri', 'Noto Naskh Arabic', serif; direction: rtl; }
+    .arabic { font-family: 'Amiri', 'Noto Naskh Arabic', serif; direction: rtl; unicode-bidi: plaintext; }
 
     /* Navbar scroll shadow */
     #navbar { transition: box-shadow .25s ease, background .25s ease; }
