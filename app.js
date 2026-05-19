@@ -91,6 +91,7 @@ function navigate(path, push = true) {
   app().innerHTML = '';
   handler(new URLSearchParams(path.includes('?') ? path.split('?')[1] : ''));
   setActiveNav(base);
+  updateReaderMenus(base);
   window.scrollTo({ top: 0, behavior: 'smooth' });
   reicons();
 }
@@ -119,6 +120,12 @@ function setActiveNav(base) {
     const isActive = route === base || (base === '/search' && route === '/search');
     a.classList.toggle('active', isActive);
   });
+}
+
+function updateReaderMenus(base) {
+  const hide = base === '/kitab';
+  $('#bottom-nav')?.classList.toggle('reader-hide-menu', hide);
+  $('#navbar')?.classList.toggle('reader-hide-menu', hide);
 }
 
 // ── Navbar behaviours ─────────────────────────────────────────

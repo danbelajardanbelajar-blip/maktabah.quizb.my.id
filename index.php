@@ -100,6 +100,13 @@ $sessionUser = $_SESSION['user'] ?? null;
       /* iOS safe area */
       padding-bottom: env(safe-area-inset-bottom);
     }
+    .reader-hide-menu {
+      display: none !important;
+    }
+    @media (min-width: 768px) {
+      /* Keep top navbar visible on desktop even when reader mode is active */
+      #navbar.reader-hide-menu { display: block !important; }
+    }
     .bnav-item {
       color: #1a3a2a;
       opacity: .4;
