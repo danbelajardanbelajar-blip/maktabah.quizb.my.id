@@ -1085,7 +1085,7 @@ async function renderDetail(params) {
               <span id="reader-label" class="text-xs text-primary/40"></span>
               <button id="reader-next"
                 class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-light disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                Berikutnya <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                Berikutnya <i data-lucide="chevron-right" class="w-4 h-4"></i>
               </button>
             </div>
 
