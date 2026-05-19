@@ -441,9 +441,7 @@ $sessionUser = $_SESSION['user'] ?? null;
 
         <!-- Logo -->
         <a href="/" data-route="/" class="flex items-center gap-3 group">
-          <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-md group-hover:bg-primary-light transition-colors">
-            <span class="text-gold arabic text-sm font-bold">م</span>
-          </div>
+          <img src="/favicon.png" alt="Al-Maktabah As-Sunniyyah Logo" class="w-9 h-9 rounded-lg shadow-md group-hover:shadow-lg transition-shadow" />
           <div class="leading-tight">
             <div class="arabic text-primary font-bold text-base leading-none">المكتبة السنية</div>
             <div class="text-xs text-primary/60 font-light tracking-wide">Al-Maktabah As-Sunniyyah</div>
