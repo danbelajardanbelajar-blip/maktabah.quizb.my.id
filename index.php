@@ -626,7 +626,7 @@ $sessionUser = $_SESSION['user'] ?? null;
         <div>
           <h4 class="text-gold text-sm font-semibold uppercase tracking-wider mb-4">Info</h4>
           <ul class="space-y-2 text-sm text-white/70">
-            <li class="flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-gold/60"></i> lib.quizb.my.id</li>
+            <li class="flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-gold/60"></i> maktabah.quizb.my.id</li>
             <li class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> Ribuan Kitab Tersedia</li>
           </ul>
         </div>

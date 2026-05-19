@@ -1365,7 +1365,7 @@ function renderAbout() {
           <h2 class="text-primary font-bold text-base mb-3 flex items-center gap-2">
             <i data-lucide="globe" class="w-4 h-4 text-gold"></i> Kontak & Akses
           </h2>
-          <p class="mb-4">Anda dapat mengakses perpustakaan ini di: <a href="https://lib.quizb.my.id" class="text-gold hover:underline font-medium">lib.quizb.my.id</a></p>
+          <p class="mb-4">Anda dapat mengakses perpustakaan ini di: <a href="https://maktabah.quizb.my.id" class="text-gold hover:underline font-medium">maktabah.quizb.my.id</a></p>
 
           <!-- Founder & Developer cards -->
           <div class="grid sm:grid-cols-2 gap-4 mt-4">
