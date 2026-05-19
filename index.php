@@ -103,6 +103,27 @@ $sessionUser = $_SESSION['user'] ?? null;
     .reader-hide-menu {
       display: none !important;
     }
+    @media (max-width: 767px) {
+      #navbar,
+      #bottom-nav,
+      #search-bar,
+      #settings-drawer,
+      #settings-overlay,
+      #font-modal-overlay,
+      footer {
+        display: none !important;
+      }
+      body {
+        min-height: 100vh;
+      }
+      main#app-content {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+      }
+      #app-content {
+        min-height: 100vh;
+      }
+    }
     @media (min-width: 768px) {
       /* Keep top navbar visible on desktop even when reader mode is active */
       #navbar.reader-hide-menu { display: block !important; }
