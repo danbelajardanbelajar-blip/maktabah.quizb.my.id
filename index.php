@@ -567,9 +567,9 @@ $sessionUser = $_SESSION['user'] ?? null;
         <span class="text-[10px] font-medium">Akun</span>
       </a>
       <?php else: ?>
-      <a href="/auth.php?action=login" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
-        <i data-lucide="log-in" class="w-5 h-5"></i>
-        <span class="text-[10px] font-medium">Masuk</span>
+      <a href="/about" data-route="/about" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="info" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Tentang</span>
       </a>
       <?php endif; ?>
 
