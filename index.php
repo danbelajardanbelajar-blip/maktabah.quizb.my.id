@@ -107,7 +107,6 @@ $sessionUser = $_SESSION['user'] ?? null;
     }
     @media (max-width: 767px) {
       #navbar,
-      #bottom-nav,
       #search-bar,
       #settings-drawer,
       #settings-overlay,
@@ -120,7 +119,7 @@ $sessionUser = $_SESSION['user'] ?? null;
       }
       main#app-content {
         padding-top: 0 !important;
-        padding-bottom: 0 !important;
+        padding-bottom: 5rem !important;
       }
       #app-content {
         min-height: 100vh;
