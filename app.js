@@ -1080,7 +1080,7 @@ async function renderDetail(params) {
             <div class="flex items-center justify-between mt-5 gap-3">
               <button id="reader-prev"
                 class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 text-sm font-medium text-primary hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                <i data-lucide="chevron-right" class="w-4 h-4"></i> Sebelumnya
+                <i data-lucide="chevron-left" class="w-4 h-4"></i> Sebelumnya
               </button>
               <span id="reader-label" class="text-xs text-primary/40"></span>
               <button id="reader-next"
