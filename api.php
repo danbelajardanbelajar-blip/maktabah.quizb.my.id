@@ -630,6 +630,76 @@ function handleSearchContent(): void {
 }
 
 // =============================================================
+// Helper: Extract smart snippet that includes all search terms
+// =============================================================
+function extractSmartSnippet($content, $terms, $maxLength = 350) {
+    if (empty($content)) return '';
+    
+    // Clean content
+    $cleanContent = preg_replace('/\s+/', ' ', str_replace(["\n", "\r", "\t"], ' ', $content));
+    $cleanContent = substr($cleanContent, 0, 2000); // Limit to prevent memory issues
+    
+    if (empty($terms)) {
+        return substr($cleanContent, 0, $maxLength);
+    }
+    
+    // Find positions of all search terms (case-insensitive)
+    $positions = [];
+    foreach ($terms as $term) {
+        $term = trim($term);
+        if (empty($term)) continue;
+        
+        // Remove quotes if present
+        $term = preg_replace('/^"|"$/', '', $term);
+        if (empty($term)) continue;
+        
+        // Find all positions of this term
+        $lowerContent = strtolower($cleanContent);
+        $lowerTerm = strtolower($term);
+        $offset = 0;
+        while (($pos = strpos($lowerContent, $lowerTerm, $offset)) !== false) {
+            $positions[] = $pos;
+            $offset = $pos + 1;
+        }
+    }
+    
+    if (empty($positions)) {
+        // No terms found, return beginning
+        return substr($cleanContent, 0, $maxLength);
+    }
+    
+    // Sort positions and find optimal snippet window
+    sort($positions);
+    $firstPos = reset($positions);
+    $lastPos = end($positions);
+    
+    // Calculate snippet start: go back a bit from first term
+    $snippetStart = max(0, $firstPos - 50);
+    
+    // Calculate snippet end: go forward from last term to include it
+    $snippetEnd = min(strlen($cleanContent), $lastPos + 200);
+    
+    // Adjust length to not exceed maxLength
+    $snippetLength = $snippetEnd - $snippetStart;
+    if ($snippetLength > $maxLength) {
+        // Prefer to keep all terms, but truncate if needed
+        $snippetEnd = min($snippetEnd, $snippetStart + $maxLength);
+    }
+    
+    $snippet = substr($cleanContent, $snippetStart, $snippetEnd - $snippetStart);
+    
+    // Trim to word boundary
+    if (strlen($snippet) > 300) {
+        $lastSpace = strrpos($snippet, ' ');
+        if ($lastSpace > 0 && $lastSpace < strlen($snippet) - 10) {
+            $snippet = substr($snippet, 0, $lastSpace);
+        }
+    }
+    
+    return trim($snippet);
+}
+
+// =============================================================
 // 6d. SEARCH ADVANCED — page-level konten dengan banyak kolom + kategori
 // =============================================================
 function handleSearchAdvanced(): void {
@@ -690,7 +760,7 @@ function handleSearchAdvanced(): void {
 
     $sql = "SELECT bc.bkid, b.title, b.author, b.pages, b.category_name,
                 bc.page AS match_page,
-                LEFT(REPLACE(REPLACE(bc.content, '\n', ' '), '\r', ' '), 280) AS snippet
+                bc.content
          FROM book_content bc
          JOIN books b ON b.bkid = bc.bkid
          WHERE $whereClause
@@ -706,7 +776,15 @@ function handleSearchAdvanced(): void {
             $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
         }
         $stmt->execute();
-        $rows = $stmt->fetchAll();
+        $rawRows = $stmt->fetchAll();
+        
+        // Process rows to extract smarter snippets that include all search terms
+        $rows = array_map(function($row) use ($fields) {
+            $content = (string)($row['content'] ?? '');
+            $snippet = extractSmartSnippet($content, $fields);
+            $row['snippet'] = $snippet;
+            return $row;
+        }, $rawRows);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(['error' => 'Query error: ' . $e->getMessage()]);
