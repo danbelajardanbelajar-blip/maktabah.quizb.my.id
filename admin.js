@@ -12,6 +12,7 @@ Object.assign(window._adminRoutes = window._adminRoutes || {}, {
   '/admin/categories': renderAdminCategories,
   '/admin/content':    () => navigate('/admin/books', true),
   '/admin/history':    renderAdminHistory,
+  '/admin/search-logs': renderAdminSearchLogs,
 });
 
 // Patch router setelah app.js selesai load
@@ -98,6 +99,7 @@ function adminNavBar(active) {
     { r: '/admin/books',      icon: 'book',             label: 'Kelola Kitab',    adminOnly: false },
     { r: '/admin/categories', icon: 'folder',           label: 'Kelola Kategori', adminOnly: false },
     { r: '/admin/history',    icon: 'history',          label: 'CRUD History',    adminOnly: true,  desktopOnly: true },
+    { r: '/admin/search-logs', icon: 'search',           label: 'Log Pencarian',   adminOnly: true },
   ];
   return `
     <div class="bg-white border-b border-gold/15 sticky top-16 z-40 shadow-sm">
@@ -1382,302 +1384,377 @@ async function catSubmit() {
     btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan'; reicons();
   }
 }
-
-window.catDelete = async function(id, name, cnt) {
-  const warn = cnt > 0 ? `\n⚠️ ${cnt} kitab akan kehilangan kategorinya.` : '';
-  if (!confirm(`Hapus kategori "${name}"?${warn}`)) return;
-  const data = await adminPost('admin_delete_category', { id }).catch(e => ({ error: e.message }));
-  if (data.success) { adminToast('Kategori dihapus'); loadCatGrid(); }
-  else adminToast(data.error || 'Gagal', 'error');
-};
+window.catSubmit = catSubmit;
 
 // ══════════════════════════════════════════════════════════════
-//  CRUD HISTORY  /admin/history  (admin + desktop only)
+//  CRUD HISTORY
 // ══════════════════════════════════════════════════════════════
-
 async function renderAdminHistory() {
   if (!adminGuard()) return;
-
-  // Hanya tampil di desktop (≥ 768 px)
   if (window.innerWidth < 768) {
-    app().innerHTML = `
-      <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-6 gap-4">
-        <i data-lucide="monitor" class="w-16 h-16 text-primary/20"></i>
-        <h1 class="text-lg font-bold text-primary">Tampilan Desktop Diperlukan</h1>
-        <p class="text-primary/45 text-sm max-w-xs">Halaman CRUD History hanya tersedia di tampilan desktop. Silakan buka di layar yang lebih lebar.</p>
-        <a href="/dashboard" data-route="/dashboard"
-           class="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-light transition-colors">
-          Kembali ke Dashboard
-        </a>
+    app().innerHTML = adminNavBar('/admin/history') + `
+      <div class="max-w-2xl mx-auto px-4 py-16 text-center">
+        <i data-lucide="monitor" class="w-12 h-12 text-gold/40 mx-auto mb-4"></i>
+        <p class="text-primary/50 text-sm">Halaman ini hanya tersedia di tampilan desktop.</p>
       </div>`;
     reicons(); return;
   }
 
-  // State filter & pagination
-  window._histState = window._histState || {
-    page: 1, actionFilter: '', tableFilter: '', adminFilter: '',
-  };
+  let _hist = { page: 1, action: '', table: '', admin: '', data: null };
 
   app().innerHTML = adminNavBar('/admin/history') + `
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-xl font-bold text-primary flex items-center gap-2">
-            <i data-lucide="history" class="w-5 h-5 text-gold"></i> CRUD History
-          </h1>
-          <p class="text-primary/40 text-xs mt-1">Rekaman semua perubahan data oleh admin</p>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
+          <i data-lucide="history" class="w-5 h-5 text-primary"></i>
         </div>
-        <button onclick="histLoad(true)"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl border border-gold/30 text-sm text-primary/60 hover:bg-cream-dark transition-colors">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
-        </button>
+        <div>
+          <h1 class="text-xl font-bold text-primary">CRUD History</h1>
+          <p class="text-xs text-primary/40">Rekam jejak perubahan data oleh admin</p>
+        </div>
       </div>
 
-      <!-- Filter Bar -->
-      <div class="bg-white rounded-2xl shadow-card p-4 mb-5 flex flex-wrap gap-3 items-end">
-
-        <!-- Filter Aksi -->
-        <div class="flex flex-col gap-1 min-w-[140px]">
-          <label class="text-[10px] font-bold uppercase tracking-widest text-primary/40">Jenis Aksi</label>
-          <select id="hist-action-filter"
-            class="px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/40"
-            onchange="histFilter()">
-            <option value="">Semua Aksi</option>
+      <!-- Filter bar -->
+      <div class="bg-white rounded-2xl shadow-card p-4 mb-6 flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[140px]">
+          <label class="block text-xs font-semibold text-primary/50 mb-1">Jenis Aksi</label>
+          <select id="hf-action" onchange="histLoad(1)"
+            class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/30">
+            <option value="">Semua</option>
             <option value="CREATE">CREATE</option>
             <option value="UPDATE">UPDATE</option>
             <option value="DELETE">DELETE</option>
             <option value="IMPORT">IMPORT</option>
           </select>
         </div>
-
-        <!-- Filter Tabel -->
-        <div class="flex flex-col gap-1 min-w-[160px]">
-          <label class="text-[10px] font-bold uppercase tracking-widest text-primary/40">Tabel Data</label>
-          <select id="hist-table-filter"
-            class="px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/40"
-            onchange="histFilter()">
-            <option value="">Semua Tabel</option>
-            <option value="books">books (Kitab)</option>
-            <option value="categories">categories (Kategori)</option>
-            <option value="book_content">book_content (Isi Kitab)</option>
+        <div class="flex-1 min-w-[140px]">
+          <label class="block text-xs font-semibold text-primary/50 mb-1">Tabel</label>
+          <select id="hf-table" onchange="histLoad(1)"
+            class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/30">
+            <option value="">Semua</option>
+            <option value="books">books</option>
+            <option value="book_content">book_content</option>
+            <option value="categories">categories</option>
+            <option value="users">users</option>
           </select>
         </div>
-
-        <!-- Filter Admin -->
-        <div class="flex flex-col gap-1 flex-1 min-w-[180px]">
-          <label class="text-[10px] font-bold uppercase tracking-widest text-primary/40">Nama Admin</label>
-          <input id="hist-admin-filter" type="text" placeholder="Cari nama / email admin…"
-            class="px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/40"
-            oninput="histFilterDebounce()" />
+        <div class="flex-1 min-w-[160px]">
+          <label class="block text-xs font-semibold text-primary/50 mb-1">Nama Admin</label>
+          <input id="hf-admin" type="text" placeholder="Cari nama admin…" oninput="histFilterDebounce()"
+            class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
-
-        <!-- Tombol reset -->
         <button onclick="histReset()"
-          class="px-4 py-2 rounded-xl border border-gold/20 text-sm text-primary/50 hover:bg-cream-dark transition-colors self-end">
-          <i data-lucide="x" class="w-3.5 h-3.5 inline-block mr-1 align-text-bottom"></i>Reset
+          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
         </button>
       </div>
 
-      <!-- Tabel -->
-      <div id="hist-table-wrap"></div>
+      <!-- Table area -->
+      <div id="hist-grid" class="bg-white rounded-2xl shadow-card overflow-hidden">
+        <div class="p-10 text-center text-primary/30 text-sm">Memuat data…</div>
+      </div>
 
       <!-- Pagination -->
-      <div id="hist-pagination" class="mt-4 flex items-center justify-between"></div>
+      <div id="hist-pager" class="mt-4 flex items-center justify-center gap-2"></div>
     </div>`;
 
   reicons();
-  await histLoad(true);
-}
 
-// ── debounce untuk input pencarian admin
-let _histDebTimer = null;
-window.histFilterDebounce = function() {
-  clearTimeout(_histDebTimer);
-  _histDebTimer = setTimeout(() => histFilter(), 450);
-};
-
-window.histFilter = function() {
-  window._histState.page          = 1;
-  window._histState.actionFilter  = document.getElementById('hist-action-filter')?.value  || '';
-  window._histState.tableFilter   = document.getElementById('hist-table-filter')?.value   || '';
-  window._histState.adminFilter   = document.getElementById('hist-admin-filter')?.value   || '';
-  histLoad(false);
-};
-
-window.histReset = function() {
-  window._histState = { page: 1, actionFilter: '', tableFilter: '', adminFilter: '' };
-  const af = document.getElementById('hist-action-filter'); if (af) af.value = '';
-  const tf = document.getElementById('hist-table-filter');  if (tf) tf.value = '';
-  const nf = document.getElementById('hist-admin-filter');  if (nf) nf.value = '';
-  histLoad(false);
-};
-
-window.histGotoPage = function(p) {
-  window._histState.page = p;
-  histLoad(false);
-};
-
-async function histLoad(reset = false) {
-  if (reset) window._histState.page = 1;
-  const s   = window._histState;
-  const wrap = document.getElementById('hist-table-wrap');
-  const pgEl = document.getElementById('hist-pagination');
-  if (!wrap) return;
-
-  wrap.innerHTML = adminSpinner();
-
-  try {
-    const qs = new URLSearchParams({
-      action:        'admin_get_history',
-      page:          s.page,
-      limit:         50,
-      action_filter: s.actionFilter,
-      table_filter:  s.tableFilter,
-      admin_filter:  s.adminFilter,
-    });
-    const res  = await fetch(`/api.php?${qs}`);
-    const data = await res.json();
-
-    if (!data.success) throw new Error(data.error || 'Gagal memuat data.');
-
-    const rows = data.data || [];
-
-    if (!rows.length) {
-      wrap.innerHTML = `
-        <div class="bg-white rounded-2xl shadow-card py-16 text-center text-primary/25 text-sm">
-          <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 opacity-25"></i>
-          <p>Belum ada riwayat perubahan.</p>
-        </div>`;
-      if (pgEl) pgEl.innerHTML = '';
-      reicons(); return;
-    }
-
-    // Badge warna per aksi
-    const badge = a => {
-      const cfg = {
-        CREATE: 'bg-emerald-100 text-emerald-700',
-        UPDATE: 'bg-blue-100 text-blue-700',
-        DELETE: 'bg-red-100 text-red-600',
-        IMPORT: 'bg-amber-100 text-amber-700',
+  window.histLoad = async function(p = 1) {
+    _hist.page   = p;
+    _hist.action = document.getElementById('hf-action')?.value || '';
+    _hist.table  = document.getElementById('hf-table')?.value  || '';
+    _hist.admin  = document.getElementById('hf-admin')?.value  || '';
+    const grid = document.getElementById('hist-grid');
+    grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
+    reicons();
+    try {
+      const d = await adminPost('admin_get_history', {
+        page: _hist.page, action: _hist.action,
+        table_name: _hist.table, admin_name: _hist.admin, per_page: 20
+      });
+      if (!d.rows?.length) {
+        grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm">Tidak ada data.</div>';
+        document.getElementById('hist-pager').innerHTML = '';
+        return;
+      }
+      const actionBadge = a => {
+        const m = { CREATE:'bg-green-100 text-green-700', UPDATE:'bg-blue-100 text-blue-700',
+                    DELETE:'bg-red-100 text-red-700', IMPORT:'bg-purple-100 text-purple-700' };
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${m[a]||'bg-gray-100 text-gray-600'}">${escHtml(a)}</span>`;
       };
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${cfg[a] || 'bg-primary/8 text-primary/60'}">${a}</span>`;
-    };
-
-    // Ikon per tabel
-    const tblIcon = t => ({
-      books:        'book',
-      categories:   'folder',
-      book_content: 'file-text',
-    }[t] || 'database');
-
-    // Format tanggal lokal
-    const fmtDate = str => {
-      if (!str) return '-';
-      try {
-        return new Date(str).toLocaleString('id-ID', {
-          day:'2-digit', month:'short', year:'numeric',
-          hour:'2-digit', minute:'2-digit', second:'2-digit',
-        });
-      } catch { return str; }
-    };
-
-    wrap.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-card overflow-hidden">
-        <div class="px-5 py-3.5 bg-cream/40 border-b border-cream-dark flex items-center justify-between">
-          <span class="text-xs font-medium text-primary/50">
-            ${data.total} entri ditemukan
-            ${s.actionFilter || s.tableFilter || s.adminFilter ? '(difilter)' : ''}
-          </span>
-          <span class="text-xs text-primary/30">Halaman ${s.page} dari ${data.pages}</span>
-        </div>
+      grid.innerHTML = `
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-cream-dark text-left">
-                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide whitespace-nowrap">Waktu</th>
-                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide">Aksi</th>
-                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide">Tabel</th>
-                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide">ID Record</th>
-                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide">Detail</th>
-                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide whitespace-nowrap">Admin</th>
+            <thead class="bg-cream/60 border-b border-gold/15">
+              <tr>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50 whitespace-nowrap">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Aksi</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Tabel</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">ID Record</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Detail</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Admin</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-cream-dark/60">
-              ${rows.map(r => `
+            <tbody class="divide-y divide-gold/8">
+              ${d.rows.map(r => `
                 <tr class="hover:bg-cream/30 transition-colors">
-                  <td class="px-4 py-3 text-xs text-primary/50 whitespace-nowrap font-mono">${fmtDate(r.created_at)}</td>
-                  <td class="px-4 py-3">${badge(r.action)}</td>
-                  <td class="px-4 py-3">
-                    <span class="flex items-center gap-1.5 text-xs text-primary/60">
-                      <i data-lucide="${tblIcon(r.table_name)}" class="w-3.5 h-3.5 shrink-0 text-primary/30"></i>
-                      ${escHtml(r.table_name)}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 text-xs font-mono text-primary/45 max-w-[100px] truncate" title="${escHtml(r.record_id)}">${escHtml(r.record_id)}</td>
-                  <td class="px-4 py-3 text-xs text-primary/65 max-w-[260px]">
-                    <span class="block truncate" title="${escHtml(r.detail || '')}">${escHtml(r.detail || '—')}</span>
-                  </td>
+                  <td class="px-4 py-3 text-primary/50 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
+                  <td class="px-4 py-3">${actionBadge(r.action)}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-primary/70">${escHtml(r.table_name)}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-primary/60">${escHtml(r.record_id)}</td>
+                  <td class="px-4 py-3 text-xs text-primary/60 max-w-xs truncate" title="${escHtml(r.detail||'')}">${escHtml(r.detail||'—')}</td>
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-2">
-                      <div class="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold text-xs shrink-0">
-                        ${escHtml((r.admin_name || '?').charAt(0).toUpperCase())}
+                      <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        ${escHtml((r.admin_name||'?').charAt(0).toUpperCase())}
                       </div>
-                      <div class="min-w-0">
-                        <div class="text-xs font-semibold text-primary truncate max-w-[120px]" title="${escHtml(r.admin_name)}">${escHtml(r.admin_name || '—')}</div>
-                        <div class="text-[10px] text-primary/35 truncate max-w-[120px]" title="${escHtml(r.admin_email)}">${escHtml(r.admin_email || '')}</div>
-                      </div>
+                      <span class="text-xs text-primary/70 truncate max-w-[120px]">${escHtml(r.admin_name||'—')}</span>
                     </div>
                   </td>
                 </tr>`).join('')}
             </tbody>
           </table>
-        </div>
-      </div>`;
-
-    // Render pagination
-    if (pgEl && data.pages > 1) {
-      const curP  = s.page;
-      const total = data.pages;
+        </div>`;
+      // Pagination
+      const totalPages = Math.ceil(d.total / 20);
+      const pager = document.getElementById('hist-pager');
+      if (totalPages <= 1) { pager.innerHTML = ''; return; }
       let btns = '';
-      // Prev
-      btns += `<button onclick="histGotoPage(${curP - 1})" ${curP <= 1 ? 'disabled' : ''}
-        class="px-3 py-1.5 rounded-lg border border-gold/20 text-xs text-primary/50 hover:bg-cream-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        ← Prev</button>`;
-      // Page numbers (maksimal 7 tombol)
-      const range = [];
-      for (let i = 1; i <= total; i++) {
-        if (i === 1 || i === total || (i >= curP - 2 && i <= curP + 2)) range.push(i);
-        else if (range[range.length - 1] !== '…') range.push('…');
+      for (let i = 1; i <= totalPages; i++) {
+        btns += `<button onclick="histGotoPage(${i})"
+          class="w-8 h-8 rounded-lg text-sm font-semibold transition-colors
+          ${i === _hist.page ? 'bg-primary text-white' : 'bg-white border border-gold/25 text-primary/60 hover:bg-cream-dark'}">${i}</button>`;
       }
-      range.forEach(p => {
-        if (p === '…') {
-          btns += `<span class="px-2 text-primary/25 text-xs">…</span>`;
-        } else {
-          btns += `<button onclick="histGotoPage(${p})"
-            class="px-3 py-1.5 rounded-lg border text-xs transition-colors
-              ${p === curP ? 'bg-primary text-white border-primary' : 'border-gold/20 text-primary/50 hover:bg-cream-dark'}">
-            ${p}</button>`;
-        }
-      });
-      // Next
-      btns += `<button onclick="histGotoPage(${curP + 1})" ${curP >= total ? 'disabled' : ''}
-        class="px-3 py-1.5 rounded-lg border border-gold/20 text-xs text-primary/50 hover:bg-cream-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        Next →</button>`;
-
-      pgEl.innerHTML = `
-        <span class="text-xs text-primary/35">${data.total} total entri</span>
-        <div class="flex items-center gap-1.5 flex-wrap justify-end">${btns}</div>`;
-    } else if (pgEl) {
-      pgEl.innerHTML = data.total
-        ? `<span class="text-xs text-primary/35">${data.total} entri</span>`
-        : '';
+      pager.innerHTML = `<div class="flex gap-1.5 flex-wrap justify-center">${btns}</div>`;
+      reicons();
+    } catch(e) {
+      grid.innerHTML = `<div class="p-6 text-red-500 text-sm">${escHtml(e.message)}</div>`;
     }
+  };
 
-    reicons();
-  } catch(e) {
-    wrap.innerHTML = `<div class="bg-white rounded-2xl shadow-card p-6 text-red-500 text-sm">${escHtml(e.message)}</div>`;
-  }
+  window.histGotoPage = p => histLoad(p);
+  window.histReset = function() {
+    document.getElementById('hf-action').value = '';
+    document.getElementById('hf-table').value  = '';
+    document.getElementById('hf-admin').value  = '';
+    histLoad(1);
+  };
+  let _histTimer;
+  window.histFilterDebounce = function() {
+    clearTimeout(_histTimer);
+    _histTimer = setTimeout(() => histLoad(1), 380);
+  };
+
+  await histLoad(1);
 }
 
+// ══════════════════════════════════════════════════════════════
+//  LOG PENCARIAN
+// ══════════════════════════════════════════════════════════════
+async function renderAdminSearchLogs() {
+  if (!adminGuard()) return;
+
+  let _sl = { page: 1, type: '', query: '', date: '' };
+
+  app().innerHTML = adminNavBar('/admin/search-logs') + `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
+          <i data-lucide="search" class="w-5 h-5 text-primary"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-primary">Log Pencarian</h1>
+          <p class="text-xs text-primary/40">Riwayat pencarian seluruh pengunjung</p>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div id="sl-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6"></div>
+
+      <!-- Filter bar -->
+      <div class="bg-white rounded-2xl shadow-card p-4 mb-6 flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[130px]">
+          <label class="block text-xs font-semibold text-primary/50 mb-1">Jenis Pencarian</label>
+          <select id="slf-type" onchange="slLoad(1)"
+            class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/30">
+            <option value="">Semua</option>
+            <option value="basic">Biasa</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="flex-1 min-w-[180px]">
+          <label class="block text-xs font-semibold text-primary/50 mb-1">Kata Kunci</label>
+          <input id="slf-query" type="text" placeholder="Cari query…" oninput="slFilterDebounce()"
+            class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
+        </div>
+        <div class="flex-1 min-w-[150px]">
+          <label class="block text-xs font-semibold text-primary/50 mb-1">Tanggal</label>
+          <input id="slf-date" type="date" onchange="slLoad(1)"
+            class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
+        </div>
+        <button onclick="slReset()"
+          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
+        </button>
+      </div>
+
+      <!-- Top queries -->
+      <div id="sl-topq" class="mb-6"></div>
+
+      <!-- Table -->
+      <div id="sl-grid" class="bg-white rounded-2xl shadow-card overflow-hidden">
+        <div class="p-10 text-center text-primary/30 text-sm">Memuat data…</div>
+      </div>
+
+      <!-- Pagination -->
+      <div id="sl-pager" class="mt-4 flex items-center justify-center gap-2"></div>
+    </div>`;
+
+  reicons();
+
+  window.slLoad = async function(p = 1) {
+    _sl.page  = p;
+    _sl.type  = document.getElementById('slf-type')?.value  || '';
+    _sl.query = document.getElementById('slf-query')?.value || '';
+    _sl.date  = document.getElementById('slf-date')?.value  || '';
+    const grid = document.getElementById('sl-grid');
+    grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
+    reicons();
+    try {
+      const d = await adminPost('admin_get_search_logs', {
+        page: _sl.page, search_type: _sl.type,
+        query: _sl.query, date: _sl.date, per_page: 25
+      });
+
+      // Stats
+      const stats = d.stats || {};
+      const statsEl = document.getElementById('sl-stats');
+      if (statsEl) {
+        statsEl.innerHTML = [
+          { icon: 'today',         label: 'Hari Ini',      val: stats.today   || 0, color: 'text-blue-600',   bg: 'bg-blue-50'   },
+          { icon: 'calendar-days', label: 'Minggu Ini',    val: stats.week    || 0, color: 'text-green-600',  bg: 'bg-green-50'  },
+          { icon: 'list',          label: 'Total Semua',   val: d.total       || 0, color: 'text-primary',    bg: 'bg-cream/60'  },
+          { icon: 'trending-up',   label: 'Unik (query)',  val: stats.unique  || 0, color: 'text-purple-600', bg: 'bg-purple-50' },
+        ].map(s => `
+          <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center shrink-0">
+              <i data-lucide="${s.icon}" class="w-5 h-5 ${s.color}"></i>
+            </div>
+            <div>
+              <div class="text-xs text-primary/40 font-medium">${s.label}</div>
+              <div class="text-xl font-bold text-primary">${s.val.toLocaleString()}</div>
+            </div>
+          </div>`).join('');
+      }
+
+      // Top queries
+      const topqEl = document.getElementById('sl-topq');
+      if (topqEl && d.top_queries?.length && !_sl.query && !_sl.type && !_sl.date) {
+        topqEl.innerHTML = `
+          <div class="bg-white rounded-2xl shadow-card p-5">
+            <div class="text-xs font-semibold text-primary/50 uppercase tracking-wider mb-3">Top Pencarian</div>
+            <div class="flex flex-wrap gap-2">
+              ${d.top_queries.map(q => `
+                <button onclick="document.getElementById('slf-query').value=${JSON.stringify(q.query)};slLoad(1)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cream hover:bg-cream-dark text-xs text-primary/70 font-medium transition-colors border border-gold/15">
+                  <i data-lucide="search" class="w-3 h-3 text-gold/60"></i>
+                  ${escHtml(q.query)}
+                  <span class="text-primary/35">${q.cnt}×</span>
+                </button>`).join('')}
+            </div>
+          </div>`;
+        reicons();
+      } else if (topqEl) {
+        topqEl.innerHTML = '';
+      }
+
+      // Table
+      if (!d.rows?.length) {
+        grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm">Tidak ada data pencarian.</div>';
+        document.getElementById('sl-pager').innerHTML = '';
+        return;
+      }
+
+      const typeBadge = t => t === 'advanced'
+        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700">Advanced</span>'
+        : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Biasa</span>';
+
+      grid.innerHTML = `
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-cream/60 border-b border-gold/15">
+              <tr>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50 whitespace-nowrap">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Jenis</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Query</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50 text-right">Hasil</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">IP</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">User</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Browser</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gold/8">
+              ${d.rows.map(r => {
+                const ua = r.user_agent || '';
+                const browserShort = ua.includes('Chrome') ? 'Chrome'
+                  : ua.includes('Firefox') ? 'Firefox'
+                  : ua.includes('Safari') ? 'Safari'
+                  : ua.includes('Edge') ? 'Edge'
+                  : ua.slice(0, 18) || '—';
+                return `<tr class="hover:bg-cream/30 transition-colors">
+                  <td class="px-4 py-3 text-primary/50 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
+                  <td class="px-4 py-3">${typeBadge(r.search_type)}</td>
+                  <td class="px-4 py-3 max-w-xs">
+                    <div class="font-medium text-primary text-xs truncate" title="${escHtml(r.query)}">${escHtml(r.query)}</div>
+                    ${r.query_detail ? `<div class="text-primary/35 text-xs truncate mt-0.5">${escHtml(r.query_detail)}</div>` : ''}
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold
+                      ${+r.result_count > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-500'}">
+                      ${escHtml(String(r.result_count))}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-xs text-primary/50">${escHtml(r.visitor_ip||'—')}</td>
+                  <td class="px-4 py-3 text-xs text-primary/60">${escHtml(r.user_name||'Tamu')}</td>
+                  <td class="px-4 py-3 text-xs text-primary/40">${escHtml(browserShort)}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+
+      // Pagination
+      const totalPages = Math.ceil(d.total / 25);
+      const pager = document.getElementById('sl-pager');
+      if (totalPages <= 1) { pager.innerHTML = ''; reicons(); return; }
+      let btns = '';
+      if (_sl.page > 1) btns += `<button onclick="slLoad(${_sl.page-1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">‹</button>`;
+      const start = Math.max(1, _sl.page-2), end = Math.min(totalPages, _sl.page+2);
+      for (let i = start; i <= end; i++) {
+        btns += `<button onclick="slLoad(${i})"
+          class="w-8 h-8 rounded-lg text-sm font-semibold transition-colors
+          ${i === _sl.page ? 'bg-primary text-white' : 'bg-white border border-gold/25 text-primary/60 hover:bg-cream-dark'}">${i}</button>`;
+      }
+      if (_sl.page < totalPages) btns += `<button onclick="slLoad(${_sl.page+1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">›</button>`;
+      pager.innerHTML = `<div class="flex gap-1.5 flex-wrap justify-center">${btns}</div>`;
+      reicons();
+    } catch(e) {
+      grid.innerHTML = `<div class="p-6 text-red-500 text-sm">${escHtml(e.message)}</div>`;
+    }
+  };
+
+  window.slReset = function() {
+    document.getElementById('slf-type').value  = '';
+    document.getElementById('slf-query').value = '';
+    document.getElementById('slf-date').value  = '';
+    slLoad(1);
+  };
+  let _slTimer;
+  window.slFilterDebounce = function() {
+    clearTimeout(_slTimer);
+    _slTimer = setTimeout(() => slLoad(1), 380);
+  };
+
+  await slLoad(1);
+}

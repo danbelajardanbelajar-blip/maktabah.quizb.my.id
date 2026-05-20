@@ -512,6 +512,10 @@ $sessionUser = $_SESSION['user'] ?? null;
                    class="hidden md:flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
                   <i data-lucide="history" class="w-4 h-4 text-gold/60"></i> CRUD History
                 </a>
+                <a href="/admin/search-logs" data-route="/admin/search-logs"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="search" class="w-4 h-4 text-gold/60"></i> Log Pencarian
+                </a>
                 <a href="/admin/content" data-route="/admin/content"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
                   <i data-lucide="file-text" class="w-4 h-4 text-gold/60"></i> Kelola Isi Kitab

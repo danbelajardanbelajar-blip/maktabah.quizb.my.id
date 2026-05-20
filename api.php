@@ -53,6 +53,45 @@ function logCrudHistory(string $action, string $tableName, string $recordId, str
     }
 }
 
+// =============================================================
+// SEARCH LOG — helper untuk mencatat query pencarian pengunjung
+// =============================================================
+function logSearchQuery(
+    string $type,           // 'basic' | 'advanced'
+    string $query,          // teks query utama
+    int    $resultCount,    // jumlah hasil
+    string $queryDetail = '' // JSON detail untuk pencarian lanjutan
+): void {
+    try {
+        $pdo      = getPDO();
+        $user     = getSessionUser();
+        $ip       = $_SERVER['HTTP_X_FORWARDED_FOR']
+                    ?? $_SERVER['HTTP_X_REAL_IP']
+                    ?? $_SERVER['REMOTE_ADDR']
+                    ?? '';
+        // Ambil IP pertama jika ada beberapa (proxy chain)
+        $ip = trim(explode(',', $ip)[0]);
+        $ua = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 512);
+
+        $pdo->prepare(
+            "INSERT INTO search_logs
+             (search_type, query, query_detail, result_count, visitor_ip, user_agent, user_id, user_name)
+             VALUES (:type, :query, :detail, :count, :ip, :ua, :uid, :uname)"
+        )->execute([
+            ':type'  => $type,
+            ':query' => mb_substr($query, 0, 1000),
+            ':detail' => $queryDetail ?: null,
+            ':count' => $resultCount,
+            ':ip'    => $ip,
+            ':ua'    => $ua,
+            ':uid'   => $user['id']   ?? null,
+            ':uname' => $user['name'] ?? '',
+        ]);
+    } catch (\Exception $e) {
+        // Logging gagal tidak boleh mengganggu operasi utama
+    }
+}
+
 // Helper — escape FULLTEXT boolean wildcards safely
 function ftEscape(string $q): string {
     // Strip chars that could break boolean mode, keep Arabic/Latin safely
@@ -139,6 +178,8 @@ try {
         case 'admin_import_book':     requireAdmin(); handleAdminImportBook();     break;
         // Admin — CRUD History
         case 'admin_get_history':     requireAdmin(); handleAdminGetHistory();     break;
+        // Admin — Search Logs
+        case 'admin_get_search_logs': requireAdmin(); handleAdminGetSearchLogs();  break;
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Unknown action.']);
@@ -336,6 +377,7 @@ function handleSearchBooks(): void {
     $page  = max(1, (int)($_GET['page'] ?? 1));
     $limit = 12;
     $offset = ($page - 1) * $limit;
+    $isFirstPage = ($page === 1); // Log hanya halaman pertama
 
     if (strlen($q) < 2) {
         echo json_encode(['data' => [], 'total' => 0, 'page' => 1, 'total_pages' => 0]);
@@ -356,6 +398,7 @@ function handleSearchBooks(): void {
         $cs->execute([':h' => $hash]);
         if ($row = $cs->fetch()) {
             $all = json_decode($row['results_json'], true) ?? [];
+            if ($isFirstPage) logSearchQuery('basic', $qRaw, (int)$row['result_count']);
             echo json_encode([
                 'data'        => array_slice($all, 0, $limit),
                 'total'       => (int)$row['result_count'],
@@ -429,6 +472,9 @@ function handleSearchBooks(): void {
              result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
         )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($books), ':rc' => $total]);
     }
+
+    // --- Log pencarian (hanya halaman pertama) ---
+    if ($isFirstPage) logSearchQuery('basic', $qRaw, $total);
 
     echo json_encode([
         'data'        => $books,
@@ -687,6 +733,16 @@ function handleSearchAdvanced(): void {
         $total = (int)$countStmt->fetchColumn();
     } catch (Exception $e) {
         $total = 0;
+    }
+
+    // --- Log pencarian lanjutan (hanya halaman pertama) ---
+    if ($page === 1) {
+        $queryText  = implode(' | ', $fields);
+        $queryDetail = json_encode([
+            'fields' => $fields,
+            'cats'   => $cats,
+        ], JSON_UNESCAPED_UNICODE);
+        logSearchQuery('advanced', $queryText, $total, $queryDetail);
     }
 
     echo json_encode([
@@ -977,10 +1033,10 @@ function handleAdminImportBook(): void {
     $author  = trim($data['author']  ?? '');
     $catId   = (int)($data['category_id'] ?? 0);
     $iso     = $data['iso'] ?? 'ar';
-    $pages   = $data['pages'] ?? [];   // array of strings (satu per halaman)
+    $pages   = $data['pages'] ?? [];
 
-    if (!$title)        { http_response_code(400); echo json_encode(['error' => 'Judul wajib diisi.']); return; }
-    if (empty($pages))  { http_response_code(400); echo json_encode(['error' => 'Tidak ada halaman untuk diimpor.']); return; }
+    if (!$title)       { http_response_code(400); echo json_encode(['error' => 'Judul wajib diisi.']); return; }
+    if (empty($pages)) { http_response_code(400); echo json_encode(['error' => 'Tidak ada halaman untuk diimpor.']); return; }
 
     $catName = '';
     if ($catId) {
@@ -991,11 +1047,11 @@ function handleAdminImportBook(): void {
 
     $pdo->beginTransaction();
     try {
-        // ── Hapus data orphan bkid=0 yang mungkin tersisa dari import gagal sebelumnya
+        // Hapus data orphan bkid=0 sisa import gagal sebelumnya
         $pdo->prepare("DELETE FROM book_content WHERE bkid = 0")->execute();
         $pdo->prepare("DELETE FROM books WHERE bkid = 0")->execute();
 
-        // ── Buat record kitab baru
+        // Buat record kitab baru
         $stmtBook = $pdo->prepare(
             "INSERT INTO books (title, author, category_id, category_name, iso, pages)
              VALUES (:title, :author, :catid, :catname, :iso, :pages)"
@@ -1009,10 +1065,9 @@ function handleAdminImportBook(): void {
             ':pages'   => count($pages),
         ]);
 
-        // ── Ambil ID yang baru dibuat; gunakan fallback jika lastInsertId() = 0
+        // Ambil ID baru; fallback jika lastInsertId() = 0
         $bkid = (int)$pdo->lastInsertId();
         if ($bkid === 0) {
-            // Fallback: tanya langsung ke MySQL (berguna jika PDO driver tidak sinkron)
             $bkid = (int)$pdo->query("SELECT LAST_INSERT_ID()")->fetchColumn();
         }
         if ($bkid === 0) {
@@ -1022,7 +1077,7 @@ function handleAdminImportBook(): void {
             );
         }
 
-        // ── Insert semua halaman (ON DUPLICATE KEY UPDATE sebagai safeguard)
+        // Insert semua halaman (ON DUPLICATE KEY sebagai safeguard)
         $stmtPage = $pdo->prepare(
             "INSERT INTO book_content (bkid, page, content)
              VALUES (:bkid, :page, :content)
@@ -1038,7 +1093,10 @@ function handleAdminImportBook(): void {
 
         $pdo->commit();
         logCrudHistory('IMPORT', 'books', (string)$bkid,
-            "Judul: {$title}" . ($author ? " | Penulis: {$author}" : '') . ($catName ? " | Kategori: {$catName}" : '') . " | " . count($pages) . " halaman diimpor");
+            "Judul: {$title}" .
+            ($author  ? " | Penulis: {$author}"    : '') .
+            ($catName ? " | Kategori: {$catName}"  : '') .
+            " | " . count($pages) . " halaman diimpor");
         echo json_encode(['success' => true, 'bkid' => $bkid, 'pages_imported' => count($pages)]);
     } catch (\Exception $e) {
         $pdo->rollBack();
@@ -1056,23 +1114,23 @@ function handleAdminGetHistory(): void {
     $limit  = min(100, max(1, (int)($_GET['limit'] ?? 50)));
     $offset = ($page - 1) * $limit;
 
-    $action    = $_GET['action_filter'] ?? '';
-    $tableFil  = $_GET['table_filter']  ?? '';
-    $adminFil  = $_GET['admin_filter']  ?? '';
+    $action   = $_GET['action_filter'] ?? '';
+    $tableFil = $_GET['table_filter']  ?? '';
+    $adminFil = $_GET['admin_filter']  ?? '';
 
     $where  = [];
     $params = [];
 
     if ($action && in_array($action, ['CREATE','UPDATE','DELETE','IMPORT'], true)) {
-        $where[]  = 'h.action = :action';
+        $where[]           = 'h.action = :action';
         $params[':action'] = $action;
     }
     if ($tableFil) {
-        $where[]  = 'h.table_name = :table_name';
+        $where[]               = 'h.table_name = :table_name';
         $params[':table_name'] = $tableFil;
     }
     if ($adminFil) {
-        $where[]  = '(h.admin_name LIKE :admin OR h.admin_email LIKE :admin)';
+        $where[]          = '(h.admin_name LIKE :admin OR h.admin_email LIKE :admin)';
         $params[':admin'] = '%' . $adminFil . '%';
     }
 
@@ -1084,8 +1142,7 @@ function handleAdminGetHistory(): void {
 
     $stmt = $pdo->prepare(
         "SELECT h.id, h.admin_id, h.admin_name, h.admin_email,
-                h.action, h.table_name, h.record_id, h.detail,
-                h.created_at
+                h.action, h.table_name, h.record_id, h.detail, h.created_at
          FROM crud_history h
          $whereSQL
          ORDER BY h.created_at DESC
@@ -1095,14 +1152,100 @@ function handleAdminGetHistory(): void {
     $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
-    $rows = $stmt->fetchAll();
 
     echo json_encode([
         'success' => true,
-        'data'    => $rows,
+        'data'    => $stmt->fetchAll(),
         'total'   => $totalCount,
         'page'    => $page,
         'limit'   => $limit,
         'pages'   => (int)ceil($totalCount / $limit),
+    ]);
+}
+
+// =============================================================
+// ADMIN — Ambil Search Logs (paginated + filter)
+// =============================================================
+function handleAdminGetSearchLogs(): void {
+    $pdo    = getPDO();
+    $page   = max(1, (int)($_GET['page']  ?? 1));
+    $limit  = min(100, max(1, (int)($_GET['limit'] ?? 50)));
+    $offset = ($page - 1) * $limit;
+
+    $typeFil  = $_GET['type_filter']  ?? '';
+    $queryFil = $_GET['query_filter'] ?? '';
+    $dateFil  = $_GET['date_filter']  ?? '';
+
+    $where  = [];
+    $params = [];
+
+    if ($typeFil && in_array($typeFil, ['basic','advanced'], true)) {
+        $where[]          = 's.search_type = :type';
+        $params[':type']  = $typeFil;
+    }
+    if ($queryFil) {
+        $where[]           = 's.query LIKE :query';
+        $params[':query']  = '%' . $queryFil . '%';
+    }
+    if ($dateFil === 'today') {
+        $where[] = 'DATE(s.created_at) = CURDATE()';
+    } elseif ($dateFil === 'week') {
+        $where[] = 's.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
+    } elseif ($dateFil === 'month') {
+        $where[] = 's.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
+    }
+
+    $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+    // Total count
+    $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM search_logs s $whereSQL");
+    $cntStmt->execute($params);
+    $totalCount = (int)$cntStmt->fetchColumn();
+
+    // Top queries (hari ini & seminggu) untuk stats
+    $topStmt = $pdo->prepare(
+        "SELECT query, COUNT(*) AS cnt
+         FROM search_logs
+         WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+         GROUP BY query ORDER BY cnt DESC LIMIT 10"
+    );
+    $topStmt->execute();
+    $topQueries = $topStmt->fetchAll();
+
+    // Stats: today & week counts
+    $todayCount = (int)$pdo->query(
+        "SELECT COUNT(*) FROM search_logs WHERE DATE(created_at) = CURDATE()"
+    )->fetchColumn();
+    $weekCount = (int)$pdo->query(
+        "SELECT COUNT(*) FROM search_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+    )->fetchColumn();
+
+    // Rows
+    $stmt = $pdo->prepare(
+        "SELECT s.id, s.search_type, s.query, s.query_detail,
+                s.result_count, s.visitor_ip, s.user_agent,
+                s.user_id, s.user_name, s.created_at
+         FROM search_logs s
+         $whereSQL
+         ORDER BY s.created_at DESC
+         LIMIT :limit OFFSET :offset"
+    );
+    foreach ($params as $k => $v) $stmt->bindValue($k, $v);
+    $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+
+    echo json_encode([
+        'success'     => true,
+        'data'        => $stmt->fetchAll(),
+        'total'       => $totalCount,
+        'page'        => $page,
+        'limit'       => $limit,
+        'pages'       => (int)ceil($totalCount / $limit),
+        'stats'       => [
+            'today' => $todayCount,
+            'week'  => $weekCount,
+        ],
+        'top_queries' => $topQueries,
     ]);
 }
