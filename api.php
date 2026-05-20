@@ -1353,8 +1353,71 @@ function handleAdminImportBook(): void {
     }
     if ($buf !== '') $pages[] = trim($buf);
     if (empty($pages)) {
-        http_response_code(422); echo json_encode(['error' => 'Tidak ada konten yang bisa diimpor.']); return;
+        http_response_code(422); echo json_encode(['error' => 'Tidak ada konten yang bisa diimpor. Pastikan file tidak kosong.']); return;
     }
+
+    $catName = '';
+    if ($catId) {
+        $cs = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
+        $cs->execute([':id' => $catId]);
+        $catName = $cs->fetchColumn() ?: '';
+    }
+
+    $pdo->beginTransaction();
+    try {
+        if ($bkid) {
+            $pdo->prepare(
+                "UPDATE books SET title=:title, author=:author, category_id=:catid,
+                 category_name=:catname, iso=:iso, pages=:pages WHERE bkid=:bkid"
+            )->execute([
+                ':title'   => $title,
+                ':author'  => $author,
+                ':catid'   => $catId ?: null,
+                ':catname' => $catName,
+                ':iso'     => $iso,
+                ':pages'   => count($pages),
+                ':bkid'    => $bkid,
+            ]);
+        } else {
+            $stmt = $pdo->prepare(
+                "INSERT INTO books (title, author, category_id, category_name, iso, pages)
+                 VALUES (:title, :author, :catid, :catname, :iso, :pages)"
+            );
+            $stmt->execute([
+                ':title'   => $title,
+                ':author'  => $author,
+                ':catid'   => $catId ?: null,
+                ':catname' => $catName,
+                ':iso'     => $iso,
+                ':pages'   => count($pages),
+            ]);
+            $bkid = (int)$pdo->lastInsertId();
+        }
+
+        $insertContent = $pdo->prepare(
+            "INSERT INTO book_content (bkid, page, content) VALUES (:bkid, :page, :content)"
+        );
+        foreach ($pages as $pageIndex => $pageContent) {
+            $insertContent->execute([
+                ':bkid'    => $bkid,
+                ':page'    => $pageIndex + 1,
+                ':content' => $pageContent,
+            ]);
+        }
+
+        $pdo->commit();
+
+        logCrudHistory('IMPORT', 'books', (string)$bkid,
+            "Impor kitab: {$title} | Penulis: {$author} | Halaman: " . count($pages)
+        );
+
+        echo json_encode(['success' => true, 'bkid' => $bkid, 'pages' => count($pages)]);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        http_response_code(500);
+        echo json_encode(['error' => 'Import gagal: ' . $e->getMessage()]);
+    }
+}
 
 // =============================================================
 // ADMIN — GET CRUD History (paginated + filtered)
