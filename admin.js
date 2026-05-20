@@ -1,6 +1,6 @@
 /* =============================================================
    Al-Maktabah As-Sunniyyah — Admin Panel (admin.js)
-   Halaman: Dashboard · Kelola Kitab · Kelola Kategori · Kelola Isi Kitab
+   Halaman: Dashboard · Kelola Kitab · Kelola Kategori · Kelola Isi Kitab · CRUD History
    ============================================================= */
 'use strict';
 
@@ -11,6 +11,7 @@ Object.assign(window._adminRoutes = window._adminRoutes || {}, {
   '/admin/books':      renderAdminBooks,
   '/admin/categories': renderAdminCategories,
   '/admin/content':    () => navigate('/admin/books', true),
+  '/admin/history':    renderAdminHistory,
 });
 
 // Patch router setelah app.js selesai load
@@ -90,18 +91,22 @@ function adminSpinner() {
 }
 
 function adminNavBar(active) {
+  const u = window.SESSION_USER;
+  const isAdmin = u && u.role === 'admin';
   const tabs = [
-    { r: '/dashboard',        icon: 'layout-dashboard', label: 'Dashboard' },
-    { r: '/admin/books',      icon: 'book',             label: 'Kelola Kitab' },
-    { r: '/admin/categories', icon: 'folder',           label: 'Kelola Kategori' },
+    { r: '/dashboard',        icon: 'layout-dashboard', label: 'Dashboard',       adminOnly: false },
+    { r: '/admin/books',      icon: 'book',             label: 'Kelola Kitab',    adminOnly: false },
+    { r: '/admin/categories', icon: 'folder',           label: 'Kelola Kategori', adminOnly: false },
+    { r: '/admin/history',    icon: 'history',          label: 'CRUD History',    adminOnly: true,  desktopOnly: true },
   ];
   return `
     <div class="bg-white border-b border-gold/15 sticky top-16 z-40 shadow-sm">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center overflow-x-auto" style="scrollbar-width:none;">
-        ${tabs.map(t => {
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center overflow-x-auto no-scrollbar">
+        ${tabs.filter(t => (!t.adminOnly || isAdmin)).map(t => {
           const on = active === t.r;
+          const deskOnly = t.desktopOnly ? 'hidden md:flex' : 'flex';
           return `<a href="${t.r}" data-route="${t.r}"
-            class="flex items-center gap-2 px-4 sm:px-5 py-3.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors no-underline shrink-0
+            class="${deskOnly} items-center gap-2 px-4 sm:px-5 py-3.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors no-underline shrink-0
               ${on ? 'border-gold text-primary' : 'border-transparent text-primary/45 hover:text-primary hover:border-gold/30'}">
             <i data-lucide="${t.icon}" class="w-4 h-4"></i>${t.label}
           </a>`;
@@ -1385,4 +1390,294 @@ window.catDelete = async function(id, name, cnt) {
   if (data.success) { adminToast('Kategori dihapus'); loadCatGrid(); }
   else adminToast(data.error || 'Gagal', 'error');
 };
+
+// ══════════════════════════════════════════════════════════════
+//  CRUD HISTORY  /admin/history  (admin + desktop only)
+// ══════════════════════════════════════════════════════════════
+
+async function renderAdminHistory() {
+  if (!adminGuard()) return;
+
+  // Hanya tampil di desktop (≥ 768 px)
+  if (window.innerWidth < 768) {
+    app().innerHTML = `
+      <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-6 gap-4">
+        <i data-lucide="monitor" class="w-16 h-16 text-primary/20"></i>
+        <h1 class="text-lg font-bold text-primary">Tampilan Desktop Diperlukan</h1>
+        <p class="text-primary/45 text-sm max-w-xs">Halaman CRUD History hanya tersedia di tampilan desktop. Silakan buka di layar yang lebih lebar.</p>
+        <a href="/dashboard" data-route="/dashboard"
+           class="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-light transition-colors">
+          Kembali ke Dashboard
+        </a>
+      </div>`;
+    reicons(); return;
+  }
+
+  // State filter & pagination
+  window._histState = window._histState || {
+    page: 1, actionFilter: '', tableFilter: '', adminFilter: '',
+  };
+
+  app().innerHTML = adminNavBar('/admin/history') + `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-xl font-bold text-primary flex items-center gap-2">
+            <i data-lucide="history" class="w-5 h-5 text-gold"></i> CRUD History
+          </h1>
+          <p class="text-primary/40 text-xs mt-1">Rekaman semua perubahan data oleh admin</p>
+        </div>
+        <button onclick="histLoad(true)"
+          class="flex items-center gap-2 px-4 py-2 rounded-xl border border-gold/30 text-sm text-primary/60 hover:bg-cream-dark transition-colors">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+        </button>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="bg-white rounded-2xl shadow-card p-4 mb-5 flex flex-wrap gap-3 items-end">
+
+        <!-- Filter Aksi -->
+        <div class="flex flex-col gap-1 min-w-[140px]">
+          <label class="text-[10px] font-bold uppercase tracking-widest text-primary/40">Jenis Aksi</label>
+          <select id="hist-action-filter"
+            class="px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/40"
+            onchange="histFilter()">
+            <option value="">Semua Aksi</option>
+            <option value="CREATE">CREATE</option>
+            <option value="UPDATE">UPDATE</option>
+            <option value="DELETE">DELETE</option>
+            <option value="IMPORT">IMPORT</option>
+          </select>
+        </div>
+
+        <!-- Filter Tabel -->
+        <div class="flex flex-col gap-1 min-w-[160px]">
+          <label class="text-[10px] font-bold uppercase tracking-widest text-primary/40">Tabel Data</label>
+          <select id="hist-table-filter"
+            class="px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/40"
+            onchange="histFilter()">
+            <option value="">Semua Tabel</option>
+            <option value="books">books (Kitab)</option>
+            <option value="categories">categories (Kategori)</option>
+            <option value="book_content">book_content (Isi Kitab)</option>
+          </select>
+        </div>
+
+        <!-- Filter Admin -->
+        <div class="flex flex-col gap-1 flex-1 min-w-[180px]">
+          <label class="text-[10px] font-bold uppercase tracking-widest text-primary/40">Nama Admin</label>
+          <input id="hist-admin-filter" type="text" placeholder="Cari nama / email admin…"
+            class="px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/40"
+            oninput="histFilterDebounce()" />
+        </div>
+
+        <!-- Tombol reset -->
+        <button onclick="histReset()"
+          class="px-4 py-2 rounded-xl border border-gold/20 text-sm text-primary/50 hover:bg-cream-dark transition-colors self-end">
+          <i data-lucide="x" class="w-3.5 h-3.5 inline-block mr-1 align-text-bottom"></i>Reset
+        </button>
+      </div>
+
+      <!-- Tabel -->
+      <div id="hist-table-wrap"></div>
+
+      <!-- Pagination -->
+      <div id="hist-pagination" class="mt-4 flex items-center justify-between"></div>
+    </div>`;
+
+  reicons();
+  await histLoad(true);
+}
+
+// ── debounce untuk input pencarian admin
+let _histDebTimer = null;
+window.histFilterDebounce = function() {
+  clearTimeout(_histDebTimer);
+  _histDebTimer = setTimeout(() => histFilter(), 450);
+};
+
+window.histFilter = function() {
+  window._histState.page          = 1;
+  window._histState.actionFilter  = document.getElementById('hist-action-filter')?.value  || '';
+  window._histState.tableFilter   = document.getElementById('hist-table-filter')?.value   || '';
+  window._histState.adminFilter   = document.getElementById('hist-admin-filter')?.value   || '';
+  histLoad(false);
+};
+
+window.histReset = function() {
+  window._histState = { page: 1, actionFilter: '', tableFilter: '', adminFilter: '' };
+  const af = document.getElementById('hist-action-filter'); if (af) af.value = '';
+  const tf = document.getElementById('hist-table-filter');  if (tf) tf.value = '';
+  const nf = document.getElementById('hist-admin-filter');  if (nf) nf.value = '';
+  histLoad(false);
+};
+
+window.histGotoPage = function(p) {
+  window._histState.page = p;
+  histLoad(false);
+};
+
+async function histLoad(reset = false) {
+  if (reset) window._histState.page = 1;
+  const s   = window._histState;
+  const wrap = document.getElementById('hist-table-wrap');
+  const pgEl = document.getElementById('hist-pagination');
+  if (!wrap) return;
+
+  wrap.innerHTML = adminSpinner();
+
+  try {
+    const qs = new URLSearchParams({
+      action:        'admin_get_history',
+      page:          s.page,
+      limit:         50,
+      action_filter: s.actionFilter,
+      table_filter:  s.tableFilter,
+      admin_filter:  s.adminFilter,
+    });
+    const res  = await fetch(`/api.php?${qs}`);
+    const data = await res.json();
+
+    if (!data.success) throw new Error(data.error || 'Gagal memuat data.');
+
+    const rows = data.data || [];
+
+    if (!rows.length) {
+      wrap.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-card py-16 text-center text-primary/25 text-sm">
+          <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 opacity-25"></i>
+          <p>Belum ada riwayat perubahan.</p>
+        </div>`;
+      if (pgEl) pgEl.innerHTML = '';
+      reicons(); return;
+    }
+
+    // Badge warna per aksi
+    const badge = a => {
+      const cfg = {
+        CREATE: 'bg-emerald-100 text-emerald-700',
+        UPDATE: 'bg-blue-100 text-blue-700',
+        DELETE: 'bg-red-100 text-red-600',
+        IMPORT: 'bg-amber-100 text-amber-700',
+      };
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${cfg[a] || 'bg-primary/8 text-primary/60'}">${a}</span>`;
+    };
+
+    // Ikon per tabel
+    const tblIcon = t => ({
+      books:        'book',
+      categories:   'folder',
+      book_content: 'file-text',
+    }[t] || 'database');
+
+    // Format tanggal lokal
+    const fmtDate = str => {
+      if (!str) return '-';
+      try {
+        return new Date(str).toLocaleString('id-ID', {
+          day:'2-digit', month:'short', year:'numeric',
+          hour:'2-digit', minute:'2-digit', second:'2-digit',
+        });
+      } catch { return str; }
+    };
+
+    wrap.innerHTML = `
+      <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+        <div class="px-5 py-3.5 bg-cream/40 border-b border-cream-dark flex items-center justify-between">
+          <span class="text-xs font-medium text-primary/50">
+            ${data.total} entri ditemukan
+            ${s.actionFilter || s.tableFilter || s.adminFilter ? '(difilter)' : ''}
+          </span>
+          <span class="text-xs text-primary/30">Halaman ${s.page} dari ${data.pages}</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-cream-dark text-left">
+                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide whitespace-nowrap">Waktu</th>
+                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide">Aksi</th>
+                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide">Tabel</th>
+                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide">ID Record</th>
+                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide">Detail</th>
+                <th class="px-4 py-3 text-xs font-semibold text-primary/40 uppercase tracking-wide whitespace-nowrap">Admin</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-cream-dark/60">
+              ${rows.map(r => `
+                <tr class="hover:bg-cream/30 transition-colors">
+                  <td class="px-4 py-3 text-xs text-primary/50 whitespace-nowrap font-mono">${fmtDate(r.created_at)}</td>
+                  <td class="px-4 py-3">${badge(r.action)}</td>
+                  <td class="px-4 py-3">
+                    <span class="flex items-center gap-1.5 text-xs text-primary/60">
+                      <i data-lucide="${tblIcon(r.table_name)}" class="w-3.5 h-3.5 shrink-0 text-primary/30"></i>
+                      ${escHtml(r.table_name)}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-xs font-mono text-primary/45 max-w-[100px] truncate" title="${escHtml(r.record_id)}">${escHtml(r.record_id)}</td>
+                  <td class="px-4 py-3 text-xs text-primary/65 max-w-[260px]">
+                    <span class="block truncate" title="${escHtml(r.detail || '')}">${escHtml(r.detail || '—')}</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <div class="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold text-xs shrink-0">
+                        ${escHtml((r.admin_name || '?').charAt(0).toUpperCase())}
+                      </div>
+                      <div class="min-w-0">
+                        <div class="text-xs font-semibold text-primary truncate max-w-[120px]" title="${escHtml(r.admin_name)}">${escHtml(r.admin_name || '—')}</div>
+                        <div class="text-[10px] text-primary/35 truncate max-w-[120px]" title="${escHtml(r.admin_email)}">${escHtml(r.admin_email || '')}</div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+
+    // Render pagination
+    if (pgEl && data.pages > 1) {
+      const curP  = s.page;
+      const total = data.pages;
+      let btns = '';
+      // Prev
+      btns += `<button onclick="histGotoPage(${curP - 1})" ${curP <= 1 ? 'disabled' : ''}
+        class="px-3 py-1.5 rounded-lg border border-gold/20 text-xs text-primary/50 hover:bg-cream-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+        ← Prev</button>`;
+      // Page numbers (maksimal 7 tombol)
+      const range = [];
+      for (let i = 1; i <= total; i++) {
+        if (i === 1 || i === total || (i >= curP - 2 && i <= curP + 2)) range.push(i);
+        else if (range[range.length - 1] !== '…') range.push('…');
+      }
+      range.forEach(p => {
+        if (p === '…') {
+          btns += `<span class="px-2 text-primary/25 text-xs">…</span>`;
+        } else {
+          btns += `<button onclick="histGotoPage(${p})"
+            class="px-3 py-1.5 rounded-lg border text-xs transition-colors
+              ${p === curP ? 'bg-primary text-white border-primary' : 'border-gold/20 text-primary/50 hover:bg-cream-dark'}">
+            ${p}</button>`;
+        }
+      });
+      // Next
+      btns += `<button onclick="histGotoPage(${curP + 1})" ${curP >= total ? 'disabled' : ''}
+        class="px-3 py-1.5 rounded-lg border border-gold/20 text-xs text-primary/50 hover:bg-cream-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+        Next →</button>`;
+
+      pgEl.innerHTML = `
+        <span class="text-xs text-primary/35">${data.total} total entri</span>
+        <div class="flex items-center gap-1.5 flex-wrap justify-end">${btns}</div>`;
+    } else if (pgEl) {
+      pgEl.innerHTML = data.total
+        ? `<span class="text-xs text-primary/35">${data.total} entri</span>`
+        : '';
+    }
+
+    reicons();
+  } catch(e) {
+    wrap.innerHTML = `<div class="bg-white rounded-2xl shadow-card p-6 text-red-500 text-sm">${escHtml(e.message)}</div>`;
+  }
+}
 

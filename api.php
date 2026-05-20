@@ -29,6 +29,30 @@ function requireAdmin(): void {
     }
 }
 
+// =============================================================
+// CRUD HISTORY — helper untuk mencatat setiap perubahan admin
+// =============================================================
+function logCrudHistory(string $action, string $tableName, string $recordId, string $detail = ''): void {
+    try {
+        $pdo  = getPDO();
+        $user = getSessionUser();
+        $pdo->prepare(
+            "INSERT INTO crud_history (admin_id, admin_name, admin_email, action, table_name, record_id, detail)
+             VALUES (:admin_id, :admin_name, :admin_email, :action, :table_name, :record_id, :detail)"
+        )->execute([
+            ':admin_id'    => $user['id']    ?? null,
+            ':admin_name'  => $user['name']  ?? 'Unknown',
+            ':admin_email' => $user['email'] ?? '',
+            ':action'      => $action,
+            ':table_name'  => $tableName,
+            ':record_id'   => $recordId,
+            ':detail'      => $detail,
+        ]);
+    } catch (\Exception $e) {
+        // Logging gagal tidak boleh mengganggu operasi utama
+    }
+}
+
 // Helper — escape FULLTEXT boolean wildcards safely
 function ftEscape(string $q): string {
     // Strip chars that could break boolean mode, keep Arabic/Latin safely
@@ -113,6 +137,8 @@ try {
         case 'admin_delete_content': requireAdmin(); handleAdminDeleteContent(); break;
         // Admin — Import Word
         case 'admin_import_book':     requireAdmin(); handleAdminImportBook();     break;
+        // Admin — CRUD History
+        case 'admin_get_history':     requireAdmin(); handleAdminGetHistory();     break;
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Unknown action.']);
@@ -793,6 +819,8 @@ function handleAdminSaveBook(): void {
             ':catid'   => $catId ?: null, ':catname' => $catName,
             ':iso'     => $iso,    ':bkid'    => $bkid,
         ]);
+        logCrudHistory('UPDATE', 'books', (string)$bkid,
+            "Judul: {$title}" . ($author ? " | Penulis: {$author}" : '') . ($catName ? " | Kategori: {$catName}" : ''));
         echo json_encode(['success' => true, 'bkid' => $bkid]);
     } else {
         $stmt = $pdo->prepare(
@@ -804,7 +832,10 @@ function handleAdminSaveBook(): void {
             ':catid'   => $catId ?: null, ':catname' => $catName,
             ':iso'     => $iso,
         ]);
-        echo json_encode(['success' => true, 'bkid' => (int)$pdo->lastInsertId()]);
+        $newId = (int)$pdo->lastInsertId();
+        logCrudHistory('CREATE', 'books', (string)$newId,
+            "Judul: {$title}" . ($author ? " | Penulis: {$author}" : '') . ($catName ? " | Kategori: {$catName}" : ''));
+        echo json_encode(['success' => true, 'bkid' => $newId]);
     }
 }
 
@@ -816,8 +847,14 @@ function handleAdminDeleteBook(): void {
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $bkid = (int)($data['bkid'] ?? 0);
     if (!$bkid) { http_response_code(400); echo json_encode(['error' => 'bkid wajib diisi.']); return; }
+    // Ambil judul sebelum dihapus untuk catatan log
+    $titleRow = $pdo->prepare("SELECT title, author FROM books WHERE bkid = :bkid LIMIT 1");
+    $titleRow->execute([':bkid' => $bkid]);
+    $bookInfo = $titleRow->fetch();
     $pdo->prepare("DELETE FROM book_content WHERE bkid = :bkid")->execute([':bkid' => $bkid]);
     $pdo->prepare("DELETE FROM books WHERE bkid = :bkid")->execute([':bkid' => $bkid]);
+    logCrudHistory('DELETE', 'books', (string)$bkid,
+        $bookInfo ? "Judul: {$bookInfo['title']}" . ($bookInfo['author'] ? " | Penulis: {$bookInfo['author']}" : '') : '');
     echo json_encode(['success' => true]);
 }
 
@@ -836,11 +873,16 @@ function handleAdminSaveCategory(): void {
     if ($id) {
         $pdo->prepare("UPDATE categories SET name=:name, catord=:ord, level=:lvl WHERE id=:id")
             ->execute([':name' => $name, ':ord' => $ord, ':lvl' => $level, ':id' => $id]);
+        logCrudHistory('UPDATE', 'categories', (string)$id,
+            "Nama: {$name} | Urutan: {$ord} | Level: {$level}");
         echo json_encode(['success' => true, 'id' => $id]);
     } else {
         $pdo->prepare("INSERT INTO categories (name, catord, level) VALUES (:name, :ord, :lvl)")
             ->execute([':name' => $name, ':ord' => $ord, ':lvl' => $level]);
-        echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
+        $newCatId = (int)$pdo->lastInsertId();
+        logCrudHistory('CREATE', 'categories', (string)$newCatId,
+            "Nama: {$name} | Urutan: {$ord} | Level: {$level}");
+        echo json_encode(['success' => true, 'id' => $newCatId]);
     }
 }
 
@@ -852,9 +894,15 @@ function handleAdminDeleteCategory(): void {
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $id   = (int)($data['id'] ?? 0);
     if (!$id) { http_response_code(400); echo json_encode(['error' => 'id wajib diisi.']); return; }
+    // Ambil nama kategori untuk catatan log
+    $catRow = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
+    $catRow->execute([':id' => $id]);
+    $catNameLog = $catRow->fetchColumn() ?: '';
     $pdo->prepare("UPDATE books SET category_id = NULL, category_name = '' WHERE category_id = :id")
         ->execute([':id' => $id]);
     $pdo->prepare("DELETE FROM categories WHERE id = :id")->execute([':id' => $id]);
+    logCrudHistory('DELETE', 'categories', (string)$id,
+        $catNameLog ? "Nama: {$catNameLog}" : '');
     echo json_encode(['success' => true]);
 }
 
@@ -869,6 +917,11 @@ function handleAdminSaveContent(): void {
     $content = $data['content'] ?? '';
     if (!$bkid || !$page) { http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return; }
 
+    // Cek apakah halaman sudah ada (UPDATE) atau baru (CREATE)
+    $existsRow = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :bkid AND page = :page");
+    $existsRow->execute([':bkid' => $bkid, ':page' => $page]);
+    $isUpdate = (int)$existsRow->fetchColumn() > 0;
+
     $pdo->prepare(
         "INSERT INTO book_content (bkid, page, content)
          VALUES (:bkid, :page, :content)
@@ -881,6 +934,12 @@ function handleAdminSaveContent(): void {
     $pdo->prepare("UPDATE books SET pages = :pages WHERE bkid = :bkid")
         ->execute([':pages' => (int)$cnt->fetchColumn(), ':bkid' => $bkid]);
 
+    logCrudHistory(
+        $isUpdate ? 'UPDATE' : 'CREATE',
+        'book_content',
+        "bkid:{$bkid}|page:{$page}",
+        "Kitab ID: {$bkid} | Halaman: {$page}"
+    );
     echo json_encode(['success' => true]);
 }
 
@@ -902,6 +961,8 @@ function handleAdminDeleteContent(): void {
     $pdo->prepare("UPDATE books SET pages = :pages WHERE bkid = :bkid")
         ->execute([':pages' => (int)$cnt->fetchColumn(), ':bkid' => $bkid]);
 
+    logCrudHistory('DELETE', 'book_content', "bkid:{$bkid}|page:{$page}",
+        "Kitab ID: {$bkid} | Halaman: {$page}");
     echo json_encode(['success' => true]);
 }
 
@@ -959,10 +1020,72 @@ function handleAdminImportBook(): void {
         }
 
         $pdo->commit();
+        logCrudHistory('IMPORT', 'books', (string)$bkid,
+            "Judul: {$title}" . ($author ? " | Penulis: {$author}" : '') . ($catName ? " | Kategori: {$catName}" : '') . " | " . count($pages) . " halaman diimpor");
         echo json_encode(['success' => true, 'bkid' => $bkid, 'pages_imported' => count($pages)]);
     } catch (\Exception $e) {
         $pdo->rollBack();
         http_response_code(500);
         echo json_encode(['error' => $e->getMessage()]);
     }
+}
+
+// =============================================================
+// ADMIN — Ambil CRUD History (paginated + filter)
+// =============================================================
+function handleAdminGetHistory(): void {
+    $pdo    = getPDO();
+    $page   = max(1, (int)($_GET['page']   ?? 1));
+    $limit  = min(100, max(1, (int)($_GET['limit'] ?? 50)));
+    $offset = ($page - 1) * $limit;
+
+    $action    = $_GET['action_filter'] ?? '';
+    $tableFil  = $_GET['table_filter']  ?? '';
+    $adminFil  = $_GET['admin_filter']  ?? '';
+
+    $where  = [];
+    $params = [];
+
+    if ($action && in_array($action, ['CREATE','UPDATE','DELETE','IMPORT'], true)) {
+        $where[]  = 'h.action = :action';
+        $params[':action'] = $action;
+    }
+    if ($tableFil) {
+        $where[]  = 'h.table_name = :table_name';
+        $params[':table_name'] = $tableFil;
+    }
+    if ($adminFil) {
+        $where[]  = '(h.admin_name LIKE :admin OR h.admin_email LIKE :admin)';
+        $params[':admin'] = '%' . $adminFil . '%';
+    }
+
+    $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+    $total = $pdo->prepare("SELECT COUNT(*) FROM crud_history h $whereSQL");
+    $total->execute($params);
+    $totalCount = (int)$total->fetchColumn();
+
+    $stmt = $pdo->prepare(
+        "SELECT h.id, h.admin_id, h.admin_name, h.admin_email,
+                h.action, h.table_name, h.record_id, h.detail,
+                h.created_at
+         FROM crud_history h
+         $whereSQL
+         ORDER BY h.created_at DESC
+         LIMIT :limit OFFSET :offset"
+    );
+    foreach ($params as $k => $v) $stmt->bindValue($k, $v);
+    $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $rows = $stmt->fetchAll();
+
+    echo json_encode([
+        'success' => true,
+        'data'    => $rows,
+        'total'   => $totalCount,
+        'page'    => $page,
+        'limit'   => $limit,
+        'pages'   => (int)ceil($totalCount / $limit),
+    ]);
 }
