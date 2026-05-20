@@ -24,6 +24,19 @@ function jsonResponse(array $data, int $status = 200): void {
     echo $payload;
 }
 
+function getJsonRequest(): array {
+    static $json = null;
+    if ($json !== null) {
+        return $json;
+    }
+    $input = file_get_contents('php://input');
+    if ($input === false || trim($input) === '') {
+        return $json = [];
+    }
+    $decoded = json_decode($input, true);
+    return $json = is_array($decoded) ? $decoded : [];
+}
+
 // ── Auth helpers ──────────────────────────────────────────────
 function getSessionUser(): ?array {
     return $_SESSION['user'] ?? null;
@@ -1424,11 +1437,12 @@ function handleAdminImportBook(): void {
 // =============================================================
 function handleAdminGetHistory(): void {
     $pdo  = getPDO();
-    $page   = max(1, (int)($_GET['page']        ?? 1));
-    $limit  = min(100, max(5, (int)($_GET['per_page']  ?? 20)));
-    $action = trim($_GET['action']     ?? '');
-    $table  = trim($_GET['table_name'] ?? '');
-    $admin  = trim($_GET['admin_name'] ?? '');
+    $req  = getJsonRequest();
+    $page   = max(1, (int)($req['page']        ?? $_GET['page']        ?? 1));
+    $limit  = min(100, max(5, (int)($req['per_page']  ?? $_GET['per_page']  ?? 20)));
+    $action = trim($req['action']     ?? $_GET['action']     ?? '');
+    $table  = trim($req['table_name'] ?? $_GET['table_name'] ?? '');
+    $admin  = trim($req['admin_name'] ?? $_GET['admin_name'] ?? '');
 
     $where  = [];
     $params = [];
@@ -1475,11 +1489,12 @@ function handleAdminGetHistory(): void {
 // =============================================================
 function handleAdminGetSearchLogs(): void {
     $pdo  = getPDO();
-    $page       = max(1, (int)($_GET['page']        ?? 1));
-    $limit      = min(100, max(5, (int)($_GET['per_page']  ?? 25)));
-    $searchType = trim($_GET['search_type'] ?? '');
-    $query      = trim($_GET['query']       ?? '');
-    $date       = trim($_GET['date']        ?? '');
+    $req  = getJsonRequest();
+    $page       = max(1, (int)($req['page']        ?? $_GET['page']        ?? 1));
+    $limit      = min(100, max(5, (int)($req['per_page']  ?? $_GET['per_page']  ?? 25)));
+    $searchType = trim($req['search_type'] ?? $_GET['search_type'] ?? '');
+    $query      = trim($req['query']       ?? $_GET['query']       ?? '');
+    $date       = trim($req['date']        ?? $_GET['date']        ?? '');
 
     $where  = [];
     $params = [];
