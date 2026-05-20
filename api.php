@@ -991,7 +991,11 @@ function handleAdminImportBook(): void {
 
     $pdo->beginTransaction();
     try {
-        // Buat record kitab
+        // ── Hapus data orphan bkid=0 yang mungkin tersisa dari import gagal sebelumnya
+        $pdo->prepare("DELETE FROM book_content WHERE bkid = 0")->execute();
+        $pdo->prepare("DELETE FROM books WHERE bkid = 0")->execute();
+
+        // ── Buat record kitab baru
         $stmtBook = $pdo->prepare(
             "INSERT INTO books (title, author, category_id, category_name, iso, pages)
              VALUES (:title, :author, :catid, :catname, :iso, :pages)"
@@ -1004,18 +1008,31 @@ function handleAdminImportBook(): void {
             ':iso'     => $iso,
             ':pages'   => count($pages),
         ]);
-        $bkid = (int)$pdo->lastInsertId();
 
-        // Insert semua halaman
+        // ── Ambil ID yang baru dibuat; gunakan fallback jika lastInsertId() = 0
+        $bkid = (int)$pdo->lastInsertId();
+        if ($bkid === 0) {
+            // Fallback: tanya langsung ke MySQL (berguna jika PDO driver tidak sinkron)
+            $bkid = (int)$pdo->query("SELECT LAST_INSERT_ID()")->fetchColumn();
+        }
+        if ($bkid === 0) {
+            throw new \RuntimeException(
+                'Gagal mendapatkan ID kitab setelah INSERT. ' .
+                'Pastikan kolom bkid pada tabel books memiliki AUTO_INCREMENT.'
+            );
+        }
+
+        // ── Insert semua halaman (ON DUPLICATE KEY UPDATE sebagai safeguard)
         $stmtPage = $pdo->prepare(
             "INSERT INTO book_content (bkid, page, content)
-             VALUES (:bkid, :page, :content)"
+             VALUES (:bkid, :page, :content)
+             ON DUPLICATE KEY UPDATE content = VALUES(content)"
         );
         foreach ($pages as $i => $pageText) {
             $stmtPage->execute([
                 ':bkid'    => $bkid,
                 ':page'    => $i + 1,
-                ':content' => $pageText,
+                ':content' => (string)$pageText,
             ]);
         }
 
