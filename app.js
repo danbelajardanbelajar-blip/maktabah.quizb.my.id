@@ -398,6 +398,7 @@ const searchAdvancedState = {
   terms: ['', '', '', '', ''],
   cats: [],
   page: 1,
+  samePage: true,
   categories: [],
 };
 
@@ -439,6 +440,9 @@ function updateAdvancedPageUrl() {
   });
   if (searchAdvancedState.cats.length) {
     params.set('cats', searchAdvancedState.cats.join(','));
+  }
+  if (!searchAdvancedState.samePage) {
+    params.set('same_page', '0');
   }
   if (searchAdvancedState.page > 1) {
     params.set('page', searchAdvancedState.page);
@@ -523,6 +527,9 @@ async function execAdvancedSearch() {
   searchAdvancedState.terms.forEach((value, idx) => {
     if (value.trim()) params['q' + (idx + 1)] = value.trim();
   });
+  if (!searchAdvancedState.samePage) {
+    params.same_page = '0';
+  }
   if (searchAdvancedState.cats.length) params.cats = searchAdvancedState.cats.join(',');
 
   try {
@@ -557,6 +564,7 @@ function renderSearchAdvanced(params) {
   searchAdvancedState.terms = ['', '', '', '', ''];
   searchAdvancedState.cats = [];
   searchAdvancedState.page = Math.max(1, parseInt(params.get('page') || '1', 10));
+  searchAdvancedState.samePage = params.get('same_page') !== '0';
   for (let i = 0; i < 5; i += 1) {
     searchAdvancedState.terms[i] = params.get('q' + (i + 1)) || '';
   }
@@ -571,7 +579,7 @@ function renderSearchAdvanced(params) {
         <div class="flex flex-col gap-3">
           <div class="text-sm uppercase tracking-[.2em] text-gold font-bold">Pencarian Lanjutan</div>
           <h1 class="text-3xl md:text-4xl font-bold text-primary">Cari halaman kitab dengan kata kunci dan kategori</h1>
-          <p class="text-sm text-primary/60 max-w-3xl">Masukkan hingga 5 kolom. Jika sebuah kolom berisi beberapa kata, sistem akan mencocokkan frasa persis pada satu halaman. Jika beberapa kolom diisi, semua kata/frasanya harus hadir di halaman yang sama.</p>
+          <p class="text-sm text-primary/60 max-w-3xl">Masukkan hingga 5 kolom. Jika sebuah kolom berisi beberapa kata, sistem akan mencocokkan frasa persis pada satu halaman. Gunakan kotak di bawah untuk mengontrol apakah semua kata harus ditemukan dalam satu halaman.</p>
         </div>
       </div>
 
@@ -609,6 +617,13 @@ function renderSearchAdvanced(params) {
               <button id="adv-search-btn" class="w-full rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-light transition">Cari</button>
               <button id="adv-reset-btn" class="w-full rounded-2xl border border-primary/20 bg-white px-5 py-3 text-sm font-semibold text-primary hover:bg-cream-dark transition">Reset Form</button>
             </div>
+            <div class="flex items-start gap-3 text-sm text-primary/60">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input id="adv-same-page" type="checkbox" class="form-checkbox h-4 w-4 rounded border-gold/25 text-gold focus:ring-gold" ${searchAdvancedState.samePage ? 'checked' : ''} />
+                <span>Semua harus ditemukan dalam satu halaman</span>
+              </label>
+            </div>
+            <div class="text-xs text-primary/50">Jika dicentang, semua kolom yang diisi harus ditemukan di halaman yang sama. Jika tidak dicentang, hasil akan mencakup halaman yang cocok dengan salah satu kolom.</div>
             <div id="adv-search-stats" class="text-sm text-primary/60"></div>
           </div>
         </div>
@@ -648,12 +663,19 @@ function renderSearchAdvanced(params) {
     updateAdvancedPageUrl();
   });
 
+  $('#adv-same-page')?.addEventListener('change', e => {
+    searchAdvancedState.samePage = e.target.checked;
+    updateAdvancedPageUrl();
+  });
+
   $('#adv-search-btn')?.addEventListener('click', () => { searchAdvancedState.page = 1; execAdvancedSearch(); });
   $('#adv-reset-btn')?.addEventListener('click', () => {
     searchAdvancedState.terms = ['', '', '', '', ''];
     searchAdvancedState.cats = [];
     searchAdvancedState.page = 1;
+    searchAdvancedState.samePage = true;
     Array.from(document.querySelectorAll('.adv-term-input')).forEach(input => input.value = '');
+    $('#adv-same-page').checked = true;
     applyAdvancedCheckboxState();
     $('#adv-search-stats').textContent = '';
     $('#adv-results').innerHTML = `<div class="text-center py-20 text-primary/40">Isi minimal satu kolom pencarian untuk memulai.</div>`;

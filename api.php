@@ -662,6 +662,7 @@ function handleSearchAdvanced(): void {
         }
     }
 
+    $samePage = ($_GET['same_page'] ?? '1') !== '0';
     $params = [];
     $whereConditions = [];
     
@@ -673,7 +674,7 @@ function handleSearchAdvanced(): void {
     }
     
     $whereClause = count($whereConditions) > 0 
-        ? "(" . implode(" AND ", $whereConditions) . ")" 
+        ? "(" . implode($samePage ? " AND " : " OR ", $whereConditions) . ")" 
         : "1";
     
     // Add category filter
