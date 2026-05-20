@@ -519,14 +519,14 @@ async function execAdvancedSearch() {
   }
   if (!searchAdvancedState.cats.length) {
     wrap.innerHTML = `
-      <div class="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700 shadow-sm">
-        <div class="flex items-start gap-3">
-          <div class="flex-shrink-0 mt-0.5">
-            <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>
+      <div class="mx-auto max-w-2xl rounded-[32px] border border-red-200 bg-red-50 p-6 shadow-[0_18px_50px_rgba(239,68,68,0.12)] text-sm text-red-700" role="alert" aria-live="assertive">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-100 text-red-700">
+            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
           </div>
-          <div>
-            <div class="font-semibold text-red-700 mb-1">Kategori belum dipilih</div>
-            <div>Pilih satu kategori atau semua kategori terlebih dahulu untuk melanjutkan pencarian.</div>
+          <div class="flex-1">
+            <div class="text-base font-semibold text-red-800">Kategori belum dipilih</div>
+            <p class="mt-2 text-sm leading-6 text-red-700">Pilih satu kategori atau semua kategori terlebih dahulu untuk melanjutkan pencarian.</p>
           </div>
         </div>
       </div>`;
