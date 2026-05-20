@@ -517,6 +517,15 @@ async function execAdvancedSearch() {
     updateAdvancedPageUrl();
     return;
   }
+  if (!searchAdvancedState.cats.length) {
+    wrap.innerHTML = `
+      <div class="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+        Pilih satu kategori atau semua kategori terlebih dahulu untuk melanjutkan pencarian.
+      </div>`;
+    if (stats) stats.textContent = '';
+    updateAdvancedPageUrl();
+    return;
+  }
 
   abortAll();
   wrap.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${skeletonCards(6)}</div>`;
