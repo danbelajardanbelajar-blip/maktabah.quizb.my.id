@@ -1211,204 +1211,243 @@ function handleAdminDeleteCategory(): void {
     $pdo  = getPDO();
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $id   = (int)($data['id'] ?? 0);
-    if (!$id) { http_response_code(400); echo json_encode(['error' => 'id wajib diisi.']); return; }
-    // Ambil nama kategori untuk catatan log
-    $catRow = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
-    $catRow->execute([':id' => $id]);
-    $catNameLog = $catRow->fetchColumn() ?: '';
-    $pdo->prepare("UPDATE books SET category_id = NULL, category_name = '' WHERE category_id = :id")
-        ->execute([':id' => $id]);
+    if (!$id) { http_response_code(400); echo json_encode(['error' => 'ID wajib diisi.']); return; }
+    $nameRow = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
+    $nameRow->execute([':id' => $id]);
+    $catName = $nameRow->fetchColumn() ?: '';
     $pdo->prepare("DELETE FROM categories WHERE id = :id")->execute([':id' => $id]);
-    logCrudHistory('DELETE', 'categories', (string)$id,
-        $catNameLog ? "Nama: {$catNameLog}" : '');
+    logCrudHistory('DELETE', 'categories', (string)$id, "Nama: {$catName}");
     echo json_encode(['success' => true]);
 }
 
 // =============================================================
-// ADMIN — Simpan Konten Halaman
+// ADMIN — Simpan / Update Isi Kitab (satu halaman)
 // =============================================================
 function handleAdminSaveContent(): void {
     $pdo  = getPDO();
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $bkid    = (int)($data['bkid']    ?? 0);
     $page    = (int)($data['page']    ?? 0);
-    $content = $data['content'] ?? '';
-    if (!$bkid || !$page) { http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return; }
+    $content = trim($data['content']  ?? '');
+    $isNew   = (bool)($data['is_new'] ?? false);
 
-    // Cek apakah halaman sudah ada (UPDATE) atau baru (CREATE)
-    $existsRow = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :bkid AND page = :page");
-    $existsRow->execute([':bkid' => $bkid, ':page' => $page]);
-    $isUpdate = (int)$existsRow->fetchColumn() > 0;
+    if (!$bkid || !$page) {
+        http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return;
+    }
 
-    $pdo->prepare(
-        "INSERT INTO book_content (bkid, page, content)
-         VALUES (:bkid, :page, :content)
-         ON DUPLICATE KEY UPDATE content = VALUES(content)"
-    )->execute([':bkid' => $bkid, ':page' => $page, ':content' => $content]);
-
-    // Sync halaman count di tabel books
-    $cnt = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :bkid");
-    $cnt->execute([':bkid' => $bkid]);
-    $pdo->prepare("UPDATE books SET pages = :pages WHERE bkid = :bkid")
-        ->execute([':pages' => (int)$cnt->fetchColumn(), ':bkid' => $bkid]);
-
-    logCrudHistory(
-        $isUpdate ? 'UPDATE' : 'CREATE',
-        'book_content',
-        "bkid:{$bkid}|page:{$page}",
-        "Kitab ID: {$bkid} | Halaman: {$page}"
-    );
+    if ($isNew) {
+        // Cek halaman sudah ada
+        $check = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid=:bkid AND page=:page");
+        $check->execute([':bkid' => $bkid, ':page' => $page]);
+        if ((int)$check->fetchColumn() > 0) {
+            http_response_code(409); echo json_encode(['error' => "Halaman {$page} sudah ada."]); return;
+        }
+        $pdo->prepare("INSERT INTO book_content (bkid, page, content) VALUES (:bkid, :page, :content)")
+            ->execute([':bkid' => $bkid, ':page' => $page, ':content' => $content]);
+        // Update jumlah halaman di tabel books
+        $pdo->prepare("UPDATE books SET pages = (SELECT COUNT(*) FROM book_content WHERE bkid=:bkid) WHERE bkid=:bkid2")
+            ->execute([':bkid' => $bkid, ':bkid2' => $bkid]);
+        logCrudHistory('CREATE', 'book_content', "bkid:{$bkid}|page:{$page}",
+            "Tambah halaman {$page} pada kitab bkid={$bkid}");
+    } else {
+        $pdo->prepare("UPDATE book_content SET content=:content WHERE bkid=:bkid AND page=:page")
+            ->execute([':content' => $content, ':bkid' => $bkid, ':page' => $page]);
+        logCrudHistory('UPDATE', 'book_content', "bkid:{$bkid}|page:{$page}",
+            "Edit halaman {$page} pada kitab bkid={$bkid}");
+    }
     echo json_encode(['success' => true]);
 }
 
 // =============================================================
-// ADMIN — Hapus Konten Halaman
+// ADMIN — Hapus Halaman Isi Kitab
 // =============================================================
 function handleAdminDeleteContent(): void {
     $pdo  = getPDO();
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $bkid = (int)($data['bkid'] ?? 0);
     $page = (int)($data['page'] ?? 0);
-    if (!$bkid || !$page) { http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return; }
-
-    $pdo->prepare("DELETE FROM book_content WHERE bkid = :bkid AND page = :page")
+    if (!$bkid || !$page) {
+        http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return;
+    }
+    $pdo->prepare("DELETE FROM book_content WHERE bkid=:bkid AND page=:page")
         ->execute([':bkid' => $bkid, ':page' => $page]);
-
-    $cnt = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :bkid");
-    $cnt->execute([':bkid' => $bkid]);
-    $pdo->prepare("UPDATE books SET pages = :pages WHERE bkid = :bkid")
-        ->execute([':pages' => (int)$cnt->fetchColumn(), ':bkid' => $bkid]);
-
+    // Recalculate pages
+    $pdo->prepare("UPDATE books SET pages=(SELECT COUNT(*) FROM book_content WHERE bkid=:bkid) WHERE bkid=:bkid2")
+        ->execute([':bkid' => $bkid, ':bkid2' => $bkid]);
     logCrudHistory('DELETE', 'book_content', "bkid:{$bkid}|page:{$page}",
-        "Kitab ID: {$bkid} | Halaman: {$page}");
+        "Hapus halaman {$page} pada kitab bkid={$bkid}");
     echo json_encode(['success' => true]);
 }
 
 // =============================================================
-// ADMIN — Import Kitab dari Word (bulk insert)
+// ADMIN — Import Kitab dari .doc / .docx
 // =============================================================
 function handleAdminImportBook(): void {
-    $pdo  = getPDO();
-    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $pdo = getPDO();
 
-    $title   = trim($data['title']   ?? '');
-    $author  = trim($data['author']  ?? '');
-    $catId   = (int)($data['category_id'] ?? 0);
-    $iso     = $data['iso'] ?? 'ar';
-    $pages   = $data['pages'] ?? [];
+    // --- Bersihkan orphan bkid=0 dari import sebelumnya yang gagal ---
+    try {
+        $pdo->exec("DELETE FROM book_content WHERE bkid = 0");
+        $pdo->exec("DELETE FROM books WHERE bkid = 0");
+    } catch (\Exception $e) { /* ignore */ }
 
-    if (!$title)       { http_response_code(400); echo json_encode(['error' => 'Judul wajib diisi.']); return; }
-    if (empty($pages)) { http_response_code(400); echo json_encode(['error' => 'Tidak ada halaman untuk diimpor.']); return; }
+    $bkid   = (int)($_POST['bkid']        ?? 0);
+    $title  = trim($_POST['title']        ?? '');
+    $author = trim($_POST['author']       ?? '');
+    $catId  = (int)($_POST['category_id'] ?? 0);
+    $iso    = $_POST['iso']               ?? 'ar';
 
-    $catName = '';
-    if ($catId) {
-        $cs = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
-        $cs->execute([':id' => $catId]);
-        $catName = $cs->fetchColumn() ?: '';
+    if (!$title) { http_response_code(400); echo json_encode(['error' => 'Judul wajib diisi.']); return; }
+    if (empty($_FILES['docfile']['tmp_name'])) {
+        http_response_code(400); echo json_encode(['error' => 'File .doc/.docx wajib diunggah.']); return;
     }
 
+    $tmpFile = $_FILES['docfile']['tmp_name'];
+    $origExt = strtolower(pathinfo($_FILES['docfile']['name'], PATHINFO_EXTENSION));
+    if (!in_array($origExt, ['doc', 'docx'])) {
+        http_response_code(400); echo json_encode(['error' => 'Hanya file .doc dan .docx yang didukung.']); return;
+    }
+
+    // --- Konversi ke teks menggunakan antiword / docx2txt / python-docx ---
+    $tmpCopy = sys_get_temp_dir() . '/' . uniqid('mkt_', true) . '.' . $origExt;
+    move_uploaded_file($tmpFile, $tmpCopy);
+
+    $rawText = '';
+    if ($origExt === 'docx') {
+        // python-docx
+        $py = escapeshellarg($tmpCopy);
+        $out = shell_exec("python3 -c "import docx,sys; d=docx.Document($py); print('\n'.join(p.text for p in d.paragraphs))" 2>/dev/null");
+        if (!$out) {
+            // fallback: unzip + grep XML
+            $out = shell_exec("unzip -p $py word/document.xml 2>/dev/null | sed 's/<[^>]*>//g' | grep -v '^$'");
+        }
+        $rawText = (string)$out;
+    } else {
+        // antiword untuk .doc
+        $out = shell_exec('antiword ' . escapeshellarg($tmpCopy) . ' 2>/dev/null');
+        if (!$out) {
+            $out = shell_exec('catdoc ' . escapeshellarg($tmpCopy) . ' 2>/dev/null');
+        }
+        $rawText = (string)$out;
+    }
+    @unlink($tmpCopy);
+
+    if (strlen(trim($rawText)) < 5) {
+        http_response_code(422); echo json_encode(['error' => 'Gagal membaca isi file. Pastikan file tidak kosong atau terenkripsi.']); return;
+    }
+
+    // Pecah per halaman (tiap 3000 karakter atau per paragraf besar)
+    $pages = [];
+    $paragraphs = preg_split('/
+{2,}/', trim($rawText));
+    $buf = '';
+    foreach ($paragraphs as $para) {
+        $para = trim($para);
+        if ($para === '') continue;
+        if (strlen($buf) + strlen($para) > 3000 && $buf !== '') {
+            $pages[] = trim($buf);
+            $buf = $para;
+        } else {
+            $buf .= ($buf ? "
+
+" : '') . $para;
+        }
+    }
+    if ($buf !== '') $pages[] = trim($buf);
+    if (empty($pages)) {
+        http_response_code(422); echo json_encode(['error' => 'Tidak ada konten yang bisa diimpor.']); return;
+    }
+
+    // --- Transaksi: simpan buku + semua halaman ---
     $pdo->beginTransaction();
     try {
-        // Hapus data orphan bkid=0 sisa import gagal sebelumnya
-        $pdo->prepare("DELETE FROM book_content WHERE bkid = 0")->execute();
-        $pdo->prepare("DELETE FROM books WHERE bkid = 0")->execute();
-
-        // Buat record kitab baru
-        $stmtBook = $pdo->prepare(
-            "INSERT INTO books (title, author, category_id, category_name, iso, pages)
-             VALUES (:title, :author, :catid, :catname, :iso, :pages)"
-        );
-        $stmtBook->execute([
-            ':title'   => $title,
-            ':author'  => $author,
-            ':catid'   => $catId ?: null,
-            ':catname' => $catName,
-            ':iso'     => $iso,
-            ':pages'   => count($pages),
-        ]);
-
-        // Ambil ID baru; fallback jika lastInsertId() = 0
-        $bkid = (int)$pdo->lastInsertId();
-        if ($bkid === 0) {
-            $bkid = (int)$pdo->query("SELECT LAST_INSERT_ID()")->fetchColumn();
-        }
-        if ($bkid === 0) {
-            throw new \RuntimeException(
-                'Gagal mendapatkan ID kitab setelah INSERT. ' .
-                'Pastikan kolom bkid pada tabel books memiliki AUTO_INCREMENT.'
-            );
+        // Kategori
+        $catName = '';
+        if ($catId) {
+            $cs = $pdo->prepare("SELECT name FROM categories WHERE id=:id LIMIT 1");
+            $cs->execute([':id' => $catId]);
+            $catName = $cs->fetchColumn() ?: '';
         }
 
-        // Insert semua halaman (ON DUPLICATE KEY sebagai safeguard)
-        $stmtPage = $pdo->prepare(
+        if ($bkid) {
+            // Update judul/meta jika re-import
+            $pdo->prepare("UPDATE books SET title=:t, author=:a, category_id=:c, category_name=:cn, iso=:iso WHERE bkid=:bkid")
+                ->execute([':t' => $title, ':a' => $author, ':c' => $catId ?: null, ':cn' => $catName, ':iso' => $iso, ':bkid' => $bkid]);
+            // Hapus konten lama
+            $pdo->prepare("DELETE FROM book_content WHERE bkid=:bkid")->execute([':bkid' => $bkid]);
+        } else {
+            $pdo->prepare("INSERT INTO books (title, author, category_id, category_name, iso, pages) VALUES (:t,:a,:c,:cn,:iso,0)")
+                ->execute([':t' => $title, ':a' => $author, ':c' => $catId ?: null, ':cn' => $catName, ':iso' => $iso]);
+            $bkid = (int)$pdo->lastInsertId();
+            if (!$bkid) {
+                // Fallback: query langsung
+                $r = $pdo->query("SELECT LAST_INSERT_ID() AS id")->fetch();
+                $bkid = (int)($r['id'] ?? 0);
+            }
+            if (!$bkid) throw new \RuntimeException('Gagal mendapatkan ID buku baru (lastInsertId = 0).');
+        }
+
+        // Insert semua halaman
+        $ins = $pdo->prepare(
             "INSERT INTO book_content (bkid, page, content)
              VALUES (:bkid, :page, :content)
              ON DUPLICATE KEY UPDATE content = VALUES(content)"
         );
-        foreach ($pages as $i => $pageText) {
-            $stmtPage->execute([
-                ':bkid'    => $bkid,
-                ':page'    => $i + 1,
-                ':content' => (string)$pageText,
-            ]);
+        foreach ($pages as $idx => $pageContent) {
+            $ins->execute([':bkid' => $bkid, ':page' => $idx + 1, ':content' => $pageContent]);
         }
 
+        // Update jumlah halaman
+        $pdo->prepare("UPDATE books SET pages=:p WHERE bkid=:bkid")
+            ->execute([':p' => count($pages), ':bkid' => $bkid]);
+
         $pdo->commit();
+
         logCrudHistory('IMPORT', 'books', (string)$bkid,
-            "Judul: {$title}" .
-            ($author  ? " | Penulis: {$author}"    : '') .
-            ($catName ? " | Kategori: {$catName}"  : '') .
-            " | " . count($pages) . " halaman diimpor");
-        echo json_encode(['success' => true, 'bkid' => $bkid, 'pages_imported' => count($pages)]);
+            "Judul: {$title}" . ($author ? " | Penulis: {$author}" : '') . " | Halaman: " . count($pages));
+
+        echo json_encode(['success' => true, 'bkid' => $bkid, 'pages' => count($pages)]);
     } catch (\Exception $e) {
         $pdo->rollBack();
         http_response_code(500);
-        echo json_encode(['error' => $e->getMessage()]);
+        echo json_encode(['error' => 'Import gagal: ' . $e->getMessage()]);
     }
 }
 
 // =============================================================
-// ADMIN — Ambil CRUD History (paginated + filter)
+// ADMIN — GET CRUD History (paginated + filtered)
 // =============================================================
 function handleAdminGetHistory(): void {
-    $pdo    = getPDO();
-    $data   = json_decode(file_get_contents('php://input'), true) ?? [];
-    $page   = max(1, (int)($data['page'] ?? $_GET['page'] ?? 1));
-    $limit  = min(100, max(1, (int)($data['per_page'] ?? $data['limit'] ?? $_GET['limit'] ?? 50)));
-    $offset = ($page - 1) * $limit;
-
-    $action   = $data['action'] ?? $_GET['action_filter'] ?? '';
-    $tableFil = $data['table_name'] ?? $_GET['table_filter'] ?? '';
-    $adminFil = $data['admin_name'] ?? $_GET['admin_filter'] ?? '';
+    $pdo  = getPDO();
+    $page   = max(1, (int)($_GET['page']        ?? 1));
+    $limit  = min(100, max(5, (int)($_GET['per_page']  ?? 20)));
+    $action = trim($_GET['action']     ?? '');
+    $table  = trim($_GET['table_name'] ?? '');
+    $admin  = trim($_GET['admin_name'] ?? '');
 
     $where  = [];
     $params = [];
 
-    if ($action && in_array($action, ['CREATE','UPDATE','DELETE','IMPORT'], true)) {
-        $where[]           = 'h.action = :action';
-        $params[':action'] = $action;
-    }
-    if ($tableFil) {
-        $where[]               = 'h.table_name = :table_name';
-        $params[':table_name'] = $tableFil;
-    }
-    if ($adminFil) {
-        $where[]          = '(h.admin_name LIKE :admin OR h.admin_email LIKE :admin)';
-        $params[':admin'] = '%' . $adminFil . '%';
-    }
+    if ($action) { $where[] = 'action = :action'; $params[':action'] = $action; }
+    if ($table)  { $where[] = 'table_name = :table'; $params[':table'] = $table; }
+    if ($admin)  { $where[] = 'admin_name LIKE :admin'; $params[':admin'] = "%{$admin}%"; }
 
-    $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+    $whereStr = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-    $total = $pdo->prepare("SELECT COUNT(*) FROM crud_history h $whereSQL");
-    $total->execute($params);
-    $totalCount = (int)$total->fetchColumn();
+    // Total
+    $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM crud_history {$whereStr}");
+    foreach ($params as $k => $v) $cntStmt->bindValue($k, $v);
+    $cntStmt->execute();
+    $total = (int)$cntStmt->fetchColumn();
 
-    $stmt = $pdo->prepare(
-        "SELECT h.id, h.admin_id, h.admin_name, h.admin_email,
-                h.action, h.table_name, h.record_id, h.detail, h.created_at
-         FROM crud_history h
-         $whereSQL
-         ORDER BY h.created_at DESC
+    // Rows
+    $offset = ($page - 1) * $limit;
+    $stmt   = $pdo->prepare(
+        "SELECT id, admin_id, admin_name, admin_email, action, table_name, record_id, detail,
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at
+         FROM crud_history
+         {$whereStr}
+         ORDER BY id DESC
          LIMIT :limit OFFSET :offset"
     );
     foreach ($params as $k => $v) $stmt->bindValue($k, $v);
@@ -1419,79 +1458,65 @@ function handleAdminGetHistory(): void {
     echo json_encode([
         'success' => true,
         'rows'    => $stmt->fetchAll(),
-        'total'   => $totalCount,
+        'total'   => $total,
         'page'    => $page,
         'limit'   => $limit,
-        'pages'   => (int)ceil($totalCount / $limit),
+        'pages'   => (int)ceil($total / $limit),
     ]);
 }
 
 // =============================================================
-// ADMIN — Ambil Search Logs (paginated + filter)
+// ADMIN — GET Search Logs (paginated + filtered + stats)
 // =============================================================
 function handleAdminGetSearchLogs(): void {
-    $pdo    = getPDO();
-    $data   = json_decode(file_get_contents('php://input'), true) ?? [];
-    $page   = max(1, (int)($data['page'] ?? $_GET['page'] ?? 1));
-    $limit  = min(100, max(1, (int)($data['per_page'] ?? $data['limit'] ?? $_GET['limit'] ?? 50)));
-    $offset = ($page - 1) * $limit;
-
-    $typeFil  = $data['search_type']  ?? $_GET['type_filter']  ?? '';
-    $queryFil = $data['query']        ?? $_GET['query_filter'] ?? '';
-    $dateFil  = $data['date']         ?? $_GET['date_filter']  ?? '';
+    $pdo  = getPDO();
+    $page       = max(1, (int)($_GET['page']        ?? 1));
+    $limit      = min(100, max(5, (int)($_GET['per_page']  ?? 25)));
+    $searchType = trim($_GET['search_type'] ?? '');
+    $query      = trim($_GET['query']       ?? '');
+    $date       = trim($_GET['date']        ?? '');
 
     $where  = [];
     $params = [];
 
-    if ($typeFil && in_array($typeFil, ['basic','advanced'], true)) {
-        $where[]          = 's.search_type = :type';
-        $params[':type']  = $typeFil;
-    }
-    if ($queryFil) {
-        $where[]           = 's.query LIKE :query';
-        $params[':query']  = '%' . $queryFil . '%';
-    }
-    if ($dateFil === 'today') {
-        $where[] = 'DATE(s.created_at) = CURDATE()';
-    } elseif ($dateFil === 'week') {
-        $where[] = 's.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
-    } elseif ($dateFil === 'month') {
-        $where[] = 's.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
-    }
+    if ($searchType) { $where[] = 'search_type = :type';  $params[':type']  = $searchType; }
+    if ($query)      { $where[] = 'query LIKE :query';     $params[':query'] = "%{$query}%"; }
+    if ($date)       { $where[] = 'DATE(created_at) = :date'; $params[':date'] = $date; }
 
-    $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+    $whereStr = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-    // Total count
-    $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM search_logs s $whereSQL");
-    $cntStmt->execute($params);
+    // Total
+    $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM search_logs {$whereStr}");
+    foreach ($params as $k => $v) $cntStmt->bindValue($k, $v);
+    $cntStmt->execute();
     $totalCount = (int)$cntStmt->fetchColumn();
 
-    // Top queries (hari ini & seminggu) untuk stats
-    $topStmt = $pdo->prepare(
-        "SELECT query, COUNT(*) AS cnt
-         FROM search_logs
-         WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-         GROUP BY query ORDER BY cnt DESC LIMIT 10"
-    );
-    $topStmt->execute();
-    $topQueries = $topStmt->fetchAll();
-
-    // Stats: today & week counts
+    // Stats — hari ini & minggu ini (global, tidak dipengaruhi filter)
     $todayCount = (int)$pdo->query(
         "SELECT COUNT(*) FROM search_logs WHERE DATE(created_at) = CURDATE()"
     )->fetchColumn();
     $weekCount = (int)$pdo->query(
         "SELECT COUNT(*) FROM search_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
     )->fetchColumn();
+    $uniqueCount = (int)$pdo->query(
+        "SELECT COUNT(DISTINCT query) FROM search_logs"
+    )->fetchColumn();
+
+    // Top queries (global)
+    $topQueries = $pdo->query(
+        "SELECT query, COUNT(*) AS cnt FROM search_logs
+         GROUP BY query ORDER BY cnt DESC LIMIT 10"
+    )->fetchAll();
 
     // Rows
-    $stmt = $pdo->prepare(
-        "SELECT s.id, s.search_type, s.query, s.query_detail,
-                s.result_count, s.visitor_ip, s.user_agent,
-                s.user_id, s.user_name, s.created_at
-         FROM search_logs s
-         $whereSQL
-         ORDER BY s.created_at DESC
+    $offset = ($page - 1) * $limit;
+    $stmt   = $pdo->prepare(
+        "SELECT id, search_type, query, query_detail, result_count,
+                visitor_ip, user_agent, user_name,
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at
+         FROM search_logs
+         {$whereStr}
+         ORDER BY id DESC
          LIMIT :limit OFFSET :offset"
     );
     foreach ($params as $k => $v) $stmt->bindValue($k, $v);
@@ -1501,14 +1526,16 @@ function handleAdminGetSearchLogs(): void {
 
     echo json_encode([
         'success'     => true,
+        'data'        => $stmt->fetchAll(),
         'rows'        => $stmt->fetchAll(),
         'total'       => $totalCount,
         'page'        => $page,
         'limit'       => $limit,
         'pages'       => (int)ceil($totalCount / $limit),
         'stats'       => [
-            'today' => $todayCount,
-            'week'  => $weekCount,
+            'today'  => $todayCount,
+            'week'   => $weekCount,
+            'unique' => $uniqueCount,
         ],
         'top_queries' => $topQueries,
     ]);
