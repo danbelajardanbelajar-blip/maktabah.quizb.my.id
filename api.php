@@ -146,6 +146,17 @@ function booleanSearchTermForAdvanced(string $q): string {
     return '+' . ftEscape($q) . '*';
 }
 
+function booleanQueryFromFieldsOr(array $fields): string {
+    $parts = [];
+    foreach ($fields as $field) {
+        $term = ftEscape(trim($field));
+        if ($term !== '') {
+            $parts[] = $term . '*';
+        }
+    }
+    return implode(' ', $parts);
+}
+
 function booleanSearchQueryFromFields(array $fields): string {
     $parts = [];
     foreach ($fields as $field) {
@@ -710,6 +721,16 @@ function extractSmartSnippet($content, $terms, $maxLength = 350) {
 
 // =============================================================
 // 6d. SEARCH ADVANCED — page-level konten dengan banyak kolom + kategori
+//
+//  Strategi 2-langkah untuk performa maksimal:
+//  • Jalur CEPAT (all_cats / tanpa filter kategori):
+//    Step 1 — Scan FULLTEXT pada book_content saja (tanpa JOIN),
+//             ambil top-N bkid+page berdasarkan relevansi.
+//    Step 2 — JOIN ke books hanya untuk N baris hasil tersebut.
+//    COUNT  — Tanpa JOIN, langsung dari book_content.
+//  • Jalur STANDAR (ada filter kategori):
+//    Gunakan JOIN + filter category_id seperti semula,
+//    namun LEFT(content,400) saja yang diambil.
 // =============================================================
 function handleSearchAdvanced(): void {
     header('Cache-Control: public, max-age=120');
@@ -719,117 +740,271 @@ function handleSearchAdvanced(): void {
     $offset = ($page - 1) * $limit;
 
     $fields = [];
-    for ($i = 1; $i <= 5; $i += 1) {
+    for ($i = 1; $i <= 5; $i++) {
         $val = trim((string)($_GET['q' . $i] ?? ''));
-        if ($val !== '') {
-            $fields[] = $val;
-        }
+        if ($val !== '') $fields[] = $val;
     }
 
     if (empty($fields)) {
-        echo json_encode(['data' => [], 'total' => 0, 'page' => $page, 'total_pages' => 0]);
+        jsonResponse(['data' => [], 'total' => 0, 'page' => $page, 'total_pages' => 0]);
         return;
     }
 
-    $cats = [];
-    if (isset($_GET['cats']) && $_GET['cats'] !== '') {
-        foreach (explode(',', (string)$_GET['cats']) as $catId) {
-            $catId = (int) trim($catId);
-            if ($catId > 0) {
-                $cats[] = $catId;
+    $allCats = ($_GET['all_cats'] ?? '0') === '1';
+    $cats    = [];
+    if (!$allCats && isset($_GET['cats']) && $_GET['cats'] !== '') {
+        foreach (explode(',', (string)$_GET['cats']) as $cid) {
+            $cid = (int)trim($cid);
+            if ($cid > 0) $cats[] = $cid;
+        }
+    }
+    $samePage    = ($_GET['same_page'] ?? '1') !== '0';
+    $noCatFilter = $allCats || empty($cats);   // true = lewati filter kategori
+
+    // --- Cache key ---
+    $cacheKey = 'adv3:' . hash('sha256', json_encode([
+        'f' => $fields, 'c' => $cats, 'a' => $allCats, 's' => $samePage, 'p' => $page,
+    ]));
+
+    // --- Cache hit ---
+    try {
+        $cs = $pdo->prepare(
+            "SELECT results_json, result_count FROM search_cache
+             WHERE query_hash = :h AND expires_at > NOW() LIMIT 1"
+        );
+        $cs->execute([':h' => $cacheKey]);
+        if ($row = $cs->fetch()) {
+            jsonResponse([
+                'data'        => json_decode($row['results_json'], true) ?? [],
+                'total'       => (int)$row['result_count'],
+                'page'        => $page,
+                'total_pages' => (int)ceil($row['result_count'] / $limit),
+                'cached'      => true,
+            ]);
+            return;
+        }
+    } catch (\Exception $e) { /* ignore */ }
+
+    // --- Build FULLTEXT conditions (kolom bare `content`, tanpa alias tabel) ---
+    $ftParams     = [];
+    $ftConditions = [];  // menggunakan `content` tanpa alias
+
+    if ($samePage) {
+        foreach ($fields as $idx => $field) {
+            $boolTerm = booleanSearchTermForAdvanced($field);
+            if ($boolTerm === '') continue;
+            $k = ':ft' . $idx;
+            $ftParams[$k]   = $boolTerm;
+            $ftConditions[] = "MATCH(content) AGAINST ($k IN BOOLEAN MODE)";
+        }
+    } else {
+        $combined = booleanQueryFromFieldsOr($fields);
+        if ($combined !== '') {
+            $ftParams[':ft0'] = $combined;
+            $ftConditions[]   = "MATCH(content) AGAINST (:ft0 IN BOOLEAN MODE)";
+        }
+    }
+
+    if (empty($ftConditions)) {
+        jsonResponse(['data' => [], 'total' => 0, 'page' => $page, 'total_pages' => 0]);
+        return;
+    }
+
+    $ftWhere  = '(' . implode(' AND ', $ftConditions) . ')';          // bare table
+    $allFtRel = booleanQueryFromFieldsOr($fields) ?: '+*';
+
+    $rows  = [];
+    $total = 0;
+
+    try {
+        if ($noCatFilter) {
+            // ══════════════════════════════════════════════════════
+            // JALUR CEPAT — Tanpa JOIN pada scan utama
+            // ══════════════════════════════════════════════════════
+
+            // Step 1: Scan FULLTEXT pada book_content saja (tidak JOIN)
+            //         → hanya menggunakan FULLTEXT index, sangat cepat
+            $s1Params          = $ftParams;
+            $s1Params[':rel']  = $allFtRel;
+
+            $step1Sql = "SELECT bkid, page,
+                                MATCH(content) AGAINST (:rel IN BOOLEAN MODE) AS relevance
+                         FROM book_content
+                         WHERE $ftWhere
+                         ORDER BY relevance DESC, bkid ASC, page ASC
+                         LIMIT :lim OFFSET :off";
+
+            $s1 = $pdo->prepare($step1Sql);
+            foreach ($s1Params as $k => $v) $s1->bindValue($k, $v, PDO::PARAM_STR);
+            $s1->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $s1->bindValue(':off', $offset, PDO::PARAM_INT);
+            $s1->execute();
+            $topRows = $s1->fetchAll();
+
+            if (!empty($topRows)) {
+                // Step 2: Ambil metadata + snippet hanya untuk baris terpilih (JOIN minimal)
+                $pairConds  = [];
+                $pairParams = [];
+                foreach ($topRows as $i => $r) {
+                    $bk = ':bk' . $i;
+                    $pg = ':pg' . $i;
+                    $pairConds[]   = "(bc.bkid = $bk AND bc.page = $pg)";
+                    $pairParams[$bk] = (int)$r['bkid'];
+                    $pairParams[$pg] = (int)$r['page'];
+                }
+
+                $step2Sql = "SELECT bc.bkid, bc.page AS match_page,
+                                    LEFT(bc.content, 400) AS content,
+                                    b.title, b.author, b.category_name
+                             FROM book_content bc
+                             JOIN books b ON b.bkid = bc.bkid
+                             WHERE " . implode(' OR ', $pairConds);
+
+                $s2 = $pdo->prepare($step2Sql);
+                foreach ($pairParams as $k => $v) $s2->bindValue($k, $v, PDO::PARAM_INT);
+                $s2->execute();
+
+                $byKey = [];
+                foreach ($s2->fetchAll() as $r) {
+                    $byKey[$r['bkid'] . '_' . $r['match_page']] = $r;
+                }
+
+                // Kembalikan urutan relevansi dari Step 1
+                foreach ($topRows as $r) {
+                    $k = $r['bkid'] . '_' . $r['page'];
+                    if (!isset($byKey[$k])) continue;
+                    $row             = $byKey[$k];
+                    $row['snippet']  = extractSmartSnippet((string)($row['content'] ?? ''), $fields);
+                    unset($row['content']);
+                    $rows[] = $row;
+                }
+            }
+
+            // COUNT — tanpa JOIN (hanya book_content + FULLTEXT index)
+            $countKey = 'advcnt3:' . hash('sha256', json_encode([
+                'f' => $fields, 'c' => [], 's' => $samePage,
+            ]));
+            $cc = $pdo->prepare(
+                "SELECT result_count FROM search_cache WHERE query_hash = :h AND expires_at > NOW() LIMIT 1"
+            );
+            $cc->execute([':h' => $countKey]);
+            if ($cnt = $cc->fetchColumn()) {
+                $total = (int)$cnt;
+            } else {
+                $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE $ftWhere");
+                foreach ($ftParams as $k => $v) $cntStmt->bindValue($k, $v, PDO::PARAM_STR);
+                $cntStmt->execute();
+                $total = (int)$cntStmt->fetchColumn();
+                $pdo->prepare(
+                    "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
+                     VALUES (:h, :qt, '[]', :rc, DATE_ADD(NOW(), INTERVAL 30 MINUTE))
+                     ON DUPLICATE KEY UPDATE result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
+                )->execute([':h' => $countKey, ':qt' => 'cnt:adv3', ':rc' => $total]);
+            }
+
+        } else {
+            // ══════════════════════════════════════════════════════
+            // JALUR STANDAR — Ada filter kategori, pakai JOIN
+            // ══════════════════════════════════════════════════════
+
+            // Kondisi FULLTEXT untuk JOIN query (alias bc.content)
+            $ftConditionsAlias = array_map(
+                fn($c) => str_replace('MATCH(content)', 'MATCH(bc.content)', $c),
+                $ftConditions
+            );
+            $ftWhereAlias = '(' . implode(' AND ', $ftConditionsAlias) . ')';
+
+            $catPlaceholders = [];
+            $catParams       = [];
+            foreach ($cats as $i => $cid) {
+                $k = ':cat' . $i;
+                $catPlaceholders[] = $k;
+                $catParams[$k]     = $cid;
+            }
+            $fullWhere = $ftWhereAlias . ' AND b.category_id IN (' . implode(',', $catPlaceholders) . ')';
+
+            $params          = array_merge($ftParams, $catParams);
+            $params[':rel']  = $allFtRel;
+            $params[':lim']  = $limit;
+            $params[':off']  = $offset;
+
+            $sql = "SELECT bc.bkid, b.title, b.author, b.category_name,
+                           bc.page AS match_page,
+                           LEFT(bc.content, 400) AS content,
+                           MATCH(bc.content) AGAINST (:rel IN BOOLEAN MODE) AS relevance
+                    FROM book_content bc
+                    JOIN books b ON b.bkid = bc.bkid
+                    WHERE $fullWhere
+                    ORDER BY relevance DESC, b.title ASC, bc.page ASC
+                    LIMIT :lim OFFSET :off";
+
+            $stmt = $pdo->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
+            }
+            $stmt->execute();
+            $rawRows = $stmt->fetchAll();
+
+            $rows = array_map(function ($row) use ($fields) {
+                $row['snippet'] = extractSmartSnippet((string)($row['content'] ?? ''), $fields);
+                unset($row['content'], $row['relevance']);
+                return $row;
+            }, $rawRows);
+
+            // COUNT dengan JOIN + filter kategori
+            $countKey = 'advcnt3:' . hash('sha256', json_encode([
+                'f' => $fields, 'c' => $cats, 's' => $samePage,
+            ]));
+            $cc = $pdo->prepare(
+                "SELECT result_count FROM search_cache WHERE query_hash = :h AND expires_at > NOW() LIMIT 1"
+            );
+            $cc->execute([':h' => $countKey]);
+            if ($cnt = $cc->fetchColumn()) {
+                $total = (int)$cnt;
+            } else {
+                $cntParams = array_merge($ftParams, $catParams);
+                $cntStmt   = $pdo->prepare(
+                    "SELECT COUNT(*) FROM book_content bc JOIN books b ON b.bkid = bc.bkid WHERE $fullWhere"
+                );
+                foreach ($cntParams as $k => $v) {
+                    $cntStmt->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
+                }
+                $cntStmt->execute();
+                $total = (int)$cntStmt->fetchColumn();
+                $pdo->prepare(
+                    "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
+                     VALUES (:h, :qt, '[]', :rc, DATE_ADD(NOW(), INTERVAL 30 MINUTE))
+                     ON DUPLICATE KEY UPDATE result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
+                )->execute([':h' => $countKey, ':qt' => 'cnt:adv3', ':rc' => $total]);
             }
         }
-    }
-
-    $samePage = ($_GET['same_page'] ?? '1') !== '0';
-    $params = [];
-    $whereConditions = [];
-    
-    // Build LIKE conditions for all search fields
-    foreach ($fields as $idx => $field) {
-        $key = ':like' . $idx;
-        $params[$key] = '%' . $field . '%';
-        $whereConditions[] = "bc.content LIKE $key";
-    }
-    
-    $whereClause = count($whereConditions) > 0 
-        ? "(" . implode($samePage ? " AND " : " OR ", $whereConditions) . ")" 
-        : "1";
-    
-    // Add category filter
-    if (!empty($cats)) {
-        $catPlaceholders = [];
-        foreach ($cats as $idx => $catId) {
-            $key = ':cat' . $idx;
-            $catPlaceholders[] = $key;
-            $params[$key] = $catId;
-        }
-        $whereClause .= ' AND b.category_id IN (' . implode(',', $catPlaceholders) . ')';
-    }
-
-    $sql = "SELECT bc.bkid, b.title, b.author, b.pages, b.category_name,
-                bc.page AS match_page,
-                bc.content
-         FROM book_content bc
-         JOIN books b ON b.bkid = bc.bkid
-         WHERE $whereClause
-         ORDER BY b.title ASC, bc.page ASC
-         LIMIT :lim OFFSET :off";
-    
-    $params[':lim'] = $limit;
-    $params[':off'] = $offset;
-    
-    try {
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
-        }
-        $stmt->execute();
-        $rawRows = $stmt->fetchAll();
-        
-        // Process rows to extract smarter snippets that include all search terms
-        $rows = array_map(function($row) use ($fields) {
-            $content = (string)($row['content'] ?? '');
-            $snippet = extractSmartSnippet($content, $fields);
-            $row['snippet'] = $snippet;
-            return $row;
-        }, $rawRows);
     } catch (Exception $e) {
         jsonResponse(['error' => 'Query error: ' . $e->getMessage()], 500);
         return;
     }
 
-    // Count total
-    $countSql = "SELECT COUNT(*) FROM book_content bc 
-                 JOIN books b ON b.bkid = bc.bkid
-                 WHERE $whereClause";
-    
-    $countParams = [];
-    foreach ($params as $key => $value) {
-        if ($key !== ':lim' && $key !== ':off') {
-            $countParams[$key] = $value;
-        }
-    }
-    
+    // --- Simpan hasil di cache (30 menit) ---
     try {
-        $countStmt = $pdo->prepare($countSql);
-        foreach ($countParams as $key => $value) {
-            $countStmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
-        }
-        $countStmt->execute();
-        $total = (int)$countStmt->fetchColumn();
-    } catch (Exception $e) {
-        $total = 0;
-    }
+        $pdo->prepare(
+            "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
+             VALUES (:h, :qt, :rj, :rc, DATE_ADD(NOW(), INTERVAL 30 MINUTE))
+             ON DUPLICATE KEY UPDATE results_json=VALUES(results_json),
+             result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
+        )->execute([
+            ':h'  => $cacheKey,
+            ':qt' => implode(' | ', $fields),
+            ':rj' => json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
+            ':rc' => $total,
+        ]);
+    } catch (\Exception $e) { /* ignore */ }
 
     // --- Log pencarian lanjutan (hanya halaman pertama) ---
     if ($page === 1) {
-        $queryText  = implode(' | ', $fields);
-        $queryDetail = json_encode([
-            'fields' => $fields,
-            'cats'   => $cats,
-        ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
-        logSearchQuery('advanced', $queryText, $total, $queryDetail);
+        logSearchQuery('advanced', implode(' | ', $fields), $total, json_encode([
+            'fields'   => $fields,
+            'cats'     => $cats,
+            'all_cats' => $allCats,
+        ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE));
     }
 
     jsonResponse([

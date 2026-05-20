@@ -397,6 +397,7 @@ const searchState = { q: '', bookPage: 1, contPage: 1 };
 const searchAdvancedState = {
   terms: ['', '', '', '', ''],
   cats: [],
+  allCats: false,   // true = semua kategori dipilih, kirim all_cats=1 ke API
   page: 1,
   samePage: true,
   categories: [],
@@ -497,7 +498,9 @@ function updateAdvancedPageUrl() {
   searchAdvancedState.terms.forEach((value, idx) => {
     if (value.trim()) params.set('q' + (idx + 1), value.trim());
   });
-  if (searchAdvancedState.cats.length) {
+  if (searchAdvancedState.allCats) {
+    params.set('all_cats', '1');
+  } else if (searchAdvancedState.cats.length) {
     params.set('cats', searchAdvancedState.cats.join(','));
   }
   if (!searchAdvancedState.samePage) {
@@ -543,7 +546,7 @@ function renderAdvancedCategories(categories) {
     return;
   }
   wrapper.innerHTML = categories.map(cat => {
-    const checked = searchAdvancedState.cats.includes(String(cat.id)) ? 'checked' : '';
+    const checked = (searchAdvancedState.allCats || searchAdvancedState.cats.includes(String(cat.id))) ? 'checked' : '';
     return `
       <label class="flex items-center gap-3 rounded-2xl border border-cream-dark bg-white px-3 py-2 cursor-pointer hover:border-gold/30 transition-colors">
         <input type="checkbox" class="adv-cat-checkbox" value="${cat.id}" ${checked} />
@@ -554,8 +557,25 @@ function renderAdvancedCategories(categories) {
 
 function applyAdvancedCheckboxState() {
   $$('.adv-cat-checkbox').forEach(input => {
-    input.checked = searchAdvancedState.cats.includes(input.value);
+    // Jika allCats=true, centang semua; jika tidak, centang berdasarkan daftar
+    input.checked = searchAdvancedState.allCats || searchAdvancedState.cats.includes(input.value);
   });
+}
+
+// Perbarui tampilan tombol "Tandai semua" sesuai status allCats
+function updateAdvSelectAllBtn() {
+  const btn = $('#adv-select-all');
+  if (!btn) return;
+  if (searchAdvancedState.allCats) {
+    btn.classList.add('bg-gold/10', 'border-gold', 'text-gold');
+    btn.classList.remove('bg-white', 'border-gold/30', 'text-primary');
+    btn.innerHTML = '<i data-lucide="check-check" class="w-4 h-4"></i> Semua dipilih';
+  } else {
+    btn.classList.remove('bg-gold/10', 'border-gold', 'text-gold');
+    btn.classList.add('bg-white', 'border-gold/30', 'text-primary');
+    btn.innerHTML = 'Tandai semua';
+  }
+  reicons();
 }
 
 function updateAdvancedSearchStateFromInputs() {
@@ -576,7 +596,9 @@ async function execAdvancedSearch() {
     updateAdvancedPageUrl();
     return;
   }
-  if (!searchAdvancedState.cats.length) {
+  // Validasi kategori: harus ada pilihan atau semua dipilih
+  const hasCatFilter = searchAdvancedState.allCats || searchAdvancedState.cats.length > 0;
+  if (!hasCatFilter) {
     wrap.innerHTML = `
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
         <div class="w-full max-w-lg rounded-[32px] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
@@ -603,7 +625,13 @@ async function execAdvancedSearch() {
   wrap.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${skeletonCards(6)}</div>`;
   reicons();
   searchAdvancedState.page = Math.max(1, searchAdvancedState.page || 1);
+  // Tampilkan indikator loading di stats bar
+  if (stats) {
+    stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencari…</span>`;
+    reicons();
+  }
 
+  const t0 = performance.now();
   const params = { action: 'search_advanced', page: searchAdvancedState.page };
   searchAdvancedState.terms.forEach((value, idx) => {
     if (value.trim()) params['q' + (idx + 1)] = value.trim();
@@ -611,17 +639,38 @@ async function execAdvancedSearch() {
   if (!searchAdvancedState.samePage) {
     params.same_page = '0';
   }
-  if (searchAdvancedState.cats.length) params.cats = searchAdvancedState.cats.join(',');
+  // Kirim all_cats=1 jika semua dipilih → API gunakan jalur cepat 2-step tanpa JOIN pada scan utama
+  if (searchAdvancedState.allCats) {
+    params.all_cats = '1';
+  } else if (searchAdvancedState.cats.length) {
+    params.cats = searchAdvancedState.cats.join(',');
+  }
 
   try {
     const res = await apiFetch(params);
+    const ms = Math.round(performance.now() - t0);
     updateAdvancedPageUrl();
     const total = res.total || 0;
     const page = res.page || 1;
     const totalPages = res.total_pages || 1;
     const queryLabel = searchTerms.length === 1 ? searchTerms[0] : searchTerms.join(' + ');
+
+    // Badge kategori
+    const catLabel = searchAdvancedState.allCats
+      ? `<span class="inline-flex items-center gap-1 text-xs bg-gold/10 text-gold font-semibold px-2 py-0.5 rounded-full"><i data-lucide="layers" class="w-3 h-3"></i>Semua Kategori</span>`
+      : `<span class="text-xs text-primary/40">${searchAdvancedState.cats.length} kategori dipilih</span>`;
+
+    // Badge performa / cache
+    const perfBadge = res.cached
+      ? `<span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-600 font-semibold px-2 py-0.5 rounded-full"><i data-lucide="database" class="w-3 h-3"></i>Cache</span>`
+      : `<span class="inline-flex items-center gap-1 text-xs text-primary/40"><i data-lucide="zap" class="w-3 h-3 text-gold"></i>${ms} ms</span>`;
+
     if (stats) {
-      stats.innerHTML = `<span class="text-sm text-primary/60">Menemukan ${total.toLocaleString('id-ID')} halaman di ${totalPages} halaman hasil untuk <strong>${escHtml(queryLabel)}</strong>.</span>`;
+      stats.innerHTML = `<div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm text-primary/60">Menemukan <strong>${total.toLocaleString('id-ID')}</strong> halaman untuk <strong>${escHtml(queryLabel)}</strong>.</span>
+        ${catLabel}
+        ${perfBadge}
+      </div>`;
     }
     wrap.innerHTML = res.data.length
       ? `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book)).join('')}</div>
@@ -647,13 +696,14 @@ window.goAdvancedPage = function(p) {
 function renderSearchAdvanced(params) {
   searchAdvancedState.terms = ['', '', '', '', ''];
   searchAdvancedState.cats = [];
+  searchAdvancedState.allCats = params.get('all_cats') === '1';
   searchAdvancedState.page = Math.max(1, parseInt(params.get('page') || '1', 10));
   searchAdvancedState.samePage = params.get('same_page') !== '0';
   for (let i = 0; i < 5; i += 1) {
     searchAdvancedState.terms[i] = params.get('q' + (i + 1)) || '';
   }
   const catsParam = params.get('cats') || '';
-  if (catsParam) {
+  if (!searchAdvancedState.allCats && catsParam) {
     searchAdvancedState.cats = catsParam.split(',').map(id => String(parseInt(id, 10))).filter(id => id && id !== '0');
   }
 
@@ -721,29 +771,48 @@ function renderSearchAdvanced(params) {
   getSearchAdvancedCategories().then(categories => {
     renderAdvancedCategories(categories);
     applyAdvancedCheckboxState();
-
+    updateAdvSelectAllBtn();
     $$('.adv-cat-checkbox').forEach(input => {
       input.addEventListener('change', () => {
         if (input.checked) {
           if (!searchAdvancedState.cats.includes(input.value)) searchAdvancedState.cats.push(input.value);
         } else {
-          searchAdvancedState.cats = searchAdvancedState.cats.filter(id => id !== input.value);
+          // Jika sebelumnya allCats dan user unchecks satu → beralih ke mode parsial
+          if (searchAdvancedState.allCats) {
+            searchAdvancedState.allCats = false;
+            searchAdvancedState.cats = categories
+              .map(cat => String(cat.id))
+              .filter(id => id !== input.value);
+          } else {
+            searchAdvancedState.cats = searchAdvancedState.cats.filter(id => id !== input.value);
+          }
         }
+        // Deteksi otomatis: jika semua centang → pakai allCats flag
+        if (searchAdvancedState.cats.length === categories.length) {
+          searchAdvancedState.allCats = true;
+          searchAdvancedState.cats = [];
+        }
+        updateAdvSelectAllBtn();
         updateAdvancedPageUrl();
       });
     });
   });
 
+  // "Tandai semua" → set allCats=true, cats=[] untuk efisiensi
   $('#adv-select-all')?.addEventListener('click', async () => {
-    const categories = await getSearchAdvancedCategories();
-    searchAdvancedState.cats = categories.map(cat => String(cat.id));
+    await getSearchAdvancedCategories();
+    searchAdvancedState.allCats = true;
+    searchAdvancedState.cats = [];
     applyAdvancedCheckboxState();
+    updateAdvSelectAllBtn();
     updateAdvancedPageUrl();
   });
 
   $('#adv-clear-all')?.addEventListener('click', () => {
+    searchAdvancedState.allCats = false;
     searchAdvancedState.cats = [];
     applyAdvancedCheckboxState();
+    updateAdvSelectAllBtn();
     updateAdvancedPageUrl();
   });
 
@@ -756,11 +825,13 @@ function renderSearchAdvanced(params) {
   $('#adv-reset-btn')?.addEventListener('click', () => {
     searchAdvancedState.terms = ['', '', '', '', ''];
     searchAdvancedState.cats = [];
+    searchAdvancedState.allCats = false;
     searchAdvancedState.page = 1;
     searchAdvancedState.samePage = true;
     Array.from(document.querySelectorAll('.adv-term-input')).forEach(input => input.value = '');
     $('#adv-same-page').checked = true;
     applyAdvancedCheckboxState();
+    updateAdvSelectAllBtn();
     $('#adv-search-stats').textContent = '';
     $('#adv-results').innerHTML = `<div class="text-center py-20 text-primary/40">Isi minimal satu kolom pencarian untuk memulai.</div>`;
     updateAdvancedPageUrl();
