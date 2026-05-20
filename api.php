@@ -15,6 +15,15 @@ header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Cache-Control: public, max-age=60');
 
+function jsonResponse(array $data, int $status = 200): void {
+    http_response_code($status);
+    $payload = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    if ($payload === false) {
+        $payload = json_encode(['error' => 'JSON encoding failed'], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    }
+    echo $payload;
+}
+
 // ── Auth helpers ──────────────────────────────────────────────
 function getSessionUser(): ?array {
     return $_SESSION['user'] ?? null;
@@ -786,8 +795,7 @@ function handleSearchAdvanced(): void {
             return $row;
         }, $rawRows);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Query error: ' . $e->getMessage()]);
+        jsonResponse(['error' => 'Query error: ' . $e->getMessage()], 500);
         return;
     }
 
@@ -820,11 +828,11 @@ function handleSearchAdvanced(): void {
         $queryDetail = json_encode([
             'fields' => $fields,
             'cats'   => $cats,
-        ], JSON_UNESCAPED_UNICODE);
+        ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
         logSearchQuery('advanced', $queryText, $total, $queryDetail);
     }
 
-    echo json_encode([
+    jsonResponse([
         'data'        => $rows,
         'total'       => $total,
         'page'        => $page,

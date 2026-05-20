@@ -1632,7 +1632,7 @@ async function renderAdminSearchLogs() {
       const statsEl = document.getElementById('sl-stats');
       if (statsEl) {
         statsEl.innerHTML = [
-          { icon: 'today',         label: 'Hari Ini',      val: stats.today   || 0, color: 'text-blue-600',   bg: 'bg-blue-50'   },
+          { icon: 'calendar',      label: 'Hari Ini',      val: stats.today   || 0, color: 'text-blue-600',   bg: 'bg-blue-50'   },
           { icon: 'calendar-days', label: 'Minggu Ini',    val: stats.week    || 0, color: 'text-green-600',  bg: 'bg-green-50'  },
           { icon: 'list',          label: 'Total Semua',   val: d.total       || 0, color: 'text-primary',    bg: 'bg-cream/60'  },
           { icon: 'trending-up',   label: 'Unik (query)',  val: stats.unique  || 0, color: 'text-purple-600', bg: 'bg-purple-50' },
