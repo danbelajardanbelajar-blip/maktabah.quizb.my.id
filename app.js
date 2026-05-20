@@ -568,6 +568,9 @@ async function execAdvancedSearch() {
       ? `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book)).join('')}</div>
          ${paginationHtml(page, totalPages, 'goAdvancedPage')}`
       : `<div class="text-center py-20 text-primary/40">Maaf, tidak ditemukan halaman yang cocok dengan kata kunci dan kategori yang dipilih.</div>`;
+    if (res.data.length) {
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     reicons();
   } catch (err) {
     console.error('Advanced search API error:', err, 'Params:', params);
