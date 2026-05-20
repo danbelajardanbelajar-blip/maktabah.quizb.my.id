@@ -1314,12 +1314,13 @@ function handleAdminImportBook(): void {
 
     $rawText = '';
     if ($origExt === 'docx') {
-        // python-docx
-        $py = escapeshellarg($tmpCopy);
-        $out = shell_exec("python3 -c "import docx,sys; d=docx.Document($py); print('\n'.join(p.text for p in d.paragraphs))" 2>/dev/null");
+        // python-docx (single-quoted shell command to avoid PHP string interpolation issues)
+        $pyArg = escapeshellarg($tmpCopy);
+        $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
+        $out = shell_exec($pyCmd);
         if (!$out) {
             // fallback: unzip + grep XML
-            $out = shell_exec("unzip -p $py word/document.xml 2>/dev/null | sed 's/<[^>]*>//g' | grep -v '^$'");
+            $out = shell_exec('unzip -p ' . $pyArg . ' word/document.xml 2>/dev/null | sed \'s/<[^>]*>//g\' | grep -v \'^$\'');
         }
         $rawText = (string)$out;
     } else {
@@ -1338,8 +1339,7 @@ function handleAdminImportBook(): void {
 
     // Pecah per halaman (tiap 3000 karakter atau per paragraf besar)
     $pages = [];
-    $paragraphs = preg_split('/
-{2,}/', trim($rawText));
+    $paragraphs = preg_split('/\n{2,}/', trim($rawText));
     $buf = '';
     foreach ($paragraphs as $para) {
         $para = trim($para);
@@ -1348,71 +1348,13 @@ function handleAdminImportBook(): void {
             $pages[] = trim($buf);
             $buf = $para;
         } else {
-            $buf .= ($buf ? "
-
-" : '') . $para;
+            $buf .= ($buf ? "\n\n" : '') . $para;
         }
     }
     if ($buf !== '') $pages[] = trim($buf);
     if (empty($pages)) {
         http_response_code(422); echo json_encode(['error' => 'Tidak ada konten yang bisa diimpor.']); return;
     }
-
-    // --- Transaksi: simpan buku + semua halaman ---
-    $pdo->beginTransaction();
-    try {
-        // Kategori
-        $catName = '';
-        if ($catId) {
-            $cs = $pdo->prepare("SELECT name FROM categories WHERE id=:id LIMIT 1");
-            $cs->execute([':id' => $catId]);
-            $catName = $cs->fetchColumn() ?: '';
-        }
-
-        if ($bkid) {
-            // Update judul/meta jika re-import
-            $pdo->prepare("UPDATE books SET title=:t, author=:a, category_id=:c, category_name=:cn, iso=:iso WHERE bkid=:bkid")
-                ->execute([':t' => $title, ':a' => $author, ':c' => $catId ?: null, ':cn' => $catName, ':iso' => $iso, ':bkid' => $bkid]);
-            // Hapus konten lama
-            $pdo->prepare("DELETE FROM book_content WHERE bkid=:bkid")->execute([':bkid' => $bkid]);
-        } else {
-            $pdo->prepare("INSERT INTO books (title, author, category_id, category_name, iso, pages) VALUES (:t,:a,:c,:cn,:iso,0)")
-                ->execute([':t' => $title, ':a' => $author, ':c' => $catId ?: null, ':cn' => $catName, ':iso' => $iso]);
-            $bkid = (int)$pdo->lastInsertId();
-            if (!$bkid) {
-                // Fallback: query langsung
-                $r = $pdo->query("SELECT LAST_INSERT_ID() AS id")->fetch();
-                $bkid = (int)($r['id'] ?? 0);
-            }
-            if (!$bkid) throw new \RuntimeException('Gagal mendapatkan ID buku baru (lastInsertId = 0).');
-        }
-
-        // Insert semua halaman
-        $ins = $pdo->prepare(
-            "INSERT INTO book_content (bkid, page, content)
-             VALUES (:bkid, :page, :content)
-             ON DUPLICATE KEY UPDATE content = VALUES(content)"
-        );
-        foreach ($pages as $idx => $pageContent) {
-            $ins->execute([':bkid' => $bkid, ':page' => $idx + 1, ':content' => $pageContent]);
-        }
-
-        // Update jumlah halaman
-        $pdo->prepare("UPDATE books SET pages=:p WHERE bkid=:bkid")
-            ->execute([':p' => count($pages), ':bkid' => $bkid]);
-
-        $pdo->commit();
-
-        logCrudHistory('IMPORT', 'books', (string)$bkid,
-            "Judul: {$title}" . ($author ? " | Penulis: {$author}" : '') . " | Halaman: " . count($pages));
-
-        echo json_encode(['success' => true, 'bkid' => $bkid, 'pages' => count($pages)]);
-    } catch (\Exception $e) {
-        $pdo->rollBack();
-        http_response_code(500);
-        echo json_encode(['error' => 'Import gagal: ' . $e->getMessage()]);
-    }
-}
 
 // =============================================================
 // ADMIN — GET CRUD History (paginated + filtered)
@@ -1524,10 +1466,10 @@ function handleAdminGetSearchLogs(): void {
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
 
+    $rows = $stmt->fetchAll();
     echo json_encode([
         'success'     => true,
-        'data'        => $stmt->fetchAll(),
-        'rows'        => $stmt->fetchAll(),
+        'rows'        => $rows,
         'total'       => $totalCount,
         'page'        => $page,
         'limit'       => $limit,
