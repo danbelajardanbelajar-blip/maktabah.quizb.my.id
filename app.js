@@ -406,6 +406,18 @@ function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function parseSearchTerms(q) {
+  if (!q) return [];
+  const terms = [];
+  const regex = /"([^"]+)"|([^"\s]+)/g;
+  let match;
+  while ((match = regex.exec(q)) !== null) {
+    const term = (match[1] || match[2] || '').trim();
+    if (term) terms.push(term);
+  }
+  return terms;
+}
+
 function hlTextMulti(text, terms) {
   if (!text) return escHtml('');
   let escaped = escHtml(text);
@@ -1240,11 +1252,12 @@ async function loadReaderPage(bkid, page, highlightQ = '') {
 
     if (res.content) {
       const normalised = res.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      // Apply keyword highlight when coming from search, otherwise plain text
-      const rendered = highlightQ ? hlText(normalised, highlightQ) : escHtml(normalised);
+      const terms = parseSearchTerms(highlightQ);
+      // Apply multi-term highlight when coming from advanced search or multi-word query
+      const rendered = terms.length ? hlTextMulti(normalised, terms) : escHtml(normalised);
       area.innerHTML = `<div class="reader-text">${rendered}</div>`;
       // Auto-scroll to first highlighted word
-      if (highlightQ) {
+      if (terms.length) {
         setTimeout(() => {
           const first = area.querySelector('mark.hl');
           if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
