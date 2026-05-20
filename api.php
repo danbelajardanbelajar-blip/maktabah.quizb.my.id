@@ -114,6 +114,37 @@ function logSearchQuery(
     }
 }
 
+function logUserActivity(string $event, string $eventData = ''): void {
+    try {
+        $pdo  = getPDO();
+        $user = getSessionUser();
+        $ip   = $_SERVER['HTTP_X_FORWARDED_FOR']
+                ?? $_SERVER['HTTP_X_REAL_IP']
+                ?? $_SERVER['REMOTE_ADDR']
+                ?? '';
+        $ip = trim(explode(',', $ip)[0]);
+        $ua = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 512);
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO user_activity_log
+             (user_id, user_name, user_email, user_role, event, event_data, ip_address, user_agent)
+             VALUES (:uid, :uname, :uemail, :urole, :event, :edata, :ip, :ua)"
+        );
+        $stmt->execute([
+            ':uid'    => $user['id']    ?? null,
+            ':uname'  => $user['name']  ?? '',
+            ':uemail' => $user['email'] ?? '',
+            ':urole'  => $user['role']  ?? 'user',
+            ':event'  => $event,
+            ':edata'  => $eventData !== '' ? $eventData : null,
+            ':ip'     => $ip,
+            ':ua'     => $ua,
+        ]);
+    } catch (\Exception $e) {
+        // Silently ignore logging errors
+    }
+}
+
 // Helper — escape FULLTEXT boolean wildcards safely
 function ftEscape(string $q): string {
     // Strip chars that could break boolean mode, keep Arabic/Latin safely
@@ -198,6 +229,7 @@ try {
         case 'search_advanced':   handleSearchAdvanced();   break;
         // Auth
         case 'auth_me':           handleAuthMe();           break;
+        case 'log_activity':       handleLogActivity();      break;
         // Admin — CRUD Kitab
         case 'admin_save_book':    requireAdmin(); handleAdminSaveBook();    break;
         case 'admin_delete_book':  requireAdmin(); handleAdminDeleteBook();  break;
@@ -211,6 +243,7 @@ try {
         case 'admin_import_book':     requireAdmin(); handleAdminImportBook();     break;
         // Admin — CRUD History
         case 'admin_get_history':     requireAdmin(); handleAdminGetHistory();     break;
+        case 'admin_get_activity':    requireAdmin(); handleAdminGetActivity();    break;
         // Admin — Search Logs
         case 'admin_get_search_logs': requireAdmin(); handleAdminGetSearchLogs();  break;
         default:
@@ -376,6 +409,29 @@ function handleAuthMe(): void {
     } else {
         echo json_encode(['loggedIn' => false]);
     }
+}
+
+function handleLogActivity(): void {
+    $req   = getJsonRequest();
+    $event = trim($req['event'] ?? '');
+    $data  = $req['data']  ?? null;
+
+    $allowed = ['visit', 'menu_click', 'login', 'logout', 'register'];
+    if ($event === '' || !in_array($event, $allowed, true)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid activity event.']);
+        return;
+    }
+
+    $detail = null;
+    if (is_array($data) || is_object($data)) {
+        $detail = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    } elseif ($data !== null) {
+        $detail = (string)$data;
+    }
+
+    logUserActivity($event, (string)($detail ?? ''));
+    echo json_encode(['success' => true]);
 }
 
 function handleSearchCategories(): void {
@@ -1485,8 +1541,68 @@ function handleAdminGetHistory(): void {
 }
 
 // =============================================================
-// ADMIN — GET Search Logs (paginated + filtered + stats)
+// ADMIN — GET Visitor Activity (paginated + filtered + stats)
 // =============================================================
+function handleAdminGetActivity(): void {
+    $pdo  = getPDO();
+    $req  = getJsonRequest();
+    $page = max(1, (int)($req['page'] ?? $_GET['page'] ?? 1));
+    $limit = min(100, max(5, (int)($req['per_page'] ?? $_GET['per_page'] ?? 20)));
+    $event = trim($req['event'] ?? '');
+    $query = trim($req['query'] ?? '');
+    $date  = trim($req['date'] ?? '');
+
+    $where = [];
+    $params = [];
+    if ($event) { $where[] = 'event = :event'; $params[':event'] = $event; }
+    if ($query) { $where[] = '(event_data LIKE :query OR user_name LIKE :query OR user_email LIKE :query OR ip_address LIKE :query)'; $params[':query'] = '%' . $query . '%'; }
+    if ($date) { $where[] = 'DATE(created_at) = :date'; $params[':date'] = $date; }
+
+    $whereStr = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+    $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM user_activity_log {$whereStr}");
+    foreach ($params as $k => $v) { $cntStmt->bindValue($k, $v); }
+    $cntStmt->execute();
+    $total = (int)$cntStmt->fetchColumn();
+
+    $todayCount = (int)$pdo->query("SELECT COUNT(*) FROM user_activity_log WHERE DATE(created_at) = CURDATE()")->fetchColumn();
+    $weekCount  = (int)$pdo->query("SELECT COUNT(*) FROM user_activity_log WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
+    $topEvents  = $pdo->query(
+        "SELECT event, COUNT(*) AS cnt FROM user_activity_log GROUP BY event ORDER BY cnt DESC LIMIT 10"
+    )->fetchAll();
+
+    $offset = ($page - 1) * $limit;
+    $stmt = $pdo->prepare(
+        "SELECT id, event, event_data, user_id, user_name, user_email, user_role,
+                ip_address, user_agent,
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at
+         FROM user_activity_log
+         {$whereStr}
+         ORDER BY id DESC
+         LIMIT :limit OFFSET :offset"
+    );
+    foreach ($params as $k => $v) { $stmt->bindValue($k, $v); }
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+
+    echo json_encode([
+        'success' => true,
+        'rows'    => $stmt->fetchAll(),
+        'total'   => $total,
+        'page'    => $page,
+        'limit'   => $limit,
+        'pages'   => (int)ceil($total / $limit),
+        'stats'   => [
+            'today' => $todayCount,
+            'week'  => $weekCount,
+        ],
+        'top_events' => $topEvents,
+    ]);
+}
+
+// =============================================================
+// ADMIN — GET Visitor Activity (paginated + filtered + stats)
 function handleAdminGetSearchLogs(): void {
     $pdo  = getPDO();
     $req  = getJsonRequest();

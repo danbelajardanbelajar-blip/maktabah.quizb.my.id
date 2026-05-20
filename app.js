@@ -72,6 +72,20 @@ async function apiFetch(params) {
   return res.json();
 }
 
+function logVisitorActivity(event, data = {}) {
+  try {
+    fetch(API + '?action=log_activity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, data }),
+      keepalive: true,
+    });
+  } catch (err) {
+    // Non-blocking tracking
+  }
+}
+window.logVisitorActivity = logVisitorActivity;
+
 // ── Router ────────────────────────────────────────────────────
 // Rute admin didaftarkan oleh admin.js setelah DOM ready
 const routes = {
@@ -94,6 +108,7 @@ function navigate(path, push = true) {
   updateReaderMenus(base);
   window.scrollTo({ top: 0, behavior: 'smooth' });
   reicons();
+  logVisitorActivity('visit', { route: base });
 }
 
 window.addEventListener('popstate', () => navigate(location.pathname + location.search, false));
@@ -103,6 +118,11 @@ document.addEventListener('click', e => {
   if (!a) return;
   e.preventDefault();
   const route = a.getAttribute('data-route');
+  logVisitorActivity('menu_click', {
+    route,
+    label: a.textContent.trim().replace(/\s+/g, ' '),
+    href: a.href,
+  });
   navigate(route);
   // close mobile menu
   const menu = $('#mobile-menu');
