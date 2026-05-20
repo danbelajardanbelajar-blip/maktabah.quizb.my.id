@@ -408,6 +408,7 @@ function escapeRegex(value) {
 
 function parseSearchTerms(q) {
   if (!q) return [];
+  q = String(q).replace(/\+/g, ' ').trim();
   const terms = [];
   const regex = /"([^"]+)"|([^"\s]+)/g;
   let match;
@@ -416,6 +417,52 @@ function parseSearchTerms(q) {
     if (term) terms.push(term);
   }
   return terms;
+}
+
+function highlightTextNodes(container, terms) {
+  const escapedTerms = terms
+    .map(raw => String(raw || '').trim())
+    .filter(Boolean)
+    .map(t => t.replace(/^"|"$/g, '').trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegex);
+  if (!escapedTerms.length) return false;
+
+  const regex = new RegExp('(' + escapedTerms.join('|') + ')', 'gi');
+  let found = false;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+
+  nodes.forEach(node => {
+    const value = node.nodeValue;
+    if (!value || !regex.test(value)) {
+      regex.lastIndex = 0;
+      return;
+    }
+    regex.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(value)) !== null) {
+      if (match.index > lastIndex) {
+        frag.appendChild(document.createTextNode(value.slice(lastIndex, match.index)));
+      }
+      const mark = document.createElement('mark');
+      mark.className = 'hl';
+      mark.textContent = match[0];
+      frag.appendChild(mark);
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < value.length) {
+      frag.appendChild(document.createTextNode(value.slice(lastIndex)));
+    }
+    node.parentNode.replaceChild(frag, node);
+    found = true;
+    regex.lastIndex = 0;
+  });
+  return found;
 }
 
 function hlTextMulti(text, terms) {
@@ -1252,16 +1299,16 @@ async function loadReaderPage(bkid, page, highlightQ = '') {
 
     if (res.content) {
       const normalised = res.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      area.innerHTML = `<div class="reader-text">${escHtml(normalised)}</div>`;
       const terms = parseSearchTerms(highlightQ);
-      // Apply multi-term highlight when coming from advanced search or multi-word query
-      const rendered = terms.length ? hlTextMulti(normalised, terms) : escHtml(normalised);
-      area.innerHTML = `<div class="reader-text">${rendered}</div>`;
-      // Auto-scroll to first highlighted word
       if (terms.length) {
-        setTimeout(() => {
-          const first = area.querySelector('mark.hl');
-          if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 150);
+        const found = highlightTextNodes(area, terms);
+        if (found) {
+          setTimeout(() => {
+            const first = area.querySelector('mark.hl');
+            if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 150);
+        }
       }
 
     } else {
