@@ -519,19 +519,24 @@ async function execAdvancedSearch() {
   }
   if (!searchAdvancedState.cats.length) {
     wrap.innerHTML = `
-      <div class="mx-auto max-w-2xl rounded-[32px] border border-red-200 bg-red-50 p-6 shadow-[0_18px_50px_rgba(239,68,68,0.12)] text-sm text-red-700" role="alert" aria-live="assertive">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-100 text-red-700">
-            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-          </div>
-          <div class="flex-1">
-            <div class="text-base font-semibold text-red-800">Kategori belum dipilih</div>
-            <p class="mt-2 text-sm leading-6 text-red-700">Pilih satu kategori atau semua kategori terlebih dahulu untuk melanjutkan pencarian.</p>
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-lg rounded-[32px] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
+          <div class="flex flex-col items-center gap-4 text-center">
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-700">
+              <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-xl font-semibold text-slate-900">Kategori belum dipilih</h2>
+            <p class="text-sm leading-6 text-slate-600">Pilih satu kategori atau semua kategori terlebih dahulu untuk melanjutkan pencarian.</p>
+            <button id="adv-alert-close" class="mt-4 inline-flex items-center justify-center rounded-2xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700">Tutup</button>
           </div>
         </div>
       </div>`;
     if (stats) stats.textContent = '';
     updateAdvancedPageUrl();
+    document.getElementById('adv-alert-close')?.addEventListener('click', () => {
+      wrap.innerHTML = `<div class="text-center py-20 text-primary/40">Isi minimal satu kolom pencarian untuk memulai.</div>`;
+      if (stats) stats.textContent = '';
+    });
     return;
   }
 
