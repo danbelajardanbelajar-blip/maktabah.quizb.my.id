@@ -1110,13 +1110,14 @@ function handleAdminImportBook(): void {
 // =============================================================
 function handleAdminGetHistory(): void {
     $pdo    = getPDO();
-    $page   = max(1, (int)($_GET['page']   ?? 1));
-    $limit  = min(100, max(1, (int)($_GET['limit'] ?? 50)));
+    $data   = json_decode(file_get_contents('php://input'), true) ?? [];
+    $page   = max(1, (int)($data['page'] ?? $_GET['page'] ?? 1));
+    $limit  = min(100, max(1, (int)($data['per_page'] ?? $data['limit'] ?? $_GET['limit'] ?? 50)));
     $offset = ($page - 1) * $limit;
 
-    $action   = $_GET['action_filter'] ?? '';
-    $tableFil = $_GET['table_filter']  ?? '';
-    $adminFil = $_GET['admin_filter']  ?? '';
+    $action   = $data['action'] ?? $_GET['action_filter'] ?? '';
+    $tableFil = $data['table_name'] ?? $_GET['table_filter'] ?? '';
+    $adminFil = $data['admin_name'] ?? $_GET['admin_filter'] ?? '';
 
     $where  = [];
     $params = [];
@@ -1155,7 +1156,7 @@ function handleAdminGetHistory(): void {
 
     echo json_encode([
         'success' => true,
-        'data'    => $stmt->fetchAll(),
+        'rows'    => $stmt->fetchAll(),
         'total'   => $totalCount,
         'page'    => $page,
         'limit'   => $limit,
@@ -1168,13 +1169,14 @@ function handleAdminGetHistory(): void {
 // =============================================================
 function handleAdminGetSearchLogs(): void {
     $pdo    = getPDO();
-    $page   = max(1, (int)($_GET['page']  ?? 1));
-    $limit  = min(100, max(1, (int)($_GET['limit'] ?? 50)));
+    $data   = json_decode(file_get_contents('php://input'), true) ?? [];
+    $page   = max(1, (int)($data['page'] ?? $_GET['page'] ?? 1));
+    $limit  = min(100, max(1, (int)($data['per_page'] ?? $data['limit'] ?? $_GET['limit'] ?? 50)));
     $offset = ($page - 1) * $limit;
 
-    $typeFil  = $_GET['type_filter']  ?? '';
-    $queryFil = $_GET['query_filter'] ?? '';
-    $dateFil  = $_GET['date_filter']  ?? '';
+    $typeFil  = $data['search_type']  ?? $_GET['type_filter']  ?? '';
+    $queryFil = $data['query']        ?? $_GET['query_filter'] ?? '';
+    $dateFil  = $data['date']         ?? $_GET['date_filter']  ?? '';
 
     $where  = [];
     $params = [];
@@ -1237,7 +1239,7 @@ function handleAdminGetSearchLogs(): void {
 
     echo json_encode([
         'success'     => true,
-        'data'        => $stmt->fetchAll(),
+        'rows'        => $stmt->fetchAll(),
         'total'       => $totalCount,
         'page'        => $page,
         'limit'       => $limit,
