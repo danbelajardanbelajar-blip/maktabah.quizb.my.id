@@ -1524,14 +1524,15 @@ async function renderAdminHistory() {
       // Pagination
       const totalPages = Math.ceil(d.total / 20);
       const pager = document.getElementById('hist-pager');
-      if (totalPages <= 1) { pager.innerHTML = ''; return; }
-      let btns = '';
-      for (let i = 1; i <= totalPages; i++) {
-        btns += `<button onclick="histGotoPage(${i})"
-          class="w-8 h-8 rounded-lg text-sm font-semibold transition-colors
-          ${i === _hist.page ? 'bg-primary text-white' : 'bg-white border border-gold/25 text-primary/60 hover:bg-cream-dark'}">${i}</button>`;
+      if (totalPages <= 1) {
+        pager.innerHTML = '';
+        return;
       }
-      pager.innerHTML = `<div class="flex gap-1.5 flex-wrap justify-center">${btns}</div>`;
+      pager.innerHTML = `
+        <div class="flex flex-col items-center gap-2">
+          <div class="text-xs text-primary/50">Menampilkan halaman ${_hist.page} dari ${totalPages} — total ${d.total} catatan</div>
+          ${paginationHtml(_hist.page, totalPages, 'histGotoPage')}
+        </div>`;
       reicons();
     } catch(e) {
       grid.innerHTML = `<div class="p-6 text-red-500 text-sm">${escHtml(e.message)}</div>`;
