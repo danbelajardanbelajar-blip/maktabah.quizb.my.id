@@ -165,7 +165,10 @@ function searchPhraseText(string $q): string {
 
 function booleanSearchTerm(string $q): string {
     $q = trim($q);
-    if (isPhraseQuery($q)) {
+    if ($q === '') {
+        return '';
+    }
+    if (isPhraseQuery($q) || preg_match('/\s+/u', $q)) {
         return '"' . ftEscape(searchPhraseText($q)) . '"';
     }
 
@@ -187,15 +190,23 @@ function booleanSearchTermForAdvanced(string $q): string {
     if ($q === '') {
         return '';
     }
+    if (preg_match('/\s+/u', $q)) {
+        return '+"' . ftEscape($q) . '"';
+    }
     return '+' . ftEscape($q) . '*';
 }
 
 function booleanQueryFromFieldsOr(array $fields): string {
     $parts = [];
     foreach ($fields as $field) {
-        $term = ftEscape(trim($field));
-        if ($term !== '') {
-            $parts[] = $term . '*';
+        $field = trim($field);
+        if ($field === '') {
+            continue;
+        }
+        if (preg_match('/\s+/u', $field)) {
+            $parts[] = '"' . ftEscape($field) . '"';
+        } else {
+            $parts[] = ftEscape($field) . '*';
         }
     }
     return implode(' ', $parts);
@@ -476,7 +487,7 @@ function handleSearchBooks(): void {
     $hash       = 'books:' . hash('sha256', strtolower($qRaw));
     $qStar      = booleanSearchTerm($qRaw);
     $like       = '%' . $q . '%';
-    $phraseLike = isPhraseQuery($qRaw) ? $like : null;
+    $phraseLike = preg_match('/\s+/u', $q) ? $like : null;
 
     // --- Cache hit (page 1 only) ---
     if ($page === 1) {
