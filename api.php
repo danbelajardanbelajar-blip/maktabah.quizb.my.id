@@ -1555,7 +1555,13 @@ function handleAdminGetActivity(): void {
     $where = [];
     $params = [];
     if ($event) { $where[] = 'event = :event'; $params[':event'] = $event; }
-    if ($query) { $where[] = '(event_data LIKE :query OR user_name LIKE :query OR user_email LIKE :query OR ip_address LIKE :query)'; $params[':query'] = '%' . $query . '%'; }
+    if ($query) {
+        $where[] = '(event_data LIKE :query1 OR user_name LIKE :query2 OR user_email LIKE :query3 OR ip_address LIKE :query4)';
+        $params[':query1'] = '%' . $query . '%';
+        $params[':query2'] = '%' . $query . '%';
+        $params[':query3'] = '%' . $query . '%';
+        $params[':query4'] = '%' . $query . '%';
+    }
     if ($date) { $where[] = 'DATE(created_at) = :date'; $params[':date'] = $date; }
 
     $whereStr = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
