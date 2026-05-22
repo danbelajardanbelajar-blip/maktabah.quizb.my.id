@@ -1589,7 +1589,7 @@ async function renderAdminActivity() {
         </div>
         <div class="flex-1 min-w-[180px]">
           <label class="block text-xs font-semibold text-primary/50 mb-1">Cari</label>
-          <input id="actf-query" type="text" placeholder="Cari user, email, IP, atau detail…" oninput="actFilterDebounce()"
+          <input id="actf-query" type="text" placeholder="Cari user, email, IP, atau detail…" oninput="actFilterDebounce()" onkeydown="if (event.key === 'Enter') actLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <div class="flex-1 min-w-[150px]">
@@ -1597,7 +1597,7 @@ async function renderAdminActivity() {
           <input id="actf-date" type="date" onchange="actLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
-        <button onclick="actReset()"
+        <button type="button" onclick="actReset()"
           class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
         </button>
