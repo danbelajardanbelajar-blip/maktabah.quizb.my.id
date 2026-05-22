@@ -63,10 +63,15 @@ function adminGuard() {
 async function adminPost(action, body) {
   const res = await fetch(`/api.php?action=${action}`, {
     method: 'POST',
+    credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || `Request failed with status ${res.status}`);
+  }
+  return data;
 }
 
 function adminToast(msg, type = 'success') {
