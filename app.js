@@ -430,14 +430,26 @@ function escapeRegex(value) {
 function parseSearchTerms(q) {
   if (!q) return [];
   q = String(q).replace(/\+/g, ' ').trim();
-  const terms = [];
-  const regex = /"([^"]+)"|([^"\s]+)/g;
-  let match;
-  while ((match = regex.exec(q)) !== null) {
-    const term = (match[1] || match[2] || '').trim();
-    if (term) terms.push(term);
+  // If user wrapped phrase in quotes, respect quoted groups and separate others.
+  if (/\".*\"/u.test(q)) {
+    const terms = [];
+    const regex = /"([^\"]+)"|([^"\s]+)/g;
+    let match;
+    while ((match = regex.exec(q)) !== null) {
+      const term = (match[1] || match[2] || '').trim();
+      if (term) terms.push(term);
+    }
+    return terms;
   }
-  return terms;
+
+  // If the query contains whitespace (multi-word) treat it as a single phrase
+  // so matches require the words to appear together in the same order.
+  if (/\s+/u.test(q)) {
+    return [q];
+  }
+
+  // Single-word query
+  return [q];
 }
 
 function highlightTextNodes(container, terms) {
