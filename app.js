@@ -431,7 +431,7 @@ function parseSearchTerms(q) {
   if (!q) return [];
   q = String(q).replace(/\+/g, ' ').trim();
   // If user wrapped phrase in quotes, respect quoted groups and separate others.
-  if (/\".*\"/u.test(q)) {
+  if (/".*"/u.test(q)) {
     const terms = [];
     const regex = /"([^\"]+)"|([^"\s]+)/g;
     let match;
