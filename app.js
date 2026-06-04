@@ -96,6 +96,7 @@ const routes = {
   '/search-advanced': renderSearchAdvanced,
   '/kitab':         renderDetail,
   '/privacy':       renderPrivacy,
+  '/submit-file':   renderSubmitFile,
 };
 
 function navigate(path, push = true) {
@@ -282,6 +283,24 @@ async function renderHome() {
         <h2 class="text-xl font-bold text-primary mb-6">Jelajahi Kategori</h2>
         <div id="cat-grid" class="flex flex-wrap gap-3">
           ${Array.from({length:6}, () => `<div class="skeleton h-9 w-28 rounded-full"></div>`).join('')}
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Kirimkan File (visible di mobile, tersembunyi di desktop) -->
+    <section class="md:hidden bg-gradient-to-br from-primary to-primary-light py-8 px-5">
+      <div class="flex items-start gap-4">
+        <div class="shrink-0 w-12 h-12 rounded-2xl bg-gold/20 flex items-center justify-center">
+          <i data-lucide="upload-cloud" class="w-6 h-6 text-gold"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-white font-bold text-base leading-snug mb-1">Kirimkan Hasil Bahsul Masail atau Kitab Anda</h3>
+          <p class="text-white/65 text-xs leading-relaxed mb-4">Bagikan karya & hasil kajian Anda untuk koleksi perpustakaan digital ini.</p>
+          <button onclick="handleSubmitCTA()"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-primary font-semibold text-sm shadow hover:bg-gold-light transition-colors">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            Kirimkan File
+          </button>
         </div>
       </div>
     </section>`;
@@ -1829,6 +1848,202 @@ function privacyRightCard(icon, title, desc) {
       <p class="text-xs text-muted leading-relaxed">${desc}</p>
     </div>`;
 }
+
+// ══════════════════════════════════════════════════════════════
+//  SUBMIT FILE — CTA helper & halaman kirim file
+// ══════════════════════════════════════════════════════════════
+
+/** Dipanggil dari tombol CTA di beranda.
+ *  Jika sudah login → langsung ke /submit-file
+ *  Jika belum       → simpan tujuan di sessionStorage, lalu ke halaman login */
+function handleSubmitCTA() {
+  apiFetch({ action: 'auth_me' }).then(res => {
+    if (res.loggedIn) {
+      navigate('/submit-file');
+    } else {
+      sessionStorage.setItem('_afterLoginRedirect', '/submit-file');
+      window.location.href = '/auth.php?action=login';
+    }
+  }).catch(() => {
+    sessionStorage.setItem('_afterLoginRedirect', '/submit-file');
+    window.location.href = '/auth.php?action=login';
+  });
+}
+window.handleSubmitCTA = handleSubmitCTA;
+
+// Setelah login, cek apakah ada pending redirect
+(function checkPostLoginRedirect() {
+  const target = sessionStorage.getItem('_afterLoginRedirect');
+  if (!target) return;
+  apiFetch({ action: 'auth_me' }).then(res => {
+    if (res.loggedIn) {
+      sessionStorage.removeItem('_afterLoginRedirect');
+      navigate(target);
+    }
+  }).catch(() => {});
+})();
+
+async function renderSubmitFile() {
+  // Pastikan sudah login
+  let me;
+  try {
+    me = await apiFetch({ action: 'auth_me' });
+  } catch { me = { loggedIn: false }; }
+
+  if (!me.loggedIn) {
+    sessionStorage.setItem('_afterLoginRedirect', '/submit-file');
+    window.location.href = '/auth.php?action=login';
+    return;
+  }
+
+  // Muat kategori
+  let cats = [];
+  try {
+    const r = await apiFetch({ action: 'categories' });
+    cats = r.data || [];
+  } catch { /* ignore */ }
+
+  app().innerHTML = `
+    <div class="min-h-screen bg-cream py-10 px-4">
+      <div class="max-w-lg mx-auto">
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-7">
+          <button onclick="navigate('/')" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gold/30 hover:bg-cream-dark transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4 text-primary"></i>
+          </button>
+          <div>
+            <h1 class="text-lg font-bold text-primary">Kirimkan File</h1>
+            <p class="text-xs text-primary/50">Hasil Bahsul Masail atau Kitab</p>
+          </div>
+        </div>
+
+        <!-- Card form -->
+        <div class="bg-white rounded-2xl shadow-card p-6">
+
+          <div id="submit-error"   class="hidden mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm"></div>
+          <div id="submit-success" class="hidden mb-4 p-4 rounded-xl bg-green-50 text-green-700 text-sm font-medium"></div>
+
+          <form id="submit-form" enctype="multipart/form-data" onsubmit="submitFileForm(event)">
+
+            <!-- Nama File -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+                Nama File <span class="text-red-400">*</span>
+              </label>
+              <input type="text" id="sf-name" name="file_name" required
+                placeholder="Contoh: Bahsul Masail Pesantren Al-Falah 2024"
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
+            </div>
+
+            <!-- Tipe File -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+                Tipe File <span class="text-red-400">*</span>
+              </label>
+              <select id="sf-type" name="file_type" required
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all appearance-none">
+                <option value="">— Pilih Tipe —</option>
+                <option value="bahsul_masail">Hasil Bahsul Masail</option>
+                <option value="kitab">File Kitab</option>
+              </select>
+            </div>
+
+            <!-- Kategori -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Kategori</label>
+              <select id="sf-cat" name="category_id"
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all appearance-none">
+                <option value="">— Pilih Kategori (opsional) —</option>
+                ${cats.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Deskripsi -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Deskripsi <span class="text-primary/30 font-normal">(opsional)</span></label>
+              <textarea id="sf-desc" name="description" rows="3"
+                placeholder="Keterangan singkat tentang isi file…"
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all resize-none"></textarea>
+            </div>
+
+            <!-- Upload File -->
+            <div class="mb-6">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+                File <span class="text-red-400">*</span>
+                <span class="text-primary/30 font-normal ml-1">PDF / Word · maks. 20 MB</span>
+              </label>
+              <label class="flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed border-gold/40 rounded-xl py-7 px-4 bg-cream cursor-pointer hover:border-gold hover:bg-gold/5 transition-all" id="file-drop-zone">
+                <i data-lucide="upload-cloud" class="w-8 h-8 text-gold/60"></i>
+                <span class="text-sm text-primary/50" id="file-label">Klik untuk pilih file atau seret ke sini</span>
+                <input type="file" id="sf-file" name="file" accept=".pdf,.doc,.docx" required class="hidden"
+                  onchange="document.getElementById('file-label').textContent = this.files[0]?.name || 'Pilih file'" />
+              </label>
+            </div>
+
+            <button type="submit" id="sf-submit-btn"
+              class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-light transition-colors shadow-sm">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              <span id="sf-btn-label">Kirim untuk Direview</span>
+            </button>
+
+          </form>
+        </div>
+
+        <p class="text-xs text-center text-primary/35 mt-5">File akan direview oleh admin sebelum ditampilkan di perpustakaan.</p>
+      </div>
+    </div>`;
+
+  reicons();
+}
+window.renderSubmitFile = renderSubmitFile;
+
+async function submitFileForm(e) {
+  e.preventDefault();
+  const errEl  = document.getElementById('submit-error');
+  const okEl   = document.getElementById('submit-success');
+  const btn    = document.getElementById('sf-submit-btn');
+  const lbl    = document.getElementById('sf-btn-label');
+
+  const showErr = (msg) => { errEl.textContent = msg; errEl.classList.remove('hidden'); okEl.classList.add('hidden'); };
+  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+
+  const name   = document.getElementById('sf-name').value.trim();
+  const type   = document.getElementById('sf-type').value;
+  const catId  = document.getElementById('sf-cat').value;
+  const desc   = document.getElementById('sf-desc').value.trim();
+  const fileEl = document.getElementById('sf-file');
+
+  if (!name)         { showErr('Nama file wajib diisi.'); return; }
+  if (!type)         { showErr('Pilih tipe file terlebih dahulu.'); return; }
+  if (!fileEl.files?.length) { showErr('Pilih file yang akan dikirim.'); return; }
+
+  btn.disabled = true;
+  lbl.textContent = 'Mengirim…';
+
+  const fd = new FormData();
+  fd.append('file_name',   name);
+  fd.append('file_type',   type);
+  fd.append('category_id', catId);
+  fd.append('description', desc);
+  fd.append('file',        fileEl.files[0]);
+
+  try {
+    const res = await fetch('/api.php?action=submit_file', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Gagal mengirim.');
+    okEl.textContent = data.message || 'Kiriman berhasil dikirim!';
+    okEl.classList.remove('hidden');
+    document.getElementById('submit-form').reset();
+    document.getElementById('file-label').textContent = 'Klik untuk pilih file atau seret ke sini';
+  } catch (err) {
+    showErr(err.message);
+  } finally {
+    btn.disabled = false;
+    lbl.textContent = 'Kirim untuk Direview';
+  }
+}
+window.submitFileForm = submitFileForm;
 
 // ══════════════════════════════════════════════════════════════
 //  PAGE: 404

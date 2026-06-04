@@ -11,9 +11,10 @@ Object.assign(window._adminRoutes = window._adminRoutes || {}, {
   '/admin/books':      renderAdminBooks,
   '/admin/categories': renderAdminCategories,
   '/admin/content':    () => navigate('/admin/books', true),
-  '/admin/history':    renderAdminHistory,
-  '/admin/activity':   renderAdminActivity,
+  '/admin/history':     renderAdminHistory,
+  '/admin/activity':    renderAdminActivity,
   '/admin/search-logs': renderAdminSearchLogs,
+  '/admin/submissions': renderAdminSubmissions,
 });
 
 // Patch router setelah app.js selesai load
@@ -104,9 +105,10 @@ function adminNavBar(active) {
     { r: '/dashboard',        icon: 'layout-dashboard', label: 'Dashboard',       adminOnly: false },
     { r: '/admin/books',      icon: 'book',             label: 'Kelola Kitab',    adminOnly: false },
     { r: '/admin/categories', icon: 'folder',           label: 'Kelola Kategori', adminOnly: false },
-    { r: '/admin/history',    icon: 'history',          label: 'CRUD History',    adminOnly: true,  desktopOnly: true },
-    { r: '/admin/activity',   icon: 'activity',         label: 'Log Aktivitas',    adminOnly: true },
-    { r: '/admin/search-logs', icon: 'search',          label: 'Log Pencarian',   adminOnly: true },
+    { r: '/admin/history',     icon: 'history',     label: 'CRUD History',    adminOnly: true,  desktopOnly: true },
+    { r: '/admin/activity',    icon: 'activity',    label: 'Log Aktivitas',   adminOnly: true },
+    { r: '/admin/search-logs', icon: 'search',      label: 'Log Pencarian',   adminOnly: true },
+    { r: '/admin/submissions', icon: 'inbox',       label: 'Review Kiriman',  adminOnly: true },
   ];
   return `
     <div class="bg-white border-b border-gold/15 sticky top-16 z-40 shadow-sm">
@@ -159,6 +161,7 @@ function renderDashboard() {
         ${isAdmin ? dashCard('/admin/history',    'history',   'CRUD History',      'Jejak perubahan admin',        true)  : ''}
         ${isAdmin ? dashCard('/admin/search-logs','search',    'Log Pencarian',     'Riwayat pencarian pengguna',    true)  : ''}
         ${isAdmin ? dashCard('/admin/activity',   'activity',  'Log Aktivitas',     'Kunjungan & login/logout',     true)  : ''}
+        ${isAdmin ? dashCard('/admin/submissions','inbox',    'Review Kiriman',    'Approve kiriman pengguna',     true)  : ''}
       </div>
 
       <div class="text-center">
@@ -1936,4 +1939,165 @@ async function renderAdminSearchLogs() {
   };
 
   await slLoad(1);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ADMIN: REVIEW KIRIMAN FILE
+// ══════════════════════════════════════════════════════════════
+async function renderAdminSubmissions() {
+  app().innerHTML = adminNavBar('/admin/submissions') + `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+          <h1 class="text-xl font-bold text-primary flex items-center gap-2">
+            <i data-lucide="inbox" class="w-5 h-5 text-gold"></i> Review Kiriman
+          </h1>
+          <p class="text-primary/45 text-xs mt-0.5">Approve atau tolak kiriman Hasil Bahsul Masail &amp; Kitab dari pengguna</p>
+        </div>
+        <div class="flex gap-2 flex-wrap" id="sub-tabs"></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+        <div id="sub-table-wrap">
+          <div class="py-16 text-center"><i data-lucide="loader-circle" class="w-8 h-8 mx-auto animate-spin text-gold/50"></i></div>
+        </div>
+        <div id="sub-pagination" class="px-4 py-3 border-t border-cream-dark flex items-center justify-between text-xs text-primary/40"></div>
+      </div>
+    </div>
+    <div id="sub-modal-overlay" class="hidden fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+      <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
+        <h3 id="sub-modal-title" class="font-bold text-primary mb-1 text-base"></h3>
+        <p  id="sub-modal-meta"  class="text-xs text-primary/45 mb-4"></p>
+        <label class="block text-xs font-semibold text-primary/55 mb-1.5">Catatan Review <span class="text-primary/30 font-normal">(opsional)</span></label>
+        <textarea id="sub-modal-note" rows="3" placeholder="Tulis catatan untuk pengirim…"
+          class="w-full px-3 py-2 rounded-xl border border-gold/30 bg-cream text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 resize-none mb-5"></textarea>
+        <div class="flex gap-3">
+          <button onclick="subReview('approve')" class="flex-1 py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-1.5">
+            <i data-lucide="check-circle" class="w-4 h-4"></i> Setujui
+          </button>
+          <button onclick="subReview('reject')" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-1.5">
+            <i data-lucide="x-circle" class="w-4 h-4"></i> Tolak
+          </button>
+          <button onclick="closeSubModal()" class="px-4 py-2.5 rounded-xl border border-gold/30 text-sm text-primary/60 hover:bg-cream-dark transition-colors">Batal</button>
+        </div>
+      </div>
+    </div>`;
+
+  reicons();
+
+  let _subStatus = '';
+  let _subPage   = 1;
+  let _subTarget = null;
+
+  // Build status tabs
+  const tabDefs = [
+    { s: '',         label: 'Semua' },
+    { s: 'pending',  label: 'Menunggu' },
+    { s: 'approved', label: 'Disetujui' },
+    { s: 'rejected', label: 'Ditolak' },
+  ];
+  const tabsEl = document.getElementById('sub-tabs');
+  tabsEl.innerHTML = tabDefs.map(t =>
+    `<button data-sub-tab="${t.s}" onclick="window.subSetStatus('${t.s}')"
+      class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors
+      ${t.s === '' ? 'bg-primary text-white border-primary' : 'bg-white text-primary/60 border-gold/30 hover:border-primary/30'}">
+      ${t.label}</button>`
+  ).join('');
+
+  window.subSetStatus = function(s) {
+    _subStatus = s;
+    _subPage   = 1;
+    tabsEl.querySelectorAll('[data-sub-tab]').forEach(btn => {
+      const active = btn.dataset.subTab === s;
+      btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors '
+        + (active ? 'bg-primary text-white border-primary' : 'bg-white text-primary/60 border-gold/30 hover:border-primary/30');
+    });
+    subLoad();
+  };
+
+  window.openSubModal = function(id, name, type) {
+    _subTarget = { id, name, type };
+    document.getElementById('sub-modal-title').textContent = name;
+    document.getElementById('sub-modal-meta').textContent  = type === 'bahsul_masail' ? 'Hasil Bahsul Masail' : 'File Kitab';
+    document.getElementById('sub-modal-note').value = '';
+    document.getElementById('sub-modal-overlay').classList.remove('hidden');
+    reicons();
+  };
+  window.closeSubModal = function() {
+    document.getElementById('sub-modal-overlay').classList.add('hidden');
+    _subTarget = null;
+  };
+  window.subReview = async function(action) {
+    if (!_subTarget) return;
+    const note = document.getElementById('sub-modal-note').value.trim();
+    try {
+      const res = await apiFetch({ action: 'admin_review_submission', id: _subTarget.id, review_action: action, note });
+      if (res.error) throw new Error(res.error);
+      closeSubModal();
+      adminToast(action === 'approve' ? 'Kiriman disetujui ✓' : 'Kiriman ditolak');
+      subLoad();
+    } catch(e) { adminToast('Gagal: ' + e.message, true); }
+  };
+
+  const fmtSize = b => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(1) + ' MB';
+  const statusBadge = s => {
+    const cls = { pending: 'bg-yellow-100 text-yellow-700', approved: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-600' };
+    const lbl = { pending: 'Menunggu', approved: 'Disetujui', rejected: 'Ditolak' };
+    return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold ' + (cls[s]||'') + '">' + (lbl[s]||s) + '</span>';
+  };
+
+  async function subLoad() {
+    const wrap = document.getElementById('sub-table-wrap');
+    const pag  = document.getElementById('sub-pagination');
+    wrap.innerHTML = '<div class="py-16 text-center"><i data-lucide="loader-circle" class="w-8 h-8 mx-auto animate-spin text-gold/50"></i></div>';
+    reicons();
+    try {
+      const params = { action: 'admin_get_submissions', page: _subPage };
+      if (_subStatus) params.status = _subStatus;
+      const res  = await apiFetch(params);
+      const rows = res.data || [];
+      if (!rows.length) {
+        wrap.innerHTML = '<div class="py-16 text-center"><i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 text-primary/15"></i><p class="text-primary/30 text-sm">Tidak ada kiriman ditemukan.</p></div>';
+        pag.innerHTML = '';
+        reicons(); return;
+      }
+      const rowsHtml = rows.map(r => {
+        const fileBtn = r.file_url ? '<a href="' + escHtml(r.file_url) + '" target="_blank" title="Lihat file" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-primary/50 hover:text-primary"><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>' : '';
+        const actBtn  = r.status === 'pending' ? '<button onclick="openSubModal(' + r.id + ',' + JSON.stringify(r.file_name) + ',\'' + r.file_type + '\')" title="Review" class="p-1.5 rounded-lg hover:bg-gold/10 text-gold transition-colors"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i></button>' : '';
+        return '<tr class="hover:bg-cream/60 transition-colors">'
+          + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.file_name) + '</div>'
+          + '<div class="text-primary/40 text-xs mt-0.5">' + fmtSize(r.file_size) + ' · ' + (r.created_at||'').slice(0,10) + '</div>'
+          + (r.review_note ? '<div class="text-primary/40 text-xs italic mt-0.5 line-clamp-1">“' + escHtml(r.review_note) + '”</div>' : '')
+          + '</td>'
+          + '<td class="px-4 py-3 hidden sm:table-cell"><div class="text-primary/70 text-xs line-clamp-1">' + escHtml(r.user_name) + '</div><div class="text-primary/35 text-xs">' + escHtml(r.user_email) + '</div></td>'
+          + '<td class="px-4 py-3 hidden md:table-cell text-primary/55 text-xs">' + (r.file_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
+          + '<td class="px-4 py-3 hidden lg:table-cell text-primary/55 text-xs">' + escHtml(r.category_name || '—') + '</td>'
+          + '<td class="px-4 py-3 text-center">' + statusBadge(r.status) + '</td>'
+          + '<td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-1.5">' + fileBtn + actBtn + '</div></td>'
+          + '</tr>';
+      }).join('');
+      wrap.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm">'
+        + '<thead class="bg-cream border-b border-cream-dark text-primary/50 text-xs"><tr>'
+        + '<th class="px-4 py-3 text-left font-semibold">Nama File</th>'
+        + '<th class="px-4 py-3 text-left font-semibold hidden sm:table-cell">Pengirim</th>'
+        + '<th class="px-4 py-3 text-left font-semibold hidden md:table-cell">Tipe</th>'
+        + '<th class="px-4 py-3 text-left font-semibold hidden lg:table-cell">Kategori</th>'
+        + '<th class="px-4 py-3 text-center font-semibold">Status</th>'
+        + '<th class="px-4 py-3 text-center font-semibold w-24">Aksi</th>'
+        + '</tr></thead><tbody class="divide-y divide-cream-dark">' + rowsHtml + '</tbody></table></div>';
+      pag.innerHTML = res.pages > 1
+        ? '<span>' + res.total + ' kiriman</span><div class="flex gap-1">'
+          + (_subPage > 1 ? '<button onclick="window._subPageG=' + (_subPage-1) + ';window.subLoadG&&window.subLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-primary/60">‹</button>' : '')
+          + '<span class="px-2 py-1 text-primary/50">' + _subPage + '/' + res.pages + '</span>'
+          + (_subPage < res.pages ? '<button onclick="window._subPageG=' + (_subPage+1) + ';window.subLoadG&&window.subLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-primary/60">›</button>' : '')
+          + '</div>'
+        : '<span>' + res.total + ' kiriman</span>';
+      reicons();
+    } catch(e) {
+      wrap.innerHTML = '<p class="text-center py-12 text-red-500 text-sm">Gagal memuat: ' + escHtml(e.message) + '</p>';
+    }
+  }
+
+  window.subLoadG  = subLoad;
+  window._subPageG = _subPage;
+  await subLoad();
 }

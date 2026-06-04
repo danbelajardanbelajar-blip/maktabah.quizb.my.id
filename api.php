@@ -51,6 +51,15 @@ function requireAdmin(): void {
     }
 }
 
+function requireLogin(): void {
+    $user = getSessionUser();
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Anda harus login terlebih dahulu.']);
+        exit;
+    }
+}
+
 // =============================================================
 // CRUD HISTORY — helper untuk mencatat setiap perubahan admin
 // =============================================================
@@ -257,6 +266,10 @@ try {
         case 'admin_get_activity':    requireAdmin(); handleAdminGetActivity();    break;
         // Admin — Search Logs
         case 'admin_get_search_logs': requireAdmin(); handleAdminGetSearchLogs();  break;
+        // File Submissions
+        case 'submit_file':              requireLogin(); handleSubmitFile();              break;
+        case 'admin_get_submissions':    requireAdmin(); handleAdminGetSubmissions();    break;
+        case 'admin_review_submission':  requireAdmin(); handleAdminReviewSubmission();  break;
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Unknown action.']);
@@ -1692,4 +1705,169 @@ function handleAdminGetSearchLogs(): void {
         ],
         'top_queries' => $topQueries,
     ]);
+}
+
+// =============================================================
+//  FILE SUBMISSIONS
+// =============================================================
+
+function handleSubmitFile(): void {
+    $user = getSessionUser();
+    $pdo  = getPDO();
+
+    $fileName    = trim($_POST['file_name']     ?? '');
+    $fileType    = trim($_POST['file_type']     ?? '');
+    $categoryId  = intval($_POST['category_id'] ?? 0);
+    $description = trim($_POST['description']   ?? '');
+
+    if ($fileName === '') {
+        http_response_code(400); echo json_encode(['error' => 'Nama file wajib diisi.']); return;
+    }
+    if (!in_array($fileType, ['bahsul_masail', 'kitab'], true)) {
+        http_response_code(400); echo json_encode(['error' => 'Tipe file tidak valid.']); return;
+    }
+    if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        $errCode = $_FILES['file']['error'] ?? -1;
+        http_response_code(400); echo json_encode(['error' => "Upload gagal (kode: $errCode)."]); return;
+    }
+
+    $allowedMime = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $_FILES['file']['tmp_name']);
+    finfo_close($finfo);
+
+    if (!in_array($mimeType, $allowedMime, true)) {
+        http_response_code(400); echo json_encode(['error' => 'Format tidak didukung. Gunakan PDF atau Word.']); return;
+    }
+    if ($_FILES['file']['size'] > 20 * 1024 * 1024) {
+        http_response_code(400); echo json_encode(['error' => 'Ukuran file maksimal 20 MB.']); return;
+    }
+
+    $categoryName = '';
+    if ($categoryId > 0) {
+        $cat = $pdo->prepare("SELECT name FROM categories WHERE id = :id");
+        $cat->execute([':id' => $categoryId]);
+        $row = $cat->fetch();
+        $categoryName = $row['name'] ?? '';
+    }
+
+    $uploadDir = __DIR__ . '/uploads/submissions/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0775, true);
+
+    $ext      = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+    $safeName = preg_replace('/[^a-z0-9_\-]/i', '_', $fileName);
+    $saveAs   = uniqid('sub_', true) . '_' . $safeName . '.' . $ext;
+    $destPath = $uploadDir . $saveAs;
+
+    if (!move_uploaded_file($_FILES['file']['tmp_name'], $destPath)) {
+        http_response_code(500); echo json_encode(['error' => 'Gagal menyimpan file di server.']); return;
+    }
+
+    $stmt = $pdo->prepare(
+        "INSERT INTO file_submissions
+         (user_id, user_name, user_email, file_name, file_type, category_id, category_name,
+          file_url, file_size, mime_type, description)
+         VALUES
+         (:user_id, :user_name, :user_email, :file_name, :file_type, :category_id, :category_name,
+          :file_url, :file_size, :mime_type, :description)"
+    );
+    $stmt->execute([
+        ':user_id'       => $user['id'],
+        ':user_name'     => $user['name'],
+        ':user_email'    => $user['email'],
+        ':file_name'     => $fileName,
+        ':file_type'     => $fileType,
+        ':category_id'   => $categoryId ?: null,
+        ':category_name' => $categoryName,
+        ':file_url'      => '/uploads/submissions/' . $saveAs,
+        ':file_size'     => filesize($destPath),
+        ':mime_type'     => $mimeType,
+        ':description'   => $description,
+    ]);
+
+    echo json_encode(['success' => true, 'message' => 'Kiriman berhasil dikirim dan sedang menunggu review admin.']);
+}
+
+function handleAdminGetSubmissions(): void {
+    $pdo    = getPDO();
+    $status = trim($_GET['status'] ?? '');
+    $page   = max(1, intval($_GET['page'] ?? 1));
+    $limit  = 20;
+    $offset = ($page - 1) * $limit;
+
+    $where  = [];
+    $params = [];
+    if (in_array($status, ['pending','approved','rejected'], true)) {
+        $where[]           = 'status = :status';
+        $params[':status'] = $status;
+    }
+    $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+    $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM file_submissions $whereSQL");
+    $cntStmt->execute($params);
+    $total = (int)$cntStmt->fetchColumn();
+
+    $params[':limit']  = $limit;
+    $params[':offset'] = $offset;
+    $rows = $pdo->prepare(
+        "SELECT id, user_name, user_email, file_name, file_type, category_name,
+                file_url, file_size, mime_type, description, status,
+                reviewer_name, review_note,
+                DATE_FORMAT(reviewed_at, '%d/%m/%Y %H:%i') AS reviewed_at,
+                DATE_FORMAT(created_at,  '%d/%m/%Y %H:%i') AS created_at
+         FROM file_submissions $whereSQL
+         ORDER BY created_at DESC
+         LIMIT :limit OFFSET :offset"
+    );
+    foreach ($params as $k => $v) {
+        if ($k === ':limit' || $k === ':offset') $rows->bindValue($k, $v, PDO::PARAM_INT);
+        else $rows->bindValue($k, $v);
+    }
+    $rows->execute();
+
+    echo json_encode([
+        'data'  => $rows->fetchAll(),
+        'total' => $total,
+        'page'  => $page,
+        'pages' => (int)ceil($total / $limit),
+    ]);
+}
+
+function handleAdminReviewSubmission(): void {
+    $admin  = getSessionUser();
+    $pdo    = getPDO();
+    $req    = getJsonRequest();
+    $id     = intval($req['id']            ?? 0);
+    $action = trim($req['review_action']   ?? '');
+    $note   = trim($req['note']            ?? '');
+
+    if ($id <= 0 || !in_array($action, ['approve','reject'], true)) {
+        http_response_code(400); echo json_encode(['error' => 'Parameter tidak valid.']); return;
+    }
+
+    $newStatus = $action === 'approve' ? 'approved' : 'rejected';
+    $stmt = $pdo->prepare(
+        "UPDATE file_submissions
+         SET status = :status, reviewed_by = :reviewed_by, reviewer_name = :reviewer_name,
+             review_note = :note, reviewed_at = NOW()
+         WHERE id = :id"
+    );
+    $stmt->execute([
+        ':status'        => $newStatus,
+        ':reviewed_by'   => $admin['id'],
+        ':reviewer_name' => $admin['name'],
+        ':note'          => $note,
+        ':id'            => $id,
+    ]);
+
+    if ($stmt->rowCount() === 0) {
+        http_response_code(404); echo json_encode(['error' => 'Kiriman tidak ditemukan.']); return;
+    }
+
+    logCrudHistory($action === 'approve' ? 'APPROVE_SUBMISSION' : 'REJECT_SUBMISSION', 'file_submissions', (string)$id, $note);
+    echo json_encode(['success' => true, 'status' => $newStatus]);
 }
