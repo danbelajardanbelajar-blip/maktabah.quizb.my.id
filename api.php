@@ -1385,18 +1385,35 @@ function handleAdminImportBook(): void {
         $pdo->exec("DELETE FROM books WHERE bkid = 0");
     } catch (\Exception $e) { /* ignore */ }
 
-    $bkid   = (int)($_POST['bkid']        ?? 0);
-    $title  = trim($_POST['title']        ?? '');
-    $author = trim($_POST['author']       ?? '');
-    $catId  = (int)($_POST['category_id'] ?? 0);
-    $iso    = $_POST['iso']               ?? 'ar';
+    $json = getJsonRequest();
+    $bkid   = (int)($_POST['bkid']        ?? $json['bkid'] ?? 0);
+    $title  = trim($_POST['title']        ?? $json['title'] ?? '');
+    $author = trim($_POST['author']       ?? $json['author'] ?? '');
+    $catId  = (int)($_POST['category_id'] ?? $json['category_id'] ?? 0);
+    $iso    = $_POST['iso']               ?? $json['iso'] ?? 'ar';
+    $pages  = $json['pages'] ?? null;
 
     if (!$title) { http_response_code(400); echo json_encode(['error' => 'Judul wajib diisi.']); return; }
-    if (empty($_FILES['docfile']['tmp_name'])) {
-        http_response_code(400); echo json_encode(['error' => 'File .doc/.docx wajib diunggah.']); return;
+
+    $pageTexts = null;
+    if (is_array($pages)) {
+        $pageTexts = array_values($pages);
+        foreach ($pageTexts as $pageText) {
+            if (!is_string($pageText)) {
+                http_response_code(400); echo json_encode(['error' => 'Halaman import tidak valid.']); return;
+            }
+        }
+        if (count($pageTexts) === 0) {
+            http_response_code(400); echo json_encode(['error' => 'Tidak ada halaman import.']); return;
+        }
     }
 
-    $tmpFile = $_FILES['docfile']['tmp_name'];
+    if ($pageTexts === null) {
+        if (empty($_FILES['docfile']['tmp_name'])) {
+            http_response_code(400); echo json_encode(['error' => 'File .doc/.docx wajib diunggah.']); return;
+        }
+
+        $tmpFile = $_FILES['docfile']['tmp_name'];
     $origExt = strtolower(pathinfo($_FILES['docfile']['name'], PATHINFO_EXTENSION));
     if (!in_array($origExt, ['doc', 'docx'])) {
         http_response_code(400); echo json_encode(['error' => 'Hanya file .doc dan .docx yang didukung.']); return;
@@ -1432,23 +1449,26 @@ function handleAdminImportBook(): void {
     }
 
     // Pecah per halaman (tiap 3000 karakter atau per paragraf besar)
-    $pages = [];
+    $pageTexts = [];
     $paragraphs = preg_split('/\n{2,}/', trim($rawText));
     $buf = '';
     foreach ($paragraphs as $para) {
         $para = trim($para);
         if ($para === '') continue;
         if (strlen($buf) + strlen($para) > 3000 && $buf !== '') {
-            $pages[] = trim($buf);
+            $pageTexts[] = trim($buf);
             $buf = $para;
         } else {
             $buf .= ($buf ? "\n\n" : '') . $para;
         }
     }
-    if ($buf !== '') $pages[] = trim($buf);
-    if (empty($pages)) {
+    if ($buf !== '') $pageTexts[] = trim($buf);
+    if (empty($pageTexts)) {
         http_response_code(422); echo json_encode(['error' => 'Tidak ada konten yang bisa diimpor. Pastikan file tidak kosong.']); return;
     }
+    }
+
+    $pages = $pageTexts;
 
     $catName = '';
     if ($catId) {
