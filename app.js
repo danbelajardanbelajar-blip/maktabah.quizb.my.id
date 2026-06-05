@@ -287,8 +287,8 @@ async function renderHome() {
       </div>
     </section>
 
-    <!-- CTA Kirimkan File (visible di mobile, tersembunyi di desktop) -->
-    <section class="md:hidden bg-gradient-to-br from-primary to-primary-light py-8 px-5">
+    <!-- CTA Kirimkan File -->
+    <section class="bg-gradient-to-br from-primary to-primary-light py-8 px-5">
       <div class="flex items-start gap-4">
         <div class="shrink-0 w-12 h-12 rounded-2xl bg-gold/20 flex items-center justify-center">
           <i data-lucide="upload-cloud" class="w-6 h-6 text-gold"></i>
