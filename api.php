@@ -1785,8 +1785,8 @@ function handleSubmitFile(): void {
           :file_url, :file_size, :mime_type, :description)"
     );
     $stmt->execute([
-        ':user_id'       => $user['id'] ?? null,
-        ':user_name'     => $user['name'] ?? null,
+        ':user_id'       => $user['id'] ?? 0,
+        ':user_name'     => $user['name'] ?? '',
         ':user_email'    => $user['email'] ?? $submitterEmail,
         ':file_name'     => $fileName,
         ':file_type'     => $fileType,
