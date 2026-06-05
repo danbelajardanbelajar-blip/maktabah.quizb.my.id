@@ -37,6 +37,72 @@ function getJsonRequest(): array {
     return $json = is_array($decoded) ? $decoded : [];
 }
 
+function getComposerAutoloadPath(): ?string {
+    $candidates = [
+        __DIR__ . '/vendor/autoload.php',
+        dirname(__DIR__) . '/vendor/autoload.php',
+        ($_SERVER['DOCUMENT_ROOT'] ?? '') . '/vendor/autoload.php',
+        dirname($_SERVER['DOCUMENT_ROOT'] ?? __DIR__) . '/vendor/autoload.php',
+    ];
+    foreach ($candidates as $path) {
+        if (!$path) {
+            continue;
+        }
+        if (is_file($path)) {
+            return $path;
+        }
+    }
+    return null;
+}
+
+function loadComposerAutoloader(): bool {
+    static $loaded = null;
+    if ($loaded !== null) {
+        return $loaded;
+    }
+    $autoload = getComposerAutoloadPath();
+    if ($autoload) {
+        require_once $autoload;
+        return $loaded = true;
+    }
+    return $loaded = false;
+}
+
+function normalizeDownloadFilename(string $title): string {
+    $safe = preg_replace('/[^a-z0-9\-_\.]/i', '_', trim($title));
+    if ($safe === '') {
+        $safe = 'kitab';
+    }
+    return substr($safe, 0, 100);
+}
+
+function fallbackDownloadTxt(array $book, array $pages): void {
+    $title = trim($book['title'] ?: 'kitab');
+    $filename = normalizeDownloadFilename($title) . '.txt';
+
+    $lines = [];
+    $lines[] = $book['title'] ?: 'Kitab tanpa judul';
+    if (!empty($book['author'])) {
+        $lines[] = 'Pengarang: ' . $book['author'];
+    }
+    if (!empty($book['cat_name'])) {
+        $lines[] = 'Kategori: ' . $book['cat_name'];
+    }
+    $lines[] = '';
+    foreach ($pages as $idx => $content) {
+        $lines[] = '--- Halaman ' . ($idx + 1) . ' ---';
+        $lines[] = $content;
+        if ($idx < count($pages) - 1) {
+            $lines[] = '';
+        }
+    }
+
+    header_remove('Content-Type');
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    echo implode("\n", $lines);
+}
+
 // ── Auth helpers ──────────────────────────────────────────────
 function getSessionUser(): ?array {
     return $_SESSION['user'] ?? null;
@@ -382,31 +448,55 @@ function handleDownloadBook(): void {
     }
 
     $title = trim($book['title'] ?: 'kitab');
-    $safeName = preg_replace('/[^a-z0-9\-_\.]/i', '_', $title);
-    $filename = substr($safeName, 0, 100) ?: 'kitab';
-    $filename .= '.txt';
+    $filename = normalizeDownloadFilename($title) . '.docx';
 
-    $lines = [];
-    $lines[] = $book['title'] ?: 'Kitab tanpa judul';
-    if ($book['author']) {
-        $lines[] = 'Pengarang: ' . $book['author'];
-    }
-    if ($book['cat_name']) {
-        $lines[] = 'Kategori: ' . $book['cat_name'];
-    }
-    $lines[] = '';
-    foreach ($pages as $idx => $content) {
-        $lines[] = "--- Halaman " . ($idx + 1) . " ---";
-        $lines[] = $content;
-        if ($idx < count($pages) - 1) {
-            $lines[] = '';
+    loadComposerAutoloader();
+    if (class_exists('\PhpOffice\PhpWord\PhpWord')) {
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection([
+            'pageSizeW' => 12240,
+            'pageSizeH' => 15840,
+            'orientation' => 'portrait',
+        ]);
+
+        $section->addText($book['title'] ?: 'Kitab tanpa judul', ['name' => 'Arial', 'size' => 18, 'bold' => true]);
+        if (!empty($book['author'])) {
+            $section->addText('Pengarang: ' . $book['author'], ['name' => 'Arial', 'size' => 11, 'italic' => true]);
         }
+        if (!empty($book['cat_name'])) {
+            $section->addText('Kategori: ' . $book['cat_name'], ['name' => 'Arial', 'size' => 11, 'italic' => true]);
+        }
+        $section->addTextBreak(1);
+
+        $contentStyle = ['name' => 'Arial', 'size' => 12];
+        $pageHeadingStyle = ['name' => 'Arial', 'size' => 12, 'bold' => true];
+
+        foreach ($pages as $idx => $content) {
+            $section->addText('--- Halaman ' . ($idx + 1) . ' ---', $pageHeadingStyle);
+            $lines = preg_split('/\r\n|\r|\n/', trim($content));
+            if ($lines === false || count($lines) === 0) {
+                $section->addText('', $contentStyle);
+            } else {
+                foreach ($lines as $line) {
+                    $section->addText($line, $contentStyle);
+                }
+            }
+            if ($idx < count($pages) - 1) {
+                $section->addPageBreak();
+            }
+        }
+
+        header_remove('Content-Type');
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-store, must-revalidate');
+
+        $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        $writer->save('php://output');
+        return;
     }
 
-    $body = implode("\n", $lines);
-    header('Content-Type: text/plain; charset=UTF-8');
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
-    echo $body;
+    fallbackDownloadTxt($book, $pages);
 }
 
 // =============================================================
