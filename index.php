@@ -36,25 +36,39 @@ $sessionUser = $_SESSION['user'] ?? null;
         const dismiss = document.getElementById('dismiss-webview-banner');
         openBtn?.addEventListener('click', function(e){
           e.preventDefault();
-          // Try to open new window/tab first (may open external browser in many WebViews)
+          // First attempt: open a new tab/window
           try {
-            const a = document.createElement('a');
-            a.href = location.href;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            // Fallback: attempt Android intent to open in Chrome after short delay
-            setTimeout(() => {
-              const intent = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
-              window.location = intent;
-            }, 600);
+            window.open(location.href, '_blank', 'noopener');
           } catch (err) {
-            const intent = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
-            window.location = intent;
+            // ignore
+          }
+          // Construct Android intent URI with browser_fallback_url encoded
+          try {
+            const full = location.origin + location.pathname + location.search;
+            const fallback = encodeURIComponent(full);
+            const intentUri = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallback + ';end';
+            // Navigate to intent URI after short delay — many WebViews will open external browser
+            setTimeout(() => { window.location = intentUri; }, 500);
+          } catch (err) {
+            // last resort: show copy dialog
+            alert('Tidak bisa membuka browser secara otomatis. Silakan salin tautan dan buka di browser Anda.');
           }
         });
+
+        // Copy link button — untuk WebView yang menolak membuka browser
+        const copyBtn = document.getElementById('copy-link-btn');
+        copyBtn?.addEventListener('click', () => {
+          const url = location.href;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+              copyBtn.textContent = 'Tersalin ✓';
+              setTimeout(() => copyBtn.textContent = 'Salin Tautan', 1800);
+            }).catch(() => { window.prompt('Salin tautan berikut:', url); });
+          } else {
+            window.prompt('Salin tautan berikut:', url);
+          }
+        });
+
         dismiss?.addEventListener('click', () => { banner.style.display = 'none'; });
       });
     })();
@@ -626,6 +640,7 @@ $sessionUser = $_SESSION['user'] ?? null;
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <button id="open-in-browser-btn" style="background:#c9a84c;border:none;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer;">Buka di Browser</button>
+        <button id="copy-link-btn" style="background:transparent;border:1px solid rgba(255,255,255,.12);padding:8px 10px;border-radius:10px;color:#fff;cursor:pointer;">Salin Tautan</button>
         <button id="dismiss-webview-banner" style="background:transparent;border:1px solid rgba(255,255,255,.12);padding:8px 10px;border-radius:10px;color:#fff;cursor:pointer;">Tutup</button>
       </div>
     </div>
