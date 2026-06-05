@@ -288,19 +288,21 @@ async function renderHome() {
     </section>
 
     <!-- CTA Kirimkan File -->
-    <section class="bg-gradient-to-br from-primary to-primary-light py-8 px-5">
-      <div class="flex items-start gap-4">
-        <div class="shrink-0 w-12 h-12 rounded-2xl bg-gold/20 flex items-center justify-center">
-          <i data-lucide="upload-cloud" class="w-6 h-6 text-gold"></i>
-        </div>
-        <div class="flex-1">
-          <h3 class="text-white font-bold text-base leading-snug mb-1">Kirimkan Hasil Bahsul Masail atau Kitab Anda</h3>
-          <p class="text-white/65 text-xs leading-relaxed mb-4">Bagikan karya & hasil kajian Anda untuk koleksi perpustakaan digital ini.</p>
-          <button onclick="handleSubmitCTA()"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-primary font-semibold text-sm shadow hover:bg-gold-light transition-colors">
-            <i data-lucide="send" class="w-4 h-4"></i>
-            Kirimkan File
-          </button>
+    <section class="bg-gradient-to-br from-primary to-primary-light py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 rounded-[32px] bg-primary/0">
+        <div class="flex flex-col md:flex-row items-start gap-4 rounded-[32px] bg-gradient-to-br from-primary to-primary-light p-8">
+          <div class="shrink-0 w-12 h-12 rounded-2xl bg-gold/20 flex items-center justify-center">
+            <i data-lucide="upload-cloud" class="w-6 h-6 text-gold"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-white font-bold text-base leading-snug mb-1">Kirimkan Hasil Bahsul Masail atau Kitab Anda</h3>
+            <p class="text-white/65 text-xs leading-relaxed mb-4">Bagikan karya & hasil kajian Anda untuk koleksi perpustakaan digital ini.</p>
+            <button onclick="handleSubmitCTA()"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-primary font-semibold text-sm shadow hover:bg-gold-light transition-colors">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              Kirimkan File
+            </button>
+          </div>
         </div>
       </div>
     </section>`;
