@@ -1857,17 +1857,8 @@ function privacyRightCard(icon, title, desc) {
  *  Jika sudah login → langsung ke /submit-file
  *  Jika belum       → simpan tujuan di sessionStorage, lalu ke halaman login */
 function handleSubmitCTA() {
-  apiFetch({ action: 'auth_me' }).then(res => {
-    if (res.loggedIn) {
-      navigate('/submit-file');
-    } else {
-      sessionStorage.setItem('_afterLoginRedirect', '/submit-file');
-      window.location.href = '/auth.php?action=login';
-    }
-  }).catch(() => {
-    sessionStorage.setItem('_afterLoginRedirect', '/submit-file');
-    window.location.href = '/auth.php?action=login';
-  });
+  // Allow anonymous users to access submit page; no login required anymore
+  navigate('/submit-file');
 }
 window.handleSubmitCTA = handleSubmitCTA;
 
@@ -1884,17 +1875,7 @@ window.handleSubmitCTA = handleSubmitCTA;
 })();
 
 async function renderSubmitFile() {
-  // Pastikan sudah login
-  let me;
-  try {
-    me = await apiFetch({ action: 'auth_me' });
-  } catch { me = { loggedIn: false }; }
-
-  if (!me.loggedIn) {
-    sessionStorage.setItem('_afterLoginRedirect', '/submit-file');
-    window.location.href = '/auth.php?action=login';
-    return;
-  }
+  // Sekarang halaman dapat diakses tanpa login; anonymous submit diperbolehkan dengan email
 
   // Muat kategori
   let cats = [];
@@ -1967,6 +1948,14 @@ async function renderSubmitFile() {
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all resize-none"></textarea>
             </div>
 
+            <!-- Email pengirim (jika tidak login) -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Email Anda <span class="text-red-400">*</span></label>
+              <input type="email" id="sf-email" name="submitter_email" required
+                placeholder="email@contoh.com"
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
+            </div>
+
             <!-- Upload File -->
             <div class="mb-6">
               <label class="block text-xs font-semibold text-primary/55 mb-1.5">
@@ -2009,12 +1998,14 @@ async function submitFileForm(e) {
   errEl.classList.add('hidden'); okEl.classList.add('hidden');
 
   const name   = document.getElementById('sf-name').value.trim();
+  const email  = document.getElementById('sf-email')?.value.trim() || '';
   const type   = document.getElementById('sf-type').value;
   const catId  = document.getElementById('sf-cat').value;
   const desc   = document.getElementById('sf-desc').value.trim();
   const fileEl = document.getElementById('sf-file');
 
   if (!name)         { showErr('Nama file wajib diisi.'); return; }
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) { showErr('Masukkan email yang valid.'); return; }
   if (!type)         { showErr('Pilih tipe file terlebih dahulu.'); return; }
   if (!fileEl.files?.length) { showErr('Pilih file yang akan dikirim.'); return; }
 
@@ -2023,6 +2014,7 @@ async function submitFileForm(e) {
 
   const fd = new FormData();
   fd.append('file_name',   name);
+  fd.append('submitter_email', email);
   fd.append('file_type',   type);
   fd.append('category_id', catId);
   fd.append('description', desc);

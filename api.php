@@ -267,7 +267,8 @@ try {
         // Admin — Search Logs
         case 'admin_get_search_logs': requireAdmin(); handleAdminGetSearchLogs();  break;
         // File Submissions
-        case 'submit_file':              requireLogin(); handleSubmitFile();              break;
+        // Allow anonymous submissions (require email) — no login required
+        case 'submit_file':              handleSubmitFile();              break;
         case 'admin_get_submissions':    requireAdmin(); handleAdminGetSubmissions();    break;
         case 'admin_review_submission':  requireAdmin(); handleAdminReviewSubmission();  break;
         default:
@@ -1719,6 +1720,7 @@ function handleSubmitFile(): void {
     $fileType    = trim($_POST['file_type']     ?? '');
     $categoryId  = intval($_POST['category_id'] ?? 0);
     $description = trim($_POST['description']   ?? '');
+    $submitterEmail = trim($_POST['submitter_email'] ?? '');
 
     if ($fileName === '') {
         http_response_code(400); echo json_encode(['error' => 'Nama file wajib diisi.']); return;
@@ -1745,6 +1747,13 @@ function handleSubmitFile(): void {
     }
     if ($_FILES['file']['size'] > 20 * 1024 * 1024) {
         http_response_code(400); echo json_encode(['error' => 'Ukuran file maksimal 20 MB.']); return;
+    }
+
+    // If user not logged in, require a valid email
+    if (!$user) {
+        if ($submitterEmail === '' || filter_var($submitterEmail, FILTER_VALIDATE_EMAIL) === false) {
+            http_response_code(400); echo json_encode(['error' => 'Email pengirim wajib diisi dan harus valid.']); return;
+        }
     }
 
     $categoryName = '';
@@ -1776,9 +1785,9 @@ function handleSubmitFile(): void {
           :file_url, :file_size, :mime_type, :description)"
     );
     $stmt->execute([
-        ':user_id'       => $user['id'],
-        ':user_name'     => $user['name'],
-        ':user_email'    => $user['email'],
+        ':user_id'       => $user['id'] ?? null,
+        ':user_name'     => $user['name'] ?? null,
+        ':user_email'    => $user['email'] ?? $submitterEmail,
         ':file_name'     => $fileName,
         ':file_type'     => $fileType,
         ':category_id'   => $categoryId ?: null,
