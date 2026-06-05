@@ -15,6 +15,49 @@ $sessionUser = $_SESSION['user'] ?? null;
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    // WebView detection + helper to open in external browser
+    (function(){
+      function isInWebView() {
+        try {
+          const ua = navigator.userAgent || '';
+          // common WebView markers: 'wv', 'Version/' without Chrome, and popular in-app browser tags
+          if (/\b(wv|; wv|FBAN\/|FBAV\/|Instagram|Line|TwitterKit)\b/i.test(ua)) return true;
+          // if not top window, likely embedded
+          if (window.self !== window.top) return true;
+        } catch (e) {}
+        return false;
+      }
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!isInWebView()) return;
+        const banner = document.getElementById('webview-banner');
+        if (!banner) return;
+        banner.style.display = 'block';
+        const openBtn = document.getElementById('open-in-browser-btn');
+        const dismiss = document.getElementById('dismiss-webview-banner');
+        openBtn?.addEventListener('click', function(e){
+          e.preventDefault();
+          // Try to open new window/tab first (may open external browser in many WebViews)
+          try {
+            const a = document.createElement('a');
+            a.href = location.href;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            // Fallback: attempt Android intent to open in Chrome after short delay
+            setTimeout(() => {
+              const intent = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+              window.location = intent;
+            }, 600);
+          } catch (err) {
+            const intent = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+            window.location = intent;
+          }
+        });
+        dismiss?.addEventListener('click', () => { banner.style.display = 'none'; });
+      });
+    })();
     tailwind.config = {
       theme: {
         extend: {
@@ -363,6 +406,22 @@ $sessionUser = $_SESSION['user'] ?? null;
 
     /* Footer */
     html.dark footer { background: #060e08 !important; }
+    
+    /* WebView detection banner */
+    .webview-banner {
+      display: none;
+      position: fixed;
+      top: 64px;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      background: linear-gradient(90deg,#111 0%,#1a1a1a 100%);
+      color: #fff;
+      padding: 12px 8px;
+      font-size: 14px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.35);
+    }
+    .webview-banner a, .webview-banner button { color: #1a3a2a; }
 
     /* Global settings panel */
     html.dark #settings-drawer { background: #0e1a12 !important; }
@@ -557,6 +616,20 @@ $sessionUser = $_SESSION['user'] ?? null;
       </div>
     </div>
   </nav>
+
+  <!-- WebView warning banner (visible only when page opened inside in-app browser / WebView) -->
+  <div id="webview-banner" class="webview-banner" role="status" aria-live="polite">
+    <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;justify-content:space-between;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;">Login Google tidak didukung di in-app browser.</div>
+        <div style="font-size:13px;opacity:.95;">Silakan buka halaman ini di browser Anda (Chrome/Firefox) untuk melakukan proses login.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="open-in-browser-btn" style="background:#c9a84c;border:none;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer;">Buka di Browser</button>
+        <button id="dismiss-webview-banner" style="background:transparent;border:1px solid rgba(255,255,255,.12);padding:8px 10px;border-radius:10px;color:#fff;cursor:pointer;">Tutup</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ===================== MAIN SPA CONTAINER ===================== -->
   <main id="app-content" class="flex-1 pt-16 pb-20 md:pb-0">
