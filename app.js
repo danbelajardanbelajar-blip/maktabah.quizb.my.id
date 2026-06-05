@@ -214,9 +214,10 @@ function bookCard(b) {
         <div class="flex items-center gap-2">
           ${pages ? `<span class="text-xs text-gold font-medium">${escHtml(pages)}</span>` : ''}
           <a href="/api.php?action=download_book&id=${b.bkid}"
-             class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-gold/20 text-gold text-[11px] font-semibold hover:bg-gold/10 transition"
-             onclick="event.stopPropagation();">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i>Unduh
+             class="inline-flex items-center justify-center p-2 rounded-full border border-gold/20 text-gold hover:bg-gold/10 transition"
+             onclick="event.stopPropagation();"
+             aria-label="Unduh kitab">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
           </a>
         </div>
       </div>
@@ -1059,9 +1060,10 @@ function bookCardStagger(b, i, q = '') {
         <div class="flex items-center gap-2">
           ${pages ? `<span class="text-xs text-gold font-medium">${pages}</span>` : ''}
           <a href="/api.php?action=download_book&id=${b.bkid}"
-             class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-gold/20 text-gold text-[11px] font-semibold hover:bg-gold/10 transition"
-             onclick="event.stopPropagation();">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i>Unduh
+             class="inline-flex items-center justify-center p-2 rounded-full border border-gold/20 text-gold hover:bg-gold/10 transition"
+             onclick="event.stopPropagation();"
+             aria-label="Unduh kitab">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
           </a>
         </div>
       </div>
@@ -1094,9 +1096,10 @@ function contentCard(b, q) {
         <div class="flex items-center gap-2">
           ${page ? `<span class="text-xs text-gold font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${page}</span>` : ''}
           <a href="/api.php?action=download_book&id=${b.bkid}"
-             class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-gold/20 text-gold text-[11px] font-semibold hover:bg-gold/10 transition"
-             onclick="event.stopPropagation();">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i>Unduh
+             class="inline-flex items-center justify-center p-2 rounded-full border border-gold/20 text-gold hover:bg-gold/10 transition"
+             onclick="event.stopPropagation();"
+             aria-label="Unduh kitab">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
           </a>
         </div>
       </div>
@@ -1290,9 +1293,10 @@ async function renderDetail(params) {
             ${pages      ? `<span class="px-3 py-1 rounded-full bg-gold/20 text-gold text-xs flex items-center gap-1"><i data-lucide="file-text" class="w-3 h-3"></i>${pages}</span>` : ''}
             ${contentPgs ? `<span class="px-3 py-1 rounded-full bg-white/10 text-white/70 text-xs flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i>${contentPgs} halaman tersedia</span>` : ''}
             <a href="/api.php?action=download_book&id=${book.bkid}"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold border border-white/20 hover:bg-white/15 transition"
-               title="Unduh kitab">
-              <i data-lucide="download" class="w-4 h-4"></i>Unduh
+               class="inline-flex items-center justify-center p-2 rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/15 transition"
+               title="Unduh kitab"
+               aria-label="Unduh kitab">
+              <i data-lucide="download" class="w-4 h-4"></i>
             </a>
           </div>
         </div>
