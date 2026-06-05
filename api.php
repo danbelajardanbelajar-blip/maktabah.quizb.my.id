@@ -239,6 +239,7 @@ try {
     switch ($action) {
         case 'books':             handleBooks();            break;
         case 'book':              handleBook();             break;
+        case 'download_book':     handleDownloadBook();     break;
         case 'content':           handleContent();          break;
         case 'categories':        handleCategories();       break;
         case 'latest':            handleLatest();           break;
@@ -344,6 +345,68 @@ function handleBook(): void {
     $book['content_pages'] = (int)$cp->fetchColumn();
 
     echo json_encode(['data' => $book]);
+}
+
+function handleDownloadBook(): void {
+    $pdo = getPDO();
+    $id  = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid book id.']);
+        return;
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT b.title, b.author, b.iso, c.name AS cat_name
+         FROM books b
+         LEFT JOIN categories c ON c.id = b.category_id
+         WHERE b.bkid = :id LIMIT 1"
+    );
+    $stmt->execute([':id' => $id]);
+    $book = $stmt->fetch();
+    if (!$book) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Kitab tidak ditemukan.']);
+        return;
+    }
+
+    $contentStmt = $pdo->prepare(
+        "SELECT content FROM book_content WHERE bkid = :id ORDER BY page ASC"
+    );
+    $contentStmt->execute([':id' => $id]);
+    $pages = $contentStmt->fetchAll(PDO::FETCH_COLUMN);
+    if (empty($pages)) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Konten kitab tidak tersedia.']);
+        return;
+    }
+
+    $title = trim($book['title'] ?: 'kitab');
+    $safeName = preg_replace('/[^a-z0-9\-_\.]/i', '_', $title);
+    $filename = substr($safeName, 0, 100) ?: 'kitab';
+    $filename .= '.txt';
+
+    $lines = [];
+    $lines[] = $book['title'] ?: 'Kitab tanpa judul';
+    if ($book['author']) {
+        $lines[] = 'Pengarang: ' . $book['author'];
+    }
+    if ($book['cat_name']) {
+        $lines[] = 'Kategori: ' . $book['cat_name'];
+    }
+    $lines[] = '';
+    foreach ($pages as $idx => $content) {
+        $lines[] = "--- Halaman " . ($idx + 1) . " ---";
+        $lines[] = $content;
+        if ($idx < count($pages) - 1) {
+            $lines[] = '';
+        }
+    }
+
+    $body = implode("\n", $lines);
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    echo $body;
 }
 
 // =============================================================

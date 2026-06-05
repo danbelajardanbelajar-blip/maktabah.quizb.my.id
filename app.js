@@ -208,8 +208,17 @@ function bookCard(b) {
         <div class="text-primary/60 text-xs font-medium line-clamp-1">${escHtml(author)}</div>
       </div>
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
-        ${cat ? `<span class="text-xs bg-primary/8 text-primary/70 px-2 py-0.5 rounded-full truncate max-w-[60%]">${escHtml(cat)}</span>` : '<span></span>'}
-        ${pages ? `<span class="text-xs text-gold font-medium">${escHtml(pages)}</span>` : ''}
+        <div class="flex items-center gap-2">
+          ${cat ? `<span class="text-xs bg-primary/8 text-primary/70 px-2 py-0.5 rounded-full truncate max-w-[60%]">${escHtml(cat)}</span>` : '<span></span>'}
+        </div>
+        <div class="flex items-center gap-2">
+          ${pages ? `<span class="text-xs text-gold font-medium">${escHtml(pages)}</span>` : ''}
+          <a href="/api.php?action=download_book&id=${b.bkid}"
+             class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-gold/20 text-gold text-[11px] font-semibold hover:bg-gold/10 transition"
+             onclick="event.stopPropagation();">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>Unduh
+          </a>
+        </div>
       </div>
     </div>`;
 }
@@ -1044,8 +1053,17 @@ function bookCardStagger(b, i, q = '') {
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
       <div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
-        ${cat   ? `<span class="text-xs bg-primary/8 text-primary/60 px-2 py-0.5 rounded-full truncate max-w-[60%]">${escHtml(cat)}</span>` : '<span></span>'}
-        ${pages ? `<span class="text-xs text-gold font-medium">${pages}</span>` : ''}
+        <div class="flex items-center gap-2">
+          ${cat   ? `<span class="text-xs bg-primary/8 text-primary/60 px-2 py-0.5 rounded-full truncate max-w-[60%]">${escHtml(cat)}</span>` : '<span></span>'}
+        </div>
+        <div class="flex items-center gap-2">
+          ${pages ? `<span class="text-xs text-gold font-medium">${pages}</span>` : ''}
+          <a href="/api.php?action=download_book&id=${b.bkid}"
+             class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-gold/20 text-gold text-[11px] font-semibold hover:bg-gold/10 transition"
+             onclick="event.stopPropagation();">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>Unduh
+          </a>
+        </div>
       </div>
     </div>`;
 }
@@ -1070,8 +1088,17 @@ function contentCard(b, q) {
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}…</div>` : ''}
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
-        ${cat  ? `<span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(cat)}</span>` : '<span></span>'}
-        ${page ? `<span class="text-xs text-gold font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${page}</span>` : ''}
+        <div class="flex items-center gap-2">
+          ${cat  ? `<span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(cat)}</span>` : '<span></span>'}
+        </div>
+        <div class="flex items-center gap-2">
+          ${page ? `<span class="text-xs text-gold font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${page}</span>` : ''}
+          <a href="/api.php?action=download_book&id=${b.bkid}"
+             class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-gold/20 text-gold text-[11px] font-semibold hover:bg-gold/10 transition"
+             onclick="event.stopPropagation();">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>Unduh
+          </a>
+        </div>
       </div>
     </div>`;
 }
@@ -1258,10 +1285,15 @@ async function renderDetail(params) {
         <div class="hero-bg text-white p-8 md:p-10">
           <div class="arabic text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">${escHtml(title)}</div>
           <div class="text-gold text-base font-medium mt-1">${escHtml(author)}</div>
-          <div class="flex flex-wrap gap-3 mt-4">
+          <div class="flex flex-wrap items-center gap-3 mt-4">
             ${catName    ? `<span class="px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs">${escHtml(catName)}</span>` : ''}
             ${pages      ? `<span class="px-3 py-1 rounded-full bg-gold/20 text-gold text-xs flex items-center gap-1"><i data-lucide="file-text" class="w-3 h-3"></i>${pages}</span>` : ''}
             ${contentPgs ? `<span class="px-3 py-1 rounded-full bg-white/10 text-white/70 text-xs flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i>${contentPgs} halaman tersedia</span>` : ''}
+            <a href="/api.php?action=download_book&id=${book.bkid}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold border border-white/20 hover:bg-white/15 transition"
+               title="Unduh kitab">
+              <i data-lucide="download" class="w-4 h-4"></i>Unduh
+            </a>
           </div>
         </div>
 
