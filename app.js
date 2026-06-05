@@ -288,8 +288,8 @@ async function renderHome() {
     </section>
 
     <!-- CTA Kirimkan File -->
-    <section class="bg-gradient-to-br from-primary to-primary-light py-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 rounded-[32px] bg-primary/0">
+    <section class="py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col md:flex-row items-start gap-4 rounded-[32px] bg-gradient-to-br from-primary to-primary-light p-8">
           <div class="shrink-0 w-12 h-12 rounded-2xl bg-gold/20 flex items-center justify-center">
             <i data-lucide="upload-cloud" class="w-6 h-6 text-gold"></i>
