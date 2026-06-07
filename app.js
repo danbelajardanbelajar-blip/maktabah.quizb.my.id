@@ -311,7 +311,7 @@ async function renderHome() {
             class="w-full pl-12 pr-4 py-4 rounded-2xl text-ink text-sm bg-white shadow-xl focus:outline-none focus:ring-2 focus:ring-gold/50 transition-all" />
         </div>
         <!-- stats -->
-        <div id="hero-stats" class="mt-10 flex items-center justify-center gap-6 text-sm text-white/50">
+        <div id="hero-stats" class="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-white/50">
           <span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> Memuat statistik…</span>
         </div>
       </div>
@@ -1351,12 +1351,12 @@ async function renderDetail(params) {
         <div class="hero-bg text-white p-8 md:p-10">
           <div class="arabic text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">${escHtml(title)}</div>
           <div class="text-gold text-base font-medium mt-1">${escHtml(author)}</div>
-          <div class="flex flex-wrap items-center gap-3 mt-4">
-            ${catName    ? `<span class="px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs">${escHtml(catName)}</span>` : ''}
-            ${pages      ? `<span class="px-3 py-1 rounded-full bg-gold/20 text-gold text-xs flex items-center gap-1"><i data-lucide="file-text" class="w-3 h-3"></i>${pages}</span>` : ''}
-            ${contentPgs ? `<span class="px-3 py-1 rounded-full bg-white/10 text-white/70 text-xs flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i>${contentPgs} halaman tersedia</span>` : ''}
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4">
+            ${catName    ? `<span class="px-2 sm:px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs">${escHtml(catName)}</span>` : ''}
+            ${pages      ? `<span class="px-2 sm:px-3 py-1 rounded-full bg-gold/20 text-gold text-xs flex items-center gap-1"><i data-lucide="file-text" class="w-3 h-3"></i>${pages}</span>` : ''}
+            ${contentPgs ? `<span class="px-2 sm:px-3 py-1 rounded-full bg-white/10 text-white/70 text-xs flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i>${contentPgs} halaman tersedia</span>` : ''}
             <a href="/api.php?action=download_book&id=${book.bkid}"
-               class="inline-flex items-center justify-center p-2 rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/15 transition"
+               class="inline-flex items-center justify-center p-2 rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/15 transition shrink-0"
                title="Unduh kitab"
                aria-label="Unduh kitab">
               <i data-lucide="download" class="w-4 h-4"></i>
@@ -1385,17 +1385,17 @@ async function renderDetail(params) {
 
             <!-- Reader toolbar -->
             <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
-              <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
+              <h3 class="text-xs sm:text-sm font-semibold text-primary flex items-center gap-2">
                 <i data-lucide="book-open" class="w-4 h-4 text-gold"></i> Baca Kitab
               </h3>
-              <div class="flex items-center gap-2 text-sm">
-                <span class="text-primary/40 text-xs">Halaman</span>
+              <div class="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <span class="text-primary/40 text-xs whitespace-nowrap">Halaman</span>
                 <input id="reader-page-input" type="number" min="1" max="${contentPgs}" value="1"
-                  class="w-14 text-center border border-gold/30 rounded-lg px-2 py-1 text-sm text-primary focus:outline-none focus:border-gold" />
-                <span class="text-primary/40 text-xs">dari ${contentPgs}</span>
+                  class="w-12 sm:w-14 text-center border border-gold/30 rounded-lg px-1 sm:px-2 py-1 text-xs sm:text-sm text-primary focus:outline-none focus:border-gold" />
+                <span class="text-primary/40 text-xs whitespace-nowrap">dari ${contentPgs}</span>
                 <!-- Font Settings Gear Button -->
                 <button id="font-settings-btn" title="Pengaturan Font"
-                  class="ml-2 p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary">
+                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2">
                   <i data-lucide="settings-2" class="w-4 h-4"></i>
                 </button>
               </div>
@@ -1413,15 +1413,15 @@ async function renderDetail(params) {
             </div>
 
             <!-- Nav buttons -->
-            <div class="flex items-center justify-between mt-5 gap-3">
+            <div class="flex flex-col sm:flex-row items-center justify-between mt-5 gap-2 sm:gap-3 w-full">
               <button id="reader-prev"
-                class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 text-sm font-medium text-primary hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                <i data-lucide="chevron-left" class="w-4 h-4"></i> Sebelumnya
+                class="flex items-center justify-center gap-1 sm:gap-2 flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl border border-gold/30 text-xs sm:text-sm font-medium text-primary hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                <i data-lucide="chevron-left" class="w-4 h-4 shrink-0"></i> <span class="hidden sm:inline">Sebelumnya</span>
               </button>
-              <span id="reader-label" class="text-xs text-primary/40"></span>
+              <span id="reader-label" class="text-xs text-primary/40 whitespace-nowrap"></span>
               <button id="reader-next"
-                class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-light disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                Berikutnya <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                class="flex items-center justify-center gap-1 sm:gap-2 flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-medium hover:bg-primary-light disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                <span class="hidden sm:inline">Berikutnya</span> <i data-lucide="chevron-right" class="w-4 h-4 shrink-0"></i>
               </button>
             </div>
 
