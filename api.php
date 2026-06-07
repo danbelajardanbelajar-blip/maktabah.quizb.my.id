@@ -309,6 +309,7 @@ try {
         case 'content':           handleContent();          break;
         case 'categories':        handleCategories();       break;
         case 'latest':            handleLatest();           break;
+        case 'stats':             handleStats();            break;
         // Search — tiga endpoint terpisah untuk parallel fetch
         case 'search_categories': handleSearchCategories(); break;
         case 'search_books':      handleSearchBooks();      break;
@@ -576,7 +577,33 @@ function handleLatest(): void {
 }
 
 // =============================================================
-// 5b. AUTH ME — kembalikan session user saat ini
+// 5c. STATS — statistik total kitab, kategori, pencarian, kunjungan
+// =============================================================
+function handleStats(): void {
+    $pdo = getPDO();
+    
+    // Total kitab
+    $totalBooks = (int)$pdo->query("SELECT COUNT(*) FROM books")->fetchColumn();
+    
+    // Total kategori
+    $totalCategories = (int)$pdo->query("SELECT COUNT(*) FROM categories")->fetchColumn();
+    
+    // Total pencarian
+    $totalSearches = (int)$pdo->query("SELECT COUNT(*) FROM search_logs")->fetchColumn();
+    
+    // Total kunjungan
+    $totalVisits = (int)$pdo->query("SELECT COUNT(*) FROM user_activity_log")->fetchColumn();
+    
+    echo json_encode([
+        'total_books'       => $totalBooks,
+        'total_categories'  => $totalCategories,
+        'total_searches'    => $totalSearches,
+        'total_visits'      => $totalVisits
+    ]);
+}
+
+// =============================================================
+// 5d. AUTH ME — kembalikan session user saat ini
 // =============================================================
 function handleAuthMe(): void {
     header('Content-Type: application/json; charset=utf-8');

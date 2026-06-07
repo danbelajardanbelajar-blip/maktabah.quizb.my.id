@@ -381,10 +381,25 @@ async function renderHome() {
   try {
     const res = await apiFetch({ action: 'latest', limit: 8 });
     $('#latest-grid').innerHTML = res.data.map(bookCard).join('') || '<p class="text-primary/50 col-span-full text-center py-8">Belum ada kitab.</p>';
-    $('#hero-stats').innerHTML = `<span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> ${res.data.length > 0 ? 'Koleksi terus bertambah' : 'Koleksi belum tersedia'}</span>`;
   } catch(e) { 
     if (handleAuthError(e)) return;
     $('#latest-grid').innerHTML = '<p class="text-red-500 col-span-full text-sm text-center py-8">Gagal memuat kitab.</p>'; 
+  }
+
+  // Load statistics
+  try {
+    const stats = await apiFetch({ action: 'stats' });
+    const formatNum = (n) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    $('#hero-stats').innerHTML = `
+      <span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> <strong>${formatNum(stats.total_books)}</strong> Kitab</span>
+      <span class="flex items-center gap-2"><i data-lucide="folder" class="w-4 h-4 text-gold/60"></i> <strong>${formatNum(stats.total_categories)}</strong> Kategori</span>
+      <span class="flex items-center gap-2"><i data-lucide="search" class="w-4 h-4 text-gold/60"></i> <strong>${formatNum(stats.total_searches)}</strong> Pencarian</span>
+      <span class="flex items-center gap-2"><i data-lucide="eye" class="w-4 h-4 text-gold/60"></i> <strong>${formatNum(stats.total_visits)}</strong> Kunjungan</span>
+    `;
+    reicons();
+  } catch(e) { 
+    if (handleAuthError(e)) return;
+    $('#hero-stats').innerHTML = `<span class="text-gold/50 text-xs">Statistik sedang dimuat…</span>`;
   }
 
   // Load categories
