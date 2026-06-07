@@ -70,7 +70,9 @@ async function adminPost(action, body) {
   });
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.error || `Request failed with status ${res.status}`);
+    const error = new Error(data.error || `Request failed with status ${res.status}`);
+    error.status = res.status;
+    throw error;
   }
   return data;
 }
@@ -399,6 +401,7 @@ async function bksLoad() {
 
     reicons();
   } catch(e) {
+    if (handleAuthError(e)) return;
     wrap.innerHTML = `<div class="p-6 text-red-500 text-sm">Gagal memuat: ${escHtml(e.message)}</div>`;
   }
 }
@@ -527,6 +530,7 @@ window.openBookModal = async function(bookOrId) {
       const res = await apiFetch({ action: 'book', id: +bookOrId });
       book = res.data || null;
     } catch(e) {
+      if (handleAuthError(e)) return;
       document.getElementById('bk-modal-ttl').textContent = 'Gagal memuat data';
       if (btn) btn.disabled = false;
       return;
@@ -959,6 +963,7 @@ window._impConfirm = async function() {
     bksLoad(); // refresh tabel kitab
 
   } catch(e) {
+    if (handleAuthError(e)) return;
     msg.textContent = 'Error: ' + e.message;
     msg.className = 'text-sm rounded-xl px-4 py-2.5 bg-red-50 text-red-600 border border-red-200';
     if (btn) btn.disabled = false;
@@ -997,6 +1002,7 @@ async function bkSubmit() {
       msg.className = 'text-sm rounded-xl px-4 py-2.5 bg-red-50 text-red-600 border border-red-200';
     }
   } catch(e) {
+    if (handleAuthError(e)) return;
     msg.textContent = 'Error: ' + e.message;
     msg.className = 'text-sm rounded-xl px-4 py-2.5 bg-red-50 text-red-600 border border-red-200';
   } finally {
@@ -1007,9 +1013,14 @@ async function bkSubmit() {
 
 window.bkDelete = async function(bkid, title) {
   if (!confirm(`Hapus kitab:\n"${title}"\n\nSeluruh isi kitab juga akan dihapus. Yakin?`)) return;
-  const data = await adminPost('admin_delete_book', { bkid }).catch(e => ({ error: e.message }));
-  if (data.success) { adminToast('Kitab dihapus'); bksLoad(); }
-  else adminToast(data.error || 'Gagal', 'error');
+  try {
+    const data = await adminPost('admin_delete_book', { bkid });
+    if (data.success) { adminToast('Kitab dihapus'); bksLoad(); }
+    else adminToast(data.error || 'Gagal', 'error');
+  } catch(e) {
+    if (handleAuthError(e)) return;
+    adminToast(e.message || 'Gagal', 'error');
+  }
 };
 
 /* ── Buka editor isi kitab (inline, tanpa pindah halaman) ── */
@@ -1192,7 +1203,10 @@ window.contSave = async function() {
       adminToast('Tersimpan ✓');
       if (lbl) { lbl.textContent = 'Tersimpan ✓'; lbl.className = 'text-xs text-green-600'; setTimeout(() => { if(lbl) lbl.className='text-xs text-primary/35 hidden'; }, 3000); }
     } else adminToast(data.error || 'Gagal simpan', 'error');
-  } catch(e) { adminToast('Error: ' + e.message, 'error'); }
+  } catch(e) { 
+    if (handleAuthError(e)) return;
+    adminToast('Error: ' + e.message, 'error'); 
+  }
   finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan'; reicons(); }
   }
@@ -1201,12 +1215,17 @@ window.contSave = async function() {
 window.contDeletePage = async function(bkid, page) {
   if (!confirm(`Hapus halaman ${page}? Konten akan hilang permanen.`)) return;
   if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
-  const data = await adminPost('admin_delete_content', { bkid, page }).catch(e => ({ error: e.message }));
-  if (data.success) {
-    adminToast('Halaman dihapus');
-    contAS.page = Math.max(1, contAS.page - 1);
-    await contLoadEditor();
-  } else adminToast(data.error || 'Gagal', 'error');
+  try {
+    const data = await adminPost('admin_delete_content', { bkid, page });
+    if (data.success) {
+      adminToast('Halaman dihapus');
+      contAS.page = Math.max(1, contAS.page - 1);
+      await contLoadEditor();
+    } else adminToast(data.error || 'Gagal', 'error');
+  } catch(e) {
+    if (handleAuthError(e)) return;
+    adminToast(e.message || 'Gagal', 'error');
+  }
 };
 
 window.contAddPage = async function() {
@@ -1214,13 +1233,18 @@ window.contAddPage = async function() {
   let total = 0;
   try { const r = await apiFetch({ action: 'content', bkid, page: 1 }); total = r.total_pages || 0; } catch {}
   const newPg = total + 1;
-  const data = await adminPost('admin_save_content', { bkid, page: newPg, content: '' }).catch(e => ({ error: e.message }));
-  if (data.success) {
-    adminToast(`Halaman ${newPg} dibuat`);
-    if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
-    contAS.page = newPg;
-    await contLoadEditor();
-  } else adminToast(data.error || 'Gagal buat halaman', 'error');
+  try {
+    const data = await adminPost('admin_save_content', { bkid, page: newPg, content: '' });
+    if (data.success) {
+      adminToast(`Halaman ${newPg} dibuat`);
+      if (_ctrlS) { document.removeEventListener('keydown', _ctrlS); _ctrlS = null; }
+      contAS.page = newPg;
+      await contLoadEditor();
+    } else adminToast(data.error || 'Gagal buat halaman', 'error');
+  } catch(e) {
+    if (handleAuthError(e)) return;
+    adminToast(e.message || 'Gagal buat halaman', 'error');
+  }
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -1299,6 +1323,7 @@ async function loadCatGrid() {
       </div>`;
     reicons();
   } catch(e) {
+    if (handleAuthError(e)) return;
     grid.innerHTML = `<div class="bg-white rounded-2xl shadow-card p-6 text-red-500 text-sm">${escHtml(e.message)}</div>`;
   }
 }
@@ -1390,6 +1415,7 @@ async function catSubmit() {
       msg.className = 'text-sm rounded-xl px-4 py-2.5 bg-red-50 text-red-600 border border-red-200';
     }
   } catch(e) {
+    if (handleAuthError(e)) return;
     msg.textContent = 'Error: ' + e.message;
     msg.className = 'text-sm rounded-xl px-4 py-2.5 bg-red-50 text-red-600 border border-red-200';
   } finally {
@@ -1711,6 +1737,7 @@ async function renderAdminActivity() {
         </div>`;
       reicons();
     } catch (e) {
+      if (handleAuthError(e)) return;
       grid.innerHTML = `<div class="p-6 text-red-500 text-sm">${escHtml(e.message)}</div>`;
     }
   };
@@ -1922,6 +1949,7 @@ async function renderAdminSearchLogs() {
       pager.innerHTML = `<div class="flex gap-1.5 flex-wrap justify-center">${btns}</div>`;
       reicons();
     } catch(e) {
+      if (handleAuthError(e)) return;
       grid.innerHTML = `<div class="p-6 text-red-500 text-sm">${escHtml(e.message)}</div>`;
     }
   };
@@ -2035,7 +2063,10 @@ async function renderAdminSubmissions() {
       closeSubModal();
       adminToast(action === 'approve' ? 'Kiriman disetujui ✓' : 'Kiriman ditolak');
       subLoad();
-    } catch(e) { adminToast('Gagal: ' + e.message, true); }
+    } catch(e) { 
+      if (handleAuthError(e)) return;
+      adminToast('Gagal: ' + e.message, 'error'); 
+    }
   };
 
   const fmtSize = b => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(1) + ' MB';
@@ -2093,6 +2124,7 @@ async function renderAdminSubmissions() {
         : '<span>' + res.total + ' kiriman</span>';
       reicons();
     } catch(e) {
+      if (handleAuthError(e)) return;
       wrap.innerHTML = '<p class="text-center py-12 text-red-500 text-sm">Gagal memuat: ' + escHtml(e.message) + '</p>';
     }
   }

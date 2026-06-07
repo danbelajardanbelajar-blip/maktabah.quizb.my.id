@@ -67,9 +67,53 @@ async function apiFetch(params) {
   const res = await fetch(url);
   if (!res.ok) {
     const text = await res.text();
-    throw new Error('API error ' + res.status + ': ' + text);
+    const error = new Error('API error ' + res.status + ': ' + text);
+    error.status = res.status;
+    error.responseText = text;
+    throw error;
   }
   return res.json();
+}
+
+// ── Helper untuk handle authentication errors ──────────────
+function handleAuthError(error, fallbackMsg = 'Akses ditolak. Diperlukan hak admin.') {
+  const errorMsg = error?.message || error?.toString() || '';
+  const statusCode = error?.status || 0;
+  
+  // Cek apakah error berisi indikasi 403/auth error
+  const is403 = statusCode === 403 || 
+                errorMsg.includes('403') || 
+                errorMsg.includes('Akses ditolak') ||
+                errorMsg.includes('admin') ||
+                errorMsg.includes('Diperlukan');
+  
+  if (is403) {
+    // Parse error message untuk ditampilkan
+    let displayMsg = fallbackMsg;
+    try {
+      // Coba parse JSON error dari response
+      const jsonMatch = errorMsg.match(/:\s*(\{[^}]+\})/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[1]);
+        if (parsed.error) displayMsg = parsed.error;
+      } else if (errorMsg.includes('Akses ditolak')) {
+        // Ambil pesan yang sudah dalam format readable
+        const match = errorMsg.match(/Akses ditolak[.\s]*(.*?)$/);
+        if (match) displayMsg = match[0];
+      }
+    } catch (e) {
+      // Gunakan error message apa adanya
+      const match = errorMsg.match(/:\s*(.+)$/);
+      if (match) displayMsg = match[1];
+    }
+    
+    // Simpan ke localStorage dan redirect ke login
+    localStorage.setItem('authErrorMsg', displayMsg);
+    window.location.href = '/auth.php?action=login&error=1';
+    return true;
+  }
+  
+  return false;
 }
 
 function logVisitorActivity(event, data = {}) {
@@ -338,7 +382,10 @@ async function renderHome() {
     const res = await apiFetch({ action: 'latest', limit: 8 });
     $('#latest-grid').innerHTML = res.data.map(bookCard).join('') || '<p class="text-primary/50 col-span-full text-center py-8">Belum ada kitab.</p>';
     $('#hero-stats').innerHTML = `<span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> ${res.data.length > 0 ? 'Koleksi terus bertambah' : 'Koleksi belum tersedia'}</span>`;
-  } catch { $('#latest-grid').innerHTML = '<p class="text-red-500 col-span-full text-sm text-center py-8">Gagal memuat kitab.</p>'; }
+  } catch(e) { 
+    if (handleAuthError(e)) return;
+    $('#latest-grid').innerHTML = '<p class="text-red-500 col-span-full text-sm text-center py-8">Gagal memuat kitab.</p>'; 
+  }
 
   // Load categories
   try {
@@ -421,7 +468,8 @@ async function loadKatalogBooks() {
       ? res.data.map(bookCard).join('')
       : '<p class="col-span-full text-center py-12 text-primary/40">Tidak ada kitab di kategori ini.</p>';
     if (pag) pag.innerHTML = paginationHtml(res.page, res.total_pages, 'goKatalogPage');
-  } catch {
+  } catch(e) {
+    if (handleAuthError(e)) return;
     grid.innerHTML = '<p class="col-span-full text-center py-12 text-red-500 text-sm">Gagal memuat katalog.</p>';
   }
   reicons();
@@ -1431,7 +1479,8 @@ async function renderDetail(params) {
       });
     }
 
-  } catch {
+  } catch(e) {
+    if (handleAuthError(e)) return;
     $('#detail-content').innerHTML = '<p class="text-center text-red-500 py-12">Kitab tidak ditemukan.</p>';
   }
 }
@@ -1488,7 +1537,8 @@ async function loadReaderPage(bkid, page, highlightQ = '') {
     // scroll reader into view smoothly
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-  } catch {
+  } catch(e) {
+    if (handleAuthError(e)) return;
     area.innerHTML = `<p class="text-center text-red-500 text-sm py-6">Gagal memuat halaman.</p>`;
     area.style.opacity = '1';
   }
