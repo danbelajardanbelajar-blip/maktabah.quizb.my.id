@@ -1672,11 +1672,11 @@ function renderAbout() {
               <div class="space-y-2.5 text-sm">
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">No Hp</span>
-                  <a href="tel:085743399595" class="font-semibold text-primary hover:text-gold transition-colors">085743399595</a>
+                  <a href="https://wa.me/085743399595" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">085743399595</a>
                 </div>
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
-                  <span class="text-muted">Email</span>
-                  <a href="mailto:zenhkm@gmail.com" class="font-semibold text-primary hover:text-gold transition-colors">zenhkm@gmail.com</a>
+                  <span class="text-muted">Website</span>
+                  <a href="https://hakimz.site" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">https://hakimz.site</a>
                 </div>
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">Instagram</span>
