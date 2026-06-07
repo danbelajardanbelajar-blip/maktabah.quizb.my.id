@@ -582,8 +582,8 @@ function handleLatest(): void {
 function handleStats(): void {
     $pdo = getPDO();
     
-    // Total kitab
-    $totalBooks = (int)$pdo->query("SELECT COUNT(*) FROM books")->fetchColumn();
+    // Total kitab — hanya hitung buku yang memiliki konten
+    $totalBooks = (int)$pdo->query("SELECT COUNT(DISTINCT bkid) FROM book_content")->fetchColumn();
     
     // Total kategori
     $totalCategories = (int)$pdo->query("SELECT COUNT(*) FROM categories")->fetchColumn();
