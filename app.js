@@ -251,19 +251,14 @@ function bookCard(b) {
         <div class="arabic text-primary font-semibold text-base leading-snug line-clamp-2 mb-1">${escHtml(title)}</div>
         <div class="text-primary/60 text-xs font-medium line-clamp-1">${escHtml(author)}</div>
       </div>
-      <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
-        <div class="flex items-center gap-2">
-          ${cat ? `<span class="text-xs bg-primary/8 text-primary/70 px-2 py-0.5 rounded-full truncate max-w-[60%]">${escHtml(cat)}</span>` : '<span></span>'}
-        </div>
-        <div class="flex items-center gap-2">
-          ${pages ? `<span class="text-xs text-gold font-medium">${escHtml(pages)}</span>` : ''}
-          <a href="/api.php?action=download_book&id=${b.bkid}"
-             class="inline-flex items-center justify-center p-2 rounded-full border border-gold/20 text-gold hover:bg-gold/10 transition"
-             onclick="event.stopPropagation();"
-             aria-label="Unduh kitab">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i>
-          </a>
-        </div>
+      <div class="flex items-center gap-2 mt-auto pt-2 border-t border-cream-dark">
+        ${pages ? `<span class="text-xs text-gold font-medium">${escHtml(pages)}</span>` : ''}
+        <a href="/api.php?action=download_book&id=${b.bkid}"
+           class="inline-flex items-center justify-center p-2 rounded-full border border-gold/20 text-gold hover:bg-gold/10 transition"
+           onclick="event.stopPropagation();"
+           aria-label="Unduh kitab">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+        </a>
       </div>
     </div>`;
 }
