@@ -11,7 +11,7 @@ $maintenanceMode = true;
 
 // Pesan yang ditampilkan (bisa diubah sesuai kebutuhan)
 $maintenanceTitle   = 'Sedang Dalam Pemeliharaan';
-$maintenanceMessage = 'Kami sedang melakukan pembaruan sistem untuk meningkatkan layanan. Mohon bersabar, situs akan kembali aktif dalam waktu singkat.';
+$maintenanceMessage = 'Kami sedang melakukan pembaruan sistem untuk meningkatkan layanan. Mohon bersabar, situs akan kembali aktif nanti siang insya Allah.';
 $maintenanceEta     = ''; // Isi estimasi waktu, contoh: '± 30 menit' atau kosongkan ''
 
 if ($maintenanceMode) :
