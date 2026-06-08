@@ -1,245 +1,287 @@
 <?php
 // ============================================================
-//  fill_juz.php — Isi kolom `juz` pada tabel book_content
-//  Jalankan via browser: https://yourdomain.com/fill_juz.php
-//  Proses dicicil 5% per klik dengan tombol lanjutan
+//  fill_juz.php  v3 — Batch auto-refresh, tahan timeout
+//  Setiap request hanya kerjakan SATU langkah kecil,
+//  lalu halaman otomatis lanjut ke langkah berikutnya.
+//
+//  STEP 0 = cek / tambah kolom juz (tanpa index, ALGORITHM=INSTANT)
+//  STEP 1 = isi data juz per-kitab  (offset=N per request)
+//  STEP 2 = tambah index
+//  STEP 3 = selesai
 // ============================================================
 
-// Keamanan: hanya bisa diakses dari IP server atau login admin
-// (hapus baris berikut jika sudah pastikan aman)
-if (!in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true)) {
-    // Uncomment untuk membatasi akses:
-    // http_response_code(403); die('Forbidden');
-}
+set_time_limit(55);        // maks 55 detik per request
+ignore_user_abort(true);
 
 require_once __DIR__ . '/koneksi.php';
 
-header('Content-Type: text/html; charset=utf-8');
-set_time_limit(0);
-ignore_user_abort(true);
+// ── Baca state dari URL ────────────────────────────────────────
+$step   = max(0, (int)($_GET['step']   ?? 0));
+$offset = max(0, (int)($_GET['offset'] ?? 0));
+$batchSize = 5;   // proses N kitab per request (kecil agar aman)
 
-$action = $_GET['action'] ?? '';
-$chunkPercent = 5;
-$currentIndex = max(0, (int)($_GET['index'] ?? 0));
-$lastId = max(0, (int)($_GET['last_id'] ?? 0));
-$juz = max(1, (int)($_GET['juz'] ?? 1));
-$prevPage = isset($_GET['prev_page']) ? (int)$_GET['prev_page'] : -1;
+// ── Helper output ──────────────────────────────────────────────
+$logs = [];
+function out(string $msg): void {
+    global $logs;
+    $logs[] = htmlspecialchars($msg, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+function outOk(string $msg):  void { global $logs; $logs[] = '<span style="color:#2d8a4e">✓ ' . htmlspecialchars($msg) . '</span>'; }
+function outErr(string $msg): void { global $logs; $logs[] = '<span style="color:#c0392b">✗ ' . htmlspecialchars($msg) . '</span>'; }
+function outInfo(string $msg):void { global $logs; $logs[] = '<span style="color:#2471a3">ℹ ' . htmlspecialchars($msg) . '</span>'; }
 
-$messages = [];
-$details = [];
-$error = '';
-$nextUrl = '';
-$finished = false;
-$summary = [];
-
+// ── Koneksi ────────────────────────────────────────────────────
+$pdo = null;
 try {
     $pdo = getPDO();
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Naikkan timeout sesi agar ALTER tidak di-interrupt
+    $pdo->exec("SET SESSION wait_timeout       = 300");
+    $pdo->exec("SET SESSION interactive_timeout = 300");
+    $pdo->exec("SET SESSION net_read_timeout    = 300");
+    $pdo->exec("SET SESSION net_write_timeout   = 300");
+} catch (Throwable $e) {
+    // Lanjut meski timeout settings gagal (hak terbatas)
+}
 
-    $messages[] = 'Waktu menjalankan: ' . date('Y-m-d H:i:s');
+// ══════════════════════════════════════════════════════════════
+//  STEP 0 — Tambah kolom juz (tanpa index dulu)
+// ══════════════════════════════════════════════════════════════
+if ($step === 0) {
+    out("[ STEP 0 ] Memeriksa kolom juz…");
 
-    $hasJuzColumn = (bool)$pdo->query("SHOW COLUMNS FROM book_content LIKE 'juz'")->fetch();
-
-    if (!$hasJuzColumn) {
-        if ($action === 'add_column') {
-            $messages[] = 'Mencoba menambahkan kolom `juz`...';
+    $cols = $pdo->query("SHOW COLUMNS FROM book_content LIKE 'juz'")->fetchAll();
+    if (!empty($cols)) {
+        outInfo("Kolom juz sudah ada, lewati ke STEP 1.");
+        $nextUrl = "?step=1&offset=0";
+    } else {
+        // Coba ALGORITHM=INSTANT dulu (MySQL 8.0+ / MariaDB 10.4+) → sangat cepat
+        $ok = false;
+        try {
             $pdo->exec(
                 "ALTER TABLE book_content
-                 ADD COLUMN juz SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER page"
+                 ADD COLUMN juz SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER page,
+                 ALGORITHM=INSTANT"
             );
-            $messages[] = 'Kolom `juz` berhasil ditambahkan.';
-            $hasJuzColumn = true;
-        } else {
-            $summary[] = 'Kolom `juz` belum ada. Klik tombol di bawah untuk menambahkannya dulu.';
-        }
-    } else {
-        $messages[] = 'Kolom `juz` sudah ada.';
-    }
-
-    if ($hasJuzColumn) {
-        $totalRows = (int)$pdo->query('SELECT COUNT(*) FROM book_content')->fetchColumn();
-        $chunkTarget = max(1, (int)ceil($totalRows * $chunkPercent / 100));
-        $chunkTarget = min($chunkTarget, 3000);
-
-        $messages[] = "Total baris book_content: {$totalRows}";
-        $messages[] = "Target proses per klik: {$chunkTarget} baris ({$chunkPercent}% dari total, dibatasi max 3000).";
-
-        $bkids = $pdo
-            ->query('SELECT DISTINCT bkid FROM book_content ORDER BY bkid ASC')
-            ->fetchAll(PDO::FETCH_COLUMN);
-        $totalKitab = count($bkids);
-        $messages[] = "Total kitab: {$totalKitab}";
-
-        if ($totalRows === 0) {
-            $finished = true;
-            $summary[] = 'Tabel `book_content` kosong, tidak ada yang diproses.';
-        } elseif ($currentIndex >= $totalKitab) {
-            $finished = true;
-            $summary[] = 'Semua kitab sudah diproses.';
-        } else {
-            $stmtUpdate = $pdo->prepare('UPDATE book_content SET juz = ? WHERE id = ?');
-
-            $processedRows = 0;
-            $processedKitab = 0;
-            $multiJuzKitab = 0;
-            $startIndex = $currentIndex;
-
-            $details[] = sprintf(
-                'Mulai dari kitab ke %d: bkid=%s, last_id=%d, juz=%d, prev_page=%d',
-                $currentIndex + 1,
-                htmlspecialchars($bkids[$currentIndex], ENT_QUOTES, 'UTF-8'),
-                $lastId,
-                $juz,
-                $prevPage
-            );
-
-            while ($currentIndex < $totalKitab && $processedRows < $chunkTarget) {
-                $currentBkid = $bkids[$currentIndex];
-                $remaining = $chunkTarget - $processedRows;
-                $sql = sprintf(
-                    'SELECT id, page FROM book_content WHERE bkid = ? AND id > ? ORDER BY id ASC LIMIT %d',
-                    $remaining
+            $ok = true;
+            outOk("Kolom juz ditambahkan (INSTANT).");
+        } catch (Throwable $e1) {
+            outInfo("INSTANT tidak didukung, coba INPLACE…");
+            try {
+                $pdo->exec(
+                    "ALTER TABLE book_content
+                     ADD COLUMN juz SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER page,
+                     ALGORITHM=INPLACE, LOCK=NONE"
                 );
-                $stmtSelect = $pdo->prepare($sql);
-                $stmtSelect->execute([$currentBkid, $lastId]);
-                $rows = $stmtSelect->fetchAll(PDO::FETCH_ASSOC);
-
-                if (!$rows) {
-                    $currentIndex++;
-                    $lastId = 0;
-                    $juz = 1;
-                    $prevPage = -1;
-                    continue;
-                }
-
-                foreach ($rows as $row) {
-                    $page = (int)$row['page'];
-                    if ($prevPage >= 0 && $page <= $prevPage) {
-                        $juz++;
-                    }
-
-                    $stmtUpdate->execute([$juz, (int)$row['id']]);
-                    $processedRows++;
-                    $lastId = (int)$row['id'];
-                    $prevPage = $page;
-
-                    $details[] = sprintf(
-                        'bkid=%s id=%d page=%d juz=%d',
-                        htmlspecialchars($currentBkid, ENT_QUOTES, 'UTF-8'),
-                        (int)$row['id'],
-                        $page,
-                        $juz
+                $ok = true;
+                outOk("Kolom juz ditambahkan (INPLACE).");
+            } catch (Throwable $e2) {
+                outInfo("INPLACE gagal, coba ALTER biasa…");
+                try {
+                    $pdo->exec(
+                        "ALTER TABLE book_content
+                         ADD COLUMN juz SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER page"
                     );
-
-                    if ($processedRows >= $chunkTarget) {
-                        break;
-                    }
+                    $ok = true;
+                    outOk("Kolom juz ditambahkan.");
+                } catch (Throwable $e3) {
+                    outErr("Gagal menambah kolom: " . $e3->getMessage());
+                    outErr("Silakan tambahkan kolom manual di phpMyAdmin:");
+                    out("<code style='background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:12px;display:block;margin:4px 0'>ALTER TABLE book_content ADD COLUMN juz SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER page;</code>");
+                    out("Setelah kolom ditambah manual, akses: <a href='?step=1&offset=0'>Lanjutkan ke Step 1</a>");
                 }
-
-                if (count($rows) < $remaining) {
-                    $currentIndex++;
-                    $lastId = 0;
-                    $juz = 1;
-                    $prevPage = -1;
-                }
-            }
-
-            $nextUrl = sprintf(
-                '?action=process&index=%d&last_id=%d&juz=%d&prev_page=%d',
-                $currentIndex,
-                $lastId,
-                $juz,
-                $prevPage
-            );
-
-            $summary[] = sprintf(
-                'Diproses %d baris pada %d kitab dimulai dari indeks %d.',
-                $processedRows,
-                max(0, $currentIndex - $startIndex + ($lastId === 0 ? 0 : 1)),
-                $startIndex
-            );
-
-            if ($currentIndex >= $totalKitab) {
-                $finished = true;
-                $summary[] = 'Semua kitab selesai diproses.';
-            } else {
-                $summary[] = 'Batch selesai; klik Lanjutkan untuk batch berikutnya.';
-                $summary[] = sprintf('Selanjutnya mulai dari kitab ke %d.', $currentIndex + 1);
-            }
-
-            if ($processedRows > 0) {
-                $summary[] = "Kitab multi-juz yang diproses di batch ini: {$multiJuzKitab}.";
             }
         }
 
-        if ($finished) {
-            $indexCheck = $pdo->query("SHOW INDEX FROM book_content WHERE Key_name = 'idx_bkid_juz_page'")->fetchAll();
-            if (empty($indexCheck)) {
-                $pdo->exec("ALTER TABLE book_content ADD INDEX idx_bkid_juz_page (bkid, juz, page)");
-                $summary[] = 'Index `idx_bkid_juz_page` berhasil ditambahkan.';
-            } else {
-                $summary[] = 'Index `idx_bkid_juz_page` sudah ada.';
+        $nextUrl = $ok ? "?step=1&offset=0" : null;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STEP 1 — Isi data juz per-kitab (batching)
+// ══════════════════════════════════════════════════════════════
+elseif ($step === 1) {
+    out("[ STEP 1 ] Mengisi data juz… (batch offset={$offset})");
+
+    // Ambil semua bkid
+    $bkids = $pdo->query(
+        "SELECT DISTINCT bkid FROM book_content ORDER BY bkid ASC"
+    )->fetchAll(PDO::FETCH_COLUMN);
+    $total = count($bkids);
+
+    if ($offset >= $total) {
+        outOk("Semua {$total} kitab selesai diproses.");
+        $nextUrl = "?step=2&offset=0";
+    } else {
+        $batch = array_slice($bkids, $offset, $batchSize);
+
+        $stmtSel = $pdo->prepare(
+            "SELECT id, page FROM book_content WHERE bkid = ? ORDER BY id ASC"
+        );
+        $stmtUpd = $pdo->prepare(
+            "UPDATE book_content SET juz = ? WHERE id IN ({PLACEHOLDER})"
+        );
+
+        $done = 0;
+        foreach ($batch as $bkid) {
+            $stmtSel->execute([$bkid]);
+            $rows = $stmtSel->fetchAll();
+
+            $juz      = 1;
+            $prevPage = -1;
+            $byJuz    = [];   // [juzNum => [id, ...]]
+
+            foreach ($rows as $row) {
+                if ($prevPage >= 0 && (int)$row['page'] <= $prevPage) {
+                    $juz++;
+                }
+                $byJuz[$juz][] = (int)$row['id'];
+                $prevPage = (int)$row['page'];
             }
+
+            // UPDATE per kelompok juz
+            foreach ($byJuz as $juzNum => $ids) {
+                $ph  = implode(',', array_fill(0, count($ids), '?'));
+                $pdo->prepare("UPDATE book_content SET juz = ? WHERE id IN ($ph)")
+                    ->execute(array_merge([$juzNum], $ids));
+            }
+
+            $maxJuz = !empty($byJuz) ? max(array_keys($byJuz)) : 1;
+            if ($maxJuz > 1) {
+                out("  bkid={$bkid} → {$maxJuz} juz (" . count($rows) . " hal.)");
+            }
+            $done++;
+        }
+
+        $newOffset = $offset + $done;
+        $pct = round($newOffset / $total * 100);
+        outOk("Selesai {$newOffset}/{$total} kitab ({$pct}%)");
+        $nextUrl = "?step=1&offset={$newOffset}";
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STEP 2 — Tambah index
+// ══════════════════════════════════════════════════════════════
+elseif ($step === 2) {
+    out("[ STEP 2 ] Menambahkan index…");
+
+    $exists = $pdo->query(
+        "SHOW INDEX FROM book_content WHERE Key_name = 'idx_bkid_juz_page'"
+    )->fetchAll();
+
+    if (!empty($exists)) {
+        outInfo("Index sudah ada.");
+    } else {
+        try {
+            $pdo->exec(
+                "ALTER TABLE book_content
+                 ADD INDEX idx_bkid_juz_page (bkid, juz, page)"
+            );
+            outOk("Index idx_bkid_juz_page ditambahkan.");
+        } catch (Throwable $e) {
+            outErr("Index gagal: " . $e->getMessage() . " (tidak fatal, data tetap benar)");
         }
     }
-} catch (PDOException $e) {
-    $error = $e->getMessage();
+
+    $nextUrl = "?step=3";
 }
-?>
-<!doctype html>
+
+// ══════════════════════════════════════════════════════════════
+//  STEP 3 — Selesai
+// ══════════════════════════════════════════════════════════════
+elseif ($step === 3) {
+    // Statistik akhir
+    $stat = $pdo->query(
+        "SELECT bkid, MAX(juz) AS max_juz FROM book_content
+         GROUP BY bkid HAVING max_juz > 1 ORDER BY max_juz DESC"
+    )->fetchAll();
+
+    outOk("=== SELESAI! Semua langkah berhasil. ===");
+    out("Kitab dengan >1 juz: <strong>" . count($stat) . "</strong>");
+    foreach ($stat as $r) {
+        out("  bkid={$r['bkid']} → {$r['max_juz']} juz");
+    }
+    out("");
+    out("<strong>Langkah selanjutnya:</strong>");
+    out("1. Hapus file ini dari server (<code>fill_juz.php</code>)");
+    out("2. Upload <code>api.php</code> dan <code>app.js</code> yang sudah diperbarui");
+    $nextUrl = null;
+}
+
+// ── Hitung total bkid untuk progress bar (step 1) ─────────────
+$totalBkid = 0;
+if ($step === 1) {
+    $totalBkid = (int)$pdo->query(
+        "SELECT COUNT(DISTINCT bkid) FROM book_content"
+    )->fetchColumn();
+}
+
+// ── Auto-redirect ──────────────────────────────────────────────
+$autoRefreshMs = isset($nextUrl) ? 600 : 0; // 0.6 detik jeda sebelum lanjut
+
+?><!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
-    <title>fill_juz.php — Proses 5% per klik</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.6; }
-        .box { background:#f8f9fa; border:1px solid #dfe3e6; padding:16px; border-radius:8px; }
-        .error { color:#a00; }
-        .ok { color:#064; }
-        .button { display:inline-block; margin-top:16px; padding:12px 18px; background:#007bff; color:#fff; text-decoration:none; border-radius:6px; }
-        .button:hover { background:#0056b3; }
-        pre { background:#282c34; color:#f8f8f2; padding:12px; border-radius:8px; overflow:auto; }
-    </style>
+<meta charset="UTF-8">
+<title>fill_juz — Al-Maktabah</title>
+<?php if (isset($nextUrl)): ?>
+<meta http-equiv="refresh" content="1;url=<?= htmlspecialchars($nextUrl) ?>">
+<?php endif; ?>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #1c1c1e; }
+  .card { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.08); max-width: 680px; margin: 0 auto; padding: 28px 32px; }
+  h1 { font-size: 1.2rem; color: #1a3a2a; margin: 0 0 4px; }
+  .sub { font-size: .85rem; color: #888; margin-bottom: 20px; }
+  .log { background: #f9f9f9; border: 1px solid #e8e4d9; border-radius: 10px; padding: 14px 16px;
+         font-size: .82rem; line-height: 1.8; max-height: 360px; overflow-y: auto; font-family: monospace; }
+  .log div { margin: 1px 0; }
+  code { background: #f0ece0; padding: 2px 6px; border-radius: 4px; font-size: .8rem; }
+  .progress-bar { background: #e8e4d9; border-radius: 999px; height: 10px; margin: 16px 0 6px; overflow: hidden; }
+  .progress-fill { background: linear-gradient(90deg, #1a3a2a, #c9a84c); height: 100%; border-radius: 999px; transition: width .4s; }
+  .pct { font-size: .8rem; color: #888; text-align: right; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #c9a84c; border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn { display: inline-block; margin-top: 16px; padding: 10px 22px; background: #1a3a2a; color: #fff; border-radius: 10px; text-decoration: none; font-size: .9rem; font-weight: 600; }
+  .done-banner { background: #eafaf1; border: 1px solid #2ecc71; border-radius: 10px; padding: 14px 18px; margin-top: 16px; font-size: .9rem; color: #1e8449; font-weight: 600; }
+</style>
 </head>
 <body>
-    <h1>fill_juz.php — Proses 5% per klik</h1>
-    <div class="box">
-        <p>Jalankan ulang halaman ini setiap kali ingin meneruskan batch berikutnya.</p>
-        <?php if ($error): ?>
-            <p class="error"><strong>ERROR:</strong> <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
-        <?php endif; ?>
-        <?php if ($messages): ?>
-            <ul>
-                <?php foreach ($messages as $msg): ?>
-                    <li><?= htmlspecialchars($msg, ENT_QUOTES, 'UTF-8') ?></li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
+<div class="card">
+  <h1>🔧 fill_juz.php — Al-Maktabah As-Sunniyyah</h1>
+  <div class="sub">Mengisi kolom <code>juz</code> pada tabel <code>book_content</code> secara otomatis</div>
 
-        <?php if ($summary): ?>
-            <h2>Ringkasan</h2>
-            <ul>
-                <?php foreach ($summary as $line): ?>
-                    <li><?= htmlspecialchars($line, ENT_QUOTES, 'UTF-8') ?></li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
+  <?php
+  // Progress bar (step 1)
+  if ($step === 1 && $totalBkid > 0):
+    $pct = min(100, round($offset / $totalBkid * 100));
+  ?>
+  <div class="progress-bar"><div class="progress-fill" style="width:<?= $pct ?>%"></div></div>
+  <div class="pct"><?= $pct ?>% (<?= $offset ?> / <?= $totalBkid ?> kitab)</div>
+  <?php endif; ?>
 
-        <?php if ($details): ?>
-            <h2>Detail</h2>
-            <pre><?= htmlspecialchars(implode("\n", $details), ENT_QUOTES, 'UTF-8') ?></pre>
-        <?php endif; ?>
+  <div class="log">
+  <?php foreach ($logs as $line): ?>
+    <div><?= $line ?></div>
+  <?php endforeach; ?>
+  <?php if (isset($nextUrl)): ?>
+    <div><span class="spinner"></span><em>Melanjutkan otomatis…</em></div>
+  <?php endif; ?>
+  </div>
 
-        <?php if (!$hasJuzColumn): ?>
-            <a class="button" href="?action=add_column">Tambah Kolom juz</a>
-        <?php elseif ($finished): ?>
-            <p class="ok"><strong>Selesai:</strong> Semua baris sudah terproses.</p>
-            <p>Setelah verifikasi, hapus file ini dari server.</p>
-        <?php elseif ($nextUrl): ?>
-            <a class="button" href="<?= htmlspecialchars($nextUrl, ENT_QUOTES, 'UTF-8') ?>">Lanjutkan batch berikutnya</a>
-        <?php else: ?>
-            <a class="button" href="?action=process&index=0&last_id=0&juz=1&prev_page=-1">Mulai proses</a>
-        <?php endif; ?>
-    </div>
+  <?php if ($step === 3): ?>
+    <div class="done-banner">✅ Proses selesai! Hapus file ini dari server, lalu upload file yang sudah diperbarui.</div>
+  <?php elseif (isset($nextUrl)): ?>
+    <p style="font-size:.82rem;color:#888;margin-top:12px">
+      Halaman akan otomatis lanjut. Jika tidak, <a href="<?= htmlspecialchars($nextUrl) ?>">klik di sini</a>.
+    </p>
+  <?php else: ?>
+    <a class="btn" href="?step=0">↺ Mulai Ulang</a>
+  <?php endif; ?>
+
+  <p style="font-size:.75rem;color:#bbb;margin-top:20px">
+    Step: <?= $step ?> | Offset: <?= $offset ?> | <?= date('H:i:s') ?>
+  </p>
+</div>
 </body>
 </html>
