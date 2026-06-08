@@ -16,7 +16,7 @@ require_once __DIR__ . '/koneksi.php';
 
 header('Content-Type: text/html; charset=utf-8');
 
-$chunkPercent = 10;
+$chunkPercent = 5;
 $startIndex = max(0, (int)($_GET['start'] ?? 0));
 $messages = [];
 $details = [];
