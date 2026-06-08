@@ -213,16 +213,19 @@ window.logVisitorActivity = logVisitorActivity;
 // ── Router ────────────────────────────────────────────────────
 // Rute admin didaftarkan oleh admin.js setelah DOM ready
 const routes = {
-  '/':              renderHome,
-  '/katalog':       renderKatalog,
-  '/kategori':      renderKategori,
-  '/settings':      renderSettings,
-  '/about':         renderAbout,
-  '/search':        renderSearch,
+  '/':                renderHome,
+  '/katalog':         renderKatalog,    // tetap ada agar APK lama tidak 404
+  '/kategori':        renderKategori,
+  '/settings':        renderSettings,
+  '/about':           renderAbout,
+  '/search':          renderSearch,
   '/search-advanced': renderSearchAdvanced,
-  '/kitab':         renderDetail,
-  '/privacy':       renderPrivacy,
-  '/submit-file':   renderSubmitFile,
+  '/kitab':           renderDetail,
+  '/privacy':         renderPrivacy,
+  '/submit-file':     renderSubmitFile,
+  // ── Alias backward-compat (APK lama) ──────────────────────
+  '/catalog':         renderKategori,   // alias bahasa Inggris
+  '/setting':         renderSettings,   // alias tanpa 's'
 };
 
 function navigate(path, push = true) {
@@ -2549,19 +2552,43 @@ window.submitFileForm = submitFileForm;
 //  PAGE: 404
 // ══════════════════════════════════════════════════════════════
 function render404() {
+  const path = location.pathname;
   app().innerHTML = `
-    <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-      <div class="w-20 h-20 rounded-2xl bg-surface border border-border flex items-center justify-center mb-6">
-        <i data-lucide="file-question" class="w-10 h-10 text-muted"></i>
+    <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-12">
+      <div class="w-20 h-20 rounded-2xl bg-primary/8 border border-gold/20 flex items-center justify-center mb-6">
+        <i data-lucide="file-question" class="w-10 h-10 text-primary/30"></i>
       </div>
       <h1 class="text-4xl font-bold text-primary mb-2">404</h1>
-      <p class="text-muted text-lg mb-6">Halaman tidak ditemukan</p>
-      <button onclick="navigate('/')"
-        class="px-6 py-2.5 bg-gold text-white rounded-xl font-medium hover:bg-yellow-600 transition-colors">
-        Kembali ke Beranda
-      </button>
+      <p class="text-primary/50 text-base mb-2">Halaman <code class="text-gold font-mono text-sm">${escHtml(path)}</code> tidak ditemukan</p>
+      <p class="text-primary/35 text-sm mb-8">Mengarahkan ke Beranda dalam <span id="_r404-cnt">3</span> detik…</p>
+      <div class="flex flex-wrap gap-3 justify-center">
+        <button onclick="navigate('/')"
+          class="px-5 py-2.5 bg-primary text-white rounded-xl font-medium text-sm hover:bg-primary-light transition-colors">
+          <i data-lucide="home" class="w-4 h-4 inline mr-1"></i> Beranda
+        </button>
+        <button onclick="navigate('/kategori')"
+          class="px-5 py-2.5 bg-white border border-gold/30 text-primary rounded-xl font-medium text-sm hover:bg-cream-dark transition-colors">
+          <i data-lucide="layout-grid" class="w-4 h-4 inline mr-1"></i> Kategori
+        </button>
+        <button onclick="navigate('/settings')"
+          class="px-5 py-2.5 bg-white border border-gold/30 text-primary rounded-xl font-medium text-sm hover:bg-cream-dark transition-colors">
+          <i data-lucide="settings-2" class="w-4 h-4 inline mr-1"></i> Setting
+        </button>
+      </div>
     </div>`;
   reicons();
+
+  // Auto-redirect ke Beranda setelah 3 detik
+  let cnt = 3;
+  const timer = setInterval(() => {
+    cnt--;
+    const el = document.getElementById('_r404-cnt');
+    if (el) el.textContent = cnt;
+    if (cnt <= 0) {
+      clearInterval(timer);
+      navigate('/');
+    }
+  }, 1000);
 }
 
 // ── Export navigate for admin.js ──────────────────────────────

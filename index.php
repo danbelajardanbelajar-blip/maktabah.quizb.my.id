@@ -838,9 +838,17 @@ $sessionUser = $_SESSION['user'] ?? null;
         _settings.size = parseInt(n); _applySettings();
       };
 
-      // closeSettings tetap ada (dipanggil dari Escape) — no-op karena drawer dihapus
-      window.openSettings  = function() {};
-      window.closeSettings = function() {};
+      // openSettings: backward-compat APK lama — arahkan ke halaman /settings
+      // (APK lama memanggil openSettings() dari tombol Setting di bottom nav)
+      window.openSettings = function() {
+        if (typeof window.navigate === 'function') {
+          window.navigate('/settings');
+        } else {
+          // app.js belum load (sangat jarang) — fallback hard navigate
+          window.location.href = '/settings';
+        }
+      };
+      window.closeSettings = function() { /* no-op: drawer sudah dihapus */ };
 
       // Apply on page load (before app.js fully runs)
       _applySettings(false);
