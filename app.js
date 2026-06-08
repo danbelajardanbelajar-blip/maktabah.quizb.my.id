@@ -419,16 +419,6 @@ async function renderHome() {
       </div>
     </section>
 
-    <!-- Categories -->
-    <section class="bg-white py-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-xl font-bold text-primary mb-6">Jelajahi Kategori</h2>
-        <div id="cat-grid" class="flex flex-wrap gap-3">
-          ${Array.from({length:6}, () => `<div class="skeleton h-9 w-28 rounded-full"></div>`).join('')}
-        </div>
-      </div>
-    </section>
-
     <!-- CTA Kirimkan File -->
     <section class="py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -489,18 +479,6 @@ async function renderHome() {
     if (handleAuthError(e)) return;
     $('#hero-stats').innerHTML = `<span class="text-gold/50 text-xs">Statistik sedang dimuat…</span>`;
   }
-
-  // Load categories
-  try {
-    const res = await apiFetch({ action: 'categories' });
-    const cats = res.data.filter(c => c.book_count > 0).slice(0, 18);
-    $('#cat-grid').innerHTML = cats.map(c =>
-      `<button onclick="navigate('/katalog?cat=${c.id}')"
-         class="px-4 py-2 rounded-full border border-gold/30 text-sm text-primary/80 hover:bg-primary hover:text-white hover:border-primary transition-all">
-         ${escHtml(c.name)} <span class="text-gold text-xs ml-1">${c.book_count}</span>
-       </button>`
-    ).join('') || '<span class="text-primary/40 text-sm">Kategori belum tersedia.</span>';
-  } catch { /* ignore */ }
 
   reicons();
 }
