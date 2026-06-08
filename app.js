@@ -420,17 +420,22 @@ async function renderHome() {
     </section>
 
     <!-- Latest Kitab -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-primary">Kitab Terbaru</h2>
-        <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
-          Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </a>
-      </div>
-      <div id="latest-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        ${skeletonCards(8)}
+    <div class="gold-line"></div>
+    <section class="w-full bg-cream-dark py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-primary">Kitab Terbaru</h2>
+          <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
+            Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
+        <div id="latest-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          ${skeletonCards(8)}
+        </div>
       </div>
     </section>
+    <div class="gold-line"></div>
+
 
     <!-- CTA Kirimkan File -->
     <section class="py-12">
