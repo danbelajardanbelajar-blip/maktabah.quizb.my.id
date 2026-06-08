@@ -764,12 +764,7 @@ async function loadKategoriBuku() {
 window.goKategoriBukuPage = function(p) {
   kategoriState.page = p;
   loadKategoriBuku();
-fill_juz.php — Proses 5% per klik
-Jalankan ulang halaman ini setiap kali ingin meneruskan batch berikutnya.
-
-ERROR: SQLSTATE[70100]: <<Unknown error>>: 1317 Query execution was interrupted
-
-Waktu menjalankan: 2026-06-08 23:28:42  window.scrollTo({ top: 0, behavior: 'smooth' });
+window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 // ══════════════════════════════════════════════════════════════
