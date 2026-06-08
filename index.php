@@ -1,7 +1,334 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 $sessionUser = $_SESSION['user'] ?? null;
+
+// ══════════════════════════════════════════════════════════════
+//  MAINTENANCE MODE
+//  Ubah $maintenanceMode = true  → tampilkan halaman maintenance
+//  Ubah $maintenanceMode = false → situs berjalan normal
+// ══════════════════════════════════════════════════════════════
+$maintenanceMode = false;
+
+// Pesan yang ditampilkan (bisa diubah sesuai kebutuhan)
+$maintenanceTitle   = 'Sedang Dalam Pemeliharaan';
+$maintenanceMessage = 'Kami sedang melakukan pembaruan sistem untuk meningkatkan layanan. Mohon bersabar, situs akan kembali aktif dalam waktu singkat.';
+$maintenanceEta     = ''; // Isi estimasi waktu, contoh: '± 30 menit' atau kosongkan ''
+
+if ($maintenanceMode) :
+?><!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Pemeliharaan — المكتبة السنية</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      min-height: 100vh;
+      /* Android WebView safe */
+      min-height: -webkit-fill-available;
+    }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: #0f2218;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      /* Mencegah scroll di semua perangkat */
+      position: fixed;
+      inset: 0;
+    }
+
+    /* Background animasi */
+    .bg-radial {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,168,76,.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(26,58,42,.6) 0%, transparent 60%),
+        linear-gradient(160deg, #0f2218 0%, #1a3a2a 50%, #0b1a10 100%);
+      z-index: 0;
+    }
+
+    /* Partikel bintang (pure CSS) */
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .stars::before, .stars::after {
+      content: '';
+      position: absolute;
+      width: 2px; height: 2px;
+      background: rgba(255,255,255,.15);
+      border-radius: 50%;
+      box-shadow:
+        120px 40px 0 rgba(201,168,76,.3),
+        240px 180px 0 rgba(255,255,255,.12),
+        80px 300px 0 rgba(201,168,76,.2),
+        380px 60px 0 rgba(255,255,255,.1),
+        500px 200px 0 rgba(201,168,76,.25),
+        620px 350px 0 rgba(255,255,255,.08),
+        30px 500px 0 rgba(201,168,76,.15),
+        700px 450px 0 rgba(255,255,255,.12),
+        150px 700px 0 rgba(201,168,76,.2),
+        450px 600px 0 rgba(255,255,255,.1),
+        820px 120px 0 rgba(201,168,76,.18),
+        900px 500px 0 rgba(255,255,255,.08);
+      animation: twinkle 4s infinite alternate;
+    }
+    .stars::after {
+      width: 1px; height: 1px;
+      box-shadow:
+        200px 80px 0 rgba(255,255,255,.2),
+        350px 250px 0 rgba(201,168,76,.25),
+        60px 400px 0 rgba(255,255,255,.1),
+        750px 300px 0 rgba(201,168,76,.18),
+        550px 500px 0 rgba(255,255,255,.15),
+        100px 600px 0 rgba(201,168,76,.2),
+        650px 700px 0 rgba(255,255,255,.1),
+        850px 80px 0 rgba(201,168,76,.15);
+      animation-delay: 2s;
+      animation-duration: 6s;
+    }
+    @keyframes twinkle { from { opacity: .6; } to { opacity: 1; } }
+
+    /* Kartu utama */
+    .card {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 16px;
+      text-align: center;
+      animation: fadeUp .8s cubic-bezier(.22,.61,.36,1) both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(32px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* Logo / ikon */
+    .icon-wrap {
+      width: 88px; height: 88px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(201,168,76,.22), rgba(201,168,76,.06));
+      border: 1.5px solid rgba(201,168,76,.3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 28px;
+      box-shadow: 0 0 40px rgba(201,168,76,.15), inset 0 1px 0 rgba(255,255,255,.08);
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(201,168,76,.15), inset 0 1px 0 rgba(255,255,255,.08); }
+      50%       { box-shadow: 0 0 60px rgba(201,168,76,.30), inset 0 1px 0 rgba(255,255,255,.08); }
+    }
+
+    /* Gear SVG animasi */
+    .gear { animation: spin 8s linear infinite; transform-origin: center; }
+    .gear-inner { animation: spin 6s linear infinite reverse; transform-origin: center; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Judul Arab */
+    .arabic-title {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-weight: 700;
+      color: #c9a84c;
+      direction: rtl;
+      line-height: 1.3;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 12px rgba(201,168,76,.3);
+    }
+
+    /* Sub judul */
+    .site-name {
+      font-size: clamp(.7rem, 2vw, .8rem);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.35);
+      margin-bottom: 32px;
+    }
+
+    /* Garis pemisah */
+    .divider {
+      width: 60px; height: 2px;
+      background: linear-gradient(90deg, transparent, #c9a84c, transparent);
+      margin: 0 auto 32px;
+      border-radius: 1px;
+    }
+
+    /* Badge status */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: rgba(201,168,76,.12);
+      border: 1px solid rgba(201,168,76,.3);
+      font-size: .78rem;
+      font-weight: 700;
+      color: #c9a84c;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .badge-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #c9a84c;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+    /* Judul maintenance */
+    .main-title {
+      font-size: clamp(1.3rem, 4vw, 1.9rem);
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 14px;
+      line-height: 1.3;
+    }
+
+    /* Deskripsi */
+    .main-desc {
+      font-size: clamp(.85rem, 2.5vw, .98rem);
+      line-height: 1.75;
+      color: rgba(255,255,255,.6);
+      max-width: 400px;
+      margin: 0 auto 28px;
+    }
+
+    /* ETA */
+    .eta-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: .85rem;
+      color: rgba(255,255,255,.5);
+      margin-bottom: 36px;
+    }
+    .eta-box span { color: rgba(255,255,255,.8); font-weight: 600; }
+
+    /* Progress bar animasi */
+    .progress-track {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 36px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 30%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, #c9a84c, transparent);
+      animation: sweep 2.5s ease-in-out infinite;
+    }
+    @keyframes sweep {
+      0%   { transform: translateX(-200%); }
+      100% { transform: translateX(500%); }
+    }
+
+    /* Footer */
+    .footer {
+      font-size: .72rem;
+      color: rgba(255,255,255,.2);
+      margin-top: 8px;
+    }
+
+    /* Responsif mobile kecil */
+    @media (max-height: 600px) {
+      .icon-wrap { width: 64px; height: 64px; border-radius: 20px; margin-bottom: 18px; }
+      .arabic-title { font-size: 1.4rem; margin-bottom: 4px; }
+      .site-name { margin-bottom: 18px; }
+      .divider { margin-bottom: 18px; }
+      .main-desc { margin-bottom: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-radial"></div>
+  <div class="stars"></div>
+
+  <div class="card">
+
+    <!-- Icon -->
+    <div class="icon-wrap">
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+        <!-- Outer gear -->
+        <g class="gear">
+          <path fill="rgba(201,168,76,.8)"
+            d="M22 14a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm0 13a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/>
+          <path fill="rgba(201,168,76,.5)"
+            d="M39 20.5h-2.1a15.3 15.3 0 0 0-1.2-3l1.5-1.5-3.2-3.2-1.5 1.5a15.3 15.3 0 0 0-3-1.2V11h-4.5v2.1a15.3 15.3 0 0 0-3 1.2l-1.5-1.5-3.2 3.2 1.5 1.5a15.3 15.3 0 0 0-1.2 3H5v4.5h2.1a15.3 15.3 0 0 0 1.2 3l-1.5 1.5 3.2 3.2 1.5-1.5a15.3 15.3 0 0 0 3 1.2V33h4.5v-2.1a15.3 15.3 0 0 0 3-1.2l1.5 1.5 3.2-3.2-1.5-1.5a15.3 15.3 0 0 0 1.2-3H39V20.5Z"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Logo teks -->
+    <div class="arabic-title">المكتبة السنية</div>
+    <div class="site-name">Al-Maktabah As-Sunniyyah</div>
+
+    <div class="divider"></div>
+
+    <!-- Badge -->
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Maintenance
+    </div>
+
+    <!-- Judul -->
+    <div class="main-title"><?= htmlspecialchars($maintenanceTitle) ?></div>
+
+    <!-- Deskripsi -->
+    <p class="main-desc"><?= htmlspecialchars($maintenanceMessage) ?></p>
+
+    <?php if (!empty($maintenanceEta)): ?>
+    <!-- ETA -->
+    <div class="eta-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Estimasi selesai: <span><?= htmlspecialchars($maintenanceEta) ?></span>
+    </div>
+    <?php else: ?>
+    <div style="margin-bottom:28px"></div>
+    <?php endif; ?>
+
+    <!-- Progress animasi -->
+    <div class="progress-track">
+      <div class="progress-fill"></div>
+    </div>
+
+    <div class="footer">
+      © <?= date('Y') ?> Al-Maktabah As-Sunniyyah &mdash; maktabah.quizb.my.id
+    </div>
+
+  </div>
+</body>
+</html>
+<?php
+  exit();
+endif;
+// ── Akhir blok maintenance ──────────────────────────────────
 ?>
+
 <!DOCTYPE html>
 <html lang="ar" dir="ltr">
 <head>
