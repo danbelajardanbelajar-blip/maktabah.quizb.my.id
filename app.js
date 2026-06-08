@@ -216,6 +216,7 @@ const routes = {
   '/':              renderHome,
   '/katalog':       renderKatalog,
   '/kategori':      renderKategori,
+  '/settings':      renderSettings,
   '/about':         renderAbout,
   '/search':        renderSearch,
   '/search-advanced': renderSearchAdvanced,
@@ -740,7 +741,168 @@ window.goKategoriBukuPage = function(p) {
 };
 
 // ══════════════════════════════════════════════════════════════
+//  PAGE: SETTINGS
+// ══════════════════════════════════════════════════════════════
+function renderSettings() {
+  const FONTS_LAT = [
+    'Lato','Inter','Roboto','Open Sans','Poppins',
+    'Nunito','Raleway','Merriweather','Playfair Display','Source Sans 3',
+  ];
+  const FONTS_AR = [
+    { k: 'Amiri',                l: 'أميري — Amiri' },
+    { k: 'Noto Naskh Arabic',    l: 'نوتو نسخ' },
+    { k: 'Cairo',                l: 'القاهرة — Cairo' },
+    { k: 'Tajawal',              l: 'تجوّل — Tajawal' },
+    { k: 'Scheherazade New',     l: 'شهرزاد' },
+    { k: 'Reem Kufi',            l: 'ريم كوفي' },
+    { k: 'Lateef',               l: 'لطيف — Lateef' },
+    { k: 'Aref Ruqaa',           l: 'عارف رقعة' },
+    { k: 'El Messiri',           l: 'المسيري' },
+    { k: 'IBM Plex Sans Arabic', l: 'IBM عربي' },
+  ];
+
+  // Baca settings saat ini
+  const cur = Object.assign(
+    { theme: 'light', latin: 'Lato', arabic: 'Amiri', size: 18 },
+    JSON.parse(localStorage.getItem('siteSettings') || '{}')
+  );
+
+  const isDark = cur.theme === 'dark';
+
+  /* ── helper render chip ── */
+  const latChips = FONTS_LAT.map(f => `
+    <button class="font-chip${cur.latin === f ? ' active' : ''}"
+      data-key="${f}" style="font-family:'${f}',sans-serif"
+      onclick="window._sdwSetLatin('${f}'); renderSettingsRefresh()"
+    >${f}</button>`).join('');
+
+  const arChips = FONTS_AR.map(f => `
+    <button class="font-chip ar${cur.arabic === f.k ? ' active' : ''}"
+      data-key="${f.k}" style="font-family:'${f.k}','Amiri',serif"
+      onclick="window._sdwSetArabic('${f.k}'); renderSettingsRefresh()"
+    >${f.l}</button>`).join('');
+
+  /* ── card helper ── */
+  const card = (icon, label, sub, body) => `
+    <div class="bg-white rounded-2xl border border-gold/18 p-5 mb-4 shadow-card">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
+          <i data-lucide="${icon}" class="w-4 h-4 text-gold"></i>
+        </div>
+        <div>
+          <div class="text-sm font-bold text-primary">${label}</div>
+          ${sub ? `<div class="text-xs text-primary/45 mt-0.5">${sub}</div>` : ''}
+        </div>
+      </div>
+      ${body}
+    </div>`;
+
+  app().innerHTML = `
+    <div class="max-w-lg mx-auto px-4 sm:px-6 py-10 pb-28 md:pb-10">
+
+      <!-- Header -->
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center shadow-md">
+          <i data-lucide="settings-2" class="w-5 h-5 text-gold"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-primary">Pengaturan</h1>
+          <p class="text-xs text-primary/45 mt-0.5">Tampilan &amp; Aksesibilitas</p>
+        </div>
+      </div>
+
+      <!-- Tema -->
+      ${card('sun-moon', 'Tema Tampilan', 'Pilih tampilan terang atau gelap', `
+        <div class="flex rounded-xl overflow-hidden border border-gold/20 p-1 gap-1" style="background:rgba(26,58,42,.06)">
+          <button id="pg-theme-light"
+            onclick="window.setTheme('light'); renderSettingsRefresh()"
+            class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all
+              ${!isDark ? 'bg-white text-primary shadow-sm' : 'text-primary/40 bg-transparent'}"
+          >
+            <i data-lucide="sun" class="w-4 h-4"></i> Terang
+          </button>
+          <button id="pg-theme-dark"
+            onclick="window.setTheme('dark'); renderSettingsRefresh()"
+            class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all
+              ${isDark ? 'bg-primary text-gold shadow-sm' : 'text-primary/40 bg-transparent'}"
+          >
+            <i data-lucide="moon" class="w-4 h-4"></i> Gelap
+          </button>
+        </div>
+      `)}
+
+      <!-- Ukuran Teks -->
+      ${card('a-large-small', 'Ukuran Teks Pembaca', 'Berlaku pada halaman baca kitab', `
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-sm text-primary/50" style="font-size:13px">A</span>
+          <input type="range" id="pg-size-slider" min="14" max="28" step="1" value="${cur.size}"
+            class="font-range flex-1" oninput="pgSizeChange(this.value)">
+          <span class="text-sm text-primary/50" style="font-size:20px">A</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-primary/40">14px — 28px</span>
+          <span id="pg-size-lbl" class="text-sm font-bold text-gold">${cur.size}px</span>
+        </div>
+        <div class="mt-4 p-3 rounded-xl bg-cream border border-gold/15">
+          <p id="pg-preview" class="reader-text text-primary/70 leading-relaxed text-center arabic"
+             style="font-size:${cur.size}px">
+            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+          </p>
+        </div>
+      `)}
+
+      <!-- Font Latin -->
+      ${card('type', 'Font Latin', 'Untuk teks berbahasa Latin / Indonesia', `
+        <div class="grid grid-cols-2 gap-2">${latChips}</div>
+      `)}
+
+      <!-- Font Arab -->
+      ${card('type', 'Font Arab', 'Untuk teks berbahasa Arab (RTL)', `
+        <div class="grid grid-cols-2 gap-2">${arChips}</div>
+      `)}
+
+    </div>`;
+
+  reicons();
+
+  /* Wire up slider setelah render */
+  const slider = document.getElementById('pg-size-slider');
+  if (slider) {
+    slider.addEventListener('input', () => pgSizeChange(slider.value));
+  }
+}
+
+/* Perbarui label & preview ukuran teks real-time tanpa re-render full */
+window.pgSizeChange = function(val) {
+  const n = parseInt(val);
+  const lbl     = document.getElementById('pg-size-lbl');
+  const preview = document.getElementById('pg-preview');
+  if (lbl)     lbl.textContent          = n + 'px';
+  if (preview) preview.style.fontSize   = n + 'px';
+  // Simpan via fungsi global dari index.php
+  if (typeof window._sdwSetSize === 'function') {
+    window._sdwSetSize(n);
+  } else {
+    // Fallback langsung ke localStorage + CSS var
+    const s = Object.assign(
+      { theme:'light', latin:'Lato', arabic:'Amiri', size:18 },
+      JSON.parse(localStorage.getItem('siteSettings') || '{}')
+    );
+    s.size = n;
+    localStorage.setItem('siteSettings', JSON.stringify(s));
+    localStorage.setItem('readerFonts', JSON.stringify({ latin: s.latin, arabic: s.arabic, size: n }));
+    document.documentElement.style.setProperty('--font-r-size', n + 'px');
+  }
+};
+
+/* Re-render halaman settings (dipanggil setelah setTheme / setFont) */
+window.renderSettingsRefresh = function() {
+  if (location.pathname === '/settings') renderSettings();
+};
+
+// ══════════════════════════════════════════════════════════════
 //  PAGE: SEARCH
+
 
 // Per-section abort controllers
 let _abortCat = null, _abortBooks = null, _abortContent = null;

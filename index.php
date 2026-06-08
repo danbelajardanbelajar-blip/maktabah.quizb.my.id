@@ -418,35 +418,9 @@ $sessionUser = $_SESSION['user'] ?? null;
     /* Footer */
     html.dark footer { background: #060e08 !important; }
 
-    /* Global settings panel */
-    html.dark #settings-drawer { background: #0e1a12 !important; }
-    html.dark .sdw-title { color: #d4c5a0 !important; }
-    html.dark #settings-drawer [style*="color:#1a3a2a"] { color: #d4c5a0 !important; }
-    html.dark #settings-drawer [style*="color:rgba(26,58,42"] { color: rgba(212,197,160,.45) !important; }
-    html.dark #settings-drawer .sdw-card { background: #162419 !important; border-color: rgba(201,168,76,.12) !important; }
+    /* Font chip dark mode */
     html.dark .font-chip { background: #0e1a12 !important; color: #d4c5a0 !important; border-color: rgba(201,168,76,.2) !important; }
     html.dark .font-chip.active { background: rgba(201,168,76,.18) !important; color: #c9a84c !important; }
-
-    /* Settings drawer */
-    #settings-overlay {
-      position: fixed; inset: 0; z-index: 800;
-      background: rgba(0,0,0,.4); backdrop-filter: blur(3px);
-      opacity: 0; pointer-events: none;
-      transition: opacity .25s ease;
-    }
-    #settings-overlay.open { opacity: 1; pointer-events: all; }
-
-    #settings-drawer {
-      position: fixed; top: 0; right: 0; bottom: 0; z-index: 801;
-      width: min(360px, 92vw);
-      background: #faf8f3;
-      box-shadow: -4px 0 40px rgba(0,0,0,.18);
-      transform: translateX(100%);
-      transition: transform .3s cubic-bezier(.22,.61,.36,1);
-      overflow-y: auto;
-      display: flex; flex-direction: column;
-    }
-    #settings-drawer.open { transform: translateX(0); }
 
     .sdw-card {
       background: #fff;
@@ -676,10 +650,10 @@ $sessionUser = $_SESSION['user'] ?? null;
         <span class="text-[10px] font-medium">Kategori</span>
       </a>
 
-      <button id="bnav-font-btn" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5" style="background:none;border:none;cursor:pointer;">
+      <a href="/settings" data-route="/settings" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
         <i data-lucide="settings-2" class="w-5 h-5"></i>
         <span class="text-[10px] font-medium">Setting</span>
-      </button>
+      </a>
 
       <?php if ($sessionUser): ?>
       <a href="/dashboard" data-route="/dashboard" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
@@ -759,80 +733,7 @@ $sessionUser = $_SESSION['user'] ?? null;
   </footer>
 
 
-  <!-- ===================== SETTINGS DRAWER ===================== -->
-  <div id="settings-overlay" onclick="closeSettings()"></div>
-
-  <div id="settings-drawer" role="dialog" aria-label="Pengaturan">
-
-    <!-- Header -->
-    <div style="padding:20px 20px 0; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(201,168,76,.15); padding-bottom:16px; margin-bottom:16px;">
-      <div style="display:flex; align-items:center; gap:10px;">
-        <div style="width:34px;height:34px;border-radius:10px;background:#1a3a2a;display:flex;align-items:center;justify-content:center;">
-          <i data-lucide="settings-2" style="width:17px;height:17px;color:#c9a84c;"></i>
-        </div>
-        <div>
-          <div style="font-weight:700;font-size:15px;color:#1a3a2a;" class="sdw-title">Pengaturan</div>
-          <div style="font-size:11px;color:rgba(26,58,42,.45);">Tampilan & Aksesibilitas</div>
-        </div>
-      </div>
-      <button onclick="closeSettings()" style="padding:8px;border-radius:10px;border:none;background:transparent;cursor:pointer;" class="hover:bg-cream-dark">
-        <i data-lucide="x" style="width:18px;height:18px;color:rgba(26,58,42,.4);"></i>
-      </button>
-    </div>
-
-    <div style="padding:0 16px 24px; flex:1;">
-
-      <!-- Tema -->
-      <div class="sdw-card">
-        <div class="sdw-label">
-          <i data-lucide="sun-moon" style="width:12px;height:12px;color:#c9a84c;"></i>
-          Tema Tampilan
-        </div>
-        <div class="theme-pill">
-          <button id="sdw-theme-light" class="theme-btn active" onclick="setTheme('light')">
-            <i data-lucide="sun" style="width:14px;height:14px;"></i> Terang
-          </button>
-          <button id="sdw-theme-dark" class="theme-btn" onclick="setTheme('dark')">
-            <i data-lucide="moon" style="width:14px;height:14px;"></i> Gelap
-          </button>
-        </div>
-      </div>
-
-      <!-- Ukuran Teks -->
-      <div class="sdw-card">
-        <div class="sdw-label" style="justify-content:space-between;">
-          <span style="display:flex;align-items:center;gap:6px;">
-            <i data-lucide="a-large-small" style="width:12px;height:12px;color:#c9a84c;"></i>
-            Ukuran Teks
-          </span>
-          <span id="sdw-size-lbl" style="font-size:11px;font-weight:700;color:#c9a84c;">18px</span>
-        </div>
-        <input type="range" class="font-range" id="sdw-size-slider" min="14" max="28" step="1" value="18">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(26,58,42,.3);margin-top:4px;">
-          <span style="font-size:12px;">A</span><span style="font-size:17px;">A</span>
-        </div>
-      </div>
-
-      <!-- Font Latin -->
-      <div class="sdw-card">
-        <div class="sdw-label">
-          <i data-lucide="type" style="width:12px;height:12px;color:#c9a84c;"></i>
-          Font Latin (LTR)
-        </div>
-        <div id="sdw-latin-chips" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
-      </div>
-
-      <!-- Font Arab -->
-      <div class="sdw-card">
-        <div class="sdw-label">
-          <i data-lucide="type" style="width:12px;height:12px;color:#c9a84c;"></i>
-          فونت عربي (RTL)
-        </div>
-        <div id="sdw-arabic-chips" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
-      </div>
-
-    </div>
-  </div>
+  <!-- Settings drawer dihapus — digantikan halaman /settings di SPA -->
 
   <!-- ===================== SCRIPTS ===================== -->
   <script>
@@ -933,37 +834,18 @@ $sessionUser = $_SESSION['user'] ?? null;
         _settings.arabic = k; _applySettings();
         if (typeof window._setArabicFont === 'function') window._setArabicFont(k);
       };
-
-      window.openSettings = function() {
-        _buildChips();
-        _applySettings(false);
-        document.getElementById('settings-overlay').classList.add('open');
-        document.getElementById('settings-drawer').classList.add('open');
-        lucide.createIcons();
-      };
-      window.closeSettings = function() {
-        document.getElementById('settings-overlay').classList.remove('open');
-        document.getElementById('settings-drawer').classList.remove('open');
+      window._sdwSetSize = function(n) {
+        _settings.size = parseInt(n); _applySettings();
       };
 
-      // Size slider
-      const sdwSlider = document.getElementById('sdw-size-slider');
-      if (sdwSlider) {
-        sdwSlider.addEventListener('input', () => {
-          _settings.size = parseInt(sdwSlider.value);
-          _applySettings();
-        });
-      }
+      // closeSettings tetap ada (dipanggil dari Escape) — no-op karena drawer dihapus
+      window.openSettings  = function() {};
+      window.closeSettings = function() {};
 
       // Apply on page load (before app.js fully runs)
       _applySettings(false);
 
-      // Wire nav settings buttons
-      // bnav-font-btn (bottom nav) → buka settings drawer
-      const _bnavFont = document.getElementById('bnav-font-btn');
-      if (_bnavFont) _bnavFont.addEventListener('click', () => window.openSettings());
-
-      // Keyboard: Escape closes drawer & kategori dropdown
+      // Keyboard: Escape closes kategori dropdown
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
           window.closeSettings();
