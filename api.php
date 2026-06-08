@@ -512,11 +512,14 @@ function handleDownloadBook(): void {
         return;
     }
 
+    // Ambil konten urut berdasarkan juz lalu id (bukan page) agar urutan juz terjaga
     $contentStmt = $pdo->prepare(
-        "SELECT content FROM book_content WHERE bkid = :id ORDER BY page ASC"
+        "SELECT juz, page, content FROM book_content WHERE bkid = :id ORDER BY juz ASC, id ASC"
     );
     $contentStmt->execute([':id' => $id]);
-    $pages = $contentStmt->fetchAll(PDO::FETCH_COLUMN);
+    $pageRows = $contentStmt->fetchAll();
+    $pages = array_column($pageRows, 'content');
+    $pageMeta = $pageRows; // juz + page info untuk heading docx
     if (empty($pages)) {
         http_response_code(404);
         echo json_encode(['error' => 'Konten kitab tidak tersedia.']);
@@ -546,12 +549,26 @@ function handleDownloadBook(): void {
         }
         $section->addTextBreak(1);
 
-        $contentStyle = ['name' => 'Arial', 'size' => 12];
+        $contentStyle     = ['name' => 'Arial', 'size' => 12];
         $pageHeadingStyle = ['name' => 'Arial', 'size' => 12, 'bold' => true];
+        $juzHeadingStyle  = ['name' => 'Arial', 'size' => 14, 'bold' => true];
 
-        foreach ($pages as $idx => $content) {
-            $section->addText('--- Halaman ' . ($idx + 1) . ' ---', $pageHeadingStyle);
-            $lines = preg_split('/\r\n|\r|\n/', trim($content));
+        $currentJuz = 0;
+        foreach ($pageMeta as $idx => $row) {
+            // Tambahkan heading juz saat berganti juz (hanya jika ada >1 juz)
+            if ((int)$row['juz'] !== $currentJuz) {
+                $currentJuz = (int)$row['juz'];
+                if ($currentJuz > 1) {
+                    $section->addPageBreak();
+                }
+                $maxJuz = max(array_column($pageMeta, 'juz'));
+                if ($maxJuz > 1) {
+                    $section->addText("=== Juz {$currentJuz} ===", $juzHeadingStyle);
+                    $section->addTextBreak(1);
+                }
+            }
+            $section->addText('--- Halaman ' . $row['page'] . ' ---', $pageHeadingStyle);
+            $lines = preg_split('/\r\n|\r|\n/', trim($row['content']));
             if ($lines === false || count($lines) === 0) {
                 $section->addText('', $contentStyle);
             } else {
@@ -559,7 +576,7 @@ function handleDownloadBook(): void {
                     $section->addText($line, $contentStyle);
                 }
             }
-            if ($idx < count($pages) - 1) {
+            if ($idx < count($pageMeta) - 1) {
                 $section->addPageBreak();
             }
         }
@@ -1620,6 +1637,7 @@ function handleAdminSaveContent(): void {
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $bkid    = (int)($data['bkid']    ?? 0);
     $page    = (int)($data['page']    ?? 0);
+    $juz     = (int)($data['juz']     ?? 0); // 0 = auto-detect
     $content = trim($data['content']  ?? '');
     $isNew   = (bool)($data['is_new'] ?? false);
 
@@ -1628,26 +1646,52 @@ function handleAdminSaveContent(): void {
     }
 
     if ($isNew) {
-        // Cek halaman sudah ada
-        $check = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid=:bkid AND page=:page");
-        $check->execute([':bkid' => $bkid, ':page' => $page]);
-        if ((int)$check->fetchColumn() > 0) {
-            http_response_code(409); echo json_encode(['error' => "Halaman {$page} sudah ada."]); return;
+        // Auto-detect juz jika tidak dikirim:
+        // Ambil juz dan page terakhir per juz untuk bkid ini
+        if ($juz < 1) {
+            $lastRow = $pdo->prepare(
+                "SELECT juz, page FROM book_content WHERE bkid = :bkid ORDER BY juz DESC, id DESC LIMIT 1"
+            );
+            $lastRow->execute([':bkid' => $bkid]);
+            $last = $lastRow->fetch();
+            if (!$last) {
+                // Kitab masih kosong, mulai dari juz 1
+                $juz = 1;
+            } elseif ($page > (int)$last['page']) {
+                // Halaman baru lebih besar → lanjutan juz yang sama
+                $juz = (int)$last['juz'];
+            } else {
+                // Halaman lebih kecil/sama → juz baru
+                $juz = (int)$last['juz'] + 1;
+            }
         }
-        $pdo->prepare("INSERT INTO book_content (bkid, page, content) VALUES (:bkid, :page, :content)")
-            ->execute([':bkid' => $bkid, ':page' => $page, ':content' => $content]);
+
+        // Cek halaman sudah ada di juz yang sama
+        $check = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid=:bkid AND juz=:juz AND page=:page");
+        $check->execute([':bkid' => $bkid, ':juz' => $juz, ':page' => $page]);
+        if ((int)$check->fetchColumn() > 0) {
+            http_response_code(409); echo json_encode(['error' => "Halaman {$page} pada Juz {$juz} sudah ada."]); return;
+        }
+        $pdo->prepare("INSERT INTO book_content (bkid, juz, page, content) VALUES (:bkid, :juz, :page, :content)")
+            ->execute([':bkid' => $bkid, ':juz' => $juz, ':page' => $page, ':content' => $content]);
         // Update jumlah halaman di tabel books
         $pdo->prepare("UPDATE books SET pages = (SELECT COUNT(*) FROM book_content WHERE bkid=:bkid) WHERE bkid=:bkid2")
             ->execute([':bkid' => $bkid, ':bkid2' => $bkid]);
-        logCrudHistory('CREATE', 'book_content', "bkid:{$bkid}|page:{$page}",
-            "Tambah halaman {$page} pada kitab bkid={$bkid}");
+        logCrudHistory('CREATE', 'book_content', "bkid:{$bkid}|juz:{$juz}|page:{$page}",
+            "Tambah halaman {$page} juz {$juz} pada kitab bkid={$bkid}");
     } else {
-        $pdo->prepare("UPDATE book_content SET content=:content WHERE bkid=:bkid AND page=:page")
-            ->execute([':content' => $content, ':bkid' => $bkid, ':page' => $page]);
-        logCrudHistory('UPDATE', 'book_content', "bkid:{$bkid}|page:{$page}",
-            "Edit halaman {$page} pada kitab bkid={$bkid}");
+        // Update: filter by juz jika dikirim, otherwise fallback ke page saja
+        if ($juz > 0) {
+            $pdo->prepare("UPDATE book_content SET content=:content WHERE bkid=:bkid AND juz=:juz AND page=:page")
+                ->execute([':content' => $content, ':bkid' => $bkid, ':juz' => $juz, ':page' => $page]);
+        } else {
+            $pdo->prepare("UPDATE book_content SET content=:content WHERE bkid=:bkid AND page=:page ORDER BY id ASC LIMIT 1")
+                ->execute([':content' => $content, ':bkid' => $bkid, ':page' => $page]);
+        }
+        logCrudHistory('UPDATE', 'book_content', "bkid:{$bkid}|juz:{$juz}|page:{$page}",
+            "Edit halaman {$page} juz {$juz} pada kitab bkid={$bkid}");
     }
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'juz' => $juz]);
 }
 
 // =============================================================
@@ -1658,16 +1702,23 @@ function handleAdminDeleteContent(): void {
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $bkid = (int)($data['bkid'] ?? 0);
     $page = (int)($data['page'] ?? 0);
+    $juz  = (int)($data['juz']  ?? 0); // 0 = hapus semua juz dengan page ini
     if (!$bkid || !$page) {
         http_response_code(400); echo json_encode(['error' => 'bkid dan page wajib diisi.']); return;
     }
-    $pdo->prepare("DELETE FROM book_content WHERE bkid=:bkid AND page=:page")
-        ->execute([':bkid' => $bkid, ':page' => $page]);
+    if ($juz > 0) {
+        $pdo->prepare("DELETE FROM book_content WHERE bkid=:bkid AND juz=:juz AND page=:page")
+            ->execute([':bkid' => $bkid, ':juz' => $juz, ':page' => $page]);
+    } else {
+        // Fallback: hapus hanya baris pertama dengan page tersebut
+        $pdo->prepare("DELETE FROM book_content WHERE bkid=:bkid AND page=:page ORDER BY id ASC LIMIT 1")
+            ->execute([':bkid' => $bkid, ':page' => $page]);
+    }
     // Recalculate pages
     $pdo->prepare("UPDATE books SET pages=(SELECT COUNT(*) FROM book_content WHERE bkid=:bkid) WHERE bkid=:bkid2")
         ->execute([':bkid' => $bkid, ':bkid2' => $bkid]);
-    logCrudHistory('DELETE', 'book_content', "bkid:{$bkid}|page:{$page}",
-        "Hapus halaman {$page} pada kitab bkid={$bkid}");
+    logCrudHistory('DELETE', 'book_content', "bkid:{$bkid}|juz:{$juz}|page:{$page}",
+        "Hapus halaman {$page} juz {$juz} pada kitab bkid={$bkid}");
     echo json_encode(['success' => true]);
 }
 
