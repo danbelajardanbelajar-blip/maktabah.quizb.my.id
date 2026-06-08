@@ -116,6 +116,86 @@ function handleAuthError(error, fallbackMsg = 'Akses ditolak. Diperlukan hak adm
   return false;
 }
 
+const UPDATE_NOTICE_SESSION_KEY = 'updateNoticeDismissedV1';
+const UPDATE_NOTICE_PLAYSTORE_URL = 'https://play.google.com/store/apps/details?id=com.maktabah.premium';
+
+function isMobileViewport() {
+  return window.matchMedia('(max-width: 767px)').matches;
+}
+
+function hasDismissedUpdateNotice() {
+  return sessionStorage.getItem(UPDATE_NOTICE_SESSION_KEY) === '1';
+}
+
+function setDismissedUpdateNotice() {
+  sessionStorage.setItem(UPDATE_NOTICE_SESSION_KEY, '1');
+}
+
+function closeUpdateNotice() {
+  const overlay = document.getElementById('update-notice-overlay');
+  if (overlay) {
+    overlay.remove();
+    setDismissedUpdateNotice();
+  }
+}
+
+function createUpdateNoticeOverlay() {
+  if (document.getElementById('update-notice-overlay')) return;
+
+  const overlay = el('div', 'update-notice-overlay');
+  overlay.id = 'update-notice-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,34,24,.92);display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:520px;background:#fff;border-radius:30px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.24);">
+      <div style="padding:24px 24px 16px;background:#1a3a2a;color:#fff;display:flex;align-items:flex-start;gap:14px;">
+        <div style="width:46px;height:46px;border-radius:18px;background:rgba(201,168,76,.18);display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" style="color:#f8e6c1;"><path d="M12 5v14m7-7H5"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:1rem;font-weight:700;letter-spacing:.01em;margin-bottom:6px;">Update Terbaru Telah Tayang</div>
+          <p style="margin:0;font-size:.95rem;line-height:1.6;color:rgba(255,255,255,.84);">Versi terbaru telah diterbitkan dengan pembaruan penting untuk pengalaman aplikasi.</p>
+        </div>
+      </div>
+      <div style="padding:20px 24px 24px;background:#faf8f3;color:#1c1c1e;">
+        <div style="display:grid;gap:12px;margin-bottom:20px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="width:10px;height:10px;margin-top:6px;background:#c9a84c;border-radius:999px;flex-shrink:0;"></span>
+            <span style="font-size:.95rem;line-height:1.6;">Pembaruan ikon dan splash screen</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="width:10px;height:10px;margin-top:6px;background:#c9a84c;border-radius:999px;flex-shrink:0;"></span>
+            <span style="font-size:.95rem;line-height:1.6;">Menu download</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="width:10px;height:10px;margin-top:6px;background:#c9a84c;border-radius:999px;flex-shrink:0;"></span>
+            <span style="font-size:.95rem;line-height:1.6;">Menu kirim file dan kitab</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;">
+          <button id="update-notice-dismiss" style="flex:1 1 100%;min-width:120px;padding:14px 18px;border:none;border-radius:16px;background:#e5e1d7;color:#1c1c1e;font-weight:700;cursor:pointer;transition:transform .2s ease;">Tutup</button>
+          <a href="${UPDATE_NOTICE_PLAYSTORE_URL}" target="_blank" rel="noopener noreferrer" id="update-notice-link"
+             style="flex:1 1 100%;min-width:120px;padding:14px 18px;border:none;border-radius:16px;background:#1a3a2a;color:#fff;font-weight:700;text-align:center;text-decoration:none;">Buka Play Store</a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeUpdateNotice();
+  });
+
+  document.body.appendChild(overlay);
+  document.getElementById('update-notice-dismiss')?.addEventListener('click', closeUpdateNotice);
+  document.getElementById('update-notice-link')?.addEventListener('click', setDismissedUpdateNotice);
+}
+
+function showUpdateNoticeIfNeeded() {
+  if (!isMobileViewport() || hasDismissedUpdateNotice()) return;
+  createUpdateNoticeOverlay();
+}
+
+window.closeUpdateNotice = closeUpdateNotice;
+
 function logVisitorActivity(event, data = {}) {
   try {
     fetch(API + '?action=log_activity', {
@@ -225,6 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   navigate(location.pathname + location.search, false);
+  showUpdateNoticeIfNeeded();
 });
 
 // ── Skeleton helpers ──────────────────────────────────────────
