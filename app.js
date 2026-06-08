@@ -1735,7 +1735,7 @@ window.goSearchContPage = function(p) {
 // ══════════════════════════════════════════════════════════════
 
 // Reader state (module-level so nav buttons can reference it)
-const readerState = { bkid: null, page: 1, total: 0, searchQ: '' };
+const readerState = { bkid: null, page: 1, total: 0, juz: 1, totalJuz: 1, juzList: [], searchQ: '' };
 
 async function renderDetail(params) {
   const id       = params.get('id');
@@ -1744,10 +1744,13 @@ async function renderDetail(params) {
   if (!id) { render404(); return; }
 
   // Reset reader
-  readerState.bkid  = parseInt(id);
-  readerState.page  = 1;
-  readerState.total = 0;
-  readerState.searchQ = searchQ;
+  readerState.bkid     = parseInt(id);
+  readerState.page     = 1;
+  readerState.total    = 0;
+  readerState.juz      = 1;
+  readerState.totalJuz = 1;
+  readerState.juzList  = [];
+  readerState.searchQ  = searchQ;
 
 
   app().innerHTML = `
@@ -1774,7 +1777,9 @@ async function renderDetail(params) {
     const catName     = book.cat_name    || book.category_name || '';
     const contentPgs  = book.content_pages || 0;
 
-    readerState.total = contentPgs;
+    readerState.total    = contentPgs;
+    readerState.totalJuz = book.total_juz || 1;
+    readerState.juzList  = book.juz_list  || [];
 
     $('#detail-content').innerHTML = `
       <div class="bg-white rounded-3xl shadow-card overflow-hidden">
@@ -1786,7 +1791,7 @@ async function renderDetail(params) {
           <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4">
             ${catName    ? `<span class="px-2 sm:px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs">${escHtml(catName)}</span>` : ''}
             ${pages      ? `<span class="px-2 sm:px-3 py-1 rounded-full bg-gold/20 text-gold text-xs flex items-center gap-1"><i data-lucide="file-text" class="w-3 h-3"></i>${pages}</span>` : ''}
-            ${contentPgs ? `<span class="px-2 sm:px-3 py-1 rounded-full bg-white/10 text-white/70 text-xs flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i>${contentPgs} halaman tersedia</span>` : ''}
+            ${contentPgs ? `<span class="px-2 sm:px-3 py-1 rounded-full bg-white/10 text-white/70 text-xs flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i>${contentPgs} halaman tersedia${book.total_juz > 1 ? ` &bull; ${book.total_juz} juz` : ''}</span>` : ''}
             <a href="/api.php?action=download_book&id=${book.bkid}"
                class="inline-flex items-center justify-center p-2 rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/15 transition shrink-0"
                title="Unduh kitab"
@@ -1821,10 +1826,18 @@ async function renderDetail(params) {
                 <i data-lucide="book-open" class="w-4 h-4 text-gold"></i> Baca Kitab
               </h3>
               <div class="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                ${book.total_juz > 1 ? `
+                <select id="reader-juz-select"
+                  class="border border-gold/30 rounded-lg px-2 py-1 text-xs text-primary bg-white focus:outline-none focus:border-gold">
+                  ${(book.juz_list || []).map(j =>
+                    `<option value="${j.juz}">Juz ${j.juz} (${j.pages} hal.)</option>`
+                  ).join('')}
+                </select>
+                <span class="text-primary/30 text-xs hidden sm:inline">|</span>` : ''}
                 <span class="text-primary/40 text-xs whitespace-nowrap">Halaman</span>
                 <input id="reader-page-input" type="number" min="1" max="${contentPgs}" value="1"
                   class="w-12 sm:w-14 text-center border border-gold/30 rounded-lg px-1 sm:px-2 py-1 text-xs sm:text-sm text-primary focus:outline-none focus:border-gold" />
-                <span class="text-primary/40 text-xs whitespace-nowrap">dari ${contentPgs}</span>
+                <span id="reader-total-label" class="text-primary/40 text-xs whitespace-nowrap">dari ${contentPgs}</span>
                 <!-- Font Settings Gear Button -->
                 <button id="font-settings-btn" title="Pengaturan Font"
                   class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2">
@@ -1880,7 +1893,19 @@ async function renderDetail(params) {
       initFontPanelEvents();
 
       // Open at jump page (from search result), with keyword highlight
-      loadReaderPage(readerState.bkid, jumpPage, searchQ);
+      loadReaderPage(readerState.bkid, jumpPage, searchQ, readerState.juz);
+
+      // Juz selector
+      $('#reader-juz-select')?.addEventListener('change', e => {
+        const newJuz = parseInt(e.target.value) || 1;
+        readerState.juz  = newJuz;
+        readerState.page = 1;
+        // Update max page di input sesuai juz baru
+        const juzInfo = readerState.juzList.find(j => j.juz === newJuz);
+        const inp = $('#reader-page-input');
+        if (inp && juzInfo) inp.max = juzInfo.pages;
+        loadReaderPage(readerState.bkid, 1, '', newJuz);
+      });
 
       // If arriving from search, show a dismissible info banner above reader
       if (searchQ) {
@@ -1902,10 +1927,10 @@ async function renderDetail(params) {
 
       // nav buttons
       $('#reader-prev')?.addEventListener('click', () => {
-        if (readerState.page > 1) loadReaderPage(readerState.bkid, readerState.page - 1);
+        if (readerState.page > 1) loadReaderPage(readerState.bkid, readerState.page - 1, '', readerState.juz);
       });
       $('#reader-next')?.addEventListener('click', () => {
-        if (readerState.page < readerState.total) loadReaderPage(readerState.bkid, readerState.page + 1);
+        if (readerState.page < readerState.total) loadReaderPage(readerState.bkid, readerState.page + 1, '', readerState.juz);
       });
 
       // page input jump
@@ -1914,14 +1939,14 @@ async function renderDetail(params) {
         clearTimeout(jumpTimer);
         const v = parseInt(e.target.value);
         if (v >= 1 && v <= readerState.total) {
-          jumpTimer = setTimeout(() => loadReaderPage(readerState.bkid, v), 600);
+          jumpTimer = setTimeout(() => loadReaderPage(readerState.bkid, v, '', readerState.juz), 600);
         }
       });
       $('#reader-page-input')?.addEventListener('keydown', e => {
         if (e.key === 'Enter') {
           clearTimeout(jumpTimer);
           const v = parseInt(e.target.value);
-          if (v >= 1 && v <= readerState.total) loadReaderPage(readerState.bkid, v);
+          if (v >= 1 && v <= readerState.total) loadReaderPage(readerState.bkid, v, '', readerState.juz);
         }
       });
     }
@@ -1934,15 +1959,24 @@ async function renderDetail(params) {
 
 // Load a single page of content into the reader
 // highlightQ: optional keyword to highlight in gold
-async function loadReaderPage(bkid, page, highlightQ = '') {
+// juz: nomor juz (default dari readerState.juz)
+async function loadReaderPage(bkid, page, highlightQ = '', juz = 0) {
   const area  = $('#reader-area');
   const label = $('#reader-label');
   const inp   = $('#reader-page-input');
   const prev  = $('#reader-prev');
   const next  = $('#reader-next');
+  const totalLbl = $('#reader-total-label');
   if (!area) return;
 
+  // Gunakan juz dari argumen, atau fallback ke readerState.juz
+  if (juz < 1) juz = readerState.juz || 1;
   readerState.page = page;
+  readerState.juz  = juz;
+
+  // Sync dropdown juz
+  const juzSel = $('#reader-juz-select');
+  if (juzSel && juzSel.value != juz) juzSel.value = juz;
 
   // spinner
   area.style.opacity = '0.4';
@@ -1951,7 +1985,7 @@ async function loadReaderPage(bkid, page, highlightQ = '') {
   </div>`;
 
   try {
-    const res = await apiFetch({ action: 'content', bkid, page });
+    const res = await apiFetch({ action: 'content', bkid, page, juz });
 
     if (res.content) {
       const normalised = res.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -1973,13 +2007,16 @@ async function loadReaderPage(bkid, page, highlightQ = '') {
 
     area.style.opacity = '1';
 
-    // update controls
-    if (label) label.textContent = `Halaman ${page} dari ${res.total_pages}`;
-    if (inp)   { inp.value = page; inp.max = res.total_pages; }
-    if (prev)  prev.disabled = (page <= 1);
-    if (next)  next.disabled = (page >= res.total_pages);
+    // Update controls
+    const totalJuzLabel = res.total_juz > 1 ? ` · Juz ${res.juz}/${res.total_juz}` : '';
+    if (label)    label.textContent = `Halaman ${page} dari ${res.total_pages}${totalJuzLabel}`;
+    if (inp)      { inp.value = page; inp.max = res.total_pages; }
+    if (totalLbl) totalLbl.textContent = `dari ${res.total_pages}`;
+    if (prev)     prev.disabled  = (page <= 1);
+    if (next)     next.disabled  = (page >= res.total_pages);
 
-    readerState.total = res.total_pages;
+    readerState.total    = res.total_pages;
+    readerState.totalJuz = res.total_juz || 1;
 
     // scroll reader into view smoothly
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

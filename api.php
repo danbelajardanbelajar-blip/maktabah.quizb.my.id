@@ -465,10 +465,26 @@ function handleBook(): void {
 
     if (!$book) { http_response_code(404); echo json_encode(['error' => 'Kitab not found.']); return; }
 
-    // count available content pages
-    $cp = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :id");
-    $cp->execute([':id' => $id]);
-    $book['content_pages'] = (int)$cp->fetchColumn();
+    // Ambil daftar juz beserta jumlah halaman masing-masing
+    // Kolom juz sudah diisi oleh fill_juz.php (SMALLINT, default 1)
+    $juzStmt = $pdo->prepare(
+        "SELECT juz, COUNT(*) AS pages
+         FROM book_content
+         WHERE bkid = :id
+         GROUP BY juz
+         ORDER BY juz ASC"
+    );
+    $juzStmt->execute([':id' => $id]);
+    $juzRows = $juzStmt->fetchAll();
+
+    $juzList = array_map(fn($r) => [
+        'juz'   => (int)$r['juz'],
+        'pages' => (int)$r['pages'],
+    ], $juzRows);
+
+    $book['juz_list']      = $juzList;
+    $book['total_juz']     = count($juzList);
+    $book['content_pages'] = array_sum(array_column($juzList, 'pages'));
 
     echo json_encode(['data' => $book]);
 }
@@ -562,35 +578,52 @@ function handleDownloadBook(): void {
 }
 
 // =============================================================
-// 3. BOOK CONTENT — one page at a time from book_content
+// 3. BOOK CONTENT — one page at a time, juz-aware
+//    GET params: bkid, page (posisi dalam juz), juz (nomor juz, default 1)
 // =============================================================
 function handleContent(): void {
     $pdo  = getPDO();
     $bkid = (int)($_GET['bkid'] ?? 0);
     $page = max(1, (int)($_GET['page'] ?? 1));
+    $juz  = max(1, (int)($_GET['juz']  ?? 1));
 
     if ($bkid <= 0) { http_response_code(400); echo json_encode(['error' => 'Invalid bkid.']); return; }
 
-    // Get the Nth page row ordered by page number
+    // Ambil total juz untuk buku ini
+    $juzTotal = $pdo->prepare(
+        "SELECT COUNT(DISTINCT juz) FROM book_content WHERE bkid = :bkid"
+    );
+    $juzTotal->execute([':bkid' => $bkid]);
+    $totalJuz = (int)$juzTotal->fetchColumn();
+
+    // Pastikan juz tidak melebihi yang tersedia
+    $juz = min($juz, max(1, $totalJuz));
+
+    // Ambil halaman ke-N dalam juz yang dipilih (ORDER BY id ASC agar urutan insert terjaga)
     $stmt = $pdo->prepare(
         "SELECT bc.page, bc.content
          FROM book_content bc
-         WHERE bc.bkid = :bkid
-         ORDER BY bc.page ASC
+         WHERE bc.bkid = :bkid AND bc.juz = :juz
+         ORDER BY bc.id ASC
          LIMIT 1 OFFSET :off"
     );
     $stmt->bindValue(':bkid', $bkid, PDO::PARAM_INT);
+    $stmt->bindValue(':juz',  $juz,  PDO::PARAM_INT);
     $stmt->bindValue(':off',  $page - 1, PDO::PARAM_INT);
     $stmt->execute();
     $row = $stmt->fetch();
 
-    // total pages in content table
-    $ct = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :bkid");
-    $ct->execute([':bkid' => $bkid]);
+    // Total halaman dalam juz ini
+    $ct = $pdo->prepare(
+        "SELECT COUNT(*) FROM book_content WHERE bkid = :bkid AND juz = :juz"
+    );
+    $ct->execute([':bkid' => $bkid, ':juz' => $juz]);
     $total = (int)$ct->fetchColumn();
 
     echo json_encode([
         'bkid'        => $bkid,
+        'juz'         => $juz,
+        'total_juz'   => $totalJuz,
         'page'        => $page,
         'total_pages' => $total,
         'page_number' => $row ? (int)$row['page'] : null,
