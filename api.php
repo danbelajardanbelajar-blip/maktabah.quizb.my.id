@@ -220,6 +220,63 @@ function logUserActivity(string $event, string $eventData = ''): void {
     }
 }
 
+function ensureDownloadLogsTable(): void {
+    try {
+        $pdo = getPDO();
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS download_logs (
+               id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+               bkid INT UNSIGNED NOT NULL,
+               book_title VARCHAR(255) NOT NULL DEFAULT '',
+               user_id INT UNSIGNED NULL,
+               user_name VARCHAR(255) NOT NULL DEFAULT '',
+               user_email VARCHAR(255) NOT NULL DEFAULT '',
+               user_role ENUM('user','admin') NOT NULL DEFAULT 'user',
+               ip_address VARCHAR(45) NOT NULL DEFAULT '',
+               user_agent VARCHAR(512) NOT NULL DEFAULT '',
+               created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+               INDEX idx_bkid (bkid),
+               INDEX idx_user_id (user_id),
+               INDEX idx_created_at (created_at)
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+    } catch (\Exception $e) {
+        // ignore creation failures
+    }
+}
+
+function logDownloadBook(int $bkid, string $title): void {
+    try {
+        ensureDownloadLogsTable();
+        $pdo = getPDO();
+        $user = getSessionUser();
+        $ip   = $_SERVER['HTTP_X_FORWARDED_FOR']
+                ?? $_SERVER['HTTP_X_REAL_IP']
+                ?? $_SERVER['REMOTE_ADDR']
+                ?? '';
+        $ip = trim(explode(',', $ip)[0]);
+        $ua = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 512);
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO download_logs
+             (bkid, book_title, user_id, user_name, user_email, user_role, ip_address, user_agent)
+             VALUES (:bkid, :title, :uid, :uname, :uemail, :urole, :ip, :ua)"
+        );
+        $stmt->execute([
+            ':bkid'   => $bkid,
+            ':title'  => mb_substr($title, 0, 255),
+            ':uid'    => $user['id']    ?? null,
+            ':uname'  => $user['name']  ?? '',
+            ':uemail' => $user['email'] ?? '',
+            ':urole'  => $user['role']  ?? 'user',
+            ':ip'     => $ip,
+            ':ua'     => $ua,
+        ]);
+    } catch (\Exception $e) {
+        // ignore logging failures
+    }
+}
+
 // Helper — escape FULLTEXT boolean wildcards safely
 function ftEscape(string $q): string {
     // Strip chars that could break boolean mode, keep Arabic/Latin safely
@@ -334,6 +391,7 @@ try {
         case 'admin_get_activity':    requireAdmin(); handleAdminGetActivity();    break;
         // Admin — Search Logs
         case 'admin_get_search_logs': requireAdmin(); handleAdminGetSearchLogs();  break;
+        case 'admin_get_download_logs': requireAdmin(); handleAdminGetDownloadLogs();  break;
         // File Submissions
         // Allow anonymous submissions (require email) — no login required
         case 'submit_file':              handleSubmitFile();              break;
@@ -447,6 +505,8 @@ function handleDownloadBook(): void {
         echo json_encode(['error' => 'Konten kitab tidak tersedia.']);
         return;
     }
+
+    logDownloadBook($id, $book['title'] ?? 'Kitab tanpa judul');
 
     $title = trim($book['title'] ?: 'kitab');
     $filename = normalizeDownloadFilename($title) . '.docx';
@@ -1905,6 +1965,69 @@ function handleAdminGetSearchLogs(): void {
             'unique' => $uniqueCount,
         ],
         'top_queries' => $topQueries,
+    ]);
+}
+
+// =============================================================
+//  ADMIN — GET DOWNLOAD LOGS
+// =============================================================
+function handleAdminGetDownloadLogs(): void {
+    $pdo  = getPDO();
+    $req  = getJsonRequest();
+    $page = max(1, (int)($req['page'] ?? $_GET['page'] ?? 1));
+    $limit = min(100, max(5, (int)($req['per_page'] ?? $_GET['per_page'] ?? 25)));
+    $bkid = isset($req['bkid']) ? (int)$req['bkid'] : (int)($_GET['bkid'] ?? 0);
+    $query = trim($req['query'] ?? $_GET['query'] ?? '');
+    $date = trim($req['date'] ?? $_GET['date'] ?? '');
+
+    $where = [];
+    $params = [];
+    if ($bkid > 0) {
+        $where[] = 'bkid = :bkid';
+        $params[':bkid'] = $bkid;
+    }
+    if ($query !== '') {
+        $where[] = '(book_title LIKE :query OR user_name LIKE :query OR user_email LIKE :query OR ip_address LIKE :query OR user_agent LIKE :query)';
+        $params[':query'] = '%' . $query . '%';
+    }
+    if ($date !== '') {
+        $where[] = 'DATE(created_at) = :date';
+        $params[':date'] = $date;
+    }
+
+    $whereStr = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+    $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM download_logs {$whereStr}");
+    foreach ($params as $key => $value) {
+        $cntStmt->bindValue($key, $value);
+    }
+    $cntStmt->execute();
+    $totalCount = (int)$cntStmt->fetchColumn();
+
+    $offset = ($page - 1) * $limit;
+    $stmt = $pdo->prepare(
+        "SELECT id, bkid, book_title, user_id, user_name, user_email, user_role,
+                ip_address, user_agent,
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at
+         FROM download_logs
+         {$whereStr}
+         ORDER BY id DESC
+         LIMIT :limit OFFSET :offset"
+    );
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+
+    echo json_encode([
+        'success' => true,
+        'rows'    => $stmt->fetchAll(),
+        'total'   => $totalCount,
+        'page'    => $page,
+        'limit'   => $limit,
+        'pages'   => (int)ceil($totalCount / $limit),
     ]);
 }
 
