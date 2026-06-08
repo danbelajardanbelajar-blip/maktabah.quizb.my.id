@@ -7,7 +7,7 @@ $sessionUser = $_SESSION['user'] ?? null;
 //  Ubah $maintenanceMode = true  → tampilkan halaman maintenance
 //  Ubah $maintenanceMode = false → situs berjalan normal
 // ══════════════════════════════════════════════════════════════
-$maintenanceMode = false;
+$maintenanceMode = true;
 
 // Pesan yang ditampilkan (bisa diubah sesuai kebutuhan)
 $maintenanceTitle   = 'Sedang Dalam Pemeliharaan';
