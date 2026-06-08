@@ -96,6 +96,60 @@ $sessionUser = $_SESSION['user'] ?? null;
     .nav-link::after { content:''; display:block; height:2px; background:#c9a84c; border-radius:1px; width:0; transition:width .25s ease; }
     .nav-link:hover::after { width:100%; }
 
+    /* Kategori dropdown button — same visual as nav-link */
+    .nav-cat-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: .875rem; font-weight: 500;
+      color: rgba(26,58,42,.8); cursor: pointer;
+      background: none; border: none; padding-bottom: 4px;
+      position: relative; transition: color .2s;
+    }
+    .nav-cat-btn::after { content:''; display:block; height:2px; background:#c9a84c; border-radius:1px; width:0; transition:width .25s ease; position:absolute; bottom:0; left:0; right:0; }
+    .nav-cat-btn:hover { color: #1a3a2a; }
+    .nav-cat-btn:hover::after { width: 100%; }
+    .nav-cat-btn.active { color: #c9a84c !important; }
+    .nav-cat-btn.active::after { width: 100%; }
+
+    /* Mega dropdown */
+    #cat-mega-dropdown {
+      position: fixed;
+      top: 64px; left: 0; right: 0;
+      z-index: 48;
+      background: #faf8f3;
+      border-top: 1px solid rgba(201,168,76,.18);
+      border-bottom: 1px solid rgba(201,168,76,.12);
+      box-shadow: 0 8px 40px rgba(26,58,42,.12);
+      opacity: 0; pointer-events: none;
+      transform: translateY(-8px);
+      transition: opacity .22s ease, transform .22s cubic-bezier(.22,.61,.36,1);
+      max-height: 70vh; overflow-y: auto;
+    }
+    #cat-mega-dropdown.open {
+      opacity: 1; pointer-events: all; transform: translateY(0);
+    }
+    html.dark #cat-mega-dropdown {
+      background: #0b1510 !important;
+      border-color: rgba(201,168,76,.12) !important;
+    }
+    .cat-mega-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background .15s, transform .12s;
+      text-decoration: none;
+      color: rgba(26,58,42,.85);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .cat-mega-item:hover {
+      background: rgba(201,168,76,.10);
+      transform: translateX(3px);
+      color: #1a3a2a;
+    }
+    html.dark .cat-mega-item { color: rgba(212,197,160,.85); }
+    html.dark .cat-mega-item:hover { background: rgba(201,168,76,.12); color: #c9a84c; }
+
     /* Bottom mobile nav */
     #bottom-nav {
       box-shadow: 0 -1px 24px rgba(26,58,42,.10);
@@ -448,6 +502,13 @@ $sessionUser = $_SESSION['user'] ?? null;
         <!-- Desktop Nav -->
         <div class="hidden md:flex items-center gap-6">
           <a href="/" data-route="/"          class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Beranda</a>
+          <!-- Kategori dropdown trigger -->
+          <div class="relative" id="nav-cat-wrap">
+            <button id="nav-cat-btn" class="nav-cat-btn" aria-haspopup="true" aria-expanded="false">
+              Kategori
+              <i data-lucide="chevron-down" id="nav-cat-chevron" class="w-3.5 h-3.5 transition-transform duration-200"></i>
+            </button>
+          </div>
           <a href="/katalog" data-route="/katalog" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Katalog</a>
           <a href="/search-advanced" data-route="/search-advanced" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Cari Lanjutan</a>
           <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Tentang</a>
@@ -558,7 +619,31 @@ $sessionUser = $_SESSION['user'] ?? null;
     </div>
   </nav>
 
-  
+  <!-- ===================== KATEGORI MEGA-DROPDOWN ===================== -->
+  <div id="cat-mega-dropdown" role="menu" aria-label="Pilih Kategori">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <!-- Header row -->
+      <div class="flex items-center justify-between mb-3">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(26,58,42,.4);">
+          Pilih Kategori
+        </span>
+        <a href="/kategori" data-route="/kategori"
+           style="font-size:12px;color:#c9a84c;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px;"
+           onclick="closeCatDropdown()">
+          Lihat semua <i data-lucide="arrow-right" style="width:12px;height:12px;"></i>
+        </a>
+      </div>
+      <!-- Grid populated by JS -->
+      <div id="cat-mega-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1">
+        <!-- skeleton -->
+        <div class="skeleton h-8 rounded-lg"></div>
+        <div class="skeleton h-8 rounded-lg"></div>
+        <div class="skeleton h-8 rounded-lg"></div>
+        <div class="skeleton h-8 rounded-lg"></div>
+        <div class="skeleton h-8 rounded-lg"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===================== MAIN SPA CONTAINER ===================== -->
   <main id="app-content" class="flex-1 pt-16 pb-20 md:pb-0">
@@ -582,12 +667,13 @@ $sessionUser = $_SESSION['user'] ?? null;
 
       <a href="/search-advanced" data-route="/search-advanced" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
         <i data-lucide="search-check" class="w-5 h-5"></i>
-        <span class="text-[10px] font-medium">Cari Lanjutan</span>
+        <span class="text-[10px] font-medium">Cari</span>
       </a>
 
-      <a href="/katalog" data-route="/katalog" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
-        <i data-lucide="library" class="w-5 h-5"></i>
-        <span class="text-[10px] font-medium">Katalog</span>
+      <!-- Kategori tab (menggantikan Katalog di mobile) -->
+      <a href="/kategori" data-route="/kategori" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Kategori</span>
       </a>
 
       <button id="bnav-font-btn" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5" style="background:none;border:none;cursor:pointer;">
@@ -877,9 +963,82 @@ $sessionUser = $_SESSION['user'] ?? null;
       const _bnavFont = document.getElementById('bnav-font-btn');
       if (_bnavFont) _bnavFont.addEventListener('click', () => window.openSettings());
 
-      // Keyboard: Escape closes drawer
+      // Keyboard: Escape closes drawer & kategori dropdown
       document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') window.closeSettings();
+        if (e.key === 'Escape') {
+          window.closeSettings();
+          window.closeCatDropdown();
+        }
+      });
+
+      // ── Kategori mega-dropdown ───────────────────────────────
+      let _catDropOpen = false;
+      let _catLoaded   = false;
+
+      window.closeCatDropdown = function() {
+        const dd  = document.getElementById('cat-mega-dropdown');
+        const btn = document.getElementById('nav-cat-btn');
+        const chv = document.getElementById('nav-cat-chevron');
+        if (!dd) return;
+        _catDropOpen = false;
+        dd.classList.remove('open');
+        if (btn) { btn.setAttribute('aria-expanded','false'); btn.classList.remove('active'); }
+        if (chv) chv.style.transform = '';
+      };
+
+      window.openCatDropdown = function() {
+        const dd  = document.getElementById('cat-mega-dropdown');
+        const btn = document.getElementById('nav-cat-btn');
+        const chv = document.getElementById('nav-cat-chevron');
+        if (!dd) return;
+        _catDropOpen = true;
+        dd.classList.add('open');
+        if (btn) { btn.setAttribute('aria-expanded','true'); btn.classList.add('active'); }
+        if (chv) chv.style.transform = 'rotate(180deg)';
+
+        if (!_catLoaded) {
+          _catLoaded = true;
+          fetch('/api.php?action=categories')
+            .then(r => r.json())
+            .then(res => {
+              const grid = document.getElementById('cat-mega-grid');
+              if (!grid) return;
+              const cats = (res.data || []).filter(c => c.book_count > 0);
+              if (!cats.length) {
+                grid.innerHTML = '<p style="font-size:13px;color:rgba(26,58,42,.45);padding:8px 4px;">Belum ada kategori.</p>';
+                return;
+              }
+              grid.innerHTML = cats.map(c => `
+                <button class="cat-mega-item"
+                  onclick="window.closeCatDropdown(); window.navigate && window.navigate('/kategori?cat=${c.id}')">
+                  <span>${c.name}</span>
+                  <span style="font-size:11px;color:#c9a84c;font-weight:700;">${c.book_count}</span>
+                </button>`).join('');
+              if (window.lucide) lucide.createIcons();
+            })
+            .catch(() => {
+              const grid = document.getElementById('cat-mega-grid');
+              if (grid) grid.innerHTML = '<p style="font-size:13px;color:#c0392b;padding:8px 4px;">Gagal memuat kategori.</p>';
+            });
+        }
+      };
+
+      const _catBtn = document.getElementById('nav-cat-btn');
+      if (_catBtn) {
+        _catBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          _catDropOpen ? window.closeCatDropdown() : window.openCatDropdown();
+        });
+      }
+
+      // Close on outside click
+      document.addEventListener('click', e => {
+        if (!_catDropOpen) return;
+        const dd   = document.getElementById('cat-mega-dropdown');
+        const wrap = document.getElementById('nav-cat-wrap');
+        if (dd && !dd.contains(e.target) && wrap && !wrap.contains(e.target)) {
+          window.closeCatDropdown();
+        }
       });
 
 
