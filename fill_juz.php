@@ -2,7 +2,7 @@
 // ============================================================
 //  fill_juz.php — Isi kolom `juz` pada tabel book_content
 //  Jalankan via browser: https://yourdomain.com/fill_juz.php
-//  Proses dicicil 5% per klik, bisa lanjut di tengah kitab
+//  Proses dicicil 5% per klik dengan tombol lanjutan
 // ============================================================
 
 // Keamanan: hanya bisa diakses dari IP server atau login admin
@@ -15,9 +15,10 @@ if (!in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true)) {
 require_once __DIR__ . '/koneksi.php';
 
 header('Content-Type: text/html; charset=utf-8');
-set_time_limit(300);
+set_time_limit(0);
 ignore_user_abort(true);
 
+$action = $_GET['action'] ?? '';
 $chunkPercent = 5;
 $currentIndex = max(0, (int)($_GET['index'] ?? 0));
 $lastId = max(0, (int)($_GET['last_id'] ?? 0));
@@ -37,137 +38,148 @@ try {
 
     $messages[] = 'Waktu menjalankan: ' . date('Y-m-d H:i:s');
 
-    $checkColumn = $pdo->query("SHOW COLUMNS FROM book_content LIKE 'juz'")->fetchAll();
-    if (empty($checkColumn)) {
-        $pdo->exec(
-            "ALTER TABLE book_content
-             ADD COLUMN juz SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER page"
-        );
-        $messages[] = 'Kolom `juz` berhasil ditambahkan.';
+    $hasJuzColumn = (bool)$pdo->query("SHOW COLUMNS FROM book_content LIKE 'juz'")->fetch();
+
+    if (!$hasJuzColumn) {
+        if ($action === 'add_column') {
+            $messages[] = 'Mencoba menambahkan kolom `juz`...';
+            $pdo->exec(
+                "ALTER TABLE book_content
+                 ADD COLUMN juz SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER page"
+            );
+            $messages[] = 'Kolom `juz` berhasil ditambahkan.';
+            $hasJuzColumn = true;
+        } else {
+            $summary[] = 'Kolom `juz` belum ada. Klik tombol di bawah untuk menambahkannya dulu.';
+        }
     } else {
         $messages[] = 'Kolom `juz` sudah ada.';
     }
 
-    $totalRows = (int)$pdo->query('SELECT COUNT(*) FROM book_content')->fetchColumn();
-    $chunkTarget = max(1, (int)ceil($totalRows * $chunkPercent / 100));
-    $messages[] = "Total baris book_content: {$totalRows}";
-    $messages[] = "Target proses per klik: {$chunkTarget} baris ({$chunkPercent}% dari total)";
+    if ($hasJuzColumn) {
+        $totalRows = (int)$pdo->query('SELECT COUNT(*) FROM book_content')->fetchColumn();
+        $chunkTarget = max(1, (int)ceil($totalRows * $chunkPercent / 100));
+        $chunkTarget = min($chunkTarget, 3000);
 
-    $bkids = $pdo
-        ->query('SELECT DISTINCT bkid FROM book_content ORDER BY bkid ASC')
-        ->fetchAll(PDO::FETCH_COLUMN);
-    $totalKitab = count($bkids);
-    $messages[] = "Total kitab: {$totalKitab}";
+        $messages[] = "Total baris book_content: {$totalRows}";
+        $messages[] = "Target proses per klik: {$chunkTarget} baris ({$chunkPercent}% dari total, dibatasi max 3000).";
 
-    if ($totalRows === 0) {
-        $finished = true;
-        $summary[] = 'Tabel `book_content` kosong, tidak ada yang diproses.';
-    } elseif ($currentIndex >= $totalKitab) {
-        $finished = true;
-        $summary[] = 'Semua kitab sudah diproses.';
-    } else {
-        $stmtUpdate = $pdo->prepare('UPDATE book_content SET juz = ? WHERE id = ?');
+        $bkids = $pdo
+            ->query('SELECT DISTINCT bkid FROM book_content ORDER BY bkid ASC')
+            ->fetchAll(PDO::FETCH_COLUMN);
+        $totalKitab = count($bkids);
+        $messages[] = "Total kitab: {$totalKitab}";
 
-        $processedRows = 0;
-        $processedKitab = 0;
-        $multiJuzKitab = 0;
-        $startIndex = $currentIndex;
-
-        $details[] = sprintf(
-            'Mulai dari kitab ke %d: bkid=%s, last_id=%d, juz=%d, prev_page=%d',
-            $currentIndex + 1,
-            htmlspecialchars($bkids[$currentIndex], ENT_QUOTES, 'UTF-8'),
-            $lastId,
-            $juz,
-            $prevPage
-        );
-
-        while ($currentIndex < $totalKitab && $processedRows < $chunkTarget) {
-            $currentBkid = $bkids[$currentIndex];
-            $remaining = $chunkTarget - $processedRows;
-            $sql = sprintf(
-                'SELECT id, page FROM book_content WHERE bkid = ? AND id > ? ORDER BY id ASC LIMIT %d',
-                $remaining
-            );
-            $stmtSelect = $pdo->prepare($sql);
-            $stmtSelect->execute([$currentBkid, $lastId]);
-            $rows = $stmtSelect->fetchAll(PDO::FETCH_ASSOC);
-
-            if (!$rows) {
-                $currentIndex++;
-                $lastId = 0;
-                $juz = 1;
-                $prevPage = -1;
-                continue;
-            }
-
-            foreach ($rows as $row) {
-                $page = (int)$row['page'];
-                if ($prevPage >= 0 && $page <= $prevPage) {
-                    $juz++;
-                }
-
-                $stmtUpdate->execute([$juz, (int)$row['id']]);
-                $processedRows++;
-                $lastId = (int)$row['id'];
-                $prevPage = $page;
-
-                $details[] = sprintf(
-                    'bkid=%s id=%d page=%d juz=%d',
-                    htmlspecialchars($currentBkid, ENT_QUOTES, 'UTF-8'),
-                    (int)$row['id'],
-                    $page,
-                    $juz
-                );
-
-                if ($processedRows >= $chunkTarget) {
-                    break;
-                }
-            }
-
-            if (count($rows) < $remaining) {
-                $currentIndex++;
-                $lastId = 0;
-                $juz = 1;
-                $prevPage = -1;
-            }
-        }
-
-        $nextUrl = sprintf(
-            '?index=%d&last_id=%d&juz=%d&prev_page=%d',
-            $currentIndex,
-            $lastId,
-            $juz,
-            $prevPage
-        );
-
-        $summary[] = sprintf(
-            'Diproses %d baris pada %d kitab dimulai dari indeks %d.',
-            $processedRows,
-            max(0, $currentIndex - $startIndex + ($lastId === 0 ? 0 : 1)),
-            $startIndex
-        );
-
-        if ($currentIndex >= $totalKitab) {
+        if ($totalRows === 0) {
             $finished = true;
-            $summary[] = 'Semua kitab selesai diproses.';
+            $summary[] = 'Tabel `book_content` kosong, tidak ada yang diproses.';
+        } elseif ($currentIndex >= $totalKitab) {
+            $finished = true;
+            $summary[] = 'Semua kitab sudah diproses.';
         } else {
-            $summary[] = 'Batch selesai; klik Lanjutkan untuk batch berikutnya.';
-            $summary[] = sprintf('Selanjutnya mulai dari kitab ke %d.', $currentIndex + 1);
+            $stmtUpdate = $pdo->prepare('UPDATE book_content SET juz = ? WHERE id = ?');
+
+            $processedRows = 0;
+            $processedKitab = 0;
+            $multiJuzKitab = 0;
+            $startIndex = $currentIndex;
+
+            $details[] = sprintf(
+                'Mulai dari kitab ke %d: bkid=%s, last_id=%d, juz=%d, prev_page=%d',
+                $currentIndex + 1,
+                htmlspecialchars($bkids[$currentIndex], ENT_QUOTES, 'UTF-8'),
+                $lastId,
+                $juz,
+                $prevPage
+            );
+
+            while ($currentIndex < $totalKitab && $processedRows < $chunkTarget) {
+                $currentBkid = $bkids[$currentIndex];
+                $remaining = $chunkTarget - $processedRows;
+                $sql = sprintf(
+                    'SELECT id, page FROM book_content WHERE bkid = ? AND id > ? ORDER BY id ASC LIMIT %d',
+                    $remaining
+                );
+                $stmtSelect = $pdo->prepare($sql);
+                $stmtSelect->execute([$currentBkid, $lastId]);
+                $rows = $stmtSelect->fetchAll(PDO::FETCH_ASSOC);
+
+                if (!$rows) {
+                    $currentIndex++;
+                    $lastId = 0;
+                    $juz = 1;
+                    $prevPage = -1;
+                    continue;
+                }
+
+                foreach ($rows as $row) {
+                    $page = (int)$row['page'];
+                    if ($prevPage >= 0 && $page <= $prevPage) {
+                        $juz++;
+                    }
+
+                    $stmtUpdate->execute([$juz, (int)$row['id']]);
+                    $processedRows++;
+                    $lastId = (int)$row['id'];
+                    $prevPage = $page;
+
+                    $details[] = sprintf(
+                        'bkid=%s id=%d page=%d juz=%d',
+                        htmlspecialchars($currentBkid, ENT_QUOTES, 'UTF-8'),
+                        (int)$row['id'],
+                        $page,
+                        $juz
+                    );
+
+                    if ($processedRows >= $chunkTarget) {
+                        break;
+                    }
+                }
+
+                if (count($rows) < $remaining) {
+                    $currentIndex++;
+                    $lastId = 0;
+                    $juz = 1;
+                    $prevPage = -1;
+                }
+            }
+
+            $nextUrl = sprintf(
+                '?action=process&index=%d&last_id=%d&juz=%d&prev_page=%d',
+                $currentIndex,
+                $lastId,
+                $juz,
+                $prevPage
+            );
+
+            $summary[] = sprintf(
+                'Diproses %d baris pada %d kitab dimulai dari indeks %d.',
+                $processedRows,
+                max(0, $currentIndex - $startIndex + ($lastId === 0 ? 0 : 1)),
+                $startIndex
+            );
+
+            if ($currentIndex >= $totalKitab) {
+                $finished = true;
+                $summary[] = 'Semua kitab selesai diproses.';
+            } else {
+                $summary[] = 'Batch selesai; klik Lanjutkan untuk batch berikutnya.';
+                $summary[] = sprintf('Selanjutnya mulai dari kitab ke %d.', $currentIndex + 1);
+            }
+
+            if ($processedRows > 0) {
+                $summary[] = "Kitab multi-juz yang diproses di batch ini: {$multiJuzKitab}.";
+            }
         }
 
-        if ($processedRows > 0) {
-            $summary[] = "Kitab multi-juz yang diproses di batch ini: {$multiJuzKitab}.";
-        }
-    }
-
-    if ($finished) {
-        $indexCheck = $pdo->query("SHOW INDEX FROM book_content WHERE Key_name = 'idx_bkid_juz_page'")->fetchAll();
-        if (empty($indexCheck)) {
-            $pdo->exec("ALTER TABLE book_content ADD INDEX idx_bkid_juz_page (bkid, juz, page)");
-            $summary[] = 'Index `idx_bkid_juz_page` berhasil ditambahkan.';
-        } else {
-            $summary[] = 'Index `idx_bkid_juz_page` sudah ada.';
+        if ($finished) {
+            $indexCheck = $pdo->query("SHOW INDEX FROM book_content WHERE Key_name = 'idx_bkid_juz_page'")->fetchAll();
+            if (empty($indexCheck)) {
+                $pdo->exec("ALTER TABLE book_content ADD INDEX idx_bkid_juz_page (bkid, juz, page)");
+                $summary[] = 'Index `idx_bkid_juz_page` berhasil ditambahkan.';
+            } else {
+                $summary[] = 'Index `idx_bkid_juz_page` sudah ada.';
+            }
         }
     }
 } catch (PDOException $e) {
@@ -218,11 +230,15 @@ try {
             <pre><?= htmlspecialchars(implode("\n", $details), ENT_QUOTES, 'UTF-8') ?></pre>
         <?php endif; ?>
 
-        <?php if ($finished): ?>
+        <?php if (!$hasJuzColumn): ?>
+            <a class="button" href="?action=add_column">Tambah Kolom juz</a>
+        <?php elseif ($finished): ?>
             <p class="ok"><strong>Selesai:</strong> Semua baris sudah terproses.</p>
             <p>Setelah verifikasi, hapus file ini dari server.</p>
         <?php elseif ($nextUrl): ?>
             <a class="button" href="<?= htmlspecialchars($nextUrl, ENT_QUOTES, 'UTF-8') ?>">Lanjutkan batch berikutnya</a>
+        <?php else: ?>
+            <a class="button" href="?action=process&index=0&last_id=0&juz=1&prev_page=-1">Mulai proses</a>
         <?php endif; ?>
     </div>
 </body>
