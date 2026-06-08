@@ -407,17 +407,19 @@ async function renderHome() {
     </section>
 
     <!-- Pencarian Terbaru -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-0" id="recent-search-section" style="display:none">
-      <div class="flex items-center gap-2 mb-4">
-        <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
-          <i data-lucide="clock" class="w-3.5 h-3.5 text-gold"></i>
+    <div class="w-full bg-cream" id="recent-search-section" style="display:none">
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-gold"></i>
+          </div>
+          <h2 class="text-base font-bold text-primary">Pencarian Terbaru</h2>
         </div>
-        <h2 class="text-base font-bold text-primary">Pencarian Terbaru</h2>
-      </div>
-      <div id="recent-search-chips" class="flex flex-wrap gap-2">
-        ${Array.from({length:8}, () => `<div class="skeleton h-8 w-24 rounded-full"></div>`).join('')}
-      </div>
-    </section>
+        <div id="recent-search-chips" class="flex flex-wrap gap-2">
+          ${Array.from({length:8}, () => `<div class="skeleton h-8 w-24 rounded-full"></div>`).join('')}
+        </div>
+      </section>
+    </div>
 
     <!-- Latest Kitab -->
     <div class="gold-line"></div>
