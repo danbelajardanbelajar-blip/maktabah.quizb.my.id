@@ -366,6 +366,7 @@ try {
         case 'content':           handleContent();          break;
         case 'categories':        handleCategories();       break;
         case 'latest':            handleLatest();           break;
+        case 'recent_searches':   handleRecentSearches();   break;
         case 'stats':             handleStats();            break;
         // Search — tiga endpoint terpisah untuk parallel fetch
         case 'search_categories': handleSearchCategories(); break;
@@ -634,6 +635,30 @@ function handleLatest(): void {
     $stmt->execute();
 
     echo json_encode(['data' => $stmt->fetchAll()]);
+}
+
+// =============================================================
+// 5b. RECENT SEARCHES — kata kunci pencarian terbaru (publik)
+// =============================================================
+function handleRecentSearches(): void {
+    header('Cache-Control: public, max-age=120');
+    $pdo   = getPDO();
+    $limit = min(20, max(1, (int)($_GET['limit'] ?? 15)));
+
+    // Ambil query unik terbaru, abaikan yang kosong / terlalu pendek
+    $stmt = $pdo->prepare(
+        "SELECT query, MAX(created_at) AS last_at
+         FROM search_logs
+         WHERE LENGTH(TRIM(query)) >= 2
+         GROUP BY LOWER(TRIM(query))
+         ORDER BY last_at DESC
+         LIMIT :lim"
+    );
+    $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $rows = $stmt->fetchAll();
+    echo json_encode(['data' => array_map(fn($r) => $r['query'], $rows)]);
 }
 
 // =============================================================
