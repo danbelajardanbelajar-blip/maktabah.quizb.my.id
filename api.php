@@ -1471,7 +1471,7 @@ function handleSearchAdvanced(): void {
     $noCatFilter = $allCats || empty($cats);   // true = lewati filter kategori
 
     // --- Cache key ---
-    $cacheKey = 'adv3:' . hash('sha256', json_encode([
+    $cacheKey = 'adv4:' . hash('sha256', json_encode([
         'f' => $fields, 'c' => $cats, 'a' => $allCats, 's' => $samePage, 'p' => $page,
     ]));
 
@@ -1592,7 +1592,7 @@ function handleSearchAdvanced(): void {
             }
 
             // COUNT — tanpa JOIN (hanya book_content + FULLTEXT index)
-            $countKey = 'advcnt3:' . hash('sha256', json_encode([
+            $countKey = 'advcnt4:' . hash('sha256', json_encode([
                 'f' => $fields, 'c' => [], 's' => $samePage,
             ]));
             $cc = $pdo->prepare(
