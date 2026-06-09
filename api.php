@@ -1078,56 +1078,26 @@ function handleSearchBooks(): void {
     }
 
     // --- Query ---
-    if ($phraseLike !== null) {
-        $stmt = $pdo->prepare(
-            "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
-                    MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
-             FROM books b
-             WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
-                OR b.title LIKE :ph
-                OR b.author LIKE :ph
-             ORDER BY rel DESC, b.title ASC
-             LIMIT :lim OFFSET :off"
-        );
-        $stmt->bindValue(':q1',  $qStar, PDO::PARAM_STR);
-        $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
-        $stmt->bindValue(':ph',  $phraseLike, PDO::PARAM_STR);
-    } else {
-        $stmt = $pdo->prepare(
-            "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
-                    MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
-             FROM books b
-             WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
-                OR b.title  LIKE :lk
-                OR b.author LIKE :la
-             ORDER BY rel DESC, b.title ASC
-             LIMIT :lim OFFSET :off"
-        );
-        $stmt->bindValue(':q1',  $qStar, PDO::PARAM_STR);
-        $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
-        $stmt->bindValue(':lk',  $like,  PDO::PARAM_STR);
-        $stmt->bindValue(':la',  $like,  PDO::PARAM_STR);
-    }
+    $stmt = $pdo->prepare(
+        "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
+                MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+         FROM books b
+         WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
+         ORDER BY rel DESC, b.title ASC
+         LIMIT :lim OFFSET :off"
+    );
+    $stmt->bindValue(':q1',  $qStar, PDO::PARAM_STR);
+    $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
     $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $books = $stmt->fetchAll();
 
-    if ($phraseLike !== null) {
-        $countStmt = $pdo->prepare(
-            "SELECT COUNT(*) FROM books
-             WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)
-                OR title LIKE :ph OR author LIKE :ph"
-        );
-        $countStmt->execute([':q' => $qStar, ':ph' => $phraseLike]);
-    } else {
-        $countStmt = $pdo->prepare(
-            "SELECT COUNT(*) FROM books
-             WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)
-                OR title LIKE :lk OR author LIKE :la"
-        );
-        $countStmt->execute([':q' => $qStar, ':lk' => $like, ':la' => $like]);
-    }
+    $countStmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM books
+         WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)"
+    );
+    $countStmt->execute([':q' => $qStar]);
     $total = (int)$countStmt->fetchColumn();
 
     // --- Cache store ---
@@ -1197,13 +1167,12 @@ function handleSearchContent(): void {
         }
     }
 
-    // --- Step 1: Top bkids via fulltext GROUP BY (uses FULLTEXT index, very fast) ---
+    // --- Step 1: Scan FULLTEXT pada book_content saja (tidak JOIN) ---
     $step1 = $pdo->prepare(
-        "SELECT bkid, MAX(MATCH(content) AGAINST (:q1 IN BOOLEAN MODE)) AS rel
+        "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
          FROM book_content
          WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
-         GROUP BY bkid
-         ORDER BY rel DESC
+         ORDER BY rel DESC, bkid ASC, page ASC
          LIMIT :lim OFFSET :off"
     );
     $step1->bindValue(':q1',  $qStar, PDO::PARAM_STR);
@@ -1218,48 +1187,42 @@ function handleSearchContent(): void {
         return;
     }
 
-    $bkidInts = array_map('intval', array_column($topRows, 'bkid'));
-    $relMap   = array_column($topRows, 'rel', 'bkid');
-    $inClause = implode(',', $bkidInts); // safe — all ints
+    $pairConds  = [];
+    $pairParams = [];
+    foreach ($topRows as $i => $r) {
+        $bk = ':bk' . $i;
+        $pg = ':pg' . $i;
+        $pairConds[]   = "(bc.bkid = $bk AND bc.page = $pg)";
+        $pairParams[$bk] = (int)$r['bkid'];
+        $pairParams[$pg] = (int)$r['page'];
+    }
 
-    // --- Step 2: Best snippet per bkid using window function (all params bound) ---
-    $step2 = $pdo->prepare(
-        "SELECT b.bkid, b.title, b.author, b.pages, b.category_name,
-                s.match_juz, s.match_page, s.snippet
-         FROM books b
-         JOIN (
-             SELECT bkid, match_juz, match_page, content_text AS snippet
-             FROM (
-                 SELECT bc.bkid, bc.juz AS match_juz,
-                        bc.page  AS match_page,
-                        bc.content AS content_text,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY bc.bkid
-                            ORDER BY MATCH(bc.content) AGAINST (:q3 IN BOOLEAN MODE) DESC
-                        ) AS rn
+    // --- Step 2: Best snippet per bkid ---
+    $step2Sql = "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page,
+                        bc.content AS snippet,
+                        b.title, b.author, b.pages, b.category_name
                  FROM book_content bc
-                 WHERE bc.bkid IN ($inClause)
-                   AND MATCH(bc.content) AGAINST (:q4 IN BOOLEAN MODE)
-             ) ranked
-             WHERE rn = 1
-         ) s ON s.bkid = b.bkid
-         WHERE b.bkid IN ($inClause)"
-    );
-    $step2->bindValue(':q3', $qStar, PDO::PARAM_STR);
-    $step2->bindValue(':q4', $qStar, PDO::PARAM_STR);
+                 JOIN books b ON b.bkid = bc.bkid
+                 WHERE " . implode(' OR ', $pairConds);
+
+    $step2 = $pdo->prepare($step2Sql);
+    foreach ($pairParams as $k => $v) $step2->bindValue($k, $v, PDO::PARAM_INT);
     $step2->execute();
-    $rows = $step2->fetchAll();
+
+    $byKey = [];
+    foreach ($step2->fetchAll() as $r) {
+        $byKey[$r['bkid'] . '_' . $r['match_page']] = $r;
+    }
 
     $terms = preg_split('/\s+/u', searchPhraseText($q), -1, PREG_SPLIT_NO_EMPTY);
-    $rows = array_map(function($row) use ($terms) {
+    $rows = [];
+    foreach ($topRows as $r) {
+        $k = $r['bkid'] . '_' . $r['page'];
+        if (!isset($byKey[$k])) continue;
+        $row = $byKey[$k];
         $row['snippet'] = extractSmartSnippet((string)($row['snippet'] ?? ''), $terms);
-        return $row;
-    }, $rows);
-
-    // Restore relevance order from step 1
-    usort($rows, fn($a, $b) =>
-        ($relMap[$b['bkid']] ?? 0) <=> ($relMap[$a['bkid']] ?? 0)
-    );
+        $rows[] = $row;
+    }
 
     // --- Count total (cached separately, expensive on huge tables) ---
     $countHash = 'cnt_content:' . hash('sha256', strtolower($q));
@@ -1271,7 +1234,7 @@ function handleSearchContent(): void {
         $total = (int)$countCached;
     } else {
         $countStmt = $pdo->prepare(
-        "SELECT COUNT(DISTINCT bkid) FROM book_content
+        "SELECT COUNT(*) FROM book_content
          WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)"
     );
     $countStmt->execute([':q' => $qStar]);
