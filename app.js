@@ -394,6 +394,54 @@ function paginationHtml(current, total, onClickFn) {
 // ══════════════════════════════════════════════════════════════
 //  PAGE: HOME
 // ══════════════════════════════════════════════════════════════
+// ── Recently Opened Books (localStorage) ─────────────────────
+const RECENT_KEY      = 'maktabah_recent_opened';
+const RECENT_MAX      = 8;
+
+function getRecentlyOpened() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveToRecentlyOpened(book) {
+  try {
+    const list = getRecentlyOpened().filter(b => String(b.id) !== String(book.id));
+    list.unshift({ ...book, openedAt: Date.now() });
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX)));
+  } catch { /* ignore storage errors */ }
+}
+
+function recentBookCard(item) {
+  const timeAgo = (() => {
+    const diff = Date.now() - (item.openedAt || 0);
+    const m = Math.floor(diff / 60000);
+    const h = Math.floor(diff / 3600000);
+    const d = Math.floor(diff / 86400000);
+    if (m < 1)  return 'Baru saja';
+    if (m < 60) return `${m} menit lalu`;
+    if (h < 24) return `${h} jam lalu`;
+    if (d < 7)  return `${d} hari lalu`;
+    return new Date(item.openedAt).toLocaleDateString('id-ID', {day:'numeric',month:'short'});
+  })();
+  return `
+    <div class="book-card bg-white rounded-2xl shadow-card overflow-hidden cursor-pointer relative group"
+         onclick="navigate('/kitab?id=${item.id}')">
+      <!-- Time badge -->
+      <div class="absolute top-2 right-2 z-10">
+        <span style="font-size:10px;background:rgba(26,58,42,.72);color:rgba(212,197,160,.9);padding:2px 7px;border-radius:999px;backdrop-filter:blur(4px);white-space:nowrap;">
+          ${escHtml(timeAgo)}
+        </span>
+      </div>
+      <div class="hero-bg p-5 flex items-center justify-center min-h-[90px]">
+        <div class="arabic text-white text-center font-bold leading-snug text-lg line-clamp-3">${escHtml(item.title)}</div>
+      </div>
+      <div class="p-3">
+        <div class="text-xs text-primary/55 truncate">${escHtml(item.author || '')}</div>
+        ${item.cat ? `<span class="mt-1 inline-block text-[10px] px-2 py-0.5 rounded-full bg-gold/10 text-gold-dark font-medium">${escHtml(item.cat)}</span>` : ''}
+      </div>
+    </div>`;
+}
+
 async function renderHome() {
   app().innerHTML = `
     <!-- Hero -->
@@ -430,18 +478,23 @@ async function renderHome() {
       </section>
     </div>
 
-    <!-- Latest Kitab -->
+    <!-- Kitab yang Baru Saja Dibuka -->
     <div class="gold-line"></div>
     <section class="w-full bg-cream-dark py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-primary">Kitab Terbaru</h2>
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
+              <i data-lucide="history" class="w-4 h-4 text-gold"></i>
+            </div>
+            <h2 class="text-xl font-bold text-primary">Kitab yang Baru Saja Dibuka</h2>
+          </div>
           <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
-            Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            Jelajahi Katalog <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
         </div>
-        <div id="latest-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          ${skeletonCards(8)}
+        <div id="recent-opened-grid">
+          ${skeletonCards(4)}
         </div>
       </div>
     </section>
@@ -510,14 +563,31 @@ async function renderHome() {
     } catch { /* abaikan jika gagal */ }
   })();
 
-  // Load latest
-  try {
-    const res = await apiFetch({ action: 'latest', limit: 8 });
-    $('#latest-grid').innerHTML = res.data.map(bookCard).join('') || '<p class="text-primary/50 col-span-full text-center py-8">Belum ada kitab.</p>';
-  } catch(e) { 
-    if (handleAuthError(e)) return;
-    $('#latest-grid').innerHTML = '<p class="text-red-500 col-span-full text-sm text-center py-8">Gagal memuat kitab.</p>'; 
-  }
+  // Load kitab yang baru saja dibuka (dari localStorage)
+  (() => {
+    const recent = getRecentlyOpened();
+    const grid   = document.getElementById('recent-opened-grid');
+    if (!grid) return;
+    if (!recent.length) {
+      grid.innerHTML = `
+        <div class="col-span-full flex flex-col items-center justify-center gap-3 py-10 text-center">
+          <div class="w-14 h-14 rounded-2xl bg-primary/6 flex items-center justify-center">
+            <i data-lucide="book-open" class="w-7 h-7 text-primary/30"></i>
+          </div>
+          <p class="text-primary/45 text-sm">Belum ada kitab yang dibuka.</p>
+          <a href="/katalog" data-route="/katalog"
+             class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-light transition">
+            <i data-lucide="search" class="w-3.5 h-3.5"></i> Jelajahi Katalog
+          </a>
+        </div>`;
+      reicons();
+      return;
+    }
+    grid.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      ${recent.map(item => recentBookCard(item)).join('')}
+    </div>`;
+    reicons();
+  })();
 
   // Load statistics
   try {
@@ -2155,6 +2225,14 @@ async function renderDetail(params) {
     readerState.total    = contentPgs;
     readerState.totalJuz = book.total_juz || 1;
     readerState.juzList  = book.juz_list  || [];
+
+    // Simpan ke riwayat kitab dibuka (localStorage)
+    saveToRecentlyOpened({
+      id    : book.bkid,
+      title : title,
+      author: author,
+      cat   : catName,
+    });
 
     $('#detail-content').innerHTML = `
       <div class="bg-white rounded-3xl shadow-card overflow-hidden">
