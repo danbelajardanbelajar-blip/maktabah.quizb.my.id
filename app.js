@@ -1635,39 +1635,77 @@ let _contResults     = [];   // semua hasil terkumpul
 let _contCurrentPage = 1;    // halaman aktif yang sedang ditampilkan
 let _contSearchQ     = '';   // query terakhir (untuk highlight & navigasi)
 
-// Render satu halaman dari _contResults ke dalam grid
+// ── Tambahkan kartu baru ke page-1 grid tanpa menyentuh yg sudah ada ──
+// Hanya dipanggil selama pencarian berjalan di halaman 1.
+// Menggunakan appendChild → tidak ada re-render, tidak ada jitter.
+function appendContCards(newItems, q) {
+  let inner = document.getElementById('cont-cards-inner');
+  if (!inner) {
+    // Buat inner grid pertama kali
+    const grid = document.getElementById('cont-results-grid');
+    if (!grid) return;
+    inner = document.createElement('div');
+    inner.id = 'cont-cards-inner';
+    inner.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 search-section-enter';
+    grid.appendChild(inner);
+  }
+
+  for (const item of newItems) {
+    if (inner.children.length >= CONT_PAGE_SIZE) break; // halaman 1 sudah penuh
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = contentCard(item, q);
+    const card = wrapper.firstElementChild;
+    if (card) {
+      card.style.animation = 'cardPop .3s cubic-bezier(.22,.61,.36,1) both';
+      inner.appendChild(card);
+    }
+  }
+}
+
+// ── Update area pagination saja (tidak menyentuh grid kartu) ────────
+function updateContPagination(totalResults, currentPage, searching) {
+  const pag = document.getElementById('cont-pagination');
+  if (!pag) return;
+  const totalPages    = Math.max(1, Math.ceil(totalResults / CONT_PAGE_SIZE));
+  const searchingNote = searching
+    ? `<span style="font-size:11px;color:rgba(26,58,42,.4);display:flex;align-items:center;gap:5px;">
+         <span class="spin-ring" style="width:12px;height:12px;border-width:2px;"></span>
+         Masih mencari&hellip;
+       </span>`
+    : '';
+  pag.innerHTML = (totalResults > CONT_PAGE_SIZE || (searching && totalResults > 0))
+    ? `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;">
+         ${paginationHtml(currentPage, totalPages, 'goSearchContResultPage')}
+         ${searchingNote}
+       </div>`
+    : (searching
+        ? `<div style="display:flex;justify-content:flex-end;margin-top:8px;">${searchingNote}</div>`
+        : '');
+  reicons();
+}
+
+// ── Full re-render satu halaman (hanya dipanggil saat user klik nomor) ─
+// Full innerHTML aman di sini karena user yang meminta pindah halaman.
 function renderContPage(results, page, q, searching) {
-  const grid = $('#cont-results-grid');
-  const pag  = $('#cont-pagination');
+  const grid = document.getElementById('cont-results-grid');
   if (!grid) return;
 
-  const start      = (page - 1) * CONT_PAGE_SIZE;
-  const slice      = results.slice(start, start + CONT_PAGE_SIZE);
-  const totalPages = Math.max(1, Math.ceil(results.length / CONT_PAGE_SIZE));
+  const start = (page - 1) * CONT_PAGE_SIZE;
+  const slice = results.slice(start, start + CONT_PAGE_SIZE);
 
   if (slice.length) {
-    grid.innerHTML = `<div class="search-section-enter grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-      ${slice.map(item => contentCard(item, q)).join('')}
-    </div>`;
+    // Hapus konten lama, buat inner baru dengan animasi slide-in
+    grid.innerHTML = '';
+    const inner = document.createElement('div');
+    inner.id        = 'cont-cards-inner';
+    inner.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 search-section-enter';
+    inner.innerHTML = slice.map(item => contentCard(item, q)).join('');
+    grid.appendChild(inner);
   } else {
     grid.innerHTML = '';
   }
 
-  if (pag) {
-    // Tampilkan pagination + status pencarian jika masih berjalan
-    const searchingNote = searching
-      ? `<span style="font-size:11px;color:rgba(26,58,42,.4);display:flex;align-items:center;gap:5px;">
-           <span class="spin-ring" style="width:12px;height:12px;border-width:2px;"></span>
-           Masih mencari&hellip;
-         </span>`
-      : '';
-    pag.innerHTML = (results.length > CONT_PAGE_SIZE || searching)
-      ? `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;">
-           ${paginationHtml(page, totalPages, 'goSearchContResultPage')}
-           ${searchingNote}
-         </div>`
-      : '';
-  }
+  updateContPagination(results.length, page, searching);
   reicons();
 }
 
@@ -1706,7 +1744,8 @@ async function execProgressiveContentSearch(q, token) {
   let   found   = 0;   // jumlah kitab yang mengandung hasil
   let   checked = 0;   // jumlah kitab yang sudah dicek
 
-  // Render container (progress + grid + pagination)
+  // Render kerangka stabil — elemen-elemen ini TIDAK akan diganti selama pencarian.
+  // Grid kartu ditambah via appendChild; pagination diupdate via updateContPagination.
   body.innerHTML = `
     <div id="cont-progress-bar" class="mb-3">${progressContentShell('', 0, total)}</div>
     <div id="cont-results-grid"></div>
@@ -1719,8 +1758,8 @@ async function execProgressiveContentSearch(q, token) {
     // Batalkan jika query sudah berganti
     if (_contentSearchToken !== token) return;
 
-    // Update progress bar
-    const progBar = $('#cont-progress-bar');
+    // Update progress bar (hanya progress bar, tidak menyentuh grid)
+    const progBar = document.getElementById('cont-progress-bar');
     if (progBar) {
       progBar.innerHTML = progressContentShell(
         `Mencari di: <span style="font-family:'Amiri','Noto Naskh Arabic',serif;direction:rtl;unicode-bidi:plaintext;font-weight:600;color:#1a3a2a;">${escHtml(book.title)}</span>`,
@@ -1738,31 +1777,19 @@ async function execProgressiveContentSearch(q, token) {
         found++;
         for (const item of res.data) _contResults.push(item);
 
-        // Update header
+        // Update section header
         patchHeader('sec-content','file-text','Isi Kitab', _contResults.length, true);
 
-        // Perbarui tampilan halaman aktif (halaman 1 langsung refresh; halaman lain hanya pagination)
         if (_contCurrentPage === 1) {
-          renderContPage(_contResults, 1, q, true);
-          // Sembunyikan no-result jika sudah ada hasil
-          const noRes = $('#cont-no-result');
+          // Tambahkan kartu baru via appendChild — TIDAK ada re-render grid
+          appendContCards(res.data, q);
+          // Sembunyikan no-result
+          const noRes = document.getElementById('cont-no-result');
           if (noRes) noRes.classList.add('hidden');
-        } else {
-          // Update hanya pagination saja, jangan geser view user
-          const totalPages = Math.max(1, Math.ceil(_contResults.length / CONT_PAGE_SIZE));
-          const pag = $('#cont-pagination');
-          if (pag) {
-            const searchingNote = `<span style="font-size:11px;color:rgba(26,58,42,.4);display:flex;align-items:center;gap:5px;">
-              <span class="spin-ring" style="width:12px;height:12px;border-width:2px;"></span>
-              Masih mencari&hellip;
-            </span>`;
-            pag.innerHTML = `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;">
-              ${paginationHtml(_contCurrentPage, totalPages, 'goSearchContResultPage')}
-              ${searchingNote}
-            </div>`;
-            reicons();
-          }
         }
+
+        // Update pagination (area kecil di bawah grid, tidak menyentuh kartu)
+        updateContPagination(_contResults.length, _contCurrentPage, true);
       }
     } catch(e) {
       // Lewati kitab yang gagal, lanjutkan ke berikutnya
@@ -1770,7 +1797,7 @@ async function execProgressiveContentSearch(q, token) {
 
     checked++;
 
-    // Delay adaptif: lebih lambat jika sudah banyak hasil (tidak perlu terlalu cepat)
+    // Delay adaptif: lebih lambat jika sudah banyak hasil
     if (_contentSearchToken === token) {
       await new Promise(r => setTimeout(r, found > 5 ? 150 : 80));
     }
@@ -1779,20 +1806,18 @@ async function execProgressiveContentSearch(q, token) {
   // ── Selesai ──
   if (_contentSearchToken !== token) return;
 
-  // Bersihkan progress bar
-  const progBar = $('#cont-progress-bar');
+  // Hapus progress bar dengan fade (tidak menggoyangkan grid)
+  const progBar = document.getElementById('cont-progress-bar');
   if (progBar) progBar.innerHTML = '';
 
   if (!_contResults.length) {
-    const noRes = $('#cont-no-result');
+    const noRes = document.getElementById('cont-no-result');
     if (noRes) noRes.classList.remove('hidden');
-    const grid = $('#cont-results-grid');
-    if (grid) grid.innerHTML = '';
-    const pag = $('#cont-pagination');
+    const pag = document.getElementById('cont-pagination');
     if (pag) pag.innerHTML = '';
   } else {
-    // Re-render halaman aktif tanpa "Masih mencari" note
-    renderContPage(_contResults, _contCurrentPage, q, false);
+    // Hanya update pagination (hapus "Masih mencari"); grid tidak disentuh
+    updateContPagination(_contResults.length, _contCurrentPage, false);
   }
 
   patchHeader('sec-content','file-text','Isi Kitab', _contResults.length, false);
@@ -1805,17 +1830,15 @@ async function execProgressiveContentSearch(q, token) {
     reicons();
   }
 
-  // Tandai pencarian selesai (token-nya sendiri sudah tidak aktif)
+  // Tandai pencarian selesai
   if (_contentSearchToken === token) _contentSearchToken = null;
 }
 
-// Navigasi paginasi hasil isi kitab (client-side)
+// Navigasi paginasi hasil isi kitab (client-side) — full re-render aman
 window.goSearchContResultPage = function(p) {
   _contCurrentPage = p;
-  // Cek apakah pencarian masih berjalan (token bukan null = masih aktif)
   const stillSearching = _contentSearchToken !== null;
   renderContPage(_contResults, p, _contSearchQ, stillSearching);
-  // Scroll ke bagian isi kitab
   $('#sec-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
