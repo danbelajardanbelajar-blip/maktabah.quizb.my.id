@@ -1171,7 +1171,7 @@ function advancedContentCard(book) {
   const pageLabel = book.match_page ? `hal. ${book.match_page}` : '';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-3 cursor-pointer hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         onclick="navigate('/kitab?id=${book.bkid}&page=${book.match_page || 1}&q=${encodeURIComponent(buildAdvancedSearchQuery())}')">
+         onclick="navigate('/kitab?id=${book.bkid}&juz=${book.match_juz || 1}&page=${book.match_page || 1}&q=${encodeURIComponent(buildAdvancedSearchQuery())}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${snippetHtml ? `<div class="snippet-bar reader-text line-clamp-4">${snippetHtml}…</div>` : ''}
@@ -1686,11 +1686,12 @@ function contentCard(b, q) {
   const titleHtml  = hlText(title, q);
   const authorHtml = author ? hlText(author, q) : '';
   const hlSnip  = snippet ? hlText(snippet, q) : '';
+  const juzParam  = b.match_juz ? `&juz=${b.match_juz}` : '';
   const pageParam = b.match_page ? `&page=${b.match_page}` : '';
   const qParam    = q ? `&q=${encodeURIComponent(q)}` : '';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         onclick="navigate('/kitab?id=${b.bkid}${pageParam}${qParam}')">
+         onclick="navigate('/kitab?id=${b.bkid}${juzParam}${pageParam}${qParam}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}…</div>` : ''}
@@ -2166,19 +2167,20 @@ window.goSearchBookPage = function(p) {
 // ══════════════════════════════════════════════════════════════
 
 // Reader state (module-level so nav buttons can reference it)
-const readerState = { bkid: null, page: 1, total: 0, juz: 1, totalJuz: 1, juzList: [], searchQ: '' };
+let readerState = { bkid: null, page: 1, juz: 1, total: 0, totalJuz: 1, juzList: [], searchQ: '' };
 
 async function renderDetail(params) {
   const id       = params.get('id');
   const jumpPage = parseInt(params.get('page') || '1') || 1;
+  const jumpJuz  = parseInt(params.get('juz') || '1') || 1;
   const searchQ  = (params.get('q') || '').trim();
   if (!id) { render404(); return; }
 
   // Reset reader
   readerState.bkid     = parseInt(id);
-  readerState.page     = 1;
+  readerState.page     = jumpPage;
   readerState.total    = 0;
-  readerState.juz      = 1;
+  readerState.juz      = jumpJuz;
   readerState.totalJuz = 1;
   readerState.juzList  = [];
   readerState.searchQ  = searchQ;

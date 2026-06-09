@@ -1225,12 +1225,12 @@ function handleSearchContent(): void {
     // --- Step 2: Best snippet per bkid using window function (all params bound) ---
     $step2 = $pdo->prepare(
         "SELECT b.bkid, b.title, b.author, b.pages, b.category_name,
-                s.match_page, s.snippet
+                s.match_juz, s.match_page, s.snippet
          FROM books b
          JOIN (
-             SELECT bkid, match_page, LEFT(content_text, 300) AS snippet
+             SELECT bkid, match_juz, match_page, content_text AS snippet
              FROM (
-                 SELECT bc.bkid,
+                 SELECT bc.bkid, bc.juz AS match_juz,
                         bc.page  AS match_page,
                         bc.content AS content_text,
                         ROW_NUMBER() OVER (
@@ -1249,6 +1249,12 @@ function handleSearchContent(): void {
     $step2->bindValue(':q4', $qStar, PDO::PARAM_STR);
     $step2->execute();
     $rows = $step2->fetchAll();
+
+    $terms = preg_split('/\s+/u', searchPhraseText($q), -1, PREG_SPLIT_NO_EMPTY);
+    $rows = array_map(function($row) use ($terms) {
+        $row['snippet'] = extractSmartSnippet((string)($row['snippet'] ?? ''), $terms);
+        return $row;
+    }, $rows);
 
     // Restore relevance order from step 1
     usort($rows, fn($a, $b) =>
@@ -1340,8 +1346,8 @@ function handleSearchContentInBook(): void {
 
     // Ambil halaman terbaik dalam kitab ini (top 3, ringan karena sudah di-filter bkid)
     $stmt = $pdo->prepare(
-        "SELECT bc.page AS match_page,
-                LEFT(bc.content, 300) AS snippet,
+        "SELECT bc.juz AS match_juz, bc.page AS match_page,
+                bc.content AS snippet,
                 MATCH(bc.content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
          FROM book_content bc
          WHERE bc.bkid = :bkid
@@ -1367,6 +1373,7 @@ function handleSearchContentInBook(): void {
     $bmeta->execute([':bkid' => $bkid]);
     $book = $bmeta->fetch(PDO::FETCH_ASSOC);
 
+    $terms = preg_split('/\s+/u', searchPhraseText($qRaw), -1, PREG_SPLIT_NO_EMPTY);
     $results = [];
     foreach ($pages as $page) {
         $results[] = [
@@ -1374,8 +1381,9 @@ function handleSearchContentInBook(): void {
             'title'         => $book['title']        ?? '',
             'author'        => $book['author']       ?? '',
             'category_name' => $book['category_name'] ?? '',
+            'match_juz'     => (int)$page['match_juz'],
             'match_page'    => (int)$page['match_page'],
-            'snippet'       => trim((string)($page['snippet'] ?? '')),
+            'snippet'       => extractSmartSnippet((string)($page['snippet'] ?? ''), $terms),
         ];
     }
 
@@ -1586,8 +1594,8 @@ function handleSearchAdvanced(): void {
                     $pairParams[$pg] = (int)$r['page'];
                 }
 
-                $step2Sql = "SELECT bc.bkid, bc.page AS match_page,
-                                    LEFT(bc.content, 400) AS content,
+                $step2Sql = "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page,
+                                    bc.content AS content,
                                     b.title, b.author, b.category_name
                              FROM book_content bc
                              JOIN books b ON b.bkid = bc.bkid
@@ -1662,8 +1670,8 @@ function handleSearchAdvanced(): void {
             $params[':off']  = $offset;
 
             $sql = "SELECT bc.bkid, b.title, b.author, b.category_name,
-                           bc.page AS match_page,
-                           LEFT(bc.content, 400) AS content,
+                           bc.juz AS match_juz, bc.page AS match_page,
+                           bc.content AS content,
                            MATCH(bc.content) AGAINST (:rel IN BOOLEAN MODE) AS relevance
                     FROM book_content bc
                     JOIN books b ON b.bkid = bc.bkid
@@ -1805,8 +1813,8 @@ function handleSearch(): void {
     // 3. Content
     $contOffset = ($contPage - 1) * $limit;
     $stmtCont = $pdo->prepare(
-        "SELECT bc.bkid, bc.page AS match_page, b.title, b.author, b.category_name,
-                LEFT(bc.content, 300) AS snippet
+        "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page, b.title, b.author, b.category_name,
+                bc.content AS snippet
          FROM book_content bc
          JOIN books b ON b.bkid = bc.bkid
          WHERE bc.content LIKE :lk
@@ -1818,6 +1826,12 @@ function handleSearch(): void {
     $stmtCont->bindValue(':off', $contOffset, PDO::PARAM_INT);
     $stmtCont->execute();
     $content = $stmtCont->fetchAll();
+
+    $terms = preg_split('/\s+/u', searchPhraseText($q), -1, PREG_SPLIT_NO_EMPTY);
+    $content = array_map(function($row) use ($terms) {
+        $row['snippet'] = extractSmartSnippet((string)($row['snippet'] ?? ''), $terms);
+        return $row;
+    }, $content);
 
     $stmtContCount = $pdo->prepare(
         "SELECT COUNT(*) FROM book_content WHERE content LIKE :lk"
