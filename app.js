@@ -1171,7 +1171,7 @@ function advancedContentCard(book) {
   const pageLabel = book.match_page ? `hal. ${book.match_page}` : '';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-3 cursor-pointer hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         onclick="navigate('/kitab?id=${book.bkid}&juz=${book.match_juz || 1}&page=${book.match_page || 1}&q=${encodeURIComponent(buildAdvancedSearchQuery())}')">
+         onclick="navigate('/kitab?id=${book.bkid}&content_id=${book.match_id}&q=${encodeURIComponent(buildAdvancedSearchQuery())}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${snippetHtml ? `<div class="snippet-bar reader-text line-clamp-4">${snippetHtml}…</div>` : ''}
@@ -1690,7 +1690,7 @@ function contentCard(b, q) {
   const qParam    = q ? `&q=${encodeURIComponent(q)}` : '';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         onclick="navigate('/kitab?id=${b.bkid}${juzParam}${pageParam}${qParam}')">
+         onclick="navigate('/kitab?id=${b.bkid}&content_id=${b.match_id}&q=${encodeURIComponent(q)}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}…</div>` : ''}
@@ -1963,6 +1963,8 @@ async function renderDetail(params) {
   const jumpPage = parseInt(params.get('page') || '1') || 1;
   const jumpJuz  = parseInt(params.get('juz') || '1') || 1;
   const searchQ  = (params.get('q') || '').trim();
+  const contentId = parseInt(params.get('content_id') || '0');
+
   if (!id) { render404(); return; }
 
   // Reset reader
@@ -2129,7 +2131,11 @@ async function renderDetail(params) {
       initFontPanelEvents();
 
       // Open at jump page (from search result), with keyword highlight
-      loadReaderPage(readerState.bkid, jumpPage, searchQ, readerState.juz);
+      if (contentId > 0) {
+        loadReaderPage(readerState.bkid, 1, searchQ, 1, contentId);
+      } else {
+        loadReaderPage(readerState.bkid, jumpPage, searchQ, readerState.juz);
+      }
 
       // Juz selector
       $('#reader-juz-select')?.addEventListener('change', e => {
@@ -2196,7 +2202,7 @@ async function renderDetail(params) {
 // Load a single page of content into the reader
 // highlightQ: optional keyword to highlight in gold
 // juz: nomor juz (default dari readerState.juz)
-async function loadReaderPage(bkid, page, highlightQ = '', juz = 0) {
+async function loadReaderPage(bkid, page, highlightQ = '', juz = 0, contentId = 0) {
   const area  = $('#reader-area');
   const label = $('#reader-label');
   const inp   = $('#reader-page-input');
@@ -2221,9 +2227,16 @@ async function loadReaderPage(bkid, page, highlightQ = '', juz = 0) {
   </div>`;
 
   try {
-    const res = await apiFetch({ action: 'content', bkid, page, juz });
+    const res = await apiFetch({ action: 'content', bkid, page, juz, content_id: contentId });
 
     if (res.content) {
+      // If content_id was used, it resolved the correct page and juz for us
+      if (contentId > 0 && res.page) {
+        readerState.page = res.page;
+        readerState.juz  = res.juz;
+        page = res.page;
+        if (juzSel) juzSel.value = res.juz;
+      }
       const normalised = res.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
       area.innerHTML = `<div class="reader-text">${escHtml(normalised)}</div>`;
       const terms = parseSearchTerms(highlightQ);

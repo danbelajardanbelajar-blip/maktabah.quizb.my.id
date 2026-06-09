@@ -846,6 +846,20 @@ function handleContent(): void {
     $bkid = (int)($_GET['bkid'] ?? 0);
     $page = max(1, (int)($_GET['page'] ?? 1));
     $juz  = max(1, (int)($_GET['juz']  ?? 1));
+    $contentId = (int)($_GET['content_id'] ?? 0);
+
+    // Resolve content_id to bkid, juz, and its page offset
+    if ($contentId > 0) {
+        $st = $pdo->prepare("SELECT bkid, juz FROM book_content WHERE id = :id");
+        $st->execute([':id' => $contentId]);
+        if ($r = $st->fetch()) {
+            $bkid = (int)$r['bkid'];
+            $juz  = (int)$r['juz'];
+            $stOff = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE bkid = :b AND juz = :j AND id <= :id");
+            $stOff->execute([':b' => $bkid, ':j' => $juz, ':id' => $contentId]);
+            $page = (int)$stOff->fetchColumn();
+        }
+    }
 
     if ($bkid <= 0) { http_response_code(400); echo json_encode(['error' => 'Invalid bkid.']); return; }
 
@@ -1314,7 +1328,7 @@ function handleSearchContentInBook(): void {
 
     // Ambil halaman terbaik dalam kitab ini (top 3, ringan karena sudah di-filter bkid)
     $stmt = $pdo->prepare(
-        "SELECT bc.juz AS match_juz, bc.page AS match_page,
+        "SELECT bc.id AS match_id, bc.juz AS match_juz, bc.page AS match_page,
                 bc.content AS snippet,
                 MATCH(bc.content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
          FROM book_content bc
@@ -1345,6 +1359,7 @@ function handleSearchContentInBook(): void {
     $results = [];
     foreach ($pages as $page) {
         $results[] = [
+            'match_id'      => (int)$page['match_id'],
             'bkid'          => $bkid,
             'title'         => $book['title']        ?? '',
             'author'        => $book['author']       ?? '',
@@ -1471,7 +1486,7 @@ function handleSearchAdvanced(): void {
     $noCatFilter = $allCats || empty($cats);   // true = lewati filter kategori
 
     // --- Cache key ---
-    $cacheKey = 'adv4:' . hash('sha256', json_encode([
+    $cacheKey = 'adv5:' . hash('sha256', json_encode([
         'f' => $fields, 'c' => $cats, 'a' => $allCats, 's' => $samePage, 'p' => $page,
     ]));
 
@@ -1536,11 +1551,11 @@ function handleSearchAdvanced(): void {
             $s1Params          = $ftParams;
             $s1Params[':rel']  = $allFtRel;
 
-            $step1Sql = "SELECT bkid, juz, page,
+            $step1Sql = "SELECT id,
                                 MATCH(content) AGAINST (:rel IN BOOLEAN MODE) AS relevance
                          FROM book_content
                          WHERE $ftWhere
-                         ORDER BY relevance DESC, bkid ASC, juz ASC, page ASC
+                         ORDER BY relevance DESC, id ASC
                          LIMIT :lim OFFSET :off";
 
             $s1 = $pdo->prepare($step1Sql);
@@ -1552,37 +1567,26 @@ function handleSearchAdvanced(): void {
 
             if (!empty($topRows)) {
                 // Step 2: Ambil metadata + snippet hanya untuk baris terpilih (JOIN minimal)
-                $pairConds  = [];
-                $pairParams = [];
-                foreach ($topRows as $i => $r) {
-                    $bk = ':bk' . $i;
-                    $jz = ':jz' . $i;
-                    $pg = ':pg' . $i;
-                    $pairConds[]   = "(bc.bkid = $bk AND bc.juz = $jz AND bc.page = $pg)";
-                    $pairParams[$bk] = (int)$r['bkid'];
-                    $pairParams[$jz] = (int)$r['juz'];
-                    $pairParams[$pg] = (int)$r['page'];
-                }
+                $ids = array_map(fn($r) => (int)$r['id'], $topRows);
+                $inIds = implode(',', $ids);
 
-                $step2Sql = "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page,
+                $step2Sql = "SELECT bc.id AS match_id, bc.bkid, bc.juz AS match_juz, bc.page AS match_page,
                                     bc.content AS content,
                                     b.title, b.author, b.category_name
                              FROM book_content bc
                              JOIN books b ON b.bkid = bc.bkid
-                             WHERE " . implode(' OR ', $pairConds);
+                             WHERE bc.id IN ($inIds)";
 
-                $s2 = $pdo->prepare($step2Sql);
-                foreach ($pairParams as $k => $v) $s2->bindValue($k, $v, PDO::PARAM_INT);
-                $s2->execute();
+                $s2 = $pdo->query($step2Sql);
 
                 $byKey = [];
                 foreach ($s2->fetchAll() as $r) {
-                    $byKey[$r['bkid'] . '_' . $r['match_juz'] . '_' . $r['match_page']] = $r;
+                    $byKey[$r['match_id']] = $r;
                 }
 
                 // Kembalikan urutan relevansi dari Step 1
                 foreach ($topRows as $r) {
-                    $k = $r['bkid'] . '_' . $r['juz'] . '_' . $r['page'];
+                    $k = $r['id'];
                     if (!isset($byKey[$k])) continue;
                     $row             = $byKey[$k];
                     $row['snippet']  = extractSmartSnippet((string)($row['content'] ?? ''), $fields);
@@ -1592,7 +1596,7 @@ function handleSearchAdvanced(): void {
             }
 
             // COUNT — tanpa JOIN (hanya book_content + FULLTEXT index)
-            $countKey = 'advcnt4:' . hash('sha256', json_encode([
+            $countKey = 'advcnt5:' . hash('sha256', json_encode([
                 'f' => $fields, 'c' => [], 's' => $samePage,
             ]));
             $cc = $pdo->prepare(
@@ -1639,14 +1643,14 @@ function handleSearchAdvanced(): void {
             $params[':lim']  = $limit;
             $params[':off']  = $offset;
 
-            $sql = "SELECT bc.bkid, b.title, b.author, b.category_name,
+            $sql = "SELECT bc.id AS match_id, bc.bkid, b.title, b.author, b.category_name,
                            bc.juz AS match_juz, bc.page AS match_page,
                            bc.content AS content,
                            MATCH(bc.content) AGAINST (:rel IN BOOLEAN MODE) AS relevance
                     FROM book_content bc
                     JOIN books b ON b.bkid = bc.bkid
                     WHERE $fullWhere
-                    ORDER BY relevance DESC, b.title ASC, bc.page ASC
+                    ORDER BY relevance DESC, bc.id ASC
                     LIMIT :lim OFFSET :off";
 
             $stmt = $pdo->prepare($sql);
