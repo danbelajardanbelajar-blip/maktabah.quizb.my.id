@@ -1508,7 +1508,6 @@ function renderSearch(params) {
   searchState.contPage = 1;
 
   // Jika kembali ke query yang sama dengan hasil tersimpan:
-  // tampilkan skeleton tipis (untuk kategori & judul) + hasil konten dari cache
   const showSkeleton = newQ.length >= 2 && !sameQuery;
 
   app().innerHTML = `
@@ -1517,23 +1516,23 @@ function renderSearch(params) {
         <div class="relative group">
           <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/35 transition-colors group-focus-within:text-gold"></i>
           <input id="search-input" type="text" value="${escHtml(searchState.q)}"
-            placeholder="Cari kategori, judul, atau isi kitab…"
+            placeholder="Cari kata kunci pada isi ribuan kitab…"
             class="search-input-premium w-full pl-12 pr-12 py-4 rounded-2xl border border-gold/30 bg-white text-sm focus:outline-none focus:border-gold shadow-card" />
           <button id="search-clear" class="absolute right-4 top-1/2 -translate-y-1/2 text-primary/30 hover:text-primary transition-colors ${searchState.q ? '' : 'hidden'}">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
-        <p class="mt-3 text-xs text-primary/50">Pencarian premium: gunakan tanda kutip untuk frasa persis — hasil cepat, akurat, dan modern.</p>
+        <p class="mt-3 text-xs text-primary/50">Sistem pencarian modern: mencari isi halaman seluruh kitab secara instan dan menyeluruh.</p>
         <div class="mt-3 text-right">
           <a href="/search-advanced" data-route="/search-advanced" class="inline-flex items-center gap-2 text-sm font-semibold text-gold hover:text-gold-dark transition">
             <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
             Pencarian Lanjutan
           </a>
         </div>
-        <div id="search-stats" class="search-stats"></div>
+        <div id="search-stats" class="search-stats mt-4 text-center"></div>
       </div>
       <div id="search-results">
-        ${showSkeleton ? skeletonSearchSections() : (newQ.length >= 2 ? '' : emptySearchPrompt())}
+        ${showSkeleton ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${skeletonCards(6)}</div>` : (newQ.length >= 2 ? '' : emptySearchPrompt())}
       </div>
     </div>`;
 
@@ -1894,272 +1893,62 @@ function renderContPage(results, page, q, searching) {
   reicons();
 }
 
-async function execProgressiveContentSearch(q, token) {
-  const body = $('#sec-content-body');
-  if (!body) return;
-
-  // Reset state & cache untuk query baru
-  _contResults     = [];
-  _contCurrentPage = 1;
-  _contSearchQ     = q;
-  _src.q           = q;
-  _src.results     = [];
-  _src.page        = 1;
-  _src.complete    = false;
-  _src.checked     = 0;
-  _src.found       = 0;
-
-  // Tampilkan loading awal
-  body.innerHTML = progressContentShell('Memuat daftar kitab\u2026', 0, 0);
-  reicons();
-
-  // Ambil daftar semua kitab yang punya konten (simpan ke cache _src.books)
-  if (!_src.books.length) {
-    try {
-      const r = await fetch(API + '?' + new URLSearchParams({action:'search_books_with_content'}));
-      const res = await r.json();
-      _src.books = res.data || [];
-    } catch(e) {
-      if (_contentSearchToken === token) {
-        body.innerHTML = noResultBlock('Gagal memuat daftar kitab.');
-        patchHeader('sec-content','file-text','Isi Kitab', 0);
-      }
-      return;
-    }
-  }
-
-  if (!_src.books.length || _contentSearchToken !== token) return;
-
-  await _runContentSearch(q, token, _src.books, 0);
-}
-
-// Lanjutkan pencarian dari titik terakhir (setelah user kembali dari navigasi)
-async function _resumeProgressiveContentSearch(q, token) {
-  if (!_src.books.length) return;
-  await _runContentSearch(q, token, _src.books, _src.checked);
-}
-
-// Inti pencarian — bisa dimulai dari indeks mana saja dalam daftar kitab
-async function _runContentSearch(q, token, books, startAt) {
-  const total = books.length;
-  let found   = _src.found;
-  let checked = startAt;
-
-  // Jika query baru (startAt === 0): render container kosong stabil
-  if (startAt === 0) {
-    const body = $('#sec-content-body');
-    if (!body) return;
-    body.innerHTML = `
-      <div id="cont-progress-bar" class="mb-3">${progressContentShell('', 0, total)}</div>
-      <div id="cont-results-grid"></div>
-      <div id="cont-no-result" class="hidden">${noResultBlock('Tidak ada kecocokan pada isi kitab.')}</div>
-      <div id="cont-pagination"></div>`;
-    patchHeader('sec-content','file-text','Isi Kitab', null, true);
-    reicons();
-  }
-
-  // Iterasi per-kitab mulai dari startAt
-  for (let i = startAt; i < books.length; i++) {
-    if (_contentSearchToken !== token) return;
-
-    const book = books[i];  // alias untuk keterbacaan
-
-    // Update progress bar saja — tidak menyentuh grid
-    const progBar = document.getElementById('cont-progress-bar');
-    if (progBar) {
-      progBar.innerHTML = progressContentShell(
-        `Mencari di: <span style="font-family:'Amiri','Noto Naskh Arabic',serif;direction:rtl;unicode-bidi:plaintext;font-weight:600;color:#1a3a2a;">${escHtml(book.title)}</span>`,
-        checked, total
-      );
-    }
-
-    try {
-      const r   = await fetch(API + '?' + new URLSearchParams({action:'search_content_in_book', bkid: book.bkid, q}));
-      const res = await r.json();
-
-      if (_contentSearchToken !== token) return;
-
-      if (res.found && res.data && res.data.length) {
-        found++;
-        for (const item of res.data) {
-          _contResults.push(item);
-          _src.results.push(item); // simpan ke cache persisten
-        }
-
-        patchHeader('sec-content','file-text','Isi Kitab', _contResults.length, true);
-
-        if (_contCurrentPage === 1) {
-          appendContCards(res.data, q);
-          const noRes = document.getElementById('cont-no-result');
-          if (noRes) noRes.classList.add('hidden');
-        }
-
-        updateContPagination(_contResults.length, _contCurrentPage, true);
-      }
-    } catch(e) { /* lewati, lanjutkan */ }
-
-    checked++;
-    _src.checked = checked;  // simpan progres ke cache
-    _src.found   = found;
-
-    if (_contentSearchToken === token) {
-      await new Promise(r => setTimeout(r, found > 5 ? 150 : 80));
-    }
-  }
-
-  // ── Selesai ──
-  if (_contentSearchToken !== token) return;
-
-  // Hapus progress bar dengan fade (tidak menggoyangkan grid)
-  const progBar = document.getElementById('cont-progress-bar');
-  if (progBar) progBar.innerHTML = '';
-
-  if (!_contResults.length) {
-    const noRes = document.getElementById('cont-no-result');
-    if (noRes) noRes.classList.remove('hidden');
-    const pag = document.getElementById('cont-pagination');
-    if (pag) pag.innerHTML = '';
-  } else {
-    // Hanya update pagination (hapus "Masih mencari"); grid tidak disentuh
-    updateContPagination(_contResults.length, _contCurrentPage, false);
-  }
-
-  patchHeader('sec-content','file-text','Isi Kitab', _contResults.length, false);
-  reicons();
-
-  // Update search stats
-  const st = $('#search-stats');
-  if (st && !st.innerHTML.trim()) {
-    st.innerHTML = `<i data-lucide="check-circle" class="w-3 h-3 text-emerald-500"></i> Selesai \u2014 ${_contResults.length} halaman ditemukan`;
-    reicons();
-  }
-
-  // Tandai pencarian selesai
-  if (_contentSearchToken === token) _contentSearchToken = null;
-}
-
-// Navigasi paginasi hasil isi kitab (client-side) — full re-render aman
-window.goSearchContResultPage = function(p) {
-  _contCurrentPage = p;
-  _src.page = p;  // simpan ke cache agar direstored jika user navigasi
-  const stillSearching = _contentSearchToken !== null;
-  renderContPage(_contResults, p, _contSearchQ, stillSearching);
-  $('#sec-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-};
-
-
-
-// ── Progress shell for per-book search ───────────────────────
-function progressContentShell(label, done, total) {
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-  return `
-    <div style="background:rgba(26,58,42,.04);border:1px solid rgba(201,168,76,.18);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:8px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(26,58,42,.55);min-width:0;overflow:hidden;">
-          <span class="spin-ring" style="width:14px;height:14px;border-width:2px;flex-shrink:0;"></span>
-          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label || 'Mencari&hellip;'}</span>
-        </div>
-        <span style="font-size:11px;font-weight:700;color:#c9a84c;white-space:nowrap;">${done}/${total}</span>
-      </div>
-      <div style="width:100%;background:rgba(26,58,42,.10);border-radius:999px;height:4px;overflow:hidden;">
-        <div style="height:100%;background:#c9a84c;border-radius:999px;transition:width .3s ease;width:${pct}%;"></div>
-      </div>
-    </div>`;
-}
-
-// ── Main executor — 2 parallel + 1 progressive ────────────────
 async function execSearch() {
   const wrap = $('#search-results');
+  const stats = $('#search-stats');
   if (!wrap || searchState.q.length < 2) return;
 
   abortAll();
-  const q     = searchState.q;
-  const token = q + '_' + Date.now();
-  _contentSearchToken = token;
-  const t0    = performance.now();
+  const q = searchState.q;
   history.replaceState({}, '', '/search?q=' + encodeURIComponent(q));
 
-  // Render instant skeleton shells
-  wrap.innerHTML = `
-    <div id="sec-cat" class="mb-2">
-      ${sectionHeader('folder-open','Kategori', null, true)}
-      <div id="sec-cat-body"><div class="flex flex-wrap gap-2">
-        ${Array.from({length:5},()=>`<div class="skeleton h-9 w-28 rounded-full"></div>`).join('')}
-      </div></div>
-    </div>
-    ${sectionDivider()}
-    <div id="sec-books" class="mb-2">
-      ${sectionHeader('book-open','Judul Kitab', null, true)}
-      <div id="sec-books-body"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${skeletonCards(4)}</div></div>
-    </div>
-    ${sectionDivider()}
-    <div id="sec-content">
-      ${sectionHeader('file-text','Isi Kitab', null, true)}
-      <div id="sec-content-body"></div>
-    </div>`;
+  wrap.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${skeletonCards(6)}</div>`;
+  if (stats) {
+    stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencari…</span>`;
+  }
   reicons();
 
-  let fastDone = 0;
-  const onFastDone = () => {
-    if (++fastDone === 2) {
-      const ms = Math.round(performance.now() - t0);
-      const st = $('#search-stats');
-      if (st) { st.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-gold"></i> ${ms} ms`; reicons(); }
+  const t0 = performance.now();
+  const params = { action: 'search_advanced', page: searchState.bookPage || 1, all_cats: '1', q1: q };
+  
+  // Set array terms agar advancedContentCard dapat melakukan highlight kata dengan benar
+  searchAdvancedState.terms = [q, '', '', '', ''];
+
+  try {
+    const res = await apiFetch(params);
+    const ms = Math.round(performance.now() - t0);
+    const total = res.total || 0;
+    const page = res.page || 1;
+    const totalPages = res.total_pages || 1;
+
+    const perfBadge = res.cached
+      ? `<span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-600 font-semibold px-2 py-0.5 rounded-full"><i data-lucide="database" class="w-3 h-3"></i>Cache</span>`
+      : `<span class="inline-flex items-center gap-1 text-xs text-primary/40"><i data-lucide="zap" class="w-3 h-3 text-gold"></i>${ms} ms</span>`;
+
+    if (stats) {
+      stats.innerHTML = `<div class="flex flex-wrap items-center justify-center gap-2">
+        <span class="text-sm text-primary/60">Menemukan <strong>${total.toLocaleString('id-ID')}</strong> halaman untuk <strong>${escHtml(q)}</strong>.</span>
+        ${perfBadge}
+      </div>`;
     }
-  };
 
-  // 1. Kategori (parallel, cepat)
-  _abortCat = new AbortController();
-  fetch(API + '?' + new URLSearchParams({action:'search_categories', q}), {signal:_abortCat.signal})
-    .then(r=>r.json()).then(res => {
-      if ($('#search-input')?.value.trim() !== q) return;
-      patchHeader('sec-cat','folder-open','Kategori', res.data.length);
-      const body = $('#sec-cat-body');
-      if (!body) return;
-      body.innerHTML = res.data.length
-        ? `<div class="search-section-enter flex flex-wrap gap-2">
-            ${res.data.map((c,i)=>`<button class="cat-chip" style="animation-delay:${i*35}ms" onclick="navigate('/katalog?cat=${c.id}')">
-              <i data-lucide="folder" class="w-3.5 h-3.5 text-gold shrink-0"></i>
-              ${escHtml(c.name)}<span class="text-gold/80 text-xs font-bold">${c.book_count}</span>
-            </button>`).join('')}</div>`
-        : noResultBlock('Tidak ada kategori yang cocok.');
-      reicons();
-    }).catch(()=>{ const b=$('#sec-cat-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
-
-  // 2. Judul Kitab (parallel, cepat)
-  _abortBooks = new AbortController();
-  fetch(API + '?' + new URLSearchParams({action:'search_books', q, page:searchState.bookPage}), {signal:_abortBooks.signal})
-    .then(r=>r.json()).then(res => {
-      if ($('#search-input')?.value.trim() !== q) return;
-      patchHeader('sec-books','book-open','Judul Kitab', res.total);
-      const body = $('#sec-books-body');
-      if (!body) return;
-      body.innerHTML = res.data.length
-        ? `<div class="search-section-enter">
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>
-            ${paginationHtml(res.page, res.total_pages, 'goSearchBookPage')}</div>`
-        : noResultBlock('Tidak ada kitab yang cocok pada judul atau pengarang.');
-      reicons();
-    }).catch(()=>{ const b=$('#sec-books-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
-
-  // 3. Isi Kitab — progressive per-book (tidak memblok, dicicil)
-  execProgressiveContentSearch(q, token);
+    wrap.innerHTML = res.data.length
+      ? `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>
+         ${paginationHtml(page, totalPages, 'goSearchBookPage')}`
+      : `<div class="text-center py-20 text-primary/40">Maaf, tidak ditemukan halaman yang cocok dengan kata kunci tersebut.</div>`;
+    
+    reicons();
+  } catch (err) {
+    console.error('Search API error:', err);
+    wrap.innerHTML = `<p class="text-center py-20 text-sm text-red-500">Gagal memuat hasil pencarian. Silakan coba lagi.</p>`;
+    if (stats) stats.textContent = '';
+  }
 }
 
 window.goSearchBookPage = function(p) {
   searchState.bookPage = p;
-  const q = searchState.q, body = $('#sec-books-body');
-  if (body) body.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${skeletonCards(4)}</div>`;
-  _abortBooks = new AbortController();
-  fetch(API + '?' + new URLSearchParams({action:'search_books', q, page:p}), {signal:_abortBooks.signal})
-    .then(r=>r.json()).then(res => {
-      patchHeader('sec-books','book-open','Judul Kitab', res.total);
-      if (!body) return;
-      body.innerHTML = res.data.length
-        ? `<div class="search-section-enter"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>${paginationHtml(res.page,res.total_pages,'goSearchBookPage')}</div>`
-        : noResultBlock('Tidak ada hasil.');
-      reicons(); $('#sec-books')?.scrollIntoView({behavior:'smooth',block:'start'});
-    }).catch(()=>{});
+  execSearch();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 // ══════════════════════════════════════════════════════════════
