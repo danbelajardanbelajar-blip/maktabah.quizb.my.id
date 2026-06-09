@@ -327,48 +327,53 @@ function searchPhraseText(string $q): string {
 
 function booleanSearchTerm(string $q): string {
     $q = trim($q);
-    if ($q === '') {
-        return '';
-    }
-    if (isPhraseQuery($q) || preg_match('/\s+/u', $q)) {
+    if ($q === '') return '';
+    
+    // Jika sengaja diapit kutip, jadikan phrase search
+    if (isPhraseQuery($q)) {
         return '"' . ftEscape(searchPhraseText($q)) . '"';
     }
 
     $terms = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
     $parts = [];
     foreach ($terms as $term) {
-        $term = ftEscape($term);
-        if ($term === '') {
-            continue;
+        $clean = ftEscape($term);
+        if ($clean === '') continue;
+        
+        // Jika kata terlalu pendek (<=2 huruf), jangan paksakan wajib ada (+)
+        // karena jika MySQL innodb_ft_min_token_size = 3, kata pendek tidak di-index.
+        // Jika dipaksa '+', maka seluruh query boolean akan gagal.
+        if (mb_strlen($clean) <= 2) {
+            $parts[] = $clean . '*';
+        } else {
+            $parts[] = '+' . $clean . '*';
         }
-        $parts[] = '+' . $term . '*';
     }
 
-    return $parts ? implode(' ', $parts) : ftEscape($q) . '*';
+    return implode(' ', $parts);
 }
 
 function booleanSearchTermForAdvanced(string $q): string {
-    $q = trim($q);
-    if ($q === '') {
-        return '';
-    }
-    if (preg_match('/\s+/u', $q)) {
-        return '+"' . ftEscape($q) . '"';
-    }
-    return '+' . ftEscape($q) . '*';
+    return booleanSearchTerm($q);
 }
 
 function booleanQueryFromFieldsOr(array $fields): string {
     $parts = [];
     foreach ($fields as $field) {
         $field = trim($field);
-        if ($field === '') {
+        if ($field === '') continue;
+        
+        if (isPhraseQuery($field)) {
+            $parts[] = '"' . ftEscape(searchPhraseText($field)) . '"';
             continue;
         }
-        if (preg_match('/\s+/u', $field)) {
-            $parts[] = '"' . ftEscape($field) . '"';
-        } else {
-            $parts[] = ftEscape($field) . '*';
+
+        $terms = preg_split('/\s+/u', $field, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($terms as $term) {
+            $clean = ftEscape($term);
+            if ($clean !== '') {
+                $parts[] = $clean . '*';
+            }
         }
     }
     return implode(' ', $parts);
@@ -1531,11 +1536,11 @@ function handleSearchAdvanced(): void {
             $s1Params          = $ftParams;
             $s1Params[':rel']  = $allFtRel;
 
-            $step1Sql = "SELECT bkid, page,
+            $step1Sql = "SELECT bkid, juz, page,
                                 MATCH(content) AGAINST (:rel IN BOOLEAN MODE) AS relevance
                          FROM book_content
                          WHERE $ftWhere
-                         ORDER BY relevance DESC, bkid ASC, page ASC
+                         ORDER BY relevance DESC, bkid ASC, juz ASC, page ASC
                          LIMIT :lim OFFSET :off";
 
             $s1 = $pdo->prepare($step1Sql);
@@ -1551,9 +1556,11 @@ function handleSearchAdvanced(): void {
                 $pairParams = [];
                 foreach ($topRows as $i => $r) {
                     $bk = ':bk' . $i;
+                    $jz = ':jz' . $i;
                     $pg = ':pg' . $i;
-                    $pairConds[]   = "(bc.bkid = $bk AND bc.page = $pg)";
+                    $pairConds[]   = "(bc.bkid = $bk AND bc.juz = $jz AND bc.page = $pg)";
                     $pairParams[$bk] = (int)$r['bkid'];
+                    $pairParams[$jz] = (int)$r['juz'];
                     $pairParams[$pg] = (int)$r['page'];
                 }
 
@@ -1570,12 +1577,12 @@ function handleSearchAdvanced(): void {
 
                 $byKey = [];
                 foreach ($s2->fetchAll() as $r) {
-                    $byKey[$r['bkid'] . '_' . $r['match_page']] = $r;
+                    $byKey[$r['bkid'] . '_' . $r['match_juz'] . '_' . $r['match_page']] = $r;
                 }
 
                 // Kembalikan urutan relevansi dari Step 1
                 foreach ($topRows as $r) {
-                    $k = $r['bkid'] . '_' . $r['page'];
+                    $k = $r['bkid'] . '_' . $r['juz'] . '_' . $r['page'];
                     if (!isset($byKey[$k])) continue;
                     $row             = $byKey[$k];
                     $row['snippet']  = extractSmartSnippet((string)($row['content'] ?? ''), $fields);
