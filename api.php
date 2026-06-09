@@ -68,19 +68,49 @@ function loadComposerAutoloader(): bool {
     return $loaded = false;
 }
 
+/**
+ * Buat nama file yang aman untuk download.
+ *
+ * • Karakter Arab/Unicode DIPERTAHANKAN (tidak diganti '_').
+ * • Karakter yang tidak aman untuk filesystem (/, \, :, *, ?, ", <, >, |, null)
+ *   diganti dengan '_'.
+ * • Spasi beruntun → satu spasi.
+ * • Fallback ke 'kitab' bila hasilnya kosong.
+ * • Maks 150 karakter (cukup untuk judul Arab panjang).
+ */
 function normalizeDownloadFilename(string $title): string {
-    $safe = preg_replace('/[^a-z0-9\-_\.]/i', '_', trim($title));
+    $title = trim($title);
+    // Ganti karakter yang tidak aman di filesystem — biarkan Unicode/Arab lewat
+    $safe  = preg_replace('/[\/\\\\:*?"<>|\x00]/', '_', $title);
+    // Kolaps spasi/underscore beruntun
+    $safe  = preg_replace('/[\s_]+/u', '_', $safe);
+    $safe  = trim($safe, '_');
     if ($safe === '') {
         $safe = 'kitab';
     }
-    return substr($safe, 0, 100);
+    return mb_substr($safe, 0, 150, 'UTF-8');
+}
+
+/**
+ * Buat header Content-Disposition yang benar untuk nama file UTF-8 (RFC 5987).
+ *
+ * Browser modern mengikuti parameter filename* (RFC 5987).
+ * Browser lama mendapat fallback filename ASCII.
+ */
+function contentDispositionHeader(string $filename): string {
+    // Fallback ASCII: ganti semua non-ASCII dengan '_'
+    $ascii = preg_replace('/[^\x20-\x7E]/', '_', $filename);
+    // RFC 5987 encoded
+    $encoded = rawurlencode($filename);
+    // Kirim keduanya — browser memilih yang terbaik
+    return "attachment; filename=\"{$ascii}\"; filename*=UTF-8''{$encoded}";
 }
 
 function fallbackDownloadTxt(array $book, array $pages): void {
-    $title = trim($book['title'] ?: 'kitab');
+    $title    = trim($book['title'] ?: 'kitab');
     $filename = normalizeDownloadFilename($title) . '.txt';
 
-    $lines = [];
+    $lines   = [];
     $lines[] = $book['title'] ?: 'Kitab tanpa judul';
     if (!empty($book['author'])) {
         $lines[] = 'Pengarang: ' . $book['author'];
@@ -99,7 +129,7 @@ function fallbackDownloadTxt(array $book, array $pages): void {
 
     header_remove('Content-Type');
     header('Content-Type: text/plain; charset=UTF-8');
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Disposition: ' . contentDispositionHeader($filename));
     echo implode("\n", $lines);
 }
 
@@ -528,62 +558,136 @@ function handleDownloadBook(): void {
 
     logDownloadBook($id, $book['title'] ?? 'Kitab tanpa judul');
 
-    $title = trim($book['title'] ?: 'kitab');
+    $title    = trim($book['title'] ?: 'kitab');
     $filename = normalizeDownloadFilename($title) . '.docx';
+
+    // Deteksi apakah judul/konten mengandung teks Arab
+    $isArabic = (bool)preg_match('/\p{Arabic}/u', $title);
 
     loadComposerAutoloader();
     if (class_exists('\PhpOffice\PhpWord\PhpWord')) {
         $phpWord = new \PhpOffice\PhpWord\PhpWord();
-        $section = $phpWord->addSection([
-            'pageSizeW' => 12240,
-            'pageSizeH' => 15840,
-            'orientation' => 'portrait',
-        ]);
 
-        $section->addText($book['title'] ?: 'Kitab tanpa judul', ['name' => 'Arial', 'size' => 18, 'bold' => true]);
+        // ── Font default dokumen ──────────────────────────────────
+        // Traditional Arabic / Arial Unicode MS mendukung karakter Arab
+        $phpWord->setDefaultFontName($isArabic ? 'Traditional Arabic' : 'Arial');
+        $phpWord->setDefaultFontSize(12);
+
+        // ── Section ──────────────────────────────────────────────
+        $sectionStyle = [
+            'pageSizeW'   => 12240,
+            'pageSizeH'   => 15840,
+            'orientation' => 'portrait',
+        ];
+        if ($isArabic) {
+            // Margin: kiri lebih lebar (Word RTL convention)
+            $sectionStyle['marginLeft']  = 1080;
+            $sectionStyle['marginRight'] = 1440;
+        }
+        $section = $phpWord->addSection($sectionStyle);
+
+        // ── Helper: paragraph style untuk RTL / LTR ──────────────
+        $pStyleRtl  = ['alignment' => 'right', 'bidi' => true];
+        $pStyleLtr  = ['alignment' => 'left'];
+        $pStyleBase = $isArabic ? $pStyleRtl : $pStyleLtr;
+
+        // ── Font styles ──────────────────────────────────────────
+        $fontTitle   = [
+            'name'  => $isArabic ? 'Traditional Arabic' : 'Arial',
+            'size'  => 18,
+            'bold'  => true,
+        ];
+        $fontMeta    = [
+            'name'   => $isArabic ? 'Traditional Arabic' : 'Arial',
+            'size'   => 11,
+            'italic' => true,
+        ];
+        $fontContent = [
+            'name'  => $isArabic ? 'Traditional Arabic' : 'Arial',
+            'size'  => $isArabic ? 14 : 12,  // Arab lebih besar agar lebih terbaca
+        ];
+        $fontPageHd  = array_merge($fontContent, ['bold' => true]);
+        $fontJuzHd   = array_merge($fontContent, ['bold' => true, 'size' => ($isArabic ? 16 : 14)]);
+
+        // ── Halaman judul ─────────────────────────────────────────
+        $section->addText(
+            htmlspecialchars($book['title'] ?: 'Kitab tanpa judul', ENT_XML1, 'UTF-8'),
+            $fontTitle,
+            $pStyleBase
+        );
         if (!empty($book['author'])) {
-            $section->addText('Pengarang: ' . $book['author'], ['name' => 'Arial', 'size' => 11, 'italic' => true]);
+            $section->addText(
+                htmlspecialchars(($isArabic ? 'المؤلف: ' : 'Pengarang: ') . $book['author'], ENT_XML1, 'UTF-8'),
+                $fontMeta,
+                $pStyleBase
+            );
         }
         if (!empty($book['cat_name'])) {
-            $section->addText('Kategori: ' . $book['cat_name'], ['name' => 'Arial', 'size' => 11, 'italic' => true]);
+            $section->addText(
+                htmlspecialchars(($isArabic ? 'التصنيف: ' : 'Kategori: ') . $book['cat_name'], ENT_XML1, 'UTF-8'),
+                $fontMeta,
+                $pStyleBase
+            );
         }
         $section->addTextBreak(1);
 
-        $contentStyle     = ['name' => 'Arial', 'size' => 12];
-        $pageHeadingStyle = ['name' => 'Arial', 'size' => 12, 'bold' => true];
-        $juzHeadingStyle  = ['name' => 'Arial', 'size' => 14, 'bold' => true];
-
+        // ── Konten halaman ────────────────────────────────────────
+        $maxJuz     = max(array_column($pageMeta, 'juz'));
         $currentJuz = 0;
+
         foreach ($pageMeta as $idx => $row) {
-            // Tambahkan heading juz saat berganti juz (hanya jika ada >1 juz)
+            // Heading juz saat berganti juz
             if ((int)$row['juz'] !== $currentJuz) {
                 $currentJuz = (int)$row['juz'];
                 if ($currentJuz > 1) {
                     $section->addPageBreak();
                 }
-                $maxJuz = max(array_column($pageMeta, 'juz'));
                 if ($maxJuz > 1) {
-                    $section->addText("=== Juz {$currentJuz} ===", $juzHeadingStyle);
+                    $juzLabel = $isArabic
+                        ? 'الجزء ' . $currentJuz
+                        : "=== Juz {$currentJuz} ===";
+                    $section->addText(
+                        htmlspecialchars($juzLabel, ENT_XML1, 'UTF-8'),
+                        $fontJuzHd,
+                        $pStyleBase
+                    );
                     $section->addTextBreak(1);
                 }
             }
-            $section->addText('--- Halaman ' . $row['page'] . ' ---', $pageHeadingStyle);
+
+            // Heading halaman
+            $pageLabel = $isArabic
+                ? 'صفحة ' . $row['page']
+                : '--- Halaman ' . $row['page'] . ' ---';
+            $section->addText(
+                htmlspecialchars($pageLabel, ENT_XML1, 'UTF-8'),
+                $fontPageHd,
+                $pStyleBase
+            );
+
+            // Konten baris per baris
             $lines = preg_split('/\r\n|\r|\n/', trim($row['content']));
             if ($lines === false || count($lines) === 0) {
-                $section->addText('', $contentStyle);
+                $section->addText('', $fontContent, $pStyleBase);
             } else {
                 foreach ($lines as $line) {
-                    $section->addText($line, $contentStyle);
+                    $section->addText(
+                        htmlspecialchars($line, ENT_XML1, 'UTF-8'),
+                        $fontContent,
+                        $pStyleBase
+                    );
                 }
             }
+
             if ($idx < count($pageMeta) - 1) {
                 $section->addPageBreak();
             }
         }
 
+        // ── Headers HTTP ──────────────────────────────────────────
         header_remove('Content-Type');
         header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Disposition: ' . contentDispositionHeader($filename));
         header('Cache-Control: no-store, must-revalidate');
 
         $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
