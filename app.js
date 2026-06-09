@@ -299,16 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   $('#search-bar-close')?.addEventListener('click', () => $('#search-bar').classList.add('hidden'));
 
-  let searchTimer;
-  $('#global-search-input')?.addEventListener('input', e => {
-    clearTimeout(searchTimer);
-    const q = e.target.value.trim();
-    if (q.length < 2) return;
-    searchTimer = setTimeout(() => {
-      $('#search-bar').classList.add('hidden');
-      navigate('/search?q=' + encodeURIComponent(q));
-    }, 500);
-  });
+  // Live search input listener removed, relying on Enter key.
   $('#global-search-input')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       const q = e.target.value.trim();
@@ -524,12 +515,7 @@ async function renderHome() {
   reicons();
 
   // Hero search
-  let timer;
-  $('#hero-search')?.addEventListener('input', e => {
-    clearTimeout(timer);
-    const q = e.target.value.trim();
-    if (q.length >= 2) timer = setTimeout(() => navigate('/search?q=' + encodeURIComponent(q)), 500);
-  });
+  // Live search input listener removed, relying on Enter key.
   $('#hero-search')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       const q = e.target.value.trim();
