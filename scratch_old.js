@@ -1,14 +1,14 @@
-/* =============================================================
-   Al-Maktabah As-Sunniyyah — SPA Core (app.js)
-   Vanilla JS · History API · Fetch API
+﻿/* =============================================================
+   Al-Maktabah As-Sunniyyah ظ¤ SPA Core (app.js)
+   Vanilla JS ┬╖ History API ┬╖ Fetch API
    ============================================================= */
 
 'use strict';
 
-// ── Config ────────────────────────────────────────────────────
+// ظ¤ظ¤ Config ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 const API = '/api.php';
 
-// ── Reader font configuration ─────────────────────────────────
+// ظ¤ظ¤ Reader font configuration ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 const FONTS_LATIN = [
   { key: 'Lato',            label: 'Lato' },
   { key: 'Inter',           label: 'Inter' },
@@ -22,16 +22,16 @@ const FONTS_LATIN = [
   { key: 'Source Sans 3',   label: 'Source Sans 3' },
 ];
 const FONTS_ARABIC = [
-  { key: 'Amiri',                label: 'أميري — Amiri' },
-  { key: 'Noto Naskh Arabic',    label: 'نوتو نسخ' },
-  { key: 'Cairo',                label: 'القاهرة — Cairo' },
-  { key: 'Tajawal',              label: 'تجوّل — Tajawal' },
-  { key: 'Scheherazade New',     label: 'شهرزاد' },
-  { key: 'Reem Kufi',            label: 'ريم كوفي' },
-  { key: 'Lateef',               label: 'لطيف — Lateef' },
-  { key: 'Aref Ruqaa',           label: 'عارف رقعة' },
-  { key: 'El Messiri',           label: 'المسيري' },
-  { key: 'IBM Plex Sans Arabic', label: 'IBM عربي' },
+  { key: 'Amiri',                label: '╪ث┘à┘è╪▒┘è ظ¤ Amiri' },
+  { key: 'Noto Naskh Arabic',    label: '┘┘ê╪ز┘ê ┘╪│╪«' },
+  { key: 'Cairo',                label: '╪د┘┘é╪د┘ç╪▒╪ر ظ¤ Cairo' },
+  { key: 'Tajawal',              label: '╪ز╪ش┘ê┘ّ┘ ظ¤ Tajawal' },
+  { key: 'Scheherazade New',     label: '╪┤┘ç╪▒╪▓╪د╪»' },
+  { key: 'Reem Kufi',            label: '╪▒┘è┘à ┘â┘ê┘┘è' },
+  { key: 'Lateef',               label: '┘╪╖┘è┘ ظ¤ Lateef' },
+  { key: 'Aref Ruqaa',           label: '╪╣╪د╪▒┘ ╪▒┘é╪╣╪ر' },
+  { key: 'El Messiri',           label: '╪د┘┘à╪│┘è╪▒┘è' },
+  { key: 'IBM Plex Sans Arabic', label: 'IBM ╪╣╪▒╪ذ┘è' },
 ];
 
 // Load saved preferences from localStorage
@@ -50,7 +50,7 @@ function applyReaderFont(save = true) {
 applyReaderFont(false);
 
 
-// ── Utility helpers ───────────────────────────────────────────
+// ظ¤ظ¤ Utility helpers ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 const $  = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const el = (tag, cls, html = '') => {
@@ -75,7 +75,7 @@ async function apiFetch(params) {
   return res.json();
 }
 
-// ── Helper untuk handle authentication errors ──────────────
+// ظ¤ظ¤ Helper untuk handle authentication errors ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function handleAuthError(error, fallbackMsg = 'Akses ditolak. Diperlukan hak admin.') {
   const errorMsg = error?.message || error?.toString() || '';
   const statusCode = error?.status || 0;
@@ -210,7 +210,7 @@ function logVisitorActivity(event, data = {}) {
 }
 window.logVisitorActivity = logVisitorActivity;
 
-// ── Router ────────────────────────────────────────────────────
+// ظ¤ظ¤ Router ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 // Rute admin didaftarkan oleh admin.js setelah DOM ready
 const routes = {
   '/':                renderHome,
@@ -223,7 +223,7 @@ const routes = {
   '/kitab':           renderDetail,
   '/privacy':         renderPrivacy,
   '/submit-file':     renderSubmitFile,
-  // ── Alias backward-compat (APK lama) ──────────────────────
+  // ظ¤ظ¤ Alias backward-compat (APK lama) ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
   '/catalog':         renderKategori,   // alias bahasa Inggris
   '/setting':         renderSettings,   // alias tanpa 's'
 };
@@ -266,12 +266,12 @@ function setActiveNav(base) {
   $$('.nav-link').forEach(a => {
     a.classList.toggle('active', a.getAttribute('data-route') === base);
   });
-  // Desktop Kategori dropdown button — active when on /kategori or /katalog
+  // Desktop Kategori dropdown button ظ¤ active when on /kategori or /katalog
   const catNavBtn = document.getElementById('nav-cat-btn');
   if (catNavBtn) {
     catNavBtn.classList.toggle('active', base === '/kategori' || base === '/katalog');
   }
-  // Mobile bottom nav — /search counts as "Cari" active
+  // Mobile bottom nav ظ¤ /search counts as "Cari" active
   $$('.bnav-item').forEach(a => {
     const route = a.getAttribute('data-route');
     const isActive = route === base || (base === '/search' && route === '/search');
@@ -285,7 +285,7 @@ function updateReaderMenus(base) {
   $('#navbar')?.classList.toggle('reader-hide-menu', hide);
 }
 
-// ── Navbar behaviours ─────────────────────────────────────────
+// ظ¤ظ¤ Navbar behaviours ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 window.addEventListener('scroll', () => {
   $('#navbar')?.classList.toggle('scrolled', window.scrollY > 20);
 });
@@ -299,7 +299,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   $('#search-bar-close')?.addEventListener('click', () => $('#search-bar').classList.add('hidden'));
 
-  // Live search input listener removed, relying on Enter key.
+  let searchTimer;
+  $('#global-search-input')?.addEventListener('input', e => {
+    clearTimeout(searchTimer);
+    const q = e.target.value.trim();
+    if (q.length < 2) return;
+    searchTimer = setTimeout(() => {
+      $('#search-bar').classList.add('hidden');
+      navigate('/search?q=' + encodeURIComponent(q));
+    }, 500);
+  });
   $('#global-search-input')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       const q = e.target.value.trim();
@@ -311,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showUpdateNoticeIfNeeded();
 });
 
-// ── Skeleton helpers ──────────────────────────────────────────
+// ظ¤ظ¤ Skeleton helpers ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function skeletonCards(n = 8) {
   return Array.from({ length: n }, () =>
     `<div class="bg-white rounded-2xl shadow-card p-4 space-y-3">
@@ -322,15 +331,15 @@ function skeletonCards(n = 8) {
   ).join('');
 }
 
-// ── Shared: Book Card ─────────────────────────────────────────
+// ظ¤ظ¤ Shared: Book Card ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function bookCard(b) {
-  const title  = b.title  || 'بدون عنوان';
-  const author = b.author || 'مجهول';
+  const title  = b.title  || '╪ذ╪»┘ê┘ ╪╣┘┘ê╪د┘';
+  const author = b.author || '┘à╪ش┘ç┘ê┘';
   const cat    = b.category_name || '';
   const pages  = b.pages  ? b.pages + ' hal.' : '';
   const totalJuz   = b.total_juz || 1;
   const fmtBadge   = totalJuz > 1
-    ? `<span class="dl-fmt-badge dl-fmt-zip">ZIP · ${totalJuz} juz</span>`
+    ? `<span class="dl-fmt-badge dl-fmt-zip">ZIP ┬╖ ${totalJuz} juz</span>`
     : `<span class="dl-fmt-badge dl-fmt-docx">DOCX</span>`;
   const dlTitle    = totalJuz > 1
     ? `Unduh ${totalJuz} file DOCX dalam ZIP`
@@ -360,7 +369,7 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Pagination ────────────────────────────────────────────────
+// ظ¤ظ¤ Pagination ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function paginationHtml(current, total, onClickFn) {
   if (total <= 1) return '';
   const pages = [];
@@ -375,80 +384,32 @@ function paginationHtml(current, total, onClickFn) {
   }
   const btnBase = 'w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors';
   const btns = pages.map(p => p === '...'
-    ? `<span class="${btnBase} text-primary/40">…</span>`
+    ? `<span class="${btnBase} text-primary/40">ظخ</span>`
     : `<button onclick="${onClickFn}(${p})"
          class="${btnBase} ${p === current ? 'bg-primary text-white' : 'bg-white text-primary hover:bg-cream-dark border border-gold/20'}">${p}</button>`
   ).join('');
   return `<div class="flex items-center justify-center gap-1 mt-8 flex-wrap">${btns}</div>`;
 }
 
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 //  PAGE: HOME
-// ══════════════════════════════════════════════════════════════
-// ── Recently Opened Books (localStorage) ─────────────────────
-const RECENT_KEY      = 'maktabah_recent_opened';
-const RECENT_MAX      = 8;
-
-function getRecentlyOpened() {
-  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
-  catch { return []; }
-}
-
-function saveToRecentlyOpened(book) {
-  try {
-    const list = getRecentlyOpened().filter(b => String(b.id) !== String(book.id));
-    list.unshift({ ...book, openedAt: Date.now() });
-    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX)));
-  } catch { /* ignore storage errors */ }
-}
-
-function recentBookCard(item) {
-  const timeAgo = (() => {
-    const diff = Date.now() - (item.openedAt || 0);
-    const m = Math.floor(diff / 60000);
-    const h = Math.floor(diff / 3600000);
-    const d = Math.floor(diff / 86400000);
-    if (m < 1)  return 'Baru saja';
-    if (m < 60) return `${m} menit lalu`;
-    if (h < 24) return `${h} jam lalu`;
-    if (d < 7)  return `${d} hari lalu`;
-    return new Date(item.openedAt).toLocaleDateString('id-ID', {day:'numeric',month:'short'});
-  })();
-  return `
-    <div class="book-card bg-white rounded-2xl shadow-card overflow-hidden cursor-pointer relative group"
-         onclick="navigate('/kitab?id=${item.id}')">
-      <!-- Time badge -->
-      <div class="absolute top-2 right-2 z-10">
-        <span style="font-size:10px;background:rgba(26,58,42,.72);color:rgba(212,197,160,.9);padding:2px 7px;border-radius:999px;backdrop-filter:blur(4px);white-space:nowrap;">
-          ${escHtml(timeAgo)}
-        </span>
-      </div>
-      <div class="hero-bg p-5 flex items-center justify-center min-h-[90px]">
-        <div class="arabic text-white text-center font-bold leading-snug text-lg line-clamp-3">${escHtml(item.title)}</div>
-      </div>
-      <div class="p-3">
-        <div class="text-xs text-primary/55 truncate">${escHtml(item.author || '')}</div>
-        ${item.cat ? `<span class="mt-1 inline-block text-[10px] px-2 py-0.5 rounded-full bg-gold/10 text-gold-dark font-medium">${escHtml(item.cat)}</span>` : ''}
-      </div>
-    </div>`;
-}
-
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 async function renderHome() {
   app().innerHTML = `
     <!-- Hero -->
     <section class="hero-bg text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
-        <div class="arabic text-gold text-4xl md:text-6xl font-bold mb-3 leading-tight">المكتبة السنية</div>
+        <div class="arabic text-gold text-4xl md:text-6xl font-bold mb-3 leading-tight">╪د┘┘à┘â╪ز╪ذ╪ر ╪د┘╪│┘┘è╪ر</div>
         <p class="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto">Perpustakaan digital Islam</p>
         <!-- Search -->
         <div class="max-w-xl mx-auto relative">
           <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/40"></i>
-          <input id="hero-search" type="text" placeholder="Cari teks, judul atau pengarang kitab…"
+          <input id="hero-search" type="text" placeholder="Cari judul atau pengarang kitabظخ"
             class="w-full pl-12 pr-4 py-4 rounded-2xl text-ink text-sm bg-white shadow-xl focus:outline-none focus:ring-2 focus:ring-gold/50 transition-all" />
         </div>
         <!-- stats -->
         <div id="hero-stats" class="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-white/50">
-          <span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> Memuat statistik…</span>
+          <span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> Memuat statistikظخ</span>
         </div>
       </div>
       <div class="gold-line"></div>
@@ -469,23 +430,18 @@ async function renderHome() {
       </section>
     </div>
 
-    <!-- Kitab yang Baru Saja Dibuka -->
+    <!-- Latest Kitab -->
     <div class="gold-line"></div>
     <section class="w-full bg-cream-dark py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
-              <i data-lucide="history" class="w-4 h-4 text-gold"></i>
-            </div>
-            <h2 class="text-xl font-bold text-primary">Kitab yang Baru Saja Dibuka</h2>
-          </div>
+          <h2 class="text-xl font-bold text-primary">Kitab Terbaru</h2>
           <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
-            Jelajahi Katalog <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
         </div>
-        <div id="recent-opened-grid">
-          ${skeletonCards(4)}
+        <div id="latest-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          ${skeletonCards(8)}
         </div>
       </div>
     </section>
@@ -515,7 +471,12 @@ async function renderHome() {
   reicons();
 
   // Hero search
-  // Live search input listener removed, relying on Enter key.
+  let timer;
+  $('#hero-search')?.addEventListener('input', e => {
+    clearTimeout(timer);
+    const q = e.target.value.trim();
+    if (q.length >= 2) timer = setTimeout(() => navigate('/search?q=' + encodeURIComponent(q)), 500);
+  });
   $('#hero-search')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       const q = e.target.value.trim();
@@ -549,31 +510,14 @@ async function renderHome() {
     } catch { /* abaikan jika gagal */ }
   })();
 
-  // Load kitab yang baru saja dibuka (dari localStorage)
-  (() => {
-    const recent = getRecentlyOpened();
-    const grid   = document.getElementById('recent-opened-grid');
-    if (!grid) return;
-    if (!recent.length) {
-      grid.innerHTML = `
-        <div class="col-span-full flex flex-col items-center justify-center gap-3 py-10 text-center">
-          <div class="w-14 h-14 rounded-2xl bg-primary/6 flex items-center justify-center">
-            <i data-lucide="book-open" class="w-7 h-7 text-primary/30"></i>
-          </div>
-          <p class="text-primary/45 text-sm">Belum ada kitab yang dibuka.</p>
-          <a href="/katalog" data-route="/katalog"
-             class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-light transition">
-            <i data-lucide="search" class="w-3.5 h-3.5"></i> Jelajahi Katalog
-          </a>
-        </div>`;
-      reicons();
-      return;
-    }
-    grid.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-      ${recent.map(item => recentBookCard(item)).join('')}
-    </div>`;
-    reicons();
-  })();
+  // Load latest
+  try {
+    const res = await apiFetch({ action: 'latest', limit: 8 });
+    $('#latest-grid').innerHTML = res.data.map(bookCard).join('') || '<p class="text-primary/50 col-span-full text-center py-8">Belum ada kitab.</p>';
+  } catch(e) { 
+    if (handleAuthError(e)) return;
+    $('#latest-grid').innerHTML = '<p class="text-red-500 col-span-full text-sm text-center py-8">Gagal memuat kitab.</p>'; 
+  }
 
   // Load statistics
   try {
@@ -588,15 +532,15 @@ async function renderHome() {
     reicons();
   } catch(e) { 
     if (handleAuthError(e)) return;
-    $('#hero-stats').innerHTML = `<span class="text-gold/50 text-xs">Statistik sedang dimuat…</span>`;
+    $('#hero-stats').innerHTML = `<span class="text-gold/50 text-xs">Statistik sedang dimuatظخ</span>`;
   }
 
   reicons();
 }
 
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 //  PAGE: KATALOG
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 let katalogState = { page: 1, cat: '' };
 
 async function renderKatalog(params) {
@@ -673,9 +617,9 @@ window.goKatalogPage = function(p) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 //  PAGE: KATEGORI  (daftar kategori + kitab per-kategori)
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 let kategoriState = { selectedCat: null, catName: '', page: 1 };
 
 async function renderKategori(params) {
@@ -694,7 +638,7 @@ async function renderKategori(params) {
     return;
   }
 
-  // ── Tampilan daftar semua kategori ──────────────────────────
+  // ظ¤ظ¤ Tampilan daftar semua kategori ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
   app().innerHTML = `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <!-- Header -->
@@ -772,12 +716,12 @@ async function renderKategoriBuku() {
           Kategori
         </button>
         <i data-lucide="chevron-right" class="w-4 h-4 text-primary/30"></i>
-        <span id="kat-buku-title" class="text-sm font-semibold text-primary">Memuat…</span>
+        <span id="kat-buku-title" class="text-sm font-semibold text-primary">Memuatظخ</span>
       </div>
       <!-- Header -->
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 id="kat-buku-h1" class="text-2xl font-bold text-primary">Memuat…</h1>
+          <h1 id="kat-buku-h1" class="text-2xl font-bold text-primary">Memuatظخ</h1>
           <p class="text-primary/50 text-sm mt-1">Kitab-kitab dalam kategori ini</p>
         </div>
       </div>
@@ -832,25 +776,25 @@ window.goKategoriBukuPage = function(p) {
 window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 //  PAGE: SETTINGS
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 function renderSettings() {
   const FONTS_LAT = [
     'Lato','Inter','Roboto','Open Sans','Poppins',
     'Nunito','Raleway','Merriweather','Playfair Display','Source Sans 3',
   ];
   const FONTS_AR = [
-    { k: 'Amiri',                l: 'أميري — Amiri' },
-    { k: 'Noto Naskh Arabic',    l: 'نوتو نسخ' },
-    { k: 'Cairo',                l: 'القاهرة — Cairo' },
-    { k: 'Tajawal',              l: 'تجوّل — Tajawal' },
-    { k: 'Scheherazade New',     l: 'شهرزاد' },
-    { k: 'Reem Kufi',            l: 'ريم كوفي' },
-    { k: 'Lateef',               l: 'لطيف — Lateef' },
-    { k: 'Aref Ruqaa',           l: 'عارف رقعة' },
-    { k: 'El Messiri',           l: 'المسيري' },
-    { k: 'IBM Plex Sans Arabic', l: 'IBM عربي' },
+    { k: 'Amiri',                l: '╪ث┘à┘è╪▒┘è ظ¤ Amiri' },
+    { k: 'Noto Naskh Arabic',    l: '┘┘ê╪ز┘ê ┘╪│╪«' },
+    { k: 'Cairo',                l: '╪د┘┘é╪د┘ç╪▒╪ر ظ¤ Cairo' },
+    { k: 'Tajawal',              l: '╪ز╪ش┘ê┘ّ┘ ظ¤ Tajawal' },
+    { k: 'Scheherazade New',     l: '╪┤┘ç╪▒╪▓╪د╪»' },
+    { k: 'Reem Kufi',            l: '╪▒┘è┘à ┘â┘ê┘┘è' },
+    { k: 'Lateef',               l: '┘╪╖┘è┘ ظ¤ Lateef' },
+    { k: 'Aref Ruqaa',           l: '╪╣╪د╪▒┘ ╪▒┘é╪╣╪ر' },
+    { k: 'El Messiri',           l: '╪د┘┘à╪│┘è╪▒┘è' },
+    { k: 'IBM Plex Sans Arabic', l: 'IBM ╪╣╪▒╪ذ┘è' },
   ];
 
   // Baca settings saat ini
@@ -861,7 +805,7 @@ function renderSettings() {
 
   const isDark = cur.theme === 'dark';
 
-  /* ── helper render chip ── */
+  /* ظ¤ظ¤ helper render chip ظ¤ظ¤ */
   const latChips = FONTS_LAT.map(f => `
     <button class="font-chip${cur.latin === f ? ' active' : ''}"
       data-key="${f}" style="font-family:'${f}',sans-serif"
@@ -874,7 +818,7 @@ function renderSettings() {
       onclick="window._sdwSetArabic('${f.k}'); renderSettingsRefresh()"
     >${f.l}</button>`).join('');
 
-  /* ── card helper ── */
+  /* ظ¤ظ¤ card helper ظ¤ظ¤ */
   const card = (icon, label, sub, body) => `
     <div class="bg-white rounded-2xl border border-gold/18 p-5 mb-4 shadow-card">
       <div class="flex items-center gap-3 mb-4">
@@ -932,13 +876,13 @@ function renderSettings() {
           <span class="text-sm text-primary/50" style="font-size:20px">A</span>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-xs text-primary/40">14px — 28px</span>
+          <span class="text-xs text-primary/40">14px ظ¤ 28px</span>
           <span id="pg-size-lbl" class="text-sm font-bold text-gold">${cur.size}px</span>
         </div>
         <div class="mt-4 p-3 rounded-xl bg-cream border border-gold/15">
           <p id="pg-preview" class="reader-text text-primary/70 leading-relaxed text-center arabic"
              style="font-size:${cur.size}px">
-            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            ╪ذ┘╪│┘ْ┘à┘ ╪د┘┘┘┘ّ┘ç┘ ╪د┘╪▒┘┘ّ╪ص┘ْ┘à┘┘░┘┘ ╪د┘╪▒┘┘ّ╪ص┘┘è┘à┘
           </p>
         </div>
       `)}
@@ -992,36 +936,18 @@ window.renderSettingsRefresh = function() {
   if (location.pathname === '/settings') renderSettings();
 };
 
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 //  PAGE: SEARCH
 
 
 // Per-section abort controllers + progressive content search token
-let _abortCat = null, _abortBooks = null, _abortCont = null;
+let _abortCat = null, _abortBooks = null;
 let _contentSearchToken = null; // token string to cancel progressive search
 function abortAll() {
-  [_abortCat, _abortBooks, _abortCont].forEach(c => { try { c && c.abort(); } catch(_){} });
-  _abortCat = _abortBooks = _abortCont = null;
-  // Cancel progressive content search — tapi SIMPAN progres ke cache dulu
+  [_abortCat, _abortBooks].forEach(c => { try { c && c.abort(); } catch(_){} });
+  _abortCat = _abortBooks = null;
+  // Cancel any in-progress progressive content search
   _contentSearchToken = null;
-}
-
-// ── Cache pencarian persisten (bertahan saat navigasi) ────────
-// Dibersihkan hanya ketika query berubah atau user tekan clear.
-const _src = {
-  q        : '',     // query yang di-cache
-  results  : [],     // semua hasil yang ditemukan
-  page     : 1,      // halaman terakhir dilihat user
-  complete : false,  // true = semua kitab sudah diperiksa
-  books    : [],     // daftar semua kitab (dari API, di-cache)
-  checked  : 0,      // berapa kitab sudah dicek
-  found    : 0,      // berapa kitab yang ada hasilnya
-};
-
-function _srcClear() {
-  _src.q = ''; _src.results = []; _src.page = 1;
-  _src.complete = false; _src.books = [];
-  _src.checked  = 0; _src.found = 0;
 }
 
 // searchState declared here (used by renderSearch, execSearch, pagination)
@@ -1037,23 +963,6 @@ const searchAdvancedState = {
 
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function buildArabicRegexStr(term) {
-  const diacritics = '[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\u06DF-\\u06E8\\u06EA-\\u06ED]*';
-  let result = '';
-  for (let i = 0; i < term.length; i++) {
-    const char = term[i];
-    if (/\\s/.test(char)) {
-      // Collapse multiple spaces into one space matcher
-      if (!result.endsWith('\\s+')) {
-        result += '\\s+';
-      }
-    } else {
-      result += escapeRegex(char) + diacritics;
-    }
-  }
-  return result;
 }
 
 function parseSearchTerms(q) {
@@ -1088,7 +997,7 @@ function highlightTextNodes(container, terms) {
     .map(t => t.replace(/^"|"$/g, '').trim())
     .filter(Boolean)
     .sort((a, b) => b.length - a.length)
-    .map(buildArabicRegexStr);
+    .map(escapeRegex);
   if (!escapedTerms.length) return false;
 
   const regex = new RegExp('(' + escapedTerms.join('|') + ')', 'gi');
@@ -1136,7 +1045,7 @@ function hlTextMulti(text, terms) {
     if (!term) return;
     const unquoted = term.replace(/^"|"$/g, '').trim();
     if (!unquoted) return;
-    patterns.push(buildArabicRegexStr(unquoted));
+    patterns.push(escapeRegex(unquoted));
   });
   if (!patterns.length) return escaped;
   const regex = new RegExp('(' + patterns.sort((a, b) => b.length - a.length).join('|') + ')', 'gi');
@@ -1182,16 +1091,16 @@ function buildAdvancedSearchQuery() {
 }
 
 function advancedContentCard(book) {
-  const titleHtml = hlTextMulti(book.title || 'بدون عنوان', searchAdvancedState.terms);
+  const titleHtml = hlTextMulti(book.title || '╪ذ╪»┘ê┘ ╪╣┘┘ê╪د┘', searchAdvancedState.terms);
   const authorHtml = book.author ? hlTextMulti(book.author, searchAdvancedState.terms) : '';
   const snippetHtml = book.snippet ? hlTextMulti(book.snippet, searchAdvancedState.terms) : '';
   const pageLabel = book.match_page ? `hal. ${book.match_page}` : '';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-3 cursor-pointer hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         onclick="navigate('/kitab?id=${book.bkid}&content_id=${book.match_id}&q=${encodeURIComponent(buildAdvancedSearchQuery())}')">
+         onclick="navigate('/kitab?id=${book.bkid}&page=${book.match_page || 1}&q=${encodeURIComponent(buildAdvancedSearchQuery())}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
-      ${snippetHtml ? `<div class="snippet-bar reader-text line-clamp-4">${snippetHtml}…</div>` : ''}
+      ${snippetHtml ? `<div class="snippet-bar reader-text line-clamp-4">${snippetHtml}ظخ</div>` : ''}
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         <span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(book.category_name || '')}</span>
         ${pageLabel ? `<span class="text-xs text-gold font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${escHtml(pageLabel)}</span>` : ''}
@@ -1288,7 +1197,7 @@ async function execAdvancedSearch() {
   searchAdvancedState.page = Math.max(1, searchAdvancedState.page || 1);
   // Tampilkan indikator loading di stats bar
   if (stats) {
-    stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencari…</span>`;
+    stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencariظخ</span>`;
     reicons();
   }
 
@@ -1300,7 +1209,7 @@ async function execAdvancedSearch() {
   if (!searchAdvancedState.samePage) {
     params.same_page = '0';
   }
-  // Kirim all_cats=1 jika semua dipilih → API gunakan jalur cepat 2-step tanpa JOIN pada scan utama
+  // Kirim all_cats=1 jika semua dipilih ظْ API gunakan jalur cepat 2-step tanpa JOIN pada scan utama
   if (searchAdvancedState.allCats) {
     params.all_cats = '1';
   } else if (searchAdvancedState.cats.length) {
@@ -1438,7 +1347,7 @@ function renderSearchAdvanced(params) {
         if (input.checked) {
           if (!searchAdvancedState.cats.includes(input.value)) searchAdvancedState.cats.push(input.value);
         } else {
-          // Jika sebelumnya allCats dan user unchecks satu → beralih ke mode parsial
+          // Jika sebelumnya allCats dan user unchecks satu ظْ beralih ke mode parsial
           if (searchAdvancedState.allCats) {
             searchAdvancedState.allCats = false;
             searchAdvancedState.cats = categories
@@ -1448,7 +1357,7 @@ function renderSearchAdvanced(params) {
             searchAdvancedState.cats = searchAdvancedState.cats.filter(id => id !== input.value);
           }
         }
-        // Deteksi otomatis: jika semua centang → pakai allCats flag
+        // Deteksi otomatis: jika semua centang ظْ pakai allCats flag
         if (searchAdvancedState.cats.length === categories.length) {
           searchAdvancedState.allCats = true;
           searchAdvancedState.cats = [];
@@ -1459,7 +1368,7 @@ function renderSearchAdvanced(params) {
     });
   });
 
-  // "Tandai semua" → set allCats=true, cats=[] untuk efisiensi
+  // "Tandai semua" ظْ set allCats=true, cats=[] untuk efisiensi
   $('#adv-select-all')?.addEventListener('click', async () => {
     await getSearchAdvancedCategories();
     searchAdvancedState.allCats = true;
@@ -1513,19 +1422,11 @@ function renderSearchAdvanced(params) {
   }
 }
 
-// ── Render search page ───────────────────────────────────────
+// ظ¤ظ¤ Render search page ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function renderSearch(params) {
-  const newQ = params.get('q') || '';
-
-  // Deteksi apakah ini navigasi kembali ke query yang sama
-  const sameQuery = false; // caching is now handled by the browser/API
-
-  searchState.q        = newQ;
+  searchState.q        = params.get('q') || '';
   searchState.bookPage = 1;
   searchState.contPage = 1;
-
-  // Jika kembali ke query yang sama dengan hasil tersimpan:
-  const showSkeleton = newQ.length >= 2;
 
   app().innerHTML = `
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -1533,66 +1434,52 @@ function renderSearch(params) {
         <div class="relative group">
           <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/35 transition-colors group-focus-within:text-gold"></i>
           <input id="search-input" type="text" value="${escHtml(searchState.q)}"
-            placeholder="Cari kata kunci pada isi ribuan kitab…"
-            class="search-input-premium w-full pl-12 pr-24 py-4 rounded-2xl border border-gold/30 bg-white text-sm focus:outline-none focus:border-gold shadow-card" />
-          <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <button id="search-clear" class="p-2 text-primary/30 hover:text-primary transition-colors ${searchState.q ? '' : 'hidden'}" title="Hapus pencarian">
-              <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-            <button id="search-btn" class="p-2 bg-gold text-primary rounded-xl hover:bg-gold-light transition-colors shadow-sm" title="Mulai pencarian">
-              <i data-lucide="search" class="w-4 h-4"></i>
-            </button>
-          </div>
+            placeholder="Cari kategori, judul, atau isi kitabظخ"
+            class="search-input-premium w-full pl-12 pr-12 py-4 rounded-2xl border border-gold/30 bg-white text-sm focus:outline-none focus:border-gold shadow-card" />
+          <button id="search-clear" class="absolute right-4 top-1/2 -translate-y-1/2 text-primary/30 hover:text-primary transition-colors ${searchState.q ? '' : 'hidden'}">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
         </div>
-        <p class="mt-3 text-xs text-primary/50">Sistem pencarian modern: mencari isi halaman seluruh kitab secara instan dan menyeluruh.</p>
+        <p class="mt-3 text-xs text-primary/50">Pencarian premium: gunakan tanda kutip untuk frasa persis ظ¤ hasil cepat, akurat, dan modern.</p>
         <div class="mt-3 text-right">
           <a href="/search-advanced" data-route="/search-advanced" class="inline-flex items-center gap-2 text-sm font-semibold text-gold hover:text-gold-dark transition">
             <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
             Pencarian Lanjutan
           </a>
         </div>
-        <div id="search-stats" class="search-stats mt-4 text-center"></div>
+        <div id="search-stats" class="search-stats"></div>
       </div>
       <div id="search-results">
-        ${showSkeleton ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${skeletonCards(6)}</div>` : (newQ.length >= 2 ? '' : emptySearchPrompt())}
+        ${searchState.q.length >= 2 ? skeletonSearchSections() : emptySearchPrompt()}
       </div>
     </div>`;
 
   reicons();
-  const inp = $('#search-input'), clr = $('#search-clear'), btn = $('#search-btn');
+  const inp = $('#search-input'), clr = $('#search-clear');
 
   clr?.addEventListener('click', () => {
     inp.value = ''; searchState.q = '';
-    abortAll();
-    _srcClear();  // hapus cache saat user clear
-    clr.classList.add('hidden');
+    abortAll(); clr.classList.add('hidden');
     $('#search-results').innerHTML = emptySearchPrompt();
     $('#search-stats').innerHTML = '';
     reicons(); inp.focus();
   });
 
+  let timer;
   inp?.addEventListener('input', e => {
+    clearTimeout(timer);
     searchState.q = e.target.value.trim();
     searchState.bookPage = searchState.contPage = 1;
     clr?.classList.toggle('hidden', !searchState.q);
-    if (!searchState.q) { abortAll(); $('#search-results').innerHTML = emptySearchPrompt(); $('#search-stats').innerHTML = ''; reicons(); }
+    if (searchState.q.length >= 2) timer = setTimeout(execSearch, 300);
+    else if (!searchState.q) { abortAll(); $('#search-results').innerHTML = emptySearchPrompt(); $('#search-stats').innerHTML = ''; reicons(); }
   });
+  inp?.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(timer); execSearch(); } });
 
-  const triggerSearch = () => {
-    if (searchState.q.length >= 2) {
-      execSearch();
-    }
-  };
-
-  inp?.addEventListener('keydown', e => { if (e.key === 'Enter') triggerSearch(); });
-  btn?.addEventListener('click', triggerSearch);
-
-  if (newQ.length >= 2) {
-    execSearch();
-  }
+  if (searchState.q.length >= 2) execSearch();
 }
 
-// ── Skeleton shells ──────────────────────────────────────────
+// ظ¤ظ¤ Skeleton shells ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function skeletonSearchSections() {
   const skel = n => `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${skeletonCards(n)}</div>`;
   const skelSec = (icon, label, bodyHtml) => `
@@ -1608,7 +1495,7 @@ function skeletonSearchSections() {
     sectionDivider() + skelSec('book-open','Judul Kitab', skel(4)) +
     sectionDivider() + skelSec('file-text','Isi Kitab', skel(4));
 }
-// ── Empty state (premium) ─────────────────────────────────────
+// ظ¤ظ¤ Empty state (premium) ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function emptySearchPrompt() {
   return `<div class="flex flex-col items-center py-20 gap-4">
     <div class="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center">
@@ -1619,14 +1506,14 @@ function emptySearchPrompt() {
   </div>`;
 }
 
-// ── Gold divider ──────────────────────────────────────────────
+// ظ¤ظ¤ Gold divider ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function sectionDivider() {
   return `<div class="flex items-center gap-3 my-8">
     <div class="flex-1 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent"></div>
   </div>`;
 }
 
-// ── Section header (supports loading spinner) ─────────────────
+// ظ¤ظ¤ Section header (supports loading spinner) ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function sectionHeader(icon, label, total, loading) {
   const badge = (total !== null && total !== undefined)
     ? `<span class="sec-badge">${Number(total).toLocaleString('id-ID')}</span>` : '';
@@ -1638,14 +1525,14 @@ function sectionHeader(icon, label, total, loading) {
   </div>`;
 }
 
-// ── No-result block ───────────────────────────────────────────
+// ظ¤ظ¤ No-result block ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function noResultBlock(msg) {
   return `<p class="text-primary/35 text-sm py-3 flex items-center gap-2">
     <i data-lucide="minus-circle" class="w-4 h-4 shrink-0"></i>${msg}
   </p>`;
 }
 
-// ── Keyword highlight helper ──────────────────────────────────
+// ظ¤ظ¤ Keyword highlight helper ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function hlText(text, q) {
   if (!q || !text) return escHtml(text || '');
   
@@ -1660,17 +1547,17 @@ function hlText(text, q) {
   return escHtml(text).replace(new RegExp('(' + safe + ')', 'gi'), '<mark class="hl">$1</mark>');
 }
 
-// ── Book card with stagger animation ─────────────────────────
+// ظ¤ظ¤ Book card with stagger animation ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function bookCardStagger(b, i, q = '') {
-  const title  = b.title || 'بدون عنوان';
-  const author = b.author || 'مجهول';
+  const title  = b.title || '╪ذ╪»┘ê┘ ╪╣┘┘ê╪د┘';
+  const author = b.author || '┘à╪ش┘ç┘ê┘';
   const cat    = b.category_name || '';
   const pages  = b.pages ? b.pages + ' hal.' : '';
   const titleHtml  = hlText(title, q);
   const authorHtml = author ? hlText(author, q) : '';
   const totalJuz   = b.total_juz || 1;
   const fmtBadge   = totalJuz > 1
-    ? `<span class="dl-fmt-badge dl-fmt-zip">ZIP·${totalJuz}j</span>`
+    ? `<span class="dl-fmt-badge dl-fmt-zip">ZIP┬╖${totalJuz}j</span>`
     : `<span class="dl-fmt-badge dl-fmt-docx">DOCX</span>`;
   const dlTitle    = totalJuz > 1 ? `Unduh ZIP (${totalJuz} juz)` : 'Unduh DOCX';
   return `
@@ -1697,9 +1584,9 @@ function bookCardStagger(b, i, q = '') {
     </div>`;
 }
 
-// ── Content card with snippet highlight ──────────────────────
+// ظ¤ظ¤ Content card with snippet highlight ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function contentCard(b, q) {
-  const title   = b.title         || 'بدون عنوان';
+  const title   = b.title         || '╪ذ╪»┘ê┘ ╪╣┘┘ê╪د┘';
   const author  = b.author        || '';
   const cat     = b.category_name || '';
   const snippet = b.snippet       || '';
@@ -1707,15 +1594,14 @@ function contentCard(b, q) {
   const titleHtml  = hlText(title, q);
   const authorHtml = author ? hlText(author, q) : '';
   const hlSnip  = snippet ? hlText(snippet, q) : '';
-  const juzParam  = b.match_juz ? `&juz=${b.match_juz}` : '';
   const pageParam = b.match_page ? `&page=${b.match_page}` : '';
   const qParam    = q ? `&q=${encodeURIComponent(q)}` : '';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         onclick="navigate('/kitab?id=${b.bkid}&content_id=${b.match_id}&q=${encodeURIComponent(q)}')">
+         onclick="navigate('/kitab?id=${b.bkid}${pageParam}${qParam}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
-      ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}…</div>` : ''}
+      ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}ظخ</div>` : ''}
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         <div class="flex items-center gap-2">
           ${cat  ? `<span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(cat)}</span>` : '<span></span>'}
@@ -1735,115 +1621,23 @@ function contentCard(b, q) {
 }
 
 
-// ── Patch a section header in place ──────────────────────────
+// ظ¤ظ¤ Patch a section header in place ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function patchHeader(secId, icon, label, total, loading = false) {
   const hdr = $(`#${secId} .sec-header`);
   if (hdr) { hdr.outerHTML = sectionHeader(icon, label, total, loading); reicons(); }
 }
 
-// ── Progressive content search — per-book, satu per satu ─────
+// ظ¤ظ¤ Progressive content search ظ¤ per-book, satu per satu ظ¤ظ¤ظ¤ظ¤ظ¤
 // Hasil dikumpulkan di _contResults, ditampilkan per halaman (CONT_PAGE_SIZE).
 // Pencarian tetap berjalan di latar belakang; halaman 1 diperbarui langsung.
 const CONT_PAGE_SIZE = 9;
-let _contResults     = [];   // semua hasil terkumpul (alias _src.results)
+let _contResults     = [];   // semua hasil terkumpul
 let _contCurrentPage = 1;    // halaman aktif yang sedang ditampilkan
 let _contSearchQ     = '';   // query terakhir (untuk highlight & navigasi)
 
-// ── Restore tampilan dari cache setelah kembali dari navigasi ─
-function _restoreSearchFromCache(q) {
-  const wrap = $('#search-results');
-  if (!wrap) return;
-
-  // Sync state dari cache
-  _contResults     = [..._src.results];
-  _contCurrentPage = _src.page;
-  _contSearchQ     = q;
-
-  // Rebuild skeletal UI dengan hasil cache (kategori & judul masih perlu di-fetch ulang)
-  wrap.innerHTML = `
-    <div id="sec-cat" class="mb-2">
-      ${sectionHeader('folder-open','Kategori', null, true)}
-      <div id="sec-cat-body"><div class="flex flex-wrap gap-2">
-        ${Array.from({length:3},()=>`<div class="skeleton h-9 w-28 rounded-full"></div>`).join('')}
-      </div></div>
-    </div>
-    ${sectionDivider()}
-    <div id="sec-books" class="mb-2">
-      ${sectionHeader('book-open','Judul Kitab', null, true)}
-      <div id="sec-books-body"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${skeletonCards(4)}</div></div>
-    </div>
-    ${sectionDivider()}
-    <div id="sec-content">
-      ${sectionHeader('file-text','Isi Kitab', _contResults.length, !_src.complete)}
-      <div id="sec-content-body">
-        <div id="cont-progress-bar" class="mb-3">
-          ${!_src.complete ? `<div style="font-size:12px;color:rgba(26,58,42,.45);display:flex;align-items:center;gap:6px;padding:6px 0">
-            <span class="spin-ring" style="width:13px;height:13px;border-width:2px;"></span>
-            Melanjutkan pencarian…
-          </div>` : ''}
-        </div>
-        <div id="cont-results-grid"></div>
-        <div id="cont-no-result" class="${_contResults.length ? 'hidden' : ''}">${noResultBlock('Tidak ada kecocokan pada isi kitab.')}</div>
-        <div id="cont-pagination"></div>
-      </div>
-    </div>`;
-  reicons();
-
-  // Render halaman cache langsung
-  if (_contResults.length) renderContPage(_contResults, _contCurrentPage, q, !_src.complete);
-
-  // Fetch ulang kategori & judul kitab (ringan, tidak perlu cache)
-  const t0 = performance.now();
-  let fastDone = 0;
-  const onFastDone = () => {
-    if (++fastDone === 2) {
-      const ms = Math.round(performance.now() - t0);
-      const st = $('#search-stats');
-      if (st) { st.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-gold"></i> ${ms} ms`; reicons(); }
-    }
-  };
-
-  _abortCat = new AbortController();
-  fetch(API + '?' + new URLSearchParams({action:'search_categories', q}), {signal:_abortCat.signal})
-    .then(r=>r.json()).then(res => {
-      patchHeader('sec-cat','folder-open','Kategori', res.data.length);
-      const body = $('#sec-cat-body');
-      if (!body) return;
-      body.innerHTML = res.data.length
-        ? `<div class="search-section-enter flex flex-wrap gap-2">
-            ${res.data.map((c,i)=>`<button class="cat-chip" style="animation-delay:${i*35}ms" onclick="navigate('/katalog?cat=${c.id}')">
-              <i data-lucide="folder" class="w-3.5 h-3.5 text-gold shrink-0"></i>
-              ${escHtml(c.name)}<span class="text-gold/80 text-xs font-bold">${c.book_count}</span>
-            </button>`).join('')}</div>`
-        : noResultBlock('Tidak ada kategori yang cocok.');
-      reicons();
-    }).catch(()=>{ const b=$('#sec-cat-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
-
-  _abortBooks = new AbortController();
-  fetch(API + '?' + new URLSearchParams({action:'search_books', q, page:1}), {signal:_abortBooks.signal})
-    .then(r=>r.json()).then(res => {
-      patchHeader('sec-books','book-open','Judul Kitab', res.total);
-      const body = $('#sec-books-body');
-      if (!body) return;
-      body.innerHTML = res.data.length
-        ? `<div class="search-section-enter">
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>
-            ${paginationHtml(res.page, res.total_pages, 'goSearchBookPage')}</div>`
-        : noResultBlock('Tidak ada kitab yang cocok pada judul atau pengarang.');
-      reicons();
-    }).catch(()=>{ const b=$('#sec-books-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
-
-  // Jika pencarian belum selesai, lanjutkan dari titik terakhir
-  if (!_src.complete) {
-    const token = q + '_' + Date.now();
-    _contentSearchToken = token;
-    _resumeProgressiveContentSearch(q, token);
-  }
-}
-
-// ── Tambahkan kartu baru ke page-1 grid tanpa menyentuh yg sudah ada ──
+// ظ¤ظ¤ Tambahkan kartu baru ke page-1 grid tanpa menyentuh yg sudah ada ظ¤ظ¤
 // Hanya dipanggil selama pencarian berjalan di halaman 1.
-// Menggunakan appendChild → tidak ada re-render, tidak ada jitter.
+// Menggunakan appendChild ظْ tidak ada re-render, tidak ada jitter.
 function appendContCards(newItems, q) {
   let inner = document.getElementById('cont-cards-inner');
   if (!inner) {
@@ -1868,7 +1662,7 @@ function appendContCards(newItems, q) {
   }
 }
 
-// ── Update area pagination saja (tidak menyentuh grid kartu) ────────
+// ظ¤ظ¤ Update area pagination saja (tidak menyentuh grid kartu) ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function updateContPagination(totalResults, currentPage, searching) {
   const pag = document.getElementById('cont-pagination');
   if (!pag) return;
@@ -1890,7 +1684,7 @@ function updateContPagination(totalResults, currentPage, searching) {
   reicons();
 }
 
-// ── Full re-render satu halaman (hanya dipanggil saat user klik nomor) ─
+// ظ¤ظ¤ Full re-render satu halaman (hanya dipanggil saat user klik nomor) ظ¤
 // Full innerHTML aman di sini karena user yang meminta pindah halaman.
 function renderContPage(results, page, q, searching) {
   const grid = document.getElementById('cont-results-grid');
@@ -1915,16 +1709,172 @@ function renderContPage(results, page, q, searching) {
   reicons();
 }
 
+async function execProgressiveContentSearch(q, token) {
+  const body = $('#sec-content-body');
+  if (!body) return;
+
+  // Reset state
+  _contResults     = [];
+  _contCurrentPage = 1;
+  _contSearchQ     = q;
+
+  // Tampilkan loading awal
+  body.innerHTML = progressContentShell('Memuat daftar kitab\u2026', 0, 0);
+  reicons();
+
+  // 1. Ambil daftar semua kitab yang punya konten (ringan, di-cache 1 jam)
+  let books = [];
+  try {
+    const r = await fetch(API + '?' + new URLSearchParams({action:'search_books_with_content'}));
+    const res = await r.json();
+    books = res.data || [];
+  } catch(e) {
+    if (_contentSearchToken === token) {
+      body.innerHTML = noResultBlock('Gagal memuat daftar kitab.');
+      patchHeader('sec-content','file-text','Isi Kitab', 0);
+    }
+    return;
+  }
+
+  if (!books.length || _contentSearchToken !== token) return;
+
+  patchHeader('sec-content','file-text','Isi Kitab', null, true);
+
+  const total   = books.length;
+  let   found   = 0;   // jumlah kitab yang mengandung hasil
+  let   checked = 0;   // jumlah kitab yang sudah dicek
+
+  // Render kerangka stabil ظ¤ elemen-elemen ini TIDAK akan diganti selama pencarian.
+  // Grid kartu ditambah via appendChild; pagination diupdate via updateContPagination.
+  body.innerHTML = `
+    <div id="cont-progress-bar" class="mb-3">${progressContentShell('', 0, total)}</div>
+    <div id="cont-results-grid"></div>
+    <div id="cont-no-result" class="hidden">${noResultBlock('Tidak ada kecocokan pada isi kitab.')}</div>
+    <div id="cont-pagination"></div>`;
+  reicons();
+
+  // 2. Iterasi per-kitab dengan delay antar request
+  for (const book of books) {
+    // Batalkan jika query sudah berganti
+    if (_contentSearchToken !== token) return;
+
+    // Update progress bar (hanya progress bar, tidak menyentuh grid)
+    const progBar = document.getElementById('cont-progress-bar');
+    if (progBar) {
+      progBar.innerHTML = progressContentShell(
+        `Mencari di: <span style="font-family:'Amiri','Noto Naskh Arabic',serif;direction:rtl;unicode-bidi:plaintext;font-weight:600;color:#1a3a2a;">${escHtml(book.title)}</span>`,
+        checked, total
+      );
+    }
+
+    try {
+      const r   = await fetch(API + '?' + new URLSearchParams({action:'search_content_in_book', bkid: book.bkid, q}));
+      const res = await r.json();
+
+      if (_contentSearchToken !== token) return;
+
+      if (res.found && res.data && res.data.length) {
+        found++;
+        for (const item of res.data) _contResults.push(item);
+
+        // Update section header
+        patchHeader('sec-content','file-text','Isi Kitab', _contResults.length, true);
+
+        if (_contCurrentPage === 1) {
+          // Tambahkan kartu baru via appendChild ظ¤ TIDAK ada re-render grid
+          appendContCards(res.data, q);
+          // Sembunyikan no-result
+          const noRes = document.getElementById('cont-no-result');
+          if (noRes) noRes.classList.add('hidden');
+        }
+
+        // Update pagination (area kecil di bawah grid, tidak menyentuh kartu)
+        updateContPagination(_contResults.length, _contCurrentPage, true);
+      }
+    } catch(e) {
+      // Lewati kitab yang gagal, lanjutkan ke berikutnya
+    }
+
+    checked++;
+
+    // Delay adaptif: lebih lambat jika sudah banyak hasil
+    if (_contentSearchToken === token) {
+      await new Promise(r => setTimeout(r, found > 5 ? 150 : 80));
+    }
+  }
+
+  // ظ¤ظ¤ Selesai ظ¤ظ¤
+  if (_contentSearchToken !== token) return;
+
+  // Hapus progress bar dengan fade (tidak menggoyangkan grid)
+  const progBar = document.getElementById('cont-progress-bar');
+  if (progBar) progBar.innerHTML = '';
+
+  if (!_contResults.length) {
+    const noRes = document.getElementById('cont-no-result');
+    if (noRes) noRes.classList.remove('hidden');
+    const pag = document.getElementById('cont-pagination');
+    if (pag) pag.innerHTML = '';
+  } else {
+    // Hanya update pagination (hapus "Masih mencari"); grid tidak disentuh
+    updateContPagination(_contResults.length, _contCurrentPage, false);
+  }
+
+  patchHeader('sec-content','file-text','Isi Kitab', _contResults.length, false);
+  reicons();
+
+  // Update search stats
+  const st = $('#search-stats');
+  if (st && !st.innerHTML.trim()) {
+    st.innerHTML = `<i data-lucide="check-circle" class="w-3 h-3 text-emerald-500"></i> Selesai \u2014 ${_contResults.length} halaman ditemukan`;
+    reicons();
+  }
+
+  // Tandai pencarian selesai
+  if (_contentSearchToken === token) _contentSearchToken = null;
+}
+
+// Navigasi paginasi hasil isi kitab (client-side) ظ¤ full re-render aman
+window.goSearchContResultPage = function(p) {
+  _contCurrentPage = p;
+  const stillSearching = _contentSearchToken !== null;
+  renderContPage(_contResults, p, _contSearchQ, stillSearching);
+  $('#sec-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+
+
+// ظ¤ظ¤ Progress shell for per-book search ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
+function progressContentShell(label, done, total) {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return `
+    <div style="background:rgba(26,58,42,.04);border:1px solid rgba(201,168,76,.18);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(26,58,42,.55);min-width:0;overflow:hidden;">
+          <span class="spin-ring" style="width:14px;height:14px;border-width:2px;flex-shrink:0;"></span>
+          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label || 'Mencari&hellip;'}</span>
+        </div>
+        <span style="font-size:11px;font-weight:700;color:#c9a84c;white-space:nowrap;">${done}/${total}</span>
+      </div>
+      <div style="width:100%;background:rgba(26,58,42,.10);border-radius:999px;height:4px;overflow:hidden;">
+        <div style="height:100%;background:#c9a84c;border-radius:999px;transition:width .3s ease;width:${pct}%;"></div>
+      </div>
+    </div>`;
+}
+
+// ظ¤ظ¤ Main executor ظ¤ 2 parallel + 1 progressive ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 async function execSearch() {
   const wrap = $('#search-results');
-  const stats = $('#search-stats');
   if (!wrap || searchState.q.length < 2) return;
 
   abortAll();
-  const q = searchState.q;
+  const q     = searchState.q;
+  const token = q + '_' + Date.now();
+  _contentSearchToken = token;
+  const t0    = performance.now();
   history.replaceState({}, '', '/search?q=' + encodeURIComponent(q));
 
-  // Render instant skeleton shells for 3 sections
+  // Render instant skeleton shells
   wrap.innerHTML = `
     <div id="sec-cat" class="mb-2">
       ${sectionHeader('folder-open','Kategori', null, true)}
@@ -1940,20 +1890,16 @@ async function execSearch() {
     ${sectionDivider()}
     <div id="sec-content">
       ${sectionHeader('file-text','Isi Kitab', null, true)}
-      <div id="sec-content-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
+      <div id="sec-content-body"></div>
     </div>`;
-
-  if (stats) {
-    stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencari…</span>`;
-  }
   reicons();
 
-  const t0 = performance.now();
   let fastDone = 0;
   const onFastDone = () => {
-    if (++fastDone === 3) {
+    if (++fastDone === 2) {
       const ms = Math.round(performance.now() - t0);
-      if (stats) { stats.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-gold"></i> ${ms} ms`; reicons(); }
+      const st = $('#search-stats');
+      if (st) { st.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-gold"></i> ${ms} ms`; reicons(); }
     }
   };
 
@@ -1962,10 +1908,10 @@ async function execSearch() {
   fetch(API + '?' + new URLSearchParams({action:'search_categories', q}), {signal:_abortCat.signal})
     .then(r=>r.json()).then(res => {
       if ($('#search-input')?.value.trim() !== q) return;
-      patchHeader('sec-cat','folder-open','Kategori', res.data ? res.data.length : 0);
+      patchHeader('sec-cat','folder-open','Kategori', res.data.length);
       const body = $('#sec-cat-body');
       if (!body) return;
-      body.innerHTML = res.data && res.data.length
+      body.innerHTML = res.data.length
         ? `<div class="search-section-enter flex flex-wrap gap-2">
             ${res.data.map((c,i)=>`<button class="cat-chip" style="animation-delay:${i*35}ms" onclick="navigate('/katalog?cat=${c.id}')">
               <i data-lucide="folder" class="w-3.5 h-3.5 text-gold shrink-0"></i>
@@ -1983,7 +1929,7 @@ async function execSearch() {
       patchHeader('sec-books','book-open','Judul Kitab', res.total);
       const body = $('#sec-books-body');
       if (!body) return;
-      body.innerHTML = res.data && res.data.length
+      body.innerHTML = res.data.length
         ? `<div class="search-section-enter">
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>
             ${paginationHtml(res.page, res.total_pages, 'goSearchBookPage')}</div>`
@@ -1991,24 +1937,8 @@ async function execSearch() {
       reicons();
     }).catch(()=>{ const b=$('#sec-books-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
 
-  // 3. Isi Kitab (parallel) menggunakan search_advanced untuk pencarian konten instan
-  _abortCont = new AbortController();
-  searchAdvancedState.terms = [q, '', '', '', ''];
-  const params = { action: 'search_advanced', page: searchState.contPage || 1, all_cats: '1', q1: q };
-  fetch(API + '?' + new URLSearchParams(params), {signal:_abortCont.signal})
-    .then(r=>r.json()).then(res => {
-      if ($('#search-input')?.value.trim() !== q) return;
-      const total = res.total || 0;
-      patchHeader('sec-content','file-text','Isi Kitab', total);
-      const body = $('#sec-content-body');
-      if (!body) return;
-      body.innerHTML = res.data && res.data.length
-        ? `<div class="search-section-enter">
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>
-            ${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContPage')}</div>`
-        : noResultBlock('Maaf, tidak ditemukan halaman yang cocok dengan kata kunci tersebut.');
-      reicons();
-    }).catch(()=>{ const b=$('#sec-content-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
+  // 3. Isi Kitab ظ¤ progressive per-book (tidak memblok, dicicil)
+  execProgressiveContentSearch(q, token);
 }
 
 window.goSearchBookPage = function(p) {
@@ -2020,59 +1950,38 @@ window.goSearchBookPage = function(p) {
     .then(r=>r.json()).then(res => {
       patchHeader('sec-books','book-open','Judul Kitab', res.total);
       if (!body) return;
-      body.innerHTML = res.data && res.data.length
+      body.innerHTML = res.data.length
         ? `<div class="search-section-enter"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>${paginationHtml(res.page,res.total_pages,'goSearchBookPage')}</div>`
         : noResultBlock('Tidak ada hasil.');
       reicons(); $('#sec-books')?.scrollIntoView({behavior:'smooth',block:'start'});
     }).catch(()=>{});
 };
 
-window.goSearchContPage = function(p) {
-  searchState.contPage = p;
-  const q = searchState.q, body = $('#sec-content-body');
-  if (body) body.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div>`;
-  _abortCont = new AbortController();
-  searchAdvancedState.terms = [q, '', '', '', ''];
-  const params = { action: 'search_advanced', page: p, all_cats: '1', q1: q };
-  fetch(API + '?' + new URLSearchParams(params), {signal:_abortCont.signal})
-    .then(r=>r.json()).then(res => {
-      patchHeader('sec-content','file-text','Isi Kitab', res.total || 0);
-      if (!body) return;
-      body.innerHTML = res.data && res.data.length
-        ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContPage')}</div>`
-        : noResultBlock('Tidak ada hasil.');
-      reicons(); $('#sec-content')?.scrollIntoView({behavior:'smooth',block:'start'});
-    }).catch(()=>{});
-};
-
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 //  PAGE: DETAIL KITAB + READER
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 
 // Reader state (module-level so nav buttons can reference it)
-let readerState = { bkid: null, page: 1, juz: 1, total: 0, totalJuz: 1, juzList: [], searchQ: '' };
+const readerState = { bkid: null, page: 1, total: 0, juz: 1, totalJuz: 1, juzList: [], searchQ: '' };
 
 async function renderDetail(params) {
   const id       = params.get('id');
   const jumpPage = parseInt(params.get('page') || '1') || 1;
-  const jumpJuz  = parseInt(params.get('juz') || '1') || 1;
   const searchQ  = (params.get('q') || '').trim();
-  const contentId = parseInt(params.get('content_id') || '0');
-
   if (!id) { render404(); return; }
 
   // Reset reader
   readerState.bkid     = parseInt(id);
-  readerState.page     = jumpPage;
+  readerState.page     = 1;
   readerState.total    = 0;
-  readerState.juz      = jumpJuz;
+  readerState.juz      = 1;
   readerState.totalJuz = 1;
   readerState.juzList  = [];
   readerState.searchQ  = searchQ;
 
 
   app().innerHTML = `
-    <div class="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 py-10">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <button onclick="history.back()" class="flex items-center gap-2 text-primary/60 hover:text-primary text-sm mb-6 transition-colors">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali
       </button>
@@ -2087,8 +1996,8 @@ async function renderDetail(params) {
   try {
     const res  = await apiFetch({ action: 'book', id });
     const book = res.data;
-    const title       = book.title       || 'بدون عنوان';
-    const author      = book.author      || 'مجهول المؤلف';
+    const title       = book.title       || '╪ذ╪»┘ê┘ ╪╣┘┘ê╪د┘';
+    const author      = book.author      || '┘à╪ش┘ç┘ê┘ ╪د┘┘à╪ج┘┘';
     const authorInfo  = book.author_info || '';
     const description = book.description || book.info || '';
     const pages       = book.pages       ? book.pages + ' hal.' : '';
@@ -2099,19 +2008,11 @@ async function renderDetail(params) {
     readerState.totalJuz = book.total_juz || 1;
     readerState.juzList  = book.juz_list  || [];
 
-    // Simpan ke riwayat kitab dibuka (localStorage)
-    saveToRecentlyOpened({
-      id    : book.bkid,
-      title : title,
-      author: author,
-      cat   : catName,
-    });
-
     $('#detail-content').innerHTML = `
       <div class="bg-white rounded-3xl shadow-card overflow-hidden">
 
-        <!-- ── Book Header ── -->
-        <div class="hero-bg text-white p-4 sm:p-8 md:p-10">
+        <!-- ظ¤ظ¤ Book Header ظ¤ظ¤ -->
+        <div class="hero-bg text-white p-8 md:p-10">
           <div class="arabic text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">${escHtml(title)}</div>
           <div class="text-gold text-base font-medium mt-1">${escHtml(author)}</div>
           <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4">
@@ -2125,7 +2026,7 @@ async function renderDetail(params) {
               <i data-lucide="download" class="w-4 h-4"></i>
               <span class="text-xs font-bold tracking-wide">
                 ${book.total_juz > 1
-                  ? `<span class="dl-fmt-badge dl-fmt-zip" style="color:inherit;background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)">ZIP · ${book.total_juz} juz</span>`
+                  ? `<span class="dl-fmt-badge dl-fmt-zip" style="color:inherit;background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)">ZIP ┬╖ ${book.total_juz} juz</span>`
                   : `<span class="dl-fmt-badge dl-fmt-docx" style="color:inherit;background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)">DOCX</span>`
                 }
               </span>
@@ -2133,8 +2034,8 @@ async function renderDetail(params) {
           </div>
         </div>
 
-        <!-- ── Meta (description / author info) ── -->
-        <div class="px-3 sm:px-8 md:px-10 pt-6 sm:pt-8 space-y-5">
+        <!-- ظ¤ظ¤ Meta (description / author info) ظ¤ظ¤ -->
+        <div class="px-8 md:px-10 pt-8 space-y-5">
           ${description ? `
             <div>
               <h3 class="text-xs font-semibold text-primary/40 uppercase tracking-wider mb-2">Deskripsi</h3>
@@ -2147,9 +2048,9 @@ async function renderDetail(params) {
             </div>` : ''}
         </div>
 
-        <!-- ── Reader ── -->
+        <!-- ظ¤ظ¤ Reader ظ¤ظ¤ -->
         ${contentPgs > 0 ? `
-        <div class="px-3 sm:px-8 md:px-10 pb-6 sm:pb-10 mt-6 sm:mt-8">
+        <div class="px-8 md:px-10 pb-10 mt-8">
           <div class="border-t border-cream-dark pt-6">
 
             <!-- Reader toolbar -->
@@ -2181,9 +2082,9 @@ async function renderDetail(params) {
             <!-- Font settings panel (slide-down) -->
             <div id="font-panel-wrap">${renderFontPanel()}</div>
 
-            <!-- Content area — direction & font controlled by CSS vars + unicode-bidi -->
+            <!-- Content area ظ¤ direction & font controlled by CSS vars + unicode-bidi -->
             <div id="reader-area"
-              class="bg-cream rounded-2xl p-3 sm:p-6 md:p-8 min-h-48 text-primary leading-loose transition-opacity duration-200">
+              class="bg-cream rounded-2xl p-6 md:p-8 min-h-48 text-primary leading-loose transition-opacity duration-200">
               <div class="flex justify-center py-8">
                 <div class="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" style="border-width:2px"></div>
               </div>
@@ -2204,7 +2105,7 @@ async function renderDetail(params) {
 
           </div>
         </div>` : `
-        <div class="px-3 sm:px-8 md:px-10 pb-10 mt-6">
+        <div class="px-8 md:px-10 pb-10 mt-6">
           <div class="border-t border-cream-dark pt-6 flex items-center gap-3 text-primary/40 text-sm">
             <i data-lucide="info" class="w-4 h-4"></i>
             <span>Konten kitab ini belum tersedia.</span>
@@ -2225,11 +2126,7 @@ async function renderDetail(params) {
       initFontPanelEvents();
 
       // Open at jump page (from search result), with keyword highlight
-      if (contentId > 0) {
-        loadReaderPage(readerState.bkid, 1, searchQ, 1, contentId);
-      } else {
-        loadReaderPage(readerState.bkid, jumpPage, searchQ, readerState.juz);
-      }
+      loadReaderPage(readerState.bkid, jumpPage, searchQ, readerState.juz);
 
       // Juz selector
       $('#reader-juz-select')?.addEventListener('change', e => {
@@ -2296,7 +2193,7 @@ async function renderDetail(params) {
 // Load a single page of content into the reader
 // highlightQ: optional keyword to highlight in gold
 // juz: nomor juz (default dari readerState.juz)
-async function loadReaderPage(bkid, page, highlightQ = '', juz = 0, contentId = 0) {
+async function loadReaderPage(bkid, page, highlightQ = '', juz = 0) {
   const area  = $('#reader-area');
   const label = $('#reader-label');
   const inp   = $('#reader-page-input');
@@ -2321,16 +2218,9 @@ async function loadReaderPage(bkid, page, highlightQ = '', juz = 0, contentId = 
   </div>`;
 
   try {
-    const res = await apiFetch({ action: 'content', bkid, page, juz, content_id: contentId });
+    const res = await apiFetch({ action: 'content', bkid, page, juz });
 
     if (res.content) {
-      // If content_id was used, it resolved the correct page and juz for us
-      if (contentId > 0 && res.page) {
-        readerState.page = res.page;
-        readerState.juz  = res.juz;
-        page = res.page;
-        if (juzSel) juzSel.value = res.juz;
-      }
       const normalised = res.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
       area.innerHTML = `<div class="reader-text">${escHtml(normalised)}</div>`;
       const terms = parseSearchTerms(highlightQ);
@@ -2351,7 +2241,7 @@ async function loadReaderPage(bkid, page, highlightQ = '', juz = 0, contentId = 
     area.style.opacity = '1';
 
     // Update controls
-    const totalJuzLabel = res.total_juz > 1 ? ` · Juz ${res.juz}/${res.total_juz}` : '';
+    const totalJuzLabel = res.total_juz > 1 ? ` ┬╖ Juz ${res.juz}/${res.total_juz}` : '';
     if (label)    label.textContent = `Halaman ${page} dari ${res.total_pages}${totalJuzLabel}`;
     if (inp)      { inp.value = page; inp.max = res.total_pages; }
     if (totalLbl) totalLbl.textContent = `dari ${res.total_pages}`;
@@ -2372,7 +2262,7 @@ async function loadReaderPage(bkid, page, highlightQ = '', juz = 0, contentId = 
   reicons();
 }
 
-// ── Font Settings Panel renderer ──────────────────────────────
+// ظ¤ظ¤ Font Settings Panel renderer ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function renderFontPanel() {
   const latinChips = FONTS_LATIN.map(f => `
     <button class="font-chip ${readerFontState.latin === f.key ? 'active' : ''}"
@@ -2401,7 +2291,7 @@ function renderFontPanel() {
           <div>
             <div class="flex items-center gap-2 mb-3">
               <i data-lucide="type" class="w-3.5 h-3.5 text-gold shrink-0"></i>
-              <span class="text-xs font-bold text-primary/50 uppercase tracking-wider">فونت عربي (RTL)</span>
+              <span class="text-xs font-bold text-primary/50 uppercase tracking-wider">┘┘ê┘╪ز ╪╣╪▒╪ذ┘è (RTL)</span>
             </div>
             <div class="grid grid-cols-2 gap-1.5">${arabicChips}</div>
           </div>
@@ -2455,15 +2345,15 @@ function initFontPanelEvents() {
 
 window.loadReaderPage = loadReaderPage;
 
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 //  PAGE: ABOUT
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 function renderAbout() {
   app().innerHTML = `
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <!-- Header -->
       <div class="text-center mb-10">
-        <div class="arabic text-primary text-4xl font-bold mb-2">المكتبة السنية</div>
+        <div class="arabic text-primary text-4xl font-bold mb-2">╪د┘┘à┘â╪ز╪ذ╪ر ╪د┘╪│┘┘è╪ر</div>
         <div class="text-gold text-sm font-medium tracking-widest uppercase">Al-Maktabah As-Sunniyyah</div>
         <div class="gold-line mt-6 max-w-xs mx-auto"></div>
       </div>
@@ -2475,7 +2365,7 @@ function renderAbout() {
             <i data-lucide="info" class="w-4 h-4 text-gold"></i> Tentang Kami
           </h2>
           <p>
-            <strong>المكتبة السنية</strong> adalah perpustakaan digital Islam yang hadir untuk memudahkan umat dalam mengakses khazanah ilmu Islam, khususnya kitab-kitab dari para ulama salaf. Kami mengumpulkan, menata, dan menyajikan ribuan kitab dalam format digital yang mudah diakses oleh siapa saja, di mana saja, kapan saja — secara <em>gratis</em>.
+            <strong>╪د┘┘à┘â╪ز╪ذ╪ر ╪د┘╪│┘┘è╪ر</strong> adalah perpustakaan digital Islam yang hadir untuk memudahkan umat dalam mengakses khazanah ilmu Islam, khususnya kitab-kitab dari para ulama salaf. Kami mengumpulkan, menata, dan menyajikan ribuan kitab dalam format digital yang mudah diakses oleh siapa saja, di mana saja, kapan saja ظ¤ secara <em>gratis</em>.
           </p>
         </div>
 
@@ -2483,7 +2373,7 @@ function renderAbout() {
           <h2 class="text-primary font-bold text-base mb-3 flex items-center gap-2">
             <i data-lucide="eye" class="w-4 h-4 text-gold"></i> Visi
           </h2>
-          <p class="arabic text-base text-right text-primary mb-2">"نشر العلم الشرعي وتيسيره للأمة"</p>
+          <p class="arabic text-base text-right text-primary mb-2">"┘╪┤╪▒ ╪د┘╪╣┘┘à ╪د┘╪┤╪▒╪╣┘è ┘ê╪ز┘è╪│┘è╪▒┘ç ┘┘╪ث┘à╪ر"</p>
           <p>Menjadi portal terdepan dalam menyebarkan ilmu syar'i dan mempermudah akses umat Islam terhadap warisan intelektual para ulama.</p>
         </div>
 
@@ -2501,8 +2391,8 @@ function renderAbout() {
         </div>
 
         <div class="bg-cream rounded-2xl p-6 text-center">
-          <div class="arabic text-primary text-lg font-bold mb-1">طلب العلم فريضة على كل مسلم</div>
-          <div class="text-primary/50 text-xs">HR. Ibnu Mājah — Menuntut ilmu adalah kewajiban setiap Muslim</div>
+          <div class="arabic text-primary text-lg font-bold mb-1">╪╖┘╪ذ ╪د┘╪╣┘┘à ┘╪▒┘è╪╢╪ر ╪╣┘┘ë ┘â┘ ┘à╪│┘┘à</div>
+          <div class="text-primary/50 text-xs">HR. Ibnu M─jah ظ¤ Menuntut ilmu adalah kewajiban setiap Muslim</div>
         </div>
 
         <div>
@@ -2549,7 +2439,7 @@ function renderAbout() {
               <div class="space-y-2.5 text-sm">
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">No Hp</span>
-                  <a href="https://wa.me/6285743399595" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">085743399595</a>
+                  <a href="https://wa.me/085743399595" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">085743399595</a>
                 </div>
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">Website</span>
@@ -2571,9 +2461,9 @@ function renderAbout() {
 }
 
 
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 //  PAGE: KEBIJAKAN PRIVASI
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 function renderPrivacy() {
   const LAST_UPDATED = '13 Mei 2026';
   const SITE_URL     = 'https://maktabah.quizb.my.id';
@@ -2628,9 +2518,9 @@ function renderPrivacy() {
         ${privacySection('share-2', 'Berbagi Data dengan Pihak Ketiga', `
           <p class="text-secondary mb-3">Kami <strong>tidak menjual, menyewakan, atau membagikan</strong> data pribadi Anda kepada pihak ketiga, kecuali:</p>
           <ul class="space-y-2 text-secondary">
-            ${privacyItem('Google LLC — sebagai penyedia layanan autentikasi OAuth 2.0.')}
-            ${privacyItem('Penyedia hosting server — hanya memiliki akses teknis ke infrastruktur, bukan data pengguna secara individual.')}
-            ${privacyItem('Kewajiban hukum — apabila diwajibkan oleh peraturan perundang-undangan yang berlaku.')}
+            ${privacyItem('Google LLC ظ¤ sebagai penyedia layanan autentikasi OAuth 2.0.')}
+            ${privacyItem('Penyedia hosting server ظ¤ hanya memiliki akses teknis ke infrastruktur, bukan data pengguna secara individual.')}
+            ${privacyItem('Kewajiban hukum ظ¤ apabila diwajibkan oleh peraturan perundang-undangan yang berlaku.')}
           </ul>
         `)}
 
@@ -2702,11 +2592,11 @@ function renderPrivacy() {
       <div class="mt-12 pt-6 border-t border-border text-center">
         <p class="text-sm text-muted">
           <i data-lucide="heart" class="w-3.5 h-3.5 inline text-gold mr-1"></i>
-          Al-Maktabah As-Sunniyyah — perpustakaan digital kitab-kitab Islam klasik
+          Al-Maktabah As-Sunniyyah ظ¤ perpustakaan digital kitab-kitab Islam klasik
         </p>
         <p class="text-xs text-muted mt-1">
           <a href="/" data-route="/" class="hover:text-gold transition-colors">Kembali ke Beranda</a>
-          <span class="mx-2">·</span>
+          <span class="mx-2">┬╖</span>
           <a href="/katalog" data-route="/katalog" class="hover:text-gold transition-colors">Jelajahi Katalog</a>
         </p>
       </div>
@@ -2715,7 +2605,7 @@ function renderPrivacy() {
   reicons();
 }
 
-// ── Helper: section card ──────────────────────────────────────
+// ظ¤ظ¤ Helper: section card ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function privacySection(icon, title, bodyHtml) {
   return `
     <div class="bg-surface rounded-2xl border border-border p-6 shadow-sm">
@@ -2729,7 +2619,7 @@ function privacySection(icon, title, bodyHtml) {
     </div>`;
 }
 
-// ── Helper: sub info card ─────────────────────────────────────
+// ظ¤ظ¤ Helper: sub info card ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function privacySubCard(icon, title, bodyHtml) {
   return `
     <div class="flex items-start gap-3 bg-background rounded-xl p-3 border border-border">
@@ -2743,7 +2633,7 @@ function privacySubCard(icon, title, bodyHtml) {
     </div>`;
 }
 
-// ── Helper: list item ─────────────────────────────────────────
+// ظ¤ظ¤ Helper: list item ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function privacyItem(text) {
   return `
     <li class="flex items-start gap-2">
@@ -2752,7 +2642,7 @@ function privacyItem(text) {
     </li>`;
 }
 
-// ── Helper: right card (security pillars etc.) ────────────────
+// ظ¤ظ¤ Helper: right card (security pillars etc.) ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 function privacyRightCard(icon, title, desc) {
   return `
     <div class="bg-background rounded-xl p-4 border border-border text-center">
@@ -2764,13 +2654,13 @@ function privacyRightCard(icon, title, desc) {
     </div>`;
 }
 
-// ══════════════════════════════════════════════════════════════
-//  SUBMIT FILE — CTA helper & halaman kirim file
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
+//  SUBMIT FILE ظ¤ CTA helper & halaman kirim file
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 
 /** Dipanggil dari tombol CTA di beranda.
- *  Jika sudah login → langsung ke /submit-file
- *  Jika belum       → simpan tujuan di sessionStorage, lalu ke halaman login */
+ *  Jika sudah login ظْ langsung ke /submit-file
+ *  Jika belum       ظْ simpan tujuan di sessionStorage, lalu ke halaman login */
 function handleSubmitCTA() {
   // Allow anonymous users to access submit page; no login required anymore
   navigate('/submit-file');
@@ -2839,7 +2729,7 @@ async function renderSubmitFile() {
               </label>
               <select id="sf-type" name="file_type" required
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all appearance-none">
-                <option value="">— Pilih Tipe —</option>
+                <option value="">ظ¤ Pilih Tipe ظ¤</option>
                 <option value="bahsul_masail">Hasil Bahsul Masail</option>
                 <option value="kitab">File Kitab</option>
               </select>
@@ -2850,7 +2740,7 @@ async function renderSubmitFile() {
               <label class="block text-xs font-semibold text-primary/55 mb-1.5">Kategori</label>
               <select id="sf-cat" name="category_id"
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all appearance-none">
-                <option value="">— Pilih Kategori (opsional) —</option>
+                <option value="">ظ¤ Pilih Kategori (opsional) ظ¤</option>
                 ${cats.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('')}
               </select>
             </div>
@@ -2859,7 +2749,7 @@ async function renderSubmitFile() {
             <div class="mb-4">
               <label class="block text-xs font-semibold text-primary/55 mb-1.5">Deskripsi <span class="text-primary/30 font-normal">(opsional)</span></label>
               <textarea id="sf-desc" name="description" rows="3"
-                placeholder="Keterangan singkat tentang isi file…"
+                placeholder="Keterangan singkat tentang isi fileظخ"
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all resize-none"></textarea>
             </div>
 
@@ -2875,7 +2765,7 @@ async function renderSubmitFile() {
             <div class="mb-6">
               <label class="block text-xs font-semibold text-primary/55 mb-1.5">
                 File <span class="text-red-400">*</span>
-                <span class="text-primary/30 font-normal ml-1">PDF / Word · maks. 20 MB</span>
+                <span class="text-primary/30 font-normal ml-1">PDF / Word ┬╖ maks. 20 MB</span>
               </label>
               <label class="flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed border-gold/40 rounded-xl py-7 px-4 bg-cream cursor-pointer hover:border-gold hover:bg-gold/5 transition-all" id="file-drop-zone">
                 <i data-lucide="upload-cloud" class="w-8 h-8 text-gold/60"></i>
@@ -2925,7 +2815,7 @@ async function submitFileForm(e) {
   if (!fileEl.files?.length) { showErr('Pilih file yang akan dikirim.'); return; }
 
   btn.disabled = true;
-  lbl.textContent = 'Mengirim…';
+  lbl.textContent = 'Mengirimظخ';
 
   const fd = new FormData();
   fd.append('file_name',   name);
@@ -2952,9 +2842,9 @@ async function submitFileForm(e) {
 }
 window.submitFileForm = submitFileForm;
 
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 //  PAGE: 404
-// ══════════════════════════════════════════════════════════════
+// ظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـظـ
 function render404() {
   const path = location.pathname;
   app().innerHTML = `
@@ -2964,7 +2854,7 @@ function render404() {
       </div>
       <h1 class="text-4xl font-bold text-primary mb-2">404</h1>
       <p class="text-primary/50 text-base mb-2">Halaman <code class="text-gold font-mono text-sm">${escHtml(path)}</code> tidak ditemukan</p>
-      <p class="text-primary/35 text-sm mb-8">Mengarahkan ke Beranda dalam <span id="_r404-cnt">3</span> detik…</p>
+      <p class="text-primary/35 text-sm mb-8">Mengarahkan ke Beranda dalam <span id="_r404-cnt">3</span> detikظخ</p>
       <div class="flex flex-wrap gap-3 justify-center">
         <button onclick="navigate('/')"
           class="px-5 py-2.5 bg-primary text-white rounded-xl font-medium text-sm hover:bg-primary-light transition-colors">
@@ -2995,5 +2885,5 @@ function render404() {
   }, 1000);
 }
 
-// ── Export navigate for admin.js ──────────────────────────────
+// ظ¤ظ¤ Export navigate for admin.js ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤ظ¤
 window.navigate = navigate;
