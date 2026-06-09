@@ -391,6 +391,29 @@ endif;
     .book-card { transition: transform .2s ease, box-shadow .2s ease; }
     .book-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(26,58,42,.16); }
 
+    /* ── Download format badge (ZIP / DOCX) ─────────────────────
+       Shown next to the download icon to indicate output format.
+       .dl-fmt-zip  → amber/gold for multi-juz ZIP archives
+       .dl-fmt-docx → green/primary for single DOCX files       */
+    .dl-fmt-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      padding: 2px 5px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      line-height: 1.2;
+      vertical-align: middle;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .dl-fmt-zip  { background: rgba(201,168,76,.14); color: #a07828; border-color: rgba(201,168,76,.35); }
+    .dl-fmt-docx { background: rgba(26,58,42,.09);  color: #1a3a2a; border-color: rgba(26,58,42,.20); }
+    html.dark .dl-fmt-zip  { background: rgba(201,168,76,.18); color: #c9a84c; border-color: rgba(201,168,76,.35); }
+    html.dark .dl-fmt-docx { background: rgba(212,197,160,.10); color: #a0b898; border-color: rgba(212,197,160,.25); }
+
     /* Hero gradient */
     .hero-bg {
       background: linear-gradient(135deg, #1a3a2a 0%, #0f2218 40%, #1e3a2f 70%, #2d5c42 100%);

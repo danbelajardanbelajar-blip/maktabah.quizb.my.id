@@ -519,6 +519,116 @@ function handleBook(): void {
     echo json_encode(['data' => $book]);
 }
 
+// =============================================================
+// DOWNLOAD — helper: bangun satu PhpWord object untuk satu juz
+// =============================================================
+
+/**
+ * Bangun PhpWord untuk satu juz (atau seluruh kitab bila hanya 1 juz).
+ *
+ * @param array  $book       Metadata kitab (title, author, cat_name, iso)
+ * @param array  $pageMeta   Baris konten juz ini: [['juz'=>N,'page'=>X,'content'=>'...']]
+ * @param int    $juzNumber  Nomor juz (1-based)
+ * @param int    $totalJuz   Total juz kitab ini
+ * @param bool   $isArabic   Apakah kitab berbahasa Arab
+ * @return \PhpOffice\PhpWord\PhpWord
+ */
+function buildJuzDocx(
+    array $book,
+    array $pageMeta,
+    int   $juzNumber,
+    int   $totalJuz,
+    bool  $isArabic
+): \PhpOffice\PhpWord\PhpWord {
+    $phpWord = new \PhpOffice\PhpWord\PhpWord();
+    $phpWord->setDefaultFontName($isArabic ? 'Traditional Arabic' : 'Arial');
+    $phpWord->setDefaultFontSize(12);
+
+    // ── Section ──────────────────────────────────────────────
+    $sectionStyle = [
+        'pageSizeW'   => 12240,
+        'pageSizeH'   => 15840,
+        'orientation' => 'portrait',
+    ];
+    if ($isArabic) {
+        $sectionStyle['marginLeft']  = 1080;
+        $sectionStyle['marginRight'] = 1440;
+    }
+    $section = $phpWord->addSection($sectionStyle);
+
+    // ── Paragraph & font styles ───────────────────────────────
+    $pStyleBase = $isArabic
+        ? ['alignment' => 'right', 'bidi' => true]
+        : ['alignment' => 'left'];
+
+    $fontTitle   = ['name' => $isArabic ? 'Traditional Arabic' : 'Arial', 'size' => 18, 'bold' => true];
+    $fontMeta    = ['name' => $isArabic ? 'Traditional Arabic' : 'Arial', 'size' => 11, 'italic' => true];
+    $fontContent = ['name' => $isArabic ? 'Traditional Arabic' : 'Arial', 'size' => $isArabic ? 14 : 12];
+    $fontPageHd  = array_merge($fontContent, ['bold' => true]);
+    $fontJuzHd   = array_merge($fontContent, ['bold' => true, 'size' => $isArabic ? 16 : 14]);
+
+    // ── Halaman judul ─────────────────────────────────────────
+    $titleText = htmlspecialchars($book['title'] ?: 'Kitab tanpa judul', ENT_XML1, 'UTF-8');
+    // Tambahkan keterangan juz di judul bila multi-juz
+    if ($totalJuz > 1) {
+        $juzSuffix = $isArabic
+            ? ' — الجزء ' . $juzNumber
+            : " — Juz {$juzNumber}";
+        $titleText .= htmlspecialchars($juzSuffix, ENT_XML1, 'UTF-8');
+    }
+    $section->addText($titleText, $fontTitle, $pStyleBase);
+
+    if (!empty($book['author'])) {
+        $authorLabel = $isArabic ? 'المؤلف: ' : 'Pengarang: ';
+        $section->addText(
+            htmlspecialchars($authorLabel . $book['author'], ENT_XML1, 'UTF-8'),
+            $fontMeta, $pStyleBase
+        );
+    }
+    if (!empty($book['cat_name'])) {
+        $catLabel = $isArabic ? 'التصنيف: ' : 'Kategori: ';
+        $section->addText(
+            htmlspecialchars($catLabel . $book['cat_name'], ENT_XML1, 'UTF-8'),
+            $fontMeta, $pStyleBase
+        );
+    }
+    $section->addTextBreak(1);
+
+    // ── Konten halaman ────────────────────────────────────────
+    foreach ($pageMeta as $idx => $row) {
+        // Heading halaman
+        $pageLabel = $isArabic
+            ? 'صفحة ' . $row['page']
+            : '--- Halaman ' . $row['page'] . ' ---';
+        $section->addText(
+            htmlspecialchars($pageLabel, ENT_XML1, 'UTF-8'),
+            $fontPageHd, $pStyleBase
+        );
+
+        // Konten baris per baris
+        $lines = preg_split('/\r\n|\r|\n/', trim($row['content']));
+        if ($lines === false || count($lines) === 0) {
+            $section->addText('', $fontContent, $pStyleBase);
+        } else {
+            foreach ($lines as $line) {
+                $section->addText(
+                    htmlspecialchars($line, ENT_XML1, 'UTF-8'),
+                    $fontContent, $pStyleBase
+                );
+            }
+        }
+
+        if ($idx < count($pageMeta) - 1) {
+            $section->addPageBreak();
+        }
+    }
+
+    return $phpWord;
+}
+
+// =============================================================
+// DOWNLOAD — handler utama
+// =============================================================
 function handleDownloadBook(): void {
     $pdo = getPDO();
     $id  = (int)($_GET['id'] ?? 0);
@@ -528,6 +638,7 @@ function handleDownloadBook(): void {
         return;
     }
 
+    // ── Metadata kitab ────────────────────────────────────────
     $stmt = $pdo->prepare(
         "SELECT b.title, b.author, b.iso, c.name AS cat_name
          FROM books b
@@ -542,15 +653,17 @@ function handleDownloadBook(): void {
         return;
     }
 
-    // Ambil konten urut berdasarkan juz lalu id (bukan page) agar urutan juz terjaga
+    // ── Ambil seluruh konten, dikelompokkan per juz ───────────
     $contentStmt = $pdo->prepare(
-        "SELECT juz, page, content FROM book_content WHERE bkid = :id ORDER BY juz ASC, id ASC"
+        "SELECT juz, page, content
+         FROM book_content
+         WHERE bkid = :id
+         ORDER BY juz ASC, id ASC"
     );
     $contentStmt->execute([':id' => $id]);
-    $pageRows = $contentStmt->fetchAll();
-    $pages = array_column($pageRows, 'content');
-    $pageMeta = $pageRows; // juz + page info untuk heading docx
-    if (empty($pages)) {
+    $allRows = $contentStmt->fetchAll();
+
+    if (empty($allRows)) {
         http_response_code(404);
         echo json_encode(['error' => 'Konten kitab tidak tersedia.']);
         return;
@@ -558,145 +671,163 @@ function handleDownloadBook(): void {
 
     logDownloadBook($id, $book['title'] ?? 'Kitab tanpa judul');
 
-    $title    = trim($book['title'] ?: 'kitab');
-    $filename = normalizeDownloadFilename($title) . '.docx';
+    // Kelompokkan baris per juz: [ juzNumber => [ row, row, ... ] ]
+    $byJuz = [];
+    foreach ($allRows as $row) {
+        $byJuz[(int)$row['juz']][] = $row;
+    }
+    ksort($byJuz);
 
-    // Deteksi apakah judul/konten mengandung teks Arab
-    $isArabic = (bool)preg_match('/\p{Arabic}/u', $title);
+    $totalJuz    = count($byJuz);
+    $title       = trim($book['title'] ?: 'kitab');
+    $baseFilename = normalizeDownloadFilename($title);
+    $isArabic    = (bool)preg_match('/\p{Arabic}/u', $title);
 
     loadComposerAutoloader();
-    if (class_exists('\PhpOffice\PhpWord\PhpWord')) {
-        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+    $hasPhpWord = class_exists('\PhpOffice\PhpWord\PhpWord');
 
-        // ── Font default dokumen ──────────────────────────────────
-        // Traditional Arabic / Arial Unicode MS mendukung karakter Arab
-        $phpWord->setDefaultFontName($isArabic ? 'Traditional Arabic' : 'Arial');
-        $phpWord->setDefaultFontSize(12);
+    // ── KASUS 1: Satu juz → download DOCX langsung ───────────
+    if ($totalJuz === 1) {
+        $pageMeta  = reset($byJuz);
+        $juzNumber = (int)array_key_first($byJuz);
 
-        // ── Section ──────────────────────────────────────────────
-        $sectionStyle = [
-            'pageSizeW'   => 12240,
-            'pageSizeH'   => 15840,
-            'orientation' => 'portrait',
-        ];
-        if ($isArabic) {
-            // Margin: kiri lebih lebar (Word RTL convention)
-            $sectionStyle['marginLeft']  = 1080;
-            $sectionStyle['marginRight'] = 1440;
-        }
-        $section = $phpWord->addSection($sectionStyle);
+        if ($hasPhpWord) {
+            $phpWord = buildJuzDocx($book, $pageMeta, $juzNumber, 1, $isArabic);
+            $filename = $baseFilename . '.docx';
 
-        // ── Helper: paragraph style untuk RTL / LTR ──────────────
-        $pStyleRtl  = ['alignment' => 'right', 'bidi' => true];
-        $pStyleLtr  = ['alignment' => 'left'];
-        $pStyleBase = $isArabic ? $pStyleRtl : $pStyleLtr;
+            header_remove('Content-Type');
+            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            header('Content-Disposition: ' . contentDispositionHeader($filename));
+            header('Cache-Control: no-store, must-revalidate');
 
-        // ── Font styles ──────────────────────────────────────────
-        $fontTitle   = [
-            'name'  => $isArabic ? 'Traditional Arabic' : 'Arial',
-            'size'  => 18,
-            'bold'  => true,
-        ];
-        $fontMeta    = [
-            'name'   => $isArabic ? 'Traditional Arabic' : 'Arial',
-            'size'   => 11,
-            'italic' => true,
-        ];
-        $fontContent = [
-            'name'  => $isArabic ? 'Traditional Arabic' : 'Arial',
-            'size'  => $isArabic ? 14 : 12,  // Arab lebih besar agar lebih terbaca
-        ];
-        $fontPageHd  = array_merge($fontContent, ['bold' => true]);
-        $fontJuzHd   = array_merge($fontContent, ['bold' => true, 'size' => ($isArabic ? 16 : 14)]);
-
-        // ── Halaman judul ─────────────────────────────────────────
-        $section->addText(
-            htmlspecialchars($book['title'] ?: 'Kitab tanpa judul', ENT_XML1, 'UTF-8'),
-            $fontTitle,
-            $pStyleBase
-        );
-        if (!empty($book['author'])) {
-            $section->addText(
-                htmlspecialchars(($isArabic ? 'المؤلف: ' : 'Pengarang: ') . $book['author'], ENT_XML1, 'UTF-8'),
-                $fontMeta,
-                $pStyleBase
-            );
-        }
-        if (!empty($book['cat_name'])) {
-            $section->addText(
-                htmlspecialchars(($isArabic ? 'التصنيف: ' : 'Kategori: ') . $book['cat_name'], ENT_XML1, 'UTF-8'),
-                $fontMeta,
-                $pStyleBase
-            );
-        }
-        $section->addTextBreak(1);
-
-        // ── Konten halaman ────────────────────────────────────────
-        $maxJuz     = max(array_column($pageMeta, 'juz'));
-        $currentJuz = 0;
-
-        foreach ($pageMeta as $idx => $row) {
-            // Heading juz saat berganti juz
-            if ((int)$row['juz'] !== $currentJuz) {
-                $currentJuz = (int)$row['juz'];
-                if ($currentJuz > 1) {
-                    $section->addPageBreak();
-                }
-                if ($maxJuz > 1) {
-                    $juzLabel = $isArabic
-                        ? 'الجزء ' . $currentJuz
-                        : "=== Juz {$currentJuz} ===";
-                    $section->addText(
-                        htmlspecialchars($juzLabel, ENT_XML1, 'UTF-8'),
-                        $fontJuzHd,
-                        $pStyleBase
-                    );
-                    $section->addTextBreak(1);
-                }
-            }
-
-            // Heading halaman
-            $pageLabel = $isArabic
-                ? 'صفحة ' . $row['page']
-                : '--- Halaman ' . $row['page'] . ' ---';
-            $section->addText(
-                htmlspecialchars($pageLabel, ENT_XML1, 'UTF-8'),
-                $fontPageHd,
-                $pStyleBase
-            );
-
-            // Konten baris per baris
-            $lines = preg_split('/\r\n|\r|\n/', trim($row['content']));
-            if ($lines === false || count($lines) === 0) {
-                $section->addText('', $fontContent, $pStyleBase);
-            } else {
-                foreach ($lines as $line) {
-                    $section->addText(
-                        htmlspecialchars($line, ENT_XML1, 'UTF-8'),
-                        $fontContent,
-                        $pStyleBase
-                    );
-                }
-            }
-
-            if ($idx < count($pageMeta) - 1) {
-                $section->addPageBreak();
-            }
+            $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+            $writer->save('php://output');
+            return;
         }
 
-        // ── Headers HTTP ──────────────────────────────────────────
-        header_remove('Content-Type');
-        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-        header('Content-Disposition: ' . contentDispositionHeader($filename));
-        header('Cache-Control: no-store, must-revalidate');
-
-        $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
-        $writer->save('php://output');
+        // Fallback TXT
+        $pages = array_column($pageMeta, 'content');
+        fallbackDownloadTxt($book, $pages);
         return;
     }
 
-    fallbackDownloadTxt($book, $pages);
+    // ── KASUS 2: Multi-juz → ZIP berisi N file DOCX ──────────
+    if (!class_exists('ZipArchive')) {
+        // ZipArchive tidak tersedia: fallback satu TXT gabungan
+        fallbackDownloadMultiJuzTxt($book, $byJuz, $baseFilename);
+        return;
+    }
+
+    // Prefix unik untuk semua temp file sesi ini
+    $tmpDir    = sys_get_temp_dir();
+    $tmpPrefix = 'maktabah_' . $id . '_' . uniqid('', true);
+    $zipPath   = $tmpDir . DIRECTORY_SEPARATOR . $tmpPrefix . '.zip';
+    $zip       = new ZipArchive();
+
+    if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal membuat file ZIP.']);
+        return;
+    }
+
+    // Catat semua temp DOCX agar bisa dihapus setelah readfile()
+    $tempDocxFiles = [];
+
+    foreach ($byJuz as $juzNumber => $pageMeta) {
+        if ($hasPhpWord) {
+            // Bangun DOCX untuk juz ini, simpan ke temp file
+            $phpWord  = buildJuzDocx($book, $pageMeta, $juzNumber, $totalJuz, $isArabic);
+            $juzLabel = $isArabic ? 'الجزء_' . $juzNumber : 'Juz_' . $juzNumber;
+            $docxName = $baseFilename . '_' . $juzLabel . '.docx';          // nama di dalam ZIP
+            $tmpDocx  = $tmpDir . DIRECTORY_SEPARATOR . $tmpPrefix . '_juz' . $juzNumber . '.docx';
+
+            $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+            $writer->save($tmpDocx);
+
+            $zip->addFile($tmpDocx, $docxName);
+            $tempDocxFiles[] = $tmpDocx;    // tandai untuk dihapus nanti
+        } else {
+            // Fallback: file TXT per juz langsung ke string (tidak perlu temp file)
+            $juzLabel = 'Juz_' . $juzNumber;
+            $txtName  = $baseFilename . '_' . $juzLabel . '.txt';
+            $pages    = array_column($pageMeta, 'content');
+            $content  = buildJuzTxtContent($book, $pages, $juzNumber, $totalJuz);
+            $zip->addFromString($txtName, $content);
+        }
+    }
+
+    // Tambahkan README singkat di root ZIP
+    $readmeLines = $isArabic
+        ? [
+            'الكتاب: ' . ($book['title'] ?: '—'),
+            'المؤلف: ' . ($book['author'] ?: '—'),
+            'عدد الأجزاء: ' . $totalJuz,
+            '',
+            'تم إنشاء هذا الملف بواسطة مكتبة السنية',
+          ]
+        : [
+            'Judul    : ' . ($book['title'] ?: '—'),
+            'Penulis  : ' . ($book['author'] ?: '—'),
+            'Jumlah Juz: ' . $totalJuz,
+            '',
+            'File ini dibuat oleh Al-Maktabah As-Sunniyyah',
+          ];
+    $zip->addFromString('README.txt', implode("\r\n", $readmeLines));
+
+    // Tutup ZIP agar file di-flush ke disk sebelum dibaca
+    $zip->close();
+
+    // ── Kirim ZIP ke browser ──────────────────────────────────
+    $zipFilename = $baseFilename . '.zip';
+    header_remove('Content-Type');
+    header('Content-Type: application/zip');
+    header('Content-Disposition: ' . contentDispositionHeader($zipFilename));
+    header('Content-Length: ' . filesize($zipPath));
+    header('Cache-Control: no-store, must-revalidate');
+
+    readfile($zipPath);
+
+    // ── Bersihkan semua temp file setelah dikirim ─────────────
+    @unlink($zipPath);
+    foreach ($tempDocxFiles as $f) {
+        @unlink($f);
+    }
 }
+
+// =============================================================
+// DOWNLOAD — fallback: multi-juz sebagai TXT dalam ZIP
+// (bila ZipArchive tidak tersedia, kirim semua dalam satu TXT)
+// =============================================================
+function buildJuzTxtContent(array $book, array $pages, int $juzNumber, int $totalJuz): string {
+    $lines   = [];
+    $lines[] = $book['title'] ?: 'Kitab tanpa judul';
+    if (!empty($book['author'])) {
+        $lines[] = 'Pengarang: ' . $book['author'];
+    }
+    if ($totalJuz > 1) {
+        $lines[] = "Juz: {$juzNumber} dari {$totalJuz}";
+    }
+    $lines[] = '';
+    foreach ($pages as $idx => $content) {
+        $lines[] = '--- Halaman ' . ($idx + 1) . ' ---';
+        $lines[] = $content;
+        $lines[] = '';
+    }
+    return implode("\n", $lines);
+}
+
+function fallbackDownloadMultiJuzTxt(array $book, array $byJuz, string $baseFilename): void {
+    // Gabungkan semua juz dalam satu TXT bila tidak ada ZipArchive
+    $allPages = [];
+    foreach ($byJuz as $pageMeta) {
+        foreach ($pageMeta as $row) {
+            $allPages[] = $row['content'];
+        }
+    }
+    fallbackDownloadTxt($book, $allPages);
+}
+
+
 
 // =============================================================
 // 3. BOOK CONTENT — one page at a time, juz-aware

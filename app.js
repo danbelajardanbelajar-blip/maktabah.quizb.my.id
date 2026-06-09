@@ -337,6 +337,13 @@ function bookCard(b) {
   const author = b.author || 'مجهول';
   const cat    = b.category_name || '';
   const pages  = b.pages  ? b.pages + ' hal.' : '';
+  const totalJuz   = b.total_juz || 1;
+  const fmtBadge   = totalJuz > 1
+    ? `<span class="dl-fmt-badge dl-fmt-zip">ZIP · ${totalJuz} juz</span>`
+    : `<span class="dl-fmt-badge dl-fmt-docx">DOCX</span>`;
+  const dlTitle    = totalJuz > 1
+    ? `Unduh ${totalJuz} file DOCX dalam ZIP`
+    : 'Unduh sebagai DOCX';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-5 flex flex-col gap-3 cursor-pointer"
          onclick="navigate('/kitab?id=${b.bkid}')">
@@ -347,10 +354,12 @@ function bookCard(b) {
       <div class="flex items-center gap-2 mt-auto pt-2 border-t border-cream-dark">
         ${pages ? `<span class="text-xs text-gold font-medium">${escHtml(pages)}</span>` : ''}
         <a href="/api.php?action=download_book&id=${b.bkid}"
-           class="inline-flex items-center justify-center p-2 rounded-full border border-gold/20 text-gold hover:bg-gold/10 transition"
+           class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-gold/20 text-gold hover:bg-gold/10 transition ml-auto"
            onclick="event.stopPropagation();"
-           aria-label="Unduh kitab">
-          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+           title="${dlTitle}"
+           aria-label="${dlTitle}">
+          <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
+          ${fmtBadge}
         </a>
       </div>
     </div>`;
@@ -1543,6 +1552,11 @@ function bookCardStagger(b, i, q = '') {
   const pages  = b.pages ? b.pages + ' hal.' : '';
   const titleHtml  = hlText(title, q);
   const authorHtml = author ? hlText(author, q) : '';
+  const totalJuz   = b.total_juz || 1;
+  const fmtBadge   = totalJuz > 1
+    ? `<span class="dl-fmt-badge dl-fmt-zip">ZIP·${totalJuz}j</span>`
+    : `<span class="dl-fmt-badge dl-fmt-docx">DOCX</span>`;
+  const dlTitle    = totalJuz > 1 ? `Unduh ZIP (${totalJuz} juz)` : 'Unduh DOCX';
   return `
     <div class="book-card search-card-stagger bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
          style="animation-delay:${i*40}ms" onclick="navigate('/kitab?id=${b.bkid}')">
@@ -1555,10 +1569,12 @@ function bookCardStagger(b, i, q = '') {
         <div class="flex items-center gap-2">
           ${pages ? `<span class="text-xs text-gold font-medium">${pages}</span>` : ''}
           <a href="/api.php?action=download_book&id=${b.bkid}"
-             class="inline-flex items-center justify-center p-2 rounded-full border border-gold/20 text-gold hover:bg-gold/10 transition"
+             class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gold/20 text-gold hover:bg-gold/10 transition"
              onclick="event.stopPropagation();"
-             aria-label="Unduh kitab">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+             title="${dlTitle}"
+             aria-label="${dlTitle}">
+            <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
+            ${fmtBadge}
           </a>
         </div>
       </div>
@@ -1575,7 +1591,6 @@ function contentCard(b, q) {
   const titleHtml  = hlText(title, q);
   const authorHtml = author ? hlText(author, q) : '';
   const hlSnip  = snippet ? hlText(snippet, q) : '';
-  // Include match_page and query so reader opens on the correct page with highlight
   const pageParam = b.match_page ? `&page=${b.match_page}` : '';
   const qParam    = q ? `&q=${encodeURIComponent(q)}` : '';
   return `
@@ -1593,7 +1608,8 @@ function contentCard(b, q) {
           <a href="/api.php?action=download_book&id=${b.bkid}"
              class="inline-flex items-center justify-center p-2 rounded-full border border-gold/20 text-gold hover:bg-gold/10 transition"
              onclick="event.stopPropagation();"
-             aria-label="Unduh kitab">
+             aria-label="Unduh kitab"
+             title="Unduh kitab">
             <i data-lucide="download" class="w-3.5 h-3.5"></i>
           </a>
         </div>
@@ -1793,10 +1809,16 @@ async function renderDetail(params) {
             ${pages      ? `<span class="px-2 sm:px-3 py-1 rounded-full bg-gold/20 text-gold text-xs flex items-center gap-1"><i data-lucide="file-text" class="w-3 h-3"></i>${pages}</span>` : ''}
             ${contentPgs ? `<span class="px-2 sm:px-3 py-1 rounded-full bg-white/10 text-white/70 text-xs flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i>${contentPgs} halaman tersedia${book.total_juz > 1 ? ` &bull; ${book.total_juz} juz` : ''}</span>` : ''}
             <a href="/api.php?action=download_book&id=${book.bkid}"
-               class="inline-flex items-center justify-center p-2 rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/15 transition shrink-0"
-               title="Unduh kitab"
+               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 transition shrink-0"
+               title="${book.total_juz > 1 ? `Unduh ZIP berisi ${book.total_juz} file DOCX` : 'Unduh sebagai DOCX'}"
                aria-label="Unduh kitab">
               <i data-lucide="download" class="w-4 h-4"></i>
+              <span class="text-xs font-bold tracking-wide">
+                ${book.total_juz > 1
+                  ? `<span class="dl-fmt-badge dl-fmt-zip" style="color:inherit;background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)">ZIP · ${book.total_juz} juz</span>`
+                  : `<span class="dl-fmt-badge dl-fmt-docx" style="color:inherit;background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)">DOCX</span>`
+                }
+              </span>
             </a>
           </div>
         </div>
