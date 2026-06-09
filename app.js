@@ -2199,7 +2199,7 @@ async function renderDetail(params) {
 
 
   app().innerHTML = `
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <button onclick="history.back()" class="flex items-center gap-2 text-primary/60 hover:text-primary text-sm mb-6 transition-colors">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali
       </button>
