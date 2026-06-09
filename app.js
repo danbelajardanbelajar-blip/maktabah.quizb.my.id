@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#global-search-input')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       const q = e.target.value.trim();
-      if (q) { $('#search-bar').classList.add('hidden'); navigate('/search?q=' + encodeURIComponent(q)); }
+      if (q) { $('#search-bar').classList.add('hidden'); navigate('/search-advanced?q1=' + encodeURIComponent(q)); }
     }
   });
 
@@ -519,7 +519,7 @@ async function renderHome() {
   $('#hero-search')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       const q = e.target.value.trim();
-      if (q) navigate('/search?q=' + encodeURIComponent(q));
+      if (q) navigate('/search-advanced?q1=' + encodeURIComponent(q));
     }
   });
 
@@ -537,7 +537,7 @@ async function renderHome() {
         const safe = escHtml(q);
         const enc  = encodeURIComponent(q);
         return `<button
-          onclick="navigate('/search?q=${enc}')"
+          onclick="navigate('/search-advanced?q1=${enc}')"
           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
                  border border-gold/25 bg-white hover:bg-primary hover:text-white hover:border-primary
                  text-sm text-primary/75 transition-all duration-150 shadow-sm cursor-pointer">
