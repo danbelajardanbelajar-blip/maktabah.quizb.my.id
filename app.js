@@ -2199,7 +2199,7 @@ async function renderDetail(params) {
 
 
   app().innerHTML = `
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 py-10">
       <button onclick="history.back()" class="flex items-center gap-2 text-primary/60 hover:text-primary text-sm mb-6 transition-colors">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali
       </button>
@@ -2238,7 +2238,7 @@ async function renderDetail(params) {
       <div class="bg-white rounded-3xl shadow-card overflow-hidden">
 
         <!-- ── Book Header ── -->
-        <div class="hero-bg text-white p-8 md:p-10">
+        <div class="hero-bg text-white p-4 sm:p-8 md:p-10">
           <div class="arabic text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">${escHtml(title)}</div>
           <div class="text-gold text-base font-medium mt-1">${escHtml(author)}</div>
           <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4">
@@ -2261,7 +2261,7 @@ async function renderDetail(params) {
         </div>
 
         <!-- ── Meta (description / author info) ── -->
-        <div class="px-8 md:px-10 pt-8 space-y-5">
+        <div class="px-3 sm:px-8 md:px-10 pt-6 sm:pt-8 space-y-5">
           ${description ? `
             <div>
               <h3 class="text-xs font-semibold text-primary/40 uppercase tracking-wider mb-2">Deskripsi</h3>
@@ -2276,7 +2276,7 @@ async function renderDetail(params) {
 
         <!-- ── Reader ── -->
         ${contentPgs > 0 ? `
-        <div class="px-8 md:px-10 pb-10 mt-8">
+        <div class="px-3 sm:px-8 md:px-10 pb-6 sm:pb-10 mt-6 sm:mt-8">
           <div class="border-t border-cream-dark pt-6">
 
             <!-- Reader toolbar -->
@@ -2310,7 +2310,7 @@ async function renderDetail(params) {
 
             <!-- Content area — direction & font controlled by CSS vars + unicode-bidi -->
             <div id="reader-area"
-              class="bg-cream rounded-2xl p-6 md:p-8 min-h-48 text-primary leading-loose transition-opacity duration-200">
+              class="bg-cream rounded-2xl p-3 sm:p-6 md:p-8 min-h-48 text-primary leading-loose transition-opacity duration-200">
               <div class="flex justify-center py-8">
                 <div class="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" style="border-width:2px"></div>
               </div>
@@ -2331,7 +2331,7 @@ async function renderDetail(params) {
 
           </div>
         </div>` : `
-        <div class="px-8 md:px-10 pb-10 mt-6">
+        <div class="px-3 sm:px-8 md:px-10 pb-10 mt-6">
           <div class="border-t border-cream-dark pt-6 flex items-center gap-3 text-primary/40 text-sm">
             <i data-lucide="info" class="w-4 h-4"></i>
             <span>Konten kitab ini belum tersedia.</span>
