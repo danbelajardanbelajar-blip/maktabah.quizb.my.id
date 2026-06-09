@@ -2665,7 +2665,7 @@ function renderAbout() {
               <div class="space-y-2.5 text-sm">
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">No Hp</span>
-                  <a href="https://wa.me/085743399595" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">085743399595</a>
+                  <a href="https://wa.me/6285743399595" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">085743399595</a>
                 </div>
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">Website</span>
