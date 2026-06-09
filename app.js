@@ -1628,15 +1628,60 @@ function patchHeader(secId, icon, label, total, loading = false) {
 }
 
 // ── Progressive content search — per-book, satu per satu ─────
-// Setiap kitab di-query satu per satu dengan delay kecil,
-// sehingga tidak membebani DB dan UI tetap responsif.
-// Hasil langsung muncul/ditambah saat ditemukan.
+// Hasil dikumpulkan di _contResults, ditampilkan per halaman (CONT_PAGE_SIZE).
+// Pencarian tetap berjalan di latar belakang; halaman 1 diperbarui langsung.
+const CONT_PAGE_SIZE = 9;
+let _contResults     = [];   // semua hasil terkumpul
+let _contCurrentPage = 1;    // halaman aktif yang sedang ditampilkan
+let _contSearchQ     = '';   // query terakhir (untuk highlight & navigasi)
+
+// Render satu halaman dari _contResults ke dalam grid
+function renderContPage(results, page, q, searching) {
+  const grid = $('#cont-results-grid');
+  const pag  = $('#cont-pagination');
+  if (!grid) return;
+
+  const start      = (page - 1) * CONT_PAGE_SIZE;
+  const slice      = results.slice(start, start + CONT_PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(results.length / CONT_PAGE_SIZE));
+
+  if (slice.length) {
+    grid.innerHTML = `<div class="search-section-enter grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+      ${slice.map(item => contentCard(item, q)).join('')}
+    </div>`;
+  } else {
+    grid.innerHTML = '';
+  }
+
+  if (pag) {
+    // Tampilkan pagination + status pencarian jika masih berjalan
+    const searchingNote = searching
+      ? `<span style="font-size:11px;color:rgba(26,58,42,.4);display:flex;align-items:center;gap:5px;">
+           <span class="spin-ring" style="width:12px;height:12px;border-width:2px;"></span>
+           Masih mencari&hellip;
+         </span>`
+      : '';
+    pag.innerHTML = (results.length > CONT_PAGE_SIZE || searching)
+      ? `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;">
+           ${paginationHtml(page, totalPages, 'goSearchContResultPage')}
+           ${searchingNote}
+         </div>`
+      : '';
+  }
+  reicons();
+}
+
 async function execProgressiveContentSearch(q, token) {
   const body = $('#sec-content-body');
   if (!body) return;
 
+  // Reset state
+  _contResults     = [];
+  _contCurrentPage = 1;
+  _contSearchQ     = q;
+
   // Tampilkan loading awal
-  body.innerHTML = progressContentShell('Memuat daftar kitab…', 0, 0);
+  body.innerHTML = progressContentShell('Memuat daftar kitab\u2026', 0, 0);
   reicons();
 
   // 1. Ambil daftar semua kitab yang punya konten (ringan, di-cache 1 jam)
@@ -1660,13 +1705,13 @@ async function execProgressiveContentSearch(q, token) {
   const total   = books.length;
   let   found   = 0;   // jumlah kitab yang mengandung hasil
   let   checked = 0;   // jumlah kitab yang sudah dicek
-  const results = [];  // semua hasil yang ditemukan
 
-  // Render container hasil yang bisa di-update inkremental
+  // Render container (progress + grid + pagination)
   body.innerHTML = `
-    <div id="cont-progress-bar" class="mb-4">${progressContentShell('', checked, total)}</div>
-    <div id="cont-results-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 search-section-enter"></div>
-    <div id="cont-no-result" class="hidden">${noResultBlock('Tidak ada kecocokan pada isi kitab.')}</div>`;
+    <div id="cont-progress-bar" class="mb-3">${progressContentShell('', 0, total)}</div>
+    <div id="cont-results-grid"></div>
+    <div id="cont-no-result" class="hidden">${noResultBlock('Tidak ada kecocokan pada isi kitab.')}</div>
+    <div id="cont-pagination"></div>`;
   reicons();
 
   // 2. Iterasi per-kitab dengan delay antar request
@@ -1674,11 +1719,11 @@ async function execProgressiveContentSearch(q, token) {
     // Batalkan jika query sudah berganti
     if (_contentSearchToken !== token) return;
 
-    // Update progress
+    // Update progress bar
     const progBar = $('#cont-progress-bar');
     if (progBar) {
       progBar.innerHTML = progressContentShell(
-        `Mencari di: <span class="arabic font-semibold text-primary">${escHtml(book.title)}</span>`,
+        `Mencari di: <span style="font-family:'Amiri','Noto Naskh Arabic',serif;direction:rtl;unicode-bidi:plaintext;font-weight:600;color:#1a3a2a;">${escHtml(book.title)}</span>`,
         checked, total
       );
     }
@@ -1687,27 +1732,37 @@ async function execProgressiveContentSearch(q, token) {
       const r   = await fetch(API + '?' + new URLSearchParams({action:'search_content_in_book', bkid: book.bkid, q}));
       const res = await r.json();
 
-      if (_contentSearchToken !== token) return; // batalkan jika sudah berganti
+      if (_contentSearchToken !== token) return;
 
       if (res.found && res.data && res.data.length) {
         found++;
-        // Tambahkan hasil ke array dan render
-        for (const item of res.data) {
-          results.push(item);
-          const grid = $('#cont-results-grid');
-          if (grid) {
-            const card = document.createElement('div');
-            card.innerHTML = contentCard(item, q);
-            const el = card.firstElementChild;
-            if (el) {
-              el.style.animation = 'cardPop .3s cubic-bezier(.22,.61,.36,1) both';
-              grid.appendChild(el);
-            }
+        for (const item of res.data) _contResults.push(item);
+
+        // Update header
+        patchHeader('sec-content','file-text','Isi Kitab', _contResults.length, true);
+
+        // Perbarui tampilan halaman aktif (halaman 1 langsung refresh; halaman lain hanya pagination)
+        if (_contCurrentPage === 1) {
+          renderContPage(_contResults, 1, q, true);
+          // Sembunyikan no-result jika sudah ada hasil
+          const noRes = $('#cont-no-result');
+          if (noRes) noRes.classList.add('hidden');
+        } else {
+          // Update hanya pagination saja, jangan geser view user
+          const totalPages = Math.max(1, Math.ceil(_contResults.length / CONT_PAGE_SIZE));
+          const pag = $('#cont-pagination');
+          if (pag) {
+            const searchingNote = `<span style="font-size:11px;color:rgba(26,58,42,.4);display:flex;align-items:center;gap:5px;">
+              <span class="spin-ring" style="width:12px;height:12px;border-width:2px;"></span>
+              Masih mencari&hellip;
+            </span>`;
+            pag.innerHTML = `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;">
+              ${paginationHtml(_contCurrentPage, totalPages, 'goSearchContResultPage')}
+              ${searchingNote}
+            </div>`;
+            reicons();
           }
         }
-        // Update header dengan jumlah hasil
-        patchHeader('sec-content','file-text','Isi Kitab', results.length);
-        reicons();
       }
     } catch(e) {
       // Lewati kitab yang gagal, lanjutkan ke berikutnya
@@ -1715,34 +1770,56 @@ async function execProgressiveContentSearch(q, token) {
 
     checked++;
 
-    // Delay kecil antara request agar tidak membebani server
-    // (lebih besar jika sudah banyak hasil → tidak perlu terlalu cepat)
+    // Delay adaptif: lebih lambat jika sudah banyak hasil (tidak perlu terlalu cepat)
     if (_contentSearchToken === token) {
-      await new Promise(res => setTimeout(res, found > 5 ? 150 : 80));
+      await new Promise(r => setTimeout(r, found > 5 ? 150 : 80));
     }
   }
 
-  // Selesai — bersihkan progress bar
+  // ── Selesai ──
   if (_contentSearchToken !== token) return;
+
+  // Bersihkan progress bar
   const progBar = $('#cont-progress-bar');
   if (progBar) progBar.innerHTML = '';
 
-  if (!results.length) {
-    const grid = $('#cont-results-grid');
-    if (grid) grid.innerHTML = '';
+  if (!_contResults.length) {
     const noRes = $('#cont-no-result');
     if (noRes) noRes.classList.remove('hidden');
+    const grid = $('#cont-results-grid');
+    if (grid) grid.innerHTML = '';
+    const pag = $('#cont-pagination');
+    if (pag) pag.innerHTML = '';
+  } else {
+    // Re-render halaman aktif tanpa "Masih mencari" note
+    renderContPage(_contResults, _contCurrentPage, q, false);
   }
-  patchHeader('sec-content','file-text','Isi Kitab', results.length);
+
+  patchHeader('sec-content','file-text','Isi Kitab', _contResults.length, false);
   reicons();
 
-  // Update search stats ketika selesai
+  // Update search stats
   const st = $('#search-stats');
   if (st && !st.innerHTML.trim()) {
-    st.innerHTML = `<i data-lucide="check-circle" class="w-3 h-3 text-emerald-500"></i> Selesai — ${results.length} halaman ditemukan`;
+    st.innerHTML = `<i data-lucide="check-circle" class="w-3 h-3 text-emerald-500"></i> Selesai \u2014 ${_contResults.length} halaman ditemukan`;
     reicons();
   }
+
+  // Tandai pencarian selesai (token-nya sendiri sudah tidak aktif)
+  if (_contentSearchToken === token) _contentSearchToken = null;
 }
+
+// Navigasi paginasi hasil isi kitab (client-side)
+window.goSearchContResultPage = function(p) {
+  _contCurrentPage = p;
+  // Cek apakah pencarian masih berjalan (token bukan null = masih aktif)
+  const stillSearching = _contentSearchToken !== null;
+  renderContPage(_contResults, p, _contSearchQ, stillSearching);
+  // Scroll ke bagian isi kitab
+  $('#sec-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+
 
 // ── Progress shell for per-book search ───────────────────────
 function progressContentShell(label, done, total) {
