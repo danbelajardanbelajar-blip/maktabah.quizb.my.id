@@ -1039,6 +1039,23 @@ function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function buildArabicRegexStr(term) {
+  const diacritics = '[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\u06DF-\\u06E8\\u06EA-\\u06ED]*';
+  let result = '';
+  for (let i = 0; i < term.length; i++) {
+    const char = term[i];
+    if (/\\s/.test(char)) {
+      // Collapse multiple spaces into one space matcher
+      if (!result.endsWith('\\s+')) {
+        result += '\\s+';
+      }
+    } else {
+      result += escapeRegex(char) + diacritics;
+    }
+  }
+  return result;
+}
+
 function parseSearchTerms(q) {
   if (!q) return [];
   q = String(q).replace(/\+/g, ' ').trim();
@@ -1071,7 +1088,7 @@ function highlightTextNodes(container, terms) {
     .map(t => t.replace(/^"|"$/g, '').trim())
     .filter(Boolean)
     .sort((a, b) => b.length - a.length)
-    .map(escapeRegex);
+    .map(buildArabicRegexStr);
   if (!escapedTerms.length) return false;
 
   const regex = new RegExp('(' + escapedTerms.join('|') + ')', 'gi');
@@ -1119,7 +1136,7 @@ function hlTextMulti(text, terms) {
     if (!term) return;
     const unquoted = term.replace(/^"|"$/g, '').trim();
     if (!unquoted) return;
-    patterns.push(escapeRegex(unquoted));
+    patterns.push(buildArabicRegexStr(unquoted));
   });
   if (!patterns.length) return escaped;
   const regex = new RegExp('(' + patterns.sort((a, b) => b.length - a.length).join('|') + ')', 'gi');

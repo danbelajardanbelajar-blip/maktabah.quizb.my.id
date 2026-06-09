@@ -1380,14 +1380,15 @@ function extractSmartSnippet($content, $terms, $maxLength = 350) {
     
     // Clean content
     $cleanContent = preg_replace('/\s+/', ' ', str_replace(["\n", "\r", "\t"], ' ', $content));
-    $cleanContent = substr($cleanContent, 0, 2000); // Limit to prevent memory issues
+    $cleanContent = mb_substr($cleanContent, 0, 2000); // Limit to prevent memory issues
     
     if (empty($terms)) {
-        return substr($cleanContent, 0, $maxLength);
+        return mb_substr($cleanContent, 0, $maxLength);
     }
     
-    // Find positions of all search terms (case-insensitive)
+    $diacritics = '[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}\x{06DF}-\x{06E8}\x{06EA}-\x{06ED}]*';
     $positions = [];
+    
     foreach ($terms as $term) {
         $term = trim($term);
         if (empty($term)) continue;
@@ -1396,43 +1397,44 @@ function extractSmartSnippet($content, $terms, $maxLength = 350) {
         $term = preg_replace('/^"|"$/', '', $term);
         if (empty($term)) continue;
         
-        // Find all positions of this term
-        $lowerContent = strtolower($cleanContent);
-        $lowerTerm = strtolower($term);
-        $offset = 0;
-        while (($pos = strpos($lowerContent, $lowerTerm, $offset)) !== false) {
-            $positions[] = $pos;
-            $offset = $pos + 1;
+        $patternChars = [];
+        $chars = preg_split('//u', $term, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($chars as $char) {
+            if (preg_match('/\s/u', $char)) {
+                $patternChars[] = '\s+';
+            } else {
+                $patternChars[] = preg_quote($char, '/') . $diacritics;
+            }
+        }
+        $pattern = '/' . implode('', $patternChars) . '/ui';
+        
+        if (preg_match_all($pattern, $cleanContent, $matches, PREG_OFFSET_CAPTURE)) {
+            foreach ($matches[0] as $match) {
+                $positions[] = $match[1]; // byte offset
+            }
         }
     }
     
     if (empty($positions)) {
-        // No terms found, return beginning
-        return substr($cleanContent, 0, $maxLength);
+        return mb_substr($cleanContent, 0, $maxLength);
     }
     
-    // Sort positions and find optimal snippet window
     sort($positions);
     $firstPos = reset($positions);
     $lastPos = end($positions);
     
-    // Calculate snippet start: go back a bit from first term
-    $snippetStart = max(0, $firstPos - 50);
+    $snippetStart = max(0, $firstPos - 100);
+    $snippetEnd = min(strlen($cleanContent), $lastPos + 400);
     
-    // Calculate snippet end: go forward from last term to include it
-    $snippetEnd = min(strlen($cleanContent), $lastPos + 200);
-    
-    // Adjust length to not exceed maxLength
+    $maxBytes = $maxLength * 2;
     $snippetLength = $snippetEnd - $snippetStart;
-    if ($snippetLength > $maxLength) {
-        // Prefer to keep all terms, but truncate if needed
-        $snippetEnd = min($snippetEnd, $snippetStart + $maxLength);
+    if ($snippetLength > $maxBytes) {
+        $snippetEnd = min($snippetEnd, $snippetStart + $maxBytes);
     }
     
-    $snippet = substr($cleanContent, $snippetStart, $snippetEnd - $snippetStart);
+    $snippet = mb_strcut($cleanContent, $snippetStart, $snippetEnd - $snippetStart);
     
-    // Trim to word boundary
-    if (strlen($snippet) > 300) {
+    if (strlen($snippet) > ($maxBytes * 0.8)) {
         $lastSpace = strrpos($snippet, ' ');
         if ($lastSpace > 0 && $lastSpace < strlen($snippet) - 10) {
             $snippet = substr($snippet, 0, $lastSpace);
