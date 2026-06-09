@@ -1534,10 +1534,15 @@ function renderSearch(params) {
           <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/35 transition-colors group-focus-within:text-gold"></i>
           <input id="search-input" type="text" value="${escHtml(searchState.q)}"
             placeholder="Cari kata kunci pada isi ribuan kitab…"
-            class="search-input-premium w-full pl-12 pr-12 py-4 rounded-2xl border border-gold/30 bg-white text-sm focus:outline-none focus:border-gold shadow-card" />
-          <button id="search-clear" class="absolute right-4 top-1/2 -translate-y-1/2 text-primary/30 hover:text-primary transition-colors ${searchState.q ? '' : 'hidden'}">
-            <i data-lucide="x" class="w-4 h-4"></i>
-          </button>
+            class="search-input-premium w-full pl-12 pr-24 py-4 rounded-2xl border border-gold/30 bg-white text-sm focus:outline-none focus:border-gold shadow-card" />
+          <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <button id="search-clear" class="p-2 text-primary/30 hover:text-primary transition-colors ${searchState.q ? '' : 'hidden'}" title="Hapus pencarian">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <button id="search-btn" class="p-2 bg-gold text-primary rounded-xl hover:bg-gold-light transition-colors shadow-sm" title="Mulai pencarian">
+              <i data-lucide="search" class="w-4 h-4"></i>
+            </button>
+          </div>
         </div>
         <p class="mt-3 text-xs text-primary/50">Sistem pencarian modern: mencari isi halaman seluruh kitab secara instan dan menyeluruh.</p>
         <div class="mt-3 text-right">
@@ -1554,7 +1559,7 @@ function renderSearch(params) {
     </div>`;
 
   reicons();
-  const inp = $('#search-input'), clr = $('#search-clear');
+  const inp = $('#search-input'), clr = $('#search-clear'), btn = $('#search-btn');
 
   clr?.addEventListener('click', () => {
     inp.value = ''; searchState.q = '';
@@ -1566,16 +1571,21 @@ function renderSearch(params) {
     reicons(); inp.focus();
   });
 
-  let timer;
   inp?.addEventListener('input', e => {
-    clearTimeout(timer);
     searchState.q = e.target.value.trim();
     searchState.bookPage = searchState.contPage = 1;
     clr?.classList.toggle('hidden', !searchState.q);
-    if (searchState.q.length >= 2) timer = setTimeout(execSearch, 300);
-    else if (!searchState.q) { abortAll(); $('#search-results').innerHTML = emptySearchPrompt(); $('#search-stats').innerHTML = ''; reicons(); }
+    if (!searchState.q) { abortAll(); $('#search-results').innerHTML = emptySearchPrompt(); $('#search-stats').innerHTML = ''; reicons(); }
   });
-  inp?.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(timer); execSearch(); } });
+
+  const triggerSearch = () => {
+    if (searchState.q.length >= 2) {
+      execSearch();
+    }
+  };
+
+  inp?.addEventListener('keydown', e => { if (e.key === 'Enter') triggerSearch(); });
+  btn?.addEventListener('click', triggerSearch);
 
   if (newQ.length >= 2) {
     if (sameQuery) {
