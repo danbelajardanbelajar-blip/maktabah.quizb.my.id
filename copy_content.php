@@ -1,126 +1,89 @@
 <?php
 // ============================================================
-// copy_content.php — copy data dari book_content_old ke book_content
-// Jalankan di terminal:
-//   php copy_content.php [--force] [--dry-run]
-//
-// Struktur sumber book_content_old:
-//   id, bkid, page, content, created_at
-// Struktur target book_content:
-//   id, bkid, page, juz, content, created_at
-//
-// Kolom `juz` tidak disalin secara eksplisit karena sudah punya default 1.
+// copy_ulang.php — Salin data dari book_content_old ke book_content
+// Dilengkapi fitur Auto-Resume jika terputus di tengah jalan.
 // ============================================================
 
-if (PHP_SAPI !== 'cli') {
-    http_response_code(403);
-    exit("Jalankan via terminal: php copy_content.php\n");
+if (php_sapi_name() !== 'cli') {
+    die("Error: Script ini harus dijalankan melalui Terminal/SSH.\n");
 }
 
 set_time_limit(0);
-ini_set('memory_limit', '256M');
-
+ini_set('memory_limit', '1024M');
 require_once __DIR__ . '/koneksi.php';
 
-function clr(string $code, string $text): string {
-    return "\033[{$code}m{$text}\033[0m";
-}
-function ok(string $s): void   { echo clr('32', '✓') . " {$s}\n"; }
-function info(string $s): void { echo clr('36', 'ℹ') . " {$s}\n"; }
-function warn(string $s): void { echo clr('33', '⚠') . " {$s}\n"; }
-function err(string $s): void  { echo clr('31', '✗') . " {$s}\n"; }
-function head(string $s): void { echo "\n" . clr('1;37', $s) . "\n" . str_repeat('─', 56) . "\n"; }
-function parseArgs(array $argv): array {
-    $opts = [];
-    foreach ($argv as $arg) {
-        if (!str_starts_with($arg, '--')) {
-            continue;
-        }
-        $parts = explode('=', substr($arg, 2), 2);
-        $opts[$parts[0]] = $parts[1] ?? true;
-    }
-    return $opts;
-}
+// Konfigurasi Nama Tabel
+$tabelSumber = 'book_content_old';
+$tabelTujuan = 'book_content';
 
-$args = parseArgs($argv);
-$force = isset($args['force']);
-$dryRun = isset($args['dry-run']) || isset($args['dryrun']);
-
-head('copy_content.php — Salin book_content_old ke book_content');
-info('Waktu mulai: ' . date('Y-m-d H:i:s'));
-if ($force) {
-    warn('Mode force: target akan dikosongkan sebelum salin jika sudah berisi data.');
+function logMsg($msg) { 
+    echo "[" . date('H:i:s') . "] " . $msg . "\n"; 
 }
-if ($dryRun) {
-    warn('Mode dry-run: tidak akan melakukan perubahan di database.');
-}
-
-$pdo = getPDO();
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 try {
-    $sourceExists = (bool)$pdo->query("SHOW TABLES LIKE 'book_content_old'")->fetchColumn();
-    $targetExists = (bool)$pdo->query("SHOW TABLES LIKE 'book_content'")->fetchColumn();
-
-    if (!$sourceExists) {
-        err('Tabel sumber `book_content_old` tidak ditemukan.');
-        exit(1);
-    }
-    if (!$targetExists) {
-        err('Tabel target `book_content` tidak ditemukan.');
-        exit(1);
-    }
-
-    $sourceCount = (int)$pdo->query('SELECT COUNT(*) FROM book_content_old')->fetchColumn();
-    $targetCount = (int)$pdo->query('SELECT COUNT(*) FROM book_content')->fetchColumn();
-
-    info('Jumlah baris di book_content_old: ' . $sourceCount);
-    info('Jumlah baris di book_content: ' . $targetCount);
-
-    if ($sourceCount === 0) {
-        err('Tidak ada baris untuk disalin dari book_content_old.');
-        exit(1);
-    }
-
-    if ($targetCount > 0 && !$force) {
-        err('Tabel book_content sudah berisi data. Gunakan --force untuk mengosongkannya terlebih dahulu.');
-        exit(1);
-    }
-
-    if ($dryRun) {
-        ok('Dry-run selesai. Tidak ada data yang diubah.');
-        exit(0);
-    }
-
-    $pdo->beginTransaction();
-
-    if ($targetCount > 0 && $force) {
-        info('Mengosongkan tabel book_content sebelum menyalin...');
-        $pdo->exec('TRUNCATE TABLE book_content');
-        ok('Tabel book_content dikosongkan.');
-    }
-
-    info('Menyalin data...');
-    $insertSql = <<<SQL
-INSERT INTO book_content (id, bkid, page, content, created_at)
-SELECT id, bkid, page, content, created_at
-FROM book_content_old
-SQL;
-    $inserted = $pdo->exec($insertSql);
-    if ($inserted === false) {
-        throw new RuntimeException('Eksekusi INSERT gagal.');
-    }
-
-    $pdo->commit();
-
-    ok('Salin selesai. Baris disalin: ' . $inserted);
-    info('Periksa tabel book_content untuk memastikan data sudah masuk dan kolom juz bernilai 1.');
-    info('Waktu selesai: ' . date('Y-m-d H:i:s'));
-    exit(0);
+    $pdo = getPDO();
 } catch (Throwable $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
-    err('ERROR: ' . $e->getMessage());
-    exit(1);
+    die("Koneksi gagal: " . $e->getMessage() . "\n");
 }
+
+logMsg("=== MEMULAI PROSES COPY DATA ===");
+
+// 1. Ambil daftar kolom dari tabel SUMBER (book_content_old)
+try {
+    $cols = $pdo->query("SHOW COLUMNS FROM $tabelSumber")->fetchAll(PDO::FETCH_COLUMN);
+    // Hapus kolom 'juz' dari daftar jika tidak sengaja terambil dari tabel sumber
+    $cols = array_diff($cols, ['juz']);
+    $colNames = implode(', ', $cols);
+} catch (Throwable $e) {
+    die("Error: Tabel sumber ($tabelSumber) tidak ditemukan. Pastikan nama tabel benar.\n");
+}
+
+// 2. Cari titik awal (Resume) berdasarkan data yang sudah masuk di tabel TUJUAN
+$lastIdNew = (int)$pdo->query("SELECT MAX(id) FROM $tabelTujuan")->fetchColumn();
+
+if ($lastIdNew > 0) {
+    $minId = $lastIdNew + 1;
+    logMsg("Melanjutkan copy data dari ID: $minId...");
+} else {
+    $minId = (int)$pdo->query("SELECT MIN(id) FROM $tabelSumber")->fetchColumn();
+    logMsg("Memulai dari awal. Min ID: $minId");
+}
+
+$maxId = (int)$pdo->query("SELECT MAX(id) FROM $tabelSumber")->fetchColumn();
+
+// Jika proses ternyata sudah selesai
+if ($minId > $maxId) {
+    logMsg("Semua data dari $tabelSumber sudah berada di $tabelTujuan.");
+    logMsg("=== PROCESS FINISHED ===");
+    exit;
+}
+
+// 3. Proses penyalinan secara bertahap (Batching)
+$chunkSize = 5000;
+$copied = 0;
+
+for ($i = $minId; $i <= $maxId; $i += $chunkSize) {
+    $endId = $i + $chunkSize - 1;
+    
+    // Gunakan INSERT IGNORE untuk keamanan data ganda
+    $sql = "INSERT IGNORE INTO $tabelTujuan ($colNames)
+            SELECT $colNames FROM $tabelSumber
+            WHERE id BETWEEN $i AND $endId";
+            
+    $pdo->exec($sql);
+    
+    $copied += $chunkSize;
+    
+    // Cetak log progress setiap 50.000 baris data
+    if ($copied % 50000 === 0 || $i >= $maxId) {
+        $pct = round(($endId / $maxId) * 100);
+        $pct = $pct > 100 ? 100 : $pct; 
+        logMsg("Progress: Tercopy s/d ID $endId ($pct%)");
+    }
+    
+    // Jeda 200 milidetik agar CPU/RAM server tetap stabil
+    usleep(200000); 
+}
+
+logMsg("=== PROSES COPY SELESAI SEPENUHNYA ===");
+?>
