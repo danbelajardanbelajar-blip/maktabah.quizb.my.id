@@ -334,23 +334,20 @@ function booleanSearchTerm(string $q): string {
         return '"' . ftEscape(searchPhraseText($q)) . '"';
     }
 
-    $terms = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
-    $parts = [];
-    foreach ($terms as $term) {
-        $clean = ftEscape($term);
-        if ($clean === '') continue;
-        
-        // Jika kata terlalu pendek (<=2 huruf), jangan paksakan wajib ada (+)
-        // karena jika MySQL innodb_ft_min_token_size = 3, kata pendek tidak di-index.
-        // Jika dipaksa '+', maka seluruh query boolean akan gagal.
-        if (mb_strlen($clean) <= 2) {
-            $parts[] = $clean . '*';
-        } else {
-            $parts[] = '+' . $clean . '*';
-        }
+    // Jika mengandung spasi (beberapa kata), otomatis jadikan phrase search
+    if (strpos($q, ' ') !== false) {
+        return '"' . ftEscape($q) . '"';
     }
 
-    return implode(' ', $parts);
+    // Untuk satu kata tunggal
+    $clean = ftEscape($q);
+    if ($clean === '') return '';
+    
+    if (mb_strlen($clean) <= 2) {
+        return $clean . '*';
+    } else {
+        return '+' . $clean . '*';
+    }
 }
 
 function booleanSearchTermForAdvanced(string $q): string {
@@ -368,12 +365,14 @@ function booleanQueryFromFieldsOr(array $fields): string {
             continue;
         }
 
-        $terms = preg_split('/\s+/u', $field, -1, PREG_SPLIT_NO_EMPTY);
-        foreach ($terms as $term) {
-            $clean = ftEscape($term);
-            if ($clean !== '') {
-                $parts[] = $clean . '*';
-            }
+        if (strpos($field, ' ') !== false) {
+            $parts[] = '"' . ftEscape($field) . '"';
+            continue;
+        }
+
+        $clean = ftEscape($field);
+        if ($clean !== '') {
+            $parts[] = $clean . '*';
         }
     }
     return implode(' ', $parts);
@@ -1486,7 +1485,7 @@ function handleSearchAdvanced(): void {
     $noCatFilter = $allCats || empty($cats);   // true = lewati filter kategori
 
     // --- Cache key ---
-    $cacheKey = 'adv5:' . hash('sha256', json_encode([
+    $cacheKey = 'adv6:' . hash('sha256', json_encode([
         'f' => $fields, 'c' => $cats, 'a' => $allCats, 's' => $samePage, 'p' => $page,
     ]));
 
@@ -1596,7 +1595,7 @@ function handleSearchAdvanced(): void {
             }
 
             // COUNT — tanpa JOIN (hanya book_content + FULLTEXT index)
-            $countKey = 'advcnt5:' . hash('sha256', json_encode([
+            $countKey = 'advcnt6:' . hash('sha256', json_encode([
                 'f' => $fields, 'c' => [], 's' => $samePage,
             ]));
             $cc = $pdo->prepare(
