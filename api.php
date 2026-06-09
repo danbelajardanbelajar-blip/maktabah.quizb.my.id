@@ -399,10 +399,13 @@ try {
         case 'recent_searches':   handleRecentSearches();   break;
         case 'stats':             handleStats();            break;
         // Search — tiga endpoint terpisah untuk parallel fetch
-        case 'search_categories': handleSearchCategories(); break;
-        case 'search_books':      handleSearchBooks();      break;
-        case 'search_content':    handleSearchContent();    break;
-        case 'search_advanced':   handleSearchAdvanced();   break;
+        case 'search_categories':       handleSearchCategories();     break;
+        case 'search_books':            handleSearchBooks();          break;
+        case 'search_content':          handleSearchContent();        break;
+        case 'search_advanced':         handleSearchAdvanced();       break;
+        // Per-book progressive search (ringan, dipakai di home)
+        case 'search_books_with_content': handleSearchBooksWithContent(); break;
+        case 'search_content_in_book':    handleSearchContentInBook();    break;
         // Auth
         case 'auth_me':           handleAuthMe();           break;
         case 'log_activity':       handleLogActivity();      break;
@@ -1291,6 +1294,92 @@ function handleSearchContent(): void {
         'page'        => $page,
         'total_pages' => (int)ceil($total / $limit),
     ]);
+}
+
+// =============================================================
+// 6e. LIST BOOKS WITH CONTENT — untuk progressive per-book search
+//     Mengembalikan semua buku yang punya konten, urut abjad.
+//     Sangat ringan: hanya baca tabel books dengan sub-select EXISTS.
+// =============================================================
+function handleSearchBooksWithContent(): void {
+    header('Cache-Control: public, max-age=3600');
+    $pdo   = getPDO();
+
+    // Ambil daftar kitab yang punya konten, urut abjad
+    // Gunakan EXISTS agar tidak perlu JOIN/GROUP BY
+    $stmt = $pdo->query(
+        "SELECT b.bkid, b.title, b.author, b.category_name
+         FROM books b
+         WHERE EXISTS (
+             SELECT 1 FROM book_content bc WHERE bc.bkid = b.bkid LIMIT 1
+         )
+         ORDER BY b.title ASC"
+    );
+    $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['data' => $books, 'total' => count($books)]);
+}
+
+// =============================================================
+// 6f. SEARCH CONTENT IN BOOK — cari di satu kitab saja
+//     Sangat ringan: FULLTEXT + filter bkid = satu kitab.
+//     Dikembalikan: ada tidaknya hasil + snippet terbaik.
+// =============================================================
+function handleSearchContentInBook(): void {
+    header('Cache-Control: public, max-age=300');
+    $pdo  = getPDO();
+    $bkid = (int)($_GET['bkid'] ?? 0);
+    $qRaw = trim($_GET['q'] ?? '');
+    $q    = searchPhraseText($qRaw);
+
+    if ($bkid <= 0 || strlen($q) < 2) {
+        echo json_encode(['found' => false, 'data' => []]);
+        return;
+    }
+
+    $qStar = booleanSearchTerm($qRaw);
+
+    // Ambil halaman terbaik dalam kitab ini (top 3, ringan karena sudah di-filter bkid)
+    $stmt = $pdo->prepare(
+        "SELECT bc.page AS match_page,
+                LEFT(bc.content, 300) AS snippet,
+                MATCH(bc.content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+         FROM book_content bc
+         WHERE bc.bkid = :bkid
+           AND MATCH(bc.content) AGAINST (:q2 IN BOOLEAN MODE)
+         ORDER BY rel DESC
+         LIMIT 3"
+    );
+    $stmt->bindValue(':q1',   $qStar, PDO::PARAM_STR);
+    $stmt->bindValue(':q2',   $qStar, PDO::PARAM_STR);
+    $stmt->bindValue(':bkid', $bkid,  PDO::PARAM_INT);
+    $stmt->execute();
+    $pages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (empty($pages)) {
+        echo json_encode(['found' => false, 'data' => []]);
+        return;
+    }
+
+    // Ambil metadata kitab
+    $bmeta = $pdo->prepare(
+        "SELECT bkid, title, author, category_name FROM books WHERE bkid = :bkid LIMIT 1"
+    );
+    $bmeta->execute([':bkid' => $bkid]);
+    $book = $bmeta->fetch(PDO::FETCH_ASSOC);
+
+    $results = [];
+    foreach ($pages as $page) {
+        $results[] = [
+            'bkid'          => $bkid,
+            'title'         => $book['title']        ?? '',
+            'author'        => $book['author']       ?? '',
+            'category_name' => $book['category_name'] ?? '',
+            'match_page'    => (int)$page['match_page'],
+            'snippet'       => trim((string)($page['snippet'] ?? '')),
+        ];
+    }
+
+    echo json_encode(['found' => true, 'data' => $results]);
 }
 
 // =============================================================
