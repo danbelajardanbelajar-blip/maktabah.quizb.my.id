@@ -10,6 +10,14 @@ use PDO;
 use Exception;
 
 class AdminController {
+    
+    private static function escapeArg(string $input): string {
+        if (function_exists('escapeshellarg')) {
+            return \escapeshellarg($input);
+        }
+        return "'" . str_replace("'", "'\\''", $input) . "'";
+    }
+
     public function handleAdminSaveBook(): void {
         $pdo  = Database::getConnection();
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -249,7 +257,7 @@ class AdminController {
         $rawText = '';
         if ($origExt === 'docx') {
             // python-docx (single-quoted shell command to avoid PHP string interpolation issues)
-            $pyArg = escapeshellarg($tmpCopy);
+            $pyArg = self::escapeArg($tmpCopy);
             $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
             $out = shell_exec($pyCmd);
             if (!$out) {
@@ -259,9 +267,9 @@ class AdminController {
             $rawText = (string)$out;
         } else {
             // antiword untuk .doc
-            $out = shell_exec('antiword ' . escapeshellarg($tmpCopy) . ' 2>/dev/null');
+            $out = shell_exec('antiword ' . self::escapeArg($tmpCopy) . ' 2>/dev/null');
             if (!$out) {
-                $out = shell_exec('catdoc ' . escapeshellarg($tmpCopy) . ' 2>/dev/null');
+                $out = shell_exec('catdoc ' . self::escapeArg($tmpCopy) . ' 2>/dev/null');
             }
             $rawText = (string)$out;
         }
@@ -701,7 +709,7 @@ class AdminController {
                     $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
                     $rawText = '';
                     if ($ext === 'docx') {
-                        $pyArg = escapeshellarg($filePath);
+                        $pyArg = self::escapeArg($filePath);
                         $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
                         $out = shell_exec($pyCmd);
                         if (!$out) {
@@ -709,15 +717,15 @@ class AdminController {
                         }
                         $rawText = (string)$out;
                     } elseif ($ext === 'doc') {
-                        $out = shell_exec('antiword ' . escapeshellarg($filePath) . ' 2>/dev/null');
+                        $out = shell_exec('antiword ' . self::escapeArg($filePath) . ' 2>/dev/null');
                         if (!$out) {
-                            $out = shell_exec('catdoc ' . escapeshellarg($filePath) . ' 2>/dev/null');
+                            $out = shell_exec('catdoc ' . self::escapeArg($filePath) . ' 2>/dev/null');
                         }
                         $rawText = (string)$out;
                     } elseif ($ext === 'pdf') {
-                        $out = shell_exec('pdftotext ' . escapeshellarg($filePath) . ' - 2>/dev/null');
+                        $out = shell_exec('pdftotext ' . self::escapeArg($filePath) . ' - 2>/dev/null');
                         if (!$out) {
-                            $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . escapeshellarg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
+                            $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . self::escapeArg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
                             $out = shell_exec($pyCmd);
                         }
                         $rawText = (string)$out;
@@ -816,7 +824,7 @@ class AdminController {
             $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
             $rawText = '';
             if ($ext === 'docx') {
-                $pyArg = escapeshellarg($filePath);
+                $pyArg = self::escapeArg($filePath);
                 $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
                 $out = shell_exec($pyCmd);
                 if (!$out) {
@@ -824,15 +832,15 @@ class AdminController {
                 }
                 $rawText = (string)$out;
             } elseif ($ext === 'doc') {
-                $out = shell_exec('antiword ' . escapeshellarg($filePath) . ' 2>/dev/null');
+                $out = shell_exec('antiword ' . self::escapeArg($filePath) . ' 2>/dev/null');
                 if (!$out) {
-                    $out = shell_exec('catdoc ' . escapeshellarg($filePath) . ' 2>/dev/null');
+                    $out = shell_exec('catdoc ' . self::escapeArg($filePath) . ' 2>/dev/null');
                 }
                 $rawText = (string)$out;
             } elseif ($ext === 'pdf') {
-                $out = shell_exec('pdftotext ' . escapeshellarg($filePath) . ' - 2>/dev/null');
+                $out = shell_exec('pdftotext ' . self::escapeArg($filePath) . ' - 2>/dev/null');
                 if (!$out) {
-                    $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . escapeshellarg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
+                    $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . self::escapeArg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
                     $out = shell_exec($pyCmd);
                 }
                 $rawText = (string)$out;
