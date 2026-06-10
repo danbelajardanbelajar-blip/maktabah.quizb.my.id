@@ -62,7 +62,7 @@ export const el = (tag, cls, html = '') => {
 export const app     = () => $('#app-content');
 export const reicons = () => { if (window.lucide) lucide.createIcons(); };
 
-window.mobileFeedbackBanner = `
+export const mobileFeedbackBanner = `
   <div class="md:hidden px-4 mb-24 mt-8">
     <a href="/feedback" data-route="/feedback" class="block bg-gradient-to-r from-cream-dark to-cream rounded-2xl p-4 border border-gold/20 shadow-sm relative overflow-hidden group no-underline">
       <div class="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
