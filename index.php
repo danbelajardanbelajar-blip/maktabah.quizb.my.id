@@ -502,9 +502,16 @@ endif;
 
     /* Bottom mobile nav */
     #bottom-nav {
-      box-shadow: 0 -1px 24px rgba(26,58,42,.10);
-      /* iOS safe area */
+      box-shadow: 0 -4px 24px rgba(26,58,42,.08);
       padding-bottom: env(safe-area-inset-bottom);
+      background: rgba(255,255,255,0.98);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    html.dark #bottom-nav {
+      background: rgba(15, 34, 24, 0.96) !important;
+      border-top-color: rgba(201,168,76,.15) !important;
+      box-shadow: 0 -4px 24px rgba(0,0,0,.4);
     }
     .reader-hide-menu {
       display: none !important;
@@ -531,17 +538,38 @@ endif;
       /* Keep top navbar visible on desktop even when reader mode is active */
       #navbar.reader-hide-menu { display: block !important; }
     }
+    
+    /* Modern Stylish Bottom Nav Items */
     .bnav-item {
-      color: #1a3a2a;
-      opacity: .4;
-      transition: opacity .2s ease, color .2s ease;
+      color: #728c7c; /* Visible muted green */
+      transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
       -webkit-tap-highlight-color: transparent;
+      padding-top: 4px;
     }
+    html.dark .bnav-item {
+      color: #8da396; /* Visible muted light green for dark mode */
+    }
+
+    .bnav-item i {
+      transition: transform .3s cubic-bezier(0.34, 1.56, 0.64, 1), color .2s ease;
+    }
+    
     .bnav-item.active {
-      opacity: 1;
       color: #c9a84c;
     }
-    .bnav-item:active { opacity: .7; }
+    html.dark .bnav-item.active {
+      color: #c9a84c;
+    }
+
+    .bnav-item.active i {
+      transform: translateY(-3px) scale(1.1);
+      color: #c9a84c;
+      filter: drop-shadow(0 2px 4px rgba(201,168,76,0.3));
+    }
+    
+    .bnav-item:active i { 
+      transform: scale(0.9); 
+    }
 
     /* ── Search Premium ─────────────────────────────────────── */
 
