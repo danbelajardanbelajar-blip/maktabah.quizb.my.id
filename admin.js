@@ -2142,6 +2142,21 @@ async function renderAdminSubmissions() {
           <button onclick="closeSubModal()" class="px-4 py-2.5 rounded-xl border border-gold/30 text-sm text-primary/60 hover:bg-cream-dark transition-colors">Batal</button>
         </div>
       </div>
+    </div>
+    
+    <!-- Modal Pratinjau Teks (Editor-like) -->
+    <div id="sub-content-modal" class="hidden fixed inset-0 z-[60] bg-ink/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-cream-dark shrink-0">
+          <h2 id="sub-content-title" class="font-bold text-primary text-sm">Pratinjau File</h2>
+          <button onclick="closeSubContentModal()" class="p-2 rounded-lg hover:bg-cream-dark text-primary/40 transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div class="flex-1 p-6 overflow-hidden flex flex-col">
+          <textarea id="sub-content-textarea" class="w-full h-full p-4 rounded-xl border border-gold/30 bg-cream/30 text-sm focus:outline-none resize-none font-mono" readonly></textarea>
+        </div>
+      </div>
     </div>`;
 
   reicons();
@@ -2203,6 +2218,57 @@ async function renderAdminSubmissions() {
     }
   };
 
+  window.subDirectReview = async function(id, action) {
+    try {
+      const res = await apiFetch({ action: 'admin_review_submission', id: id, review_action: action, note: '' });
+      if (res.error) throw new Error(res.error);
+      adminToast(action === 'approve' ? 'Kiriman disetujui ✓' : 'Kiriman ditolak');
+      subLoad();
+    } catch(e) {
+      if (handleAuthError(e)) return;
+      adminToast('Gagal: ' + e.message, 'error'); 
+    }
+  };
+
+  window.subDelete = async function(id) {
+    if (!confirm('Yakin ingin menghapus kiriman ini permanen? File fisik juga akan dihapus.')) return;
+    try {
+      const res = await adminPost('admin_delete_submission', { id });
+      if (res.error) throw new Error(res.error);
+      adminToast('Kiriman dihapus ✓');
+      subLoad();
+    } catch(e) {
+      if (handleAuthError(e)) return;
+      adminToast('Gagal: ' + e.message, 'error');
+    }
+  };
+
+  window.openSubContentModal = async function(id, name) {
+    const modal = document.getElementById('sub-content-modal');
+    const ta    = document.getElementById('sub-content-textarea');
+    document.getElementById('sub-content-title').textContent = 'Pratinjau: ' + name;
+    ta.value = 'Mengekstrak teks... (membutuhkan waktu untuk PDF/Word)';
+    modal.classList.remove('hidden');
+    reicons();
+
+    try {
+      const res = await apiFetch({ action: 'admin_get_submission_content', id: id });
+      if (res.error) throw new Error(res.error);
+      if (!res.content || res.content.trim() === '') {
+        ta.value = 'Tidak ada teks yang dapat diekstrak atau file kosong/terenkripsi.';
+      } else {
+        ta.value = res.content;
+      }
+    } catch (e) {
+      if (handleAuthError(e)) return;
+      ta.value = 'Gagal memuat pratinjau: ' + e.message;
+    }
+  };
+
+  window.closeSubContentModal = function() {
+    document.getElementById('sub-content-modal').classList.add('hidden');
+  };
+
   const fmtSize = b => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(1) + ' MB';
   const statusBadge = s => {
     const cls = { pending: 'bg-yellow-100 text-yellow-700', approved: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-600' };
@@ -2226,8 +2292,18 @@ async function renderAdminSubmissions() {
         reicons(); return;
       }
       const rowsHtml = rows.map(r => {
-        const fileBtn = r.file_url ? '<a href="' + escHtml(r.file_url) + '" target="_blank" title="Lihat file" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-primary/50 hover:text-primary"><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>' : '';
-        const actBtn  = r.status === 'pending' ? '<button onclick="openSubModal(' + r.id + ',' + JSON.stringify(r.file_name) + ',\'' + r.file_type + '\')" title="Review" class="p-1.5 rounded-lg hover:bg-gold/10 text-gold transition-colors"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i></button>' : '';
+        const fileBtn = '<button onclick="openSubContentModal(' + r.id + ', ' + JSON.stringify(r.file_name) + ')" title="Lihat file" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700"><i data-lucide="eye" class="w-4 h-4"></i></button>';
+        const approveBtn = '<button onclick="subDirectReview(' + r.id + ', \'approve\')" title="Setujui" class="p-1.5 rounded-lg hover:bg-green-100 text-green-600 transition-colors"><i data-lucide="check" class="w-4 h-4"></i></button>';
+        const rejectBtn  = '<button onclick="subDirectReview(' + r.id + ', \'reject\')" title="Tolak" class="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>';
+        const deleteBtn  = '<button onclick="subDelete(' + r.id + ')" title="Hapus" class="p-1.5 rounded-lg hover:bg-red-100 text-red-700 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>';
+        
+        let actBtns = '';
+        if (r.status === 'pending') {
+            actBtns = fileBtn + approveBtn + rejectBtn + deleteBtn;
+        } else {
+            actBtns = fileBtn + deleteBtn;
+        }
+
         return '<tr class="hover:bg-cream/60 transition-colors">'
           + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.file_name) + '</div>'
           + '<div class="text-primary/40 text-xs mt-0.5">' + fmtSize(r.file_size) + ' · ' + (r.created_at||'').slice(0,10) + '</div>'
@@ -2237,7 +2313,7 @@ async function renderAdminSubmissions() {
           + '<td class="px-4 py-3 hidden md:table-cell text-primary/55 text-xs">' + (r.file_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
           + '<td class="px-4 py-3 hidden lg:table-cell text-primary/55 text-xs">' + escHtml(r.category_name || '—') + '</td>'
           + '<td class="px-4 py-3 text-center">' + statusBadge(r.status) + '</td>'
-          + '<td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-1.5">' + fileBtn + actBtn + '</div></td>'
+          + '<td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-1">' + actBtns + '</div></td>'
           + '</tr>';
       }).join('');
       wrap.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm">'

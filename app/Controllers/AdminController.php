@@ -683,4 +683,82 @@ class AdminController {
         echo json_encode(['success' => true, 'status' => $newStatus]);
     }
 
+    public function handleAdminGetSubmissionContent(): void {
+        $pdo = Database::getConnection();
+        $id  = (int)($_GET['id'] ?? 0);
+        if (!$id) { http_response_code(400); echo json_encode(['error' => 'ID wajib diisi.']); return; }
+
+        $stmt = $pdo->prepare("SELECT file_url FROM file_submissions WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $fileUrl = $stmt->fetchColumn();
+        if (!$fileUrl) { http_response_code(404); echo json_encode(['error' => 'File tidak ditemukan.']); return; }
+
+        $filePath = ($_SERVER['DOCUMENT_ROOT'] ?? '') . $fileUrl;
+        if (!file_exists($filePath)) {
+            $filePath = dirname(__DIR__, 2) . $fileUrl;
+        }
+        if (!file_exists($filePath)) {
+            http_response_code(404); echo json_encode(['error' => 'File fisik tidak ditemukan.']); return;
+        }
+
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $rawText = '';
+        if ($ext === 'docx') {
+            $pyArg = escapeshellarg($filePath);
+            $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
+            $out = shell_exec($pyCmd);
+            if (!$out) {
+                $out = shell_exec('unzip -p ' . $pyArg . ' word/document.xml 2>/dev/null | sed \'s/<[^>]*>//g\' | grep -v \'^$\'');
+            }
+            $rawText = (string)$out;
+        } elseif ($ext === 'doc') {
+            $out = shell_exec('antiword ' . escapeshellarg($filePath) . ' 2>/dev/null');
+            if (!$out) {
+                $out = shell_exec('catdoc ' . escapeshellarg($filePath) . ' 2>/dev/null');
+            }
+            $rawText = (string)$out;
+        } elseif ($ext === 'pdf') {
+            $out = shell_exec('pdftotext ' . escapeshellarg($filePath) . ' - 2>/dev/null');
+            if (!$out) {
+                $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . escapeshellarg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
+                $out = shell_exec($pyCmd);
+            }
+            $rawText = (string)$out;
+        } else {
+            $rawText = file_get_contents($filePath);
+        }
+
+        echo json_encode(['success' => true, 'content' => $rawText]);
+    }
+
+    public function handleAdminDeleteSubmission(): void {
+        $admin = AuthHelper::getSessionUser();
+        $pdo   = Database::getConnection();
+        $data  = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id    = (int)($data['id'] ?? 0);
+
+        if (!$id) { http_response_code(400); echo json_encode(['error' => 'ID wajib diisi.']); return; }
+
+        $stmt = $pdo->prepare("SELECT file_name, file_url FROM file_submissions WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            http_response_code(404); echo json_encode(['error' => 'Kiriman tidak ditemukan.']); return;
+        }
+
+        // Hapus file fisik
+        $filePath = ($_SERVER['DOCUMENT_ROOT'] ?? '') . $row['file_url'];
+        if (!file_exists($filePath)) {
+            $filePath = dirname(__DIR__, 2) . $row['file_url'];
+        }
+        if (file_exists($filePath)) {
+            @unlink($filePath);
+        }
+
+        $pdo->prepare("DELETE FROM file_submissions WHERE id = :id")->execute([':id' => $id]);
+        AuthHelper::logCrudHistory('DELETE', 'file_submissions', (string)$id, "Hapus kiriman: {$row['file_name']}");
+
+        echo json_encode(['success' => true]);
+    }
+
 }

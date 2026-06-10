@@ -65,6 +65,8 @@ $router->add('admin_get_search_logs', 'AdminController', 'handleAdminGetSearchLo
 $router->add('admin_get_download_logs', 'AdminController', 'handleAdminGetDownloadLogs');
 $router->add('admin_get_submissions', 'AdminController', 'handleAdminGetSubmissions');
 $router->add('admin_review_submission', 'AdminController', 'handleAdminReviewSubmission');
+$router->add('admin_get_submission_content', 'AdminController', 'handleAdminGetSubmissionContent');
+$router->add('admin_delete_submission', 'AdminController', 'handleAdminDeleteSubmission');
 
 // Submissions
 $router->add('submit_file', 'SubmissionController', 'handleSubmitFile');
