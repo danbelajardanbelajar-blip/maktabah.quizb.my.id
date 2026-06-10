@@ -1347,13 +1347,15 @@ async function execAdvancedSearch() {
         ${perfBadge}
       </div>`;
     }
+    const qTerms = searchAdvancedState.terms.filter(t => t.trim()).join(' ');
+    const recs = await getSearchRecommendationsHtml(qTerms);
+
     if (res.data.length) {
       wrap.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book)).join('')}</div>
-         ${paginationHtml(page, totalPages, 'goAdvancedPage')}`;
+         ${paginationHtml(page, totalPages, 'goAdvancedPage')}
+         ${recs}`;
       wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      const qTerms = searchAdvancedState.terms.filter(t => t.trim()).join(' ');
-      const recs = await getSearchRecommendationsHtml(qTerms);
       wrap.innerHTML = `<div class="text-center py-20 text-primary/40 flex flex-col items-center">
         <i data-lucide="search-x" class="w-12 h-12 text-primary/20 mb-4"></i>
         <p>Maaf, tidak ditemukan halaman yang cocok dengan kata kunci dan kategori yang dipilih.</p>
@@ -2009,16 +2011,14 @@ async function execSearch() {
     if (++fastDone === 3) {
       const ms = Math.round(performance.now() - t0);
       if (stats) { stats.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-gold"></i> ${ms} ms`; reicons(); }
-      if (totalHits === 0) {
-        const wrap = document.getElementById('search-results');
-        if (wrap) {
-          const recs = await getSearchRecommendationsHtml(searchState.q);
-          if (recs) {
-            const recDiv = document.createElement('div');
-            recDiv.innerHTML = recs;
-            wrap.appendChild(recDiv);
-            reicons();
-          }
+      const wrap = document.getElementById('search-results');
+      if (wrap) {
+        const recs = await getSearchRecommendationsHtml(searchState.q);
+        if (recs) {
+          const recDiv = document.createElement('div');
+          recDiv.innerHTML = recs;
+          wrap.appendChild(recDiv);
+          reicons();
         }
       }
     }
