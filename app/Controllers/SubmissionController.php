@@ -62,7 +62,7 @@ class SubmissionController {
             $categoryName = $row['name'] ?? '';
         }
     
-        $uploadDir = __DIR__ . '/uploads/submissions/';
+        $uploadDir = dirname(__DIR__, 2) . '/uploads/submissions/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0775, true);
     
         $ext      = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
