@@ -9,6 +9,11 @@ class AuthHelper {
         return $_SESSION['user'] ?? null;
     }
 
+    public static function isAdmin(): bool {
+        $user = self::getSessionUser();
+        return $user && ($user['role'] === 'admin');
+    }
+
     public static function requireAdmin(): void {
         $user = self::getSessionUser();
         if (!$user || $user['role'] !== 'admin') {
