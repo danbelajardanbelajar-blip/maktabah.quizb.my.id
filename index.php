@@ -916,27 +916,39 @@ endif;
                 </div>
                 <a href="/admin/books" data-route="/admin/books"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="book" class="w-4 h-4 text-gold/60"></i> Kelola Kitab
+                  <i data-lucide="book" class="w-4 h-4 text-gold/60"></i> Kitab
                 </a>
                 <a href="/admin/categories" data-route="/admin/categories"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="folder" class="w-4 h-4 text-gold/60"></i> Kelola Kategori
+                  <i data-lucide="folder" class="w-4 h-4 text-gold/60"></i> Kategori
                 </a>
                 <a href="/admin/history" data-route="/admin/history"
                    class="hidden md:flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
                   <i data-lucide="history" class="w-4 h-4 text-gold/60"></i> CRUD History
                 </a>
-                <a href="/admin/search-logs" data-route="/admin/search-logs"
-                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="search" class="w-4 h-4 text-gold/60"></i> Log Pencarian
-                </a>
                 <a href="/admin/activity" data-route="/admin/activity"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="activity" class="w-4 h-4 text-gold/60"></i> Log Aktivitas
+                  <i data-lucide="activity" class="w-4 h-4 text-gold/60"></i> Aktivitas
                 </a>
-                <a href="/admin/content" data-route="/admin/content"
+                <a href="/admin/search-logs" data-route="/admin/search-logs"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="file-text" class="w-4 h-4 text-gold/60"></i> Kelola Isi Kitab
+                  <i data-lucide="search" class="w-4 h-4 text-gold/60"></i> Pencarian
+                </a>
+                <a href="/admin/download-logs" data-route="/admin/download-logs"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="download" class="w-4 h-4 text-gold/60"></i> Download
+                </a>
+                <a href="/admin/submissions" data-route="/admin/submissions"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="inbox" class="w-4 h-4 text-gold/60"></i> Review Kiriman
+                </a>
+                <a href="/admin/requests" data-route="/admin/requests"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="help-circle" class="w-4 h-4 text-gold/60"></i> Request Kitab
+                </a>
+                <a href="/admin/feedback" data-route="/admin/feedback"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="message-square" class="w-4 h-4 text-gold/60"></i> Review Feedback
                 </a>
                 <?php endif; ?>
                 <div class="border-t border-cream-dark mt-1"></div>

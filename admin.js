@@ -164,13 +164,15 @@ function renderDashboard() {
       <div class="grid grid-cols-2 gap-4 mb-8">
         ${dashCard('/katalog',          'library',        'Katalog Kitab',     'Jelajahi koleksi',          false)}
         ${dashCard('/search',           'search',         'Cari Kitab',        'Cari judul & isi',          false)}
-        ${isAdmin ? dashCard('/admin/books',      'book',      'Kelola Kitab',      'Tambah / edit / hapus',        true)  : ''}
-        ${isAdmin ? dashCard('/admin/categories', 'folder',    'Kelola Kategori',   'Atur kategori kitab',          true)  : ''}
+        ${isAdmin ? dashCard('/admin/books',      'book',      'Kitab',             'Tambah / edit / hapus',        true)  : ''}
+        ${isAdmin ? dashCard('/admin/categories', 'folder',    'Kategori',          'Atur kategori kitab',          true)  : ''}
         ${isAdmin ? dashCard('/admin/history',    'history',   'CRUD History',      'Jejak perubahan admin',        true)  : ''}
-        ${isAdmin ? dashCard('/admin/search-logs','search',    'Log Pencarian',     'Riwayat pencarian pengguna',    true)  : ''}
-        ${isAdmin ? dashCard('/admin/activity',   'activity',  'Log Aktivitas',     'Kunjungan & login/logout',     true)  : ''}
-        ${isAdmin ? dashCard('/admin/submissions','inbox',    'Review Kiriman',    'Approve kiriman pengguna',     true)  : ''}
-        ${isAdmin ? dashCard('/admin/requests',   'help-circle','Request Kitab',   'Permohonan kitab baru',        true)  : ''}
+        ${isAdmin ? dashCard('/admin/activity',   'activity',  'Aktivitas',         'Kunjungan & login/logout',     true)  : ''}
+        ${isAdmin ? dashCard('/admin/search-logs','search',    'Pencarian',         'Riwayat pencarian pengguna',   true)  : ''}
+        ${isAdmin ? dashCard('/admin/download-logs','download','Download',          'Riwayat unduhan kitab',        true)  : ''}
+        ${isAdmin ? dashCard('/admin/submissions','inbox',     'Review Kiriman',    'Approve kiriman pengguna',     true)  : ''}
+        ${isAdmin ? dashCard('/admin/requests',   'help-circle','Request Kitab',    'Permohonan kitab baru',        true)  : ''}
+        ${isAdmin ? dashCard('/admin/feedback',   'message-square','Review Feedback','Masukan dari pengguna',      true)  : ''}
       </div>
 
       <div class="text-center">
