@@ -2367,9 +2367,9 @@ async function renderAdminSubmissions() {
         reicons(); return;
       }
       const rowsHtml = rows.map(r => {
-        const safeName = JSON.stringify(r.file_name).replace(/'/g, "\\'");
-        const reviewBtn = '<button onclick=\'openSubReviewModal(' + r.id + ', ' + safeName + ')\' title="Review" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700 flex items-center gap-1.5 px-2 font-medium text-xs"><i data-lucide="clipboard-check" class="w-4 h-4"></i> Review</button>';
-        const viewBtn = '<button onclick=\'openSubReviewModal(' + r.id + ', ' + safeName + ')\' title="Lihat file" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700"><i data-lucide="eye" class="w-4 h-4"></i></button>';
+        const escName = escHtml(r.file_name);
+        const reviewBtn = '<button onclick="openSubReviewModal(' + r.id + ', this.getAttribute(\'data-name\'))" data-name="' + escName + '" title="Review" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700 flex items-center gap-1.5 px-2 font-medium text-xs"><i data-lucide="clipboard-check" class="w-4 h-4"></i> Review</button>';
+        const viewBtn = '<button onclick="openSubReviewModal(' + r.id + ', this.getAttribute(\'data-name\'))" data-name="' + escName + '" title="Lihat file" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700"><i data-lucide="eye" class="w-4 h-4"></i></button>';
         const deleteBtn  = '<button onclick="subDelete(' + r.id + ')" title="Hapus" class="p-1.5 rounded-lg hover:bg-red-100 text-red-700 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>';
         
         let actBtns = r.status === 'pending' ? reviewBtn + deleteBtn : viewBtn + deleteBtn;
