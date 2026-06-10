@@ -659,28 +659,130 @@ class AdminController {
         if ($id <= 0 || !in_array($action, ['approve','reject'], true)) {
             http_response_code(400); echo json_encode(['error' => 'Parameter tidak valid.']); return;
         }
-    
-        $newStatus = $action === 'approve' ? 'approved' : 'rejected';
-        $stmt = $pdo->prepare(
-            "UPDATE file_submissions
-             SET status = :status, reviewed_by = :reviewed_by, reviewer_name = :reviewer_name,
-                 review_note = :note, reviewed_at = NOW()
-             WHERE id = :id"
-        );
-        $stmt->execute([
-            ':status'        => $newStatus,
-            ':reviewed_by'   => $admin['id'],
-            ':reviewer_name' => $admin['name'],
-            ':note'          => $note,
-            ':id'            => $id,
-        ]);
-    
-        if ($stmt->rowCount() === 0) {
+
+        $stmt = $pdo->prepare("SELECT * FROM file_submissions WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $sub = $stmt->fetch();
+        if (!$sub) {
             http_response_code(404); echo json_encode(['error' => 'Kiriman tidak ditemukan.']); return;
         }
+
+        if ($sub['status'] !== 'pending') {
+            http_response_code(400); echo json_encode(['error' => 'Kiriman ini sudah direview.']); return;
+        }
     
-        AuthHelper::logCrudHistory($action === 'approve' ? 'APPROVE_SUBMISSION' : 'REJECT_SUBMISSION', 'file_submissions', (string)$id, $note);
-        echo json_encode(['success' => true, 'status' => $newStatus]);
+        $newStatus = $action === 'approve' ? 'approved' : 'rejected';
+        
+        $pdo->beginTransaction();
+        try {
+            $upd = $pdo->prepare(
+                "UPDATE file_submissions
+                 SET status = :status, reviewed_by = :reviewed_by, reviewer_name = :reviewer_name,
+                     review_note = :note, reviewed_at = NOW()
+                 WHERE id = :id"
+            );
+            $upd->execute([
+                ':status'        => $newStatus,
+                ':reviewed_by'   => $admin['id'],
+                ':reviewer_name' => $admin['name'],
+                ':note'          => $note,
+                ':id'            => $id,
+            ]);
+
+            // Auto-import ke daftar kitab jika disetujui
+            if ($action === 'approve') {
+                $fileUrl = $sub['file_url'];
+                $filePath = ($_SERVER['DOCUMENT_ROOT'] ?? '') . $fileUrl;
+                if (!file_exists($filePath)) {
+                    $filePath = dirname(__DIR__, 2) . $fileUrl;
+                }
+                
+                if (file_exists($filePath)) {
+                    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+                    $rawText = '';
+                    if ($ext === 'docx') {
+                        $pyArg = escapeshellarg($filePath);
+                        $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
+                        $out = shell_exec($pyCmd);
+                        if (!$out) {
+                            $out = shell_exec('unzip -p ' . $pyArg . ' word/document.xml 2>/dev/null | sed \'s/<[^>]*>//g\' | grep -v \'^$\'');
+                        }
+                        $rawText = (string)$out;
+                    } elseif ($ext === 'doc') {
+                        $out = shell_exec('antiword ' . escapeshellarg($filePath) . ' 2>/dev/null');
+                        if (!$out) {
+                            $out = shell_exec('catdoc ' . escapeshellarg($filePath) . ' 2>/dev/null');
+                        }
+                        $rawText = (string)$out;
+                    } elseif ($ext === 'pdf') {
+                        $out = shell_exec('pdftotext ' . escapeshellarg($filePath) . ' - 2>/dev/null');
+                        if (!$out) {
+                            $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . escapeshellarg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
+                            $out = shell_exec($pyCmd);
+                        }
+                        $rawText = (string)$out;
+                    }
+
+                    if (strlen(trim($rawText)) > 5) {
+                        $pageTexts = [];
+                        $paragraphs = preg_split('/\n{2,}/', trim($rawText));
+                        $buf = '';
+                        foreach ($paragraphs as $para) {
+                            $para = trim($para);
+                            if ($para === '') continue;
+                            if (strlen($buf) + strlen($para) > 3000 && $buf !== '') {
+                                $pageTexts[] = trim($buf);
+                                $buf = $para;
+                            } else {
+                                $buf .= ($buf ? "\n\n" : '') . $para;
+                            }
+                        }
+                        if ($buf !== '') $pageTexts[] = trim($buf);
+                        
+                        if (!empty($pageTexts)) {
+                            $title = pathinfo($sub['file_name'], PATHINFO_FILENAME);
+                            $author = !empty($sub['user_name']) ? $sub['user_name'] : 'Tidak Diketahui';
+                            
+                            $ib = $pdo->prepare(
+                                "INSERT INTO books (title, author, category_id, category_name, iso, pages)
+                                 VALUES (:title, :author, :catid, :catname, 'ar', :pages)"
+                            );
+                            $ib->execute([
+                                ':title'   => $title,
+                                ':author'  => $author,
+                                ':catid'   => $sub['category_id'] ?: null,
+                                ':catname' => $sub['category_name'] ?: '',
+                                ':pages'   => count($pageTexts),
+                            ]);
+                            $bkid = (int)$pdo->lastInsertId();
+
+                            $ic = $pdo->prepare(
+                                "INSERT INTO book_content (bkid, page, content) VALUES (:bkid, :page, :content)"
+                            );
+                            foreach ($pageTexts as $pageIndex => $pageContent) {
+                                $ic->execute([
+                                    ':bkid'    => $bkid,
+                                    ':page'    => $pageIndex + 1,
+                                    ':content' => $pageContent,
+                                ]);
+                            }
+                            
+                            AuthHelper::logCrudHistory('IMPORT', 'books', (string)$bkid,
+                                "Auto-impor dari kiriman #{$id}: {$title} | Penulis: {$author}"
+                            );
+                        }
+                    }
+                }
+            }
+
+            $pdo->commit();
+            AuthHelper::logCrudHistory($action === 'approve' ? 'APPROVE_SUBMISSION' : 'REJECT_SUBMISSION', 'file_submissions', (string)$id, $note);
+            echo json_encode(['success' => true, 'status' => $newStatus]);
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            http_response_code(500); 
+            echo json_encode(['error' => 'Gagal memproses review: ' . $e->getMessage()]);
+        }
     }
 
     public function handleAdminGetSubmissionContent(): void {
