@@ -189,8 +189,14 @@ function createUpdateNoticeOverlay() {
   document.getElementById('update-notice-link')?.addEventListener('click', setDismissedUpdateNotice);
 }
 
+function isAndroidApp() {
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  // APK Android biasa membungkus web dalam WebView, yang mengandung kata 'wv' di User-Agent
+  return (ua.includes('Android') && ua.includes('wv'));
+}
+
 function showUpdateNoticeIfNeeded() {
-  if (!isMobileViewport() || hasDismissedUpdateNotice()) return;
+  if (!isMobileViewport() || !isAndroidApp() || hasDismissedUpdateNotice()) return;
   createUpdateNoticeOverlay();
 }
 
