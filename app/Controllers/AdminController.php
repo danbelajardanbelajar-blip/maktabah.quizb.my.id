@@ -732,6 +732,9 @@ class AdminController {
                     if (strlen(trim($rawText)) > 5) {
                         $pageTexts = [];
                         $paragraphs = preg_split('/\n{2,}/', trim($rawText));
+                        if (!is_array($paragraphs)) {
+                            $paragraphs = [trim($rawText)];
+                        }
                         $buf = '';
                         foreach ($paragraphs as $para) {
                             $para = trim($para);
@@ -792,73 +795,81 @@ class AdminController {
     }
 
     public function handleAdminGetSubmissionContent(): void {
-        $pdo = Database::getConnection();
-        $id  = (int)($_GET['id'] ?? 0);
-        if (!$id) { http_response_code(400); echo json_encode(['error' => 'ID wajib diisi.']); return; }
+        try {
+            $pdo = Database::getConnection();
+            $id  = (int)($_GET['id'] ?? 0);
+            if (!$id) { http_response_code(400); echo json_encode(['error' => 'ID wajib diisi.']); return; }
 
-        $stmt = $pdo->prepare("SELECT file_url FROM file_submissions WHERE id = :id LIMIT 1");
-        $stmt->execute([':id' => $id]);
-        $fileUrl = $stmt->fetchColumn();
-        if (!$fileUrl) { http_response_code(404); echo json_encode(['error' => 'File tidak ditemukan.']); return; }
+            $stmt = $pdo->prepare("SELECT file_url FROM file_submissions WHERE id = :id LIMIT 1");
+            $stmt->execute([':id' => $id]);
+            $fileUrl = $stmt->fetchColumn();
+            if (!$fileUrl) { http_response_code(404); echo json_encode(['error' => 'File tidak ditemukan.']); return; }
 
-        $filePath = ($_SERVER['DOCUMENT_ROOT'] ?? '') . $fileUrl;
-        if (!file_exists($filePath)) {
-            $filePath = dirname(__DIR__, 2) . $fileUrl;
-        }
-        if (!file_exists($filePath)) {
-            http_response_code(404); echo json_encode(['error' => 'File fisik tidak ditemukan.']); return;
-        }
-
-        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        $rawText = '';
-        if ($ext === 'docx') {
-            $pyArg = escapeshellarg($filePath);
-            $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
-            $out = shell_exec($pyCmd);
-            if (!$out) {
-                $out = shell_exec('unzip -p ' . $pyArg . ' word/document.xml 2>/dev/null | sed \'s/<[^>]*>//g\' | grep -v \'^$\'');
+            $filePath = ($_SERVER['DOCUMENT_ROOT'] ?? '') . $fileUrl;
+            if (!file_exists($filePath)) {
+                $filePath = dirname(__DIR__, 2) . $fileUrl;
             }
-            $rawText = (string)$out;
-        } elseif ($ext === 'doc') {
-            $out = shell_exec('antiword ' . escapeshellarg($filePath) . ' 2>/dev/null');
-            if (!$out) {
-                $out = shell_exec('catdoc ' . escapeshellarg($filePath) . ' 2>/dev/null');
+            if (!file_exists($filePath)) {
+                http_response_code(404); echo json_encode(['error' => 'File fisik tidak ditemukan.']); return;
             }
-            $rawText = (string)$out;
-        } elseif ($ext === 'pdf') {
-            $out = shell_exec('pdftotext ' . escapeshellarg($filePath) . ' - 2>/dev/null');
-            if (!$out) {
-                $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . escapeshellarg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
+
+            $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+            $rawText = '';
+            if ($ext === 'docx') {
+                $pyArg = escapeshellarg($filePath);
+                $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
                 $out = shell_exec($pyCmd);
-            }
-            $rawText = (string)$out;
-        } else {
-            $rawText = file_get_contents($filePath);
-        }
-        
-        $rawText = (string)$rawText;
-        if (!mb_check_encoding($rawText, 'UTF-8')) {
-            $rawText = mb_convert_encoding($rawText, 'UTF-8', 'ISO-8859-1');
-        }
-
-        $pageTexts = [];
-        if (strlen(trim($rawText)) > 0) {
-            $paragraphs = preg_split('/\n{2,}/', trim($rawText));
-            $buf = '';
-            foreach ($paragraphs as $para) {
-                $para = trim($para);
-                if ($para === '') continue;
-                if (strlen($buf) + strlen($para) > 3000 && $buf !== '') {
-                    $pageTexts[] = trim($buf);
-                    $buf = $para;
-                } else {
-                    $buf .= ($buf ? "\n\n" : '') . $para;
+                if (!$out) {
+                    $out = shell_exec('unzip -p ' . $pyArg . ' word/document.xml 2>/dev/null | sed \'s/<[^>]*>//g\' | grep -v \'^$\'');
                 }
+                $rawText = (string)$out;
+            } elseif ($ext === 'doc') {
+                $out = shell_exec('antiword ' . escapeshellarg($filePath) . ' 2>/dev/null');
+                if (!$out) {
+                    $out = shell_exec('catdoc ' . escapeshellarg($filePath) . ' 2>/dev/null');
+                }
+                $rawText = (string)$out;
+            } elseif ($ext === 'pdf') {
+                $out = shell_exec('pdftotext ' . escapeshellarg($filePath) . ' - 2>/dev/null');
+                if (!$out) {
+                    $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . escapeshellarg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
+                    $out = shell_exec($pyCmd);
+                }
+                $rawText = (string)$out;
+            } else {
+                $rawText = file_get_contents($filePath);
             }
-            if ($buf !== '') $pageTexts[] = trim($buf);
-        }
+            
+            $rawText = (string)$rawText;
+            if (function_exists('mb_check_encoding') && !mb_check_encoding($rawText, 'UTF-8')) {
+                $rawText = mb_convert_encoding($rawText, 'UTF-8', 'ISO-8859-1');
+            }
 
-        echo json_encode(['success' => true, 'pages' => $pageTexts, 'content' => $rawText]);
+            $pageTexts = [];
+            if (strlen(trim($rawText)) > 0) {
+                $paragraphs = preg_split('/\n{2,}/', trim($rawText));
+                if (!is_array($paragraphs)) {
+                    $paragraphs = [trim($rawText)];
+                }
+                $buf = '';
+                foreach ($paragraphs as $para) {
+                    $para = trim($para);
+                    if ($para === '') continue;
+                    if (strlen($buf) + strlen($para) > 3000 && $buf !== '') {
+                        $pageTexts[] = trim($buf);
+                        $buf = $para;
+                    } else {
+                        $buf .= ($buf ? "\n\n" : '') . $para;
+                    }
+                }
+                if ($buf !== '') $pageTexts[] = trim($buf);
+            }
+
+            echo json_encode(['success' => true, 'pages' => $pageTexts, 'content' => $rawText]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'API Error: ' . $e->getMessage() . ' on line ' . $e->getLine()]);
+        }
     }
 
     public function handleAdminDeleteSubmission(): void {
