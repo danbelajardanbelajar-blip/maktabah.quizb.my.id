@@ -23,6 +23,9 @@ window.handleAuthError = Core.handleAuthError;
 window.escHtml = Core.escHtml;
 window.applyReaderFont = Core.applyReaderFont;
 window.readerFontState = Core.readerFontState;
+window.paginationHtml = Core.paginationHtml;
+window.skeletonCards = Core.skeletonCards;
+window.bookCard = Core.bookCard;
 
 // Router Mapping
 const routes = {
