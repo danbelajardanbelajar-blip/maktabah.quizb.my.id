@@ -408,3 +408,113 @@ export function recentBookCard(item) {
 
 export let navigate = () => {};
 export function setNavigate(fn) { navigate = fn; }
+
+
+// --- Search Highlight Utilities ---
+export function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function buildArabicRegexStr(term) {
+  const diacritics = '[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\u06DF-\\u06E8\\u06EA-\\u06ED]*';
+  let result = '';
+  for (let i = 0; i < term.length; i++) {
+    const char = term[i];
+    if (/\\s/.test(char)) {
+      // Collapse multiple spaces into one space matcher
+      if (!result.endsWith('\\s+')) {
+        result += '\\s+';
+      }
+    } else {
+      result += escapeRegex(char) + diacritics;
+    }
+  }
+  return result;
+}
+
+export function parseSearchTerms(q) {
+  if (!q) return [];
+  q = String(q).replace(/\+/g, ' ').trim();
+  // If user wrapped phrase in quotes, respect quoted groups and separate others.
+  if (/".*"/u.test(q)) {
+    const terms = [];
+    const regex = /"([^\"]+)"|([^"\s]+)/g;
+    let match;
+    while ((match = regex.exec(q)) !== null) {
+      const term = (match[1] || match[2] || '').trim();
+      if (term) terms.push(term);
+    }
+    return terms;
+  }
+
+  // If the query contains whitespace (multi-word) treat it as a single phrase
+  // so matches require the words to appear together in the same order.
+  if (/\s+/u.test(q)) {
+    return [q];
+  }
+
+  // Single-word query
+  return [q];
+}
+
+export function highlightTextNodes(container, terms) {
+  const escapedTerms = terms
+    .map(raw => String(raw || '').trim())
+    .filter(Boolean)
+    .map(t => t.replace(/^"|"$/g, '').trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .map(buildArabicRegexStr);
+  if (!escapedTerms.length) return false;
+
+  const regex = new RegExp('(' + escapedTerms.join('|') + ')', 'gi');
+  let found = false;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+
+  nodes.forEach(node => {
+    const value = node.nodeValue;
+    if (!value || !regex.test(value)) {
+      regex.lastIndex = 0;
+      return;
+    }
+    regex.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(value)) !== null) {
+      if (match.index > lastIndex) {
+        frag.appendChild(document.createTextNode(value.slice(lastIndex, match.index)));
+      }
+      const mark = document.createElement('mark');
+      mark.className = 'hl';
+      mark.textContent = match[0];
+      frag.appendChild(mark);
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < value.length) {
+      frag.appendChild(document.createTextNode(value.slice(lastIndex)));
+    }
+    node.parentNode.replaceChild(frag, node);
+    found = true;
+    regex.lastIndex = 0;
+  });
+  return found;
+}
+
+export function hlTextMulti(text, terms) {
+  if (!text) return escHtml('');
+  let escaped = escHtml(text);
+  const patterns = [];
+  (terms || []).forEach(raw => {
+    const term = String(raw || '').trim();
+    if (!term) return;
+    const unquoted = term.replace(/^"|"$/g, '').trim();
+    if (!unquoted) return;
+    patterns.push(buildArabicRegexStr(unquoted));
+  });
+  if (!patterns.length) return escaped;
+  const regex = new RegExp('(' + patterns.sort((a, b) => b.length - a.length).join('|') + ')', 'gi');
+  return escaped.replace(regex, '<mark class="hl">$1</mark>');
+}
