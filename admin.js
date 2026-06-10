@@ -2230,6 +2230,11 @@ async function renderAdminSubmissions() {
     try {
       const res = await adminPost('admin_review_submission', { id: id, review_action: action, note: '' });
       if (res.error) throw new Error(res.error);
+      
+      if (typeof closeSubReviewModal === 'function') {
+        closeSubReviewModal();
+      }
+      
       adminToast(action === 'approve' ? 'Kiriman disetujui ✓' : 'Kiriman ditolak');
       subLoad();
     } catch(e) {
