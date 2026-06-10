@@ -118,12 +118,12 @@ function adminNavBar(active) {
   ];
   return `
     <div class="bg-white border-b border-gold/15 sticky top-16 z-40 shadow-sm">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center overflow-x-auto no-scrollbar">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center overflow-x-auto no-scrollbar">
         ${tabs.filter(t => (!t.adminOnly || isAdmin)).map(t => {
           const on = active === t.r;
           const deskOnly = t.desktopOnly ? 'hidden md:flex' : 'flex';
           return `<a href="${t.r}" data-route="${t.r}"
-            class="${deskOnly} items-center gap-2 px-4 sm:px-5 py-3.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors no-underline shrink-0
+            class="${deskOnly} items-center gap-1.5 px-3 sm:px-4 py-3.5 text-[13px] font-semibold whitespace-nowrap border-b-2 transition-colors no-underline shrink-0
               ${on ? 'border-gold text-primary' : 'border-transparent text-primary/45 hover:text-primary hover:border-gold/30'}">
             <i data-lucide="${t.icon}" class="w-4 h-4"></i>${t.label}
           </a>`;
@@ -218,7 +218,7 @@ async function renderAdminBooks() {
   _booksActiveView = contAS.bkid ? 'content' : 'books';
 
   app().innerHTML = adminNavBar('/admin/books') + `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
       <!-- ── VIEW: DAFTAR KITAB ─────────────────────────────── -->
       <div id="view-books">
@@ -1447,7 +1447,7 @@ async function renderAdminHistory() {
   let _hist = { page: 1, action: '', table: '', admin: '', data: null };
 
   app().innerHTML = adminNavBar('/admin/history') + `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
           <i data-lucide="history" class="w-5 h-5 text-primary"></i>
@@ -1600,7 +1600,7 @@ async function renderAdminActivity() {
   let _act = { page: 1, event: '', query: '', date: '' };
 
   app().innerHTML = adminNavBar('/admin/activity') + `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
           <i data-lucide="activity" class="w-5 h-5 text-primary"></i>
@@ -1772,7 +1772,7 @@ async function renderAdminSearchLogs() {
   let _sl = { page: 1, type: '', query: '', date: '' };
 
   app().innerHTML = adminNavBar('/admin/search-logs') + `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
           <i data-lucide="search" class="w-5 h-5 text-primary"></i>
@@ -1983,7 +1983,7 @@ async function renderAdminDownloadLogs() {
   let _dl = { page: 1, bkid: '', query: '', date: '' };
 
   app().innerHTML = adminNavBar('/admin/download-logs') + `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
           <i data-lucide="download" class="w-5 h-5 text-primary"></i>
@@ -2111,7 +2111,7 @@ async function renderAdminDownloadLogs() {
 // ══════════════════════════════════════════════════════════════
 async function renderAdminSubmissions() {
   app().innerHTML = adminNavBar('/admin/submissions') + `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 class="text-xl font-bold text-primary flex items-center gap-2">
@@ -2426,7 +2426,7 @@ async function renderAdminSubmissions() {
 // ══════════════════════════════════════════════════════════════
 async function renderAdminRequests() {
   app().innerHTML = adminNavBar('/admin/requests') + `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 class="text-xl font-bold text-primary flex items-center gap-2">
