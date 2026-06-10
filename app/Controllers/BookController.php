@@ -373,7 +373,7 @@ class BookController {
 
     public function fallbackDownloadTxt(array $book, array $pages): void {
         $title    = trim($book['title'] ?: 'kitab');
-        $filename = normalizeDownloadFilename($title) . '.txt';
+        $filename = $this->normalizeDownloadFilename($title) . '.txt';
     
         $lines   = [];
         $lines[] = $book['title'] ?: 'Kitab tanpa judul';
