@@ -86,7 +86,7 @@ export async function renderHome() {
         </div>
       </div>
     </section>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
 
   reicons();
 

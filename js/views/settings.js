@@ -120,7 +120,7 @@ export function renderSettings() {
       `)}
 
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
 
   reicons();
 
@@ -601,7 +601,7 @@ export function renderSearchAdvanced(params) {
 
       <div id="adv-results" class="mt-8"></div>
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
 
   reicons();
 
@@ -733,7 +733,7 @@ export function renderSearch(params) {
         ${showSkeleton ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${skeletonCards(6)}</div>` : (newQ.length >= 2 ? '' : emptySearchPrompt())}
       </div>
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
 
   reicons();
   const inp = $('#search-input'), clr = $('#search-clear'), btn = $('#search-btn');
@@ -998,7 +998,7 @@ function _restoreSearchFromCache(q) {
         <div id="cont-pagination"></div>
       </div>
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
   reicons();
 
   // Render halaman cache langsung
@@ -1154,7 +1154,7 @@ async function execSearch() {
       ${sectionHeader('file-text','Isi Kitab', null, true)}
       <div id="sec-content-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
 
   if (stats) {
     stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencari…</span>`;

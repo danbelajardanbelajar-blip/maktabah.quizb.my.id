@@ -110,7 +110,7 @@ export function renderAbout() {
 
       </div>
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
   reicons();
 }
 

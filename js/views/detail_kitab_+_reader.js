@@ -35,7 +35,7 @@ async function renderDetail(params) {
         </div>
       </div>
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
   reicons();
 
   try {

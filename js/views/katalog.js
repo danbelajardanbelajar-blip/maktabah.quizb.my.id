@@ -25,7 +25,7 @@ export async function renderKatalog(params) {
       </div>
       <div id="katalog-pagination"></div>
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
 
   reicons();
 

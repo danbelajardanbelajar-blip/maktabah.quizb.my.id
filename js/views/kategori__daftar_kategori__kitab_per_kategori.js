@@ -33,7 +33,7 @@ export async function renderKategori(params) {
           <div class="skeleton h-28 rounded-2xl"></div>`).join('')}
       </div>
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
 
   reicons();
 
@@ -113,7 +113,7 @@ export async function renderKategoriBuku() {
       </div>
       <div id="kat-buku-pagination"></div>
     </div>
-    ${window.mobileFeedbackBanner}`;
+    ${mobileFeedbackBanner}`;
 
   reicons();
 
