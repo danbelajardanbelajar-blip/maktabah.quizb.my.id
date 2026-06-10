@@ -830,7 +830,24 @@ class AdminController {
             $rawText = file_get_contents($filePath);
         }
 
-        echo json_encode(['success' => true, 'content' => $rawText]);
+        $pageTexts = [];
+        if (strlen(trim($rawText)) > 0) {
+            $paragraphs = preg_split('/\n{2,}/', trim($rawText));
+            $buf = '';
+            foreach ($paragraphs as $para) {
+                $para = trim($para);
+                if ($para === '') continue;
+                if (strlen($buf) + strlen($para) > 3000 && $buf !== '') {
+                    $pageTexts[] = trim($buf);
+                    $buf = $para;
+                } else {
+                    $buf .= ($buf ? "\n\n" : '') . $para;
+                }
+            }
+            if ($buf !== '') $pageTexts[] = trim($buf);
+        }
+
+        echo json_encode(['success' => true, 'pages' => $pageTexts, 'content' => $rawText]);
     }
 
     public function handleAdminDeleteSubmission(): void {

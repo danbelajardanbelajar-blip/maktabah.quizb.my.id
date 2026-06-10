@@ -2144,17 +2144,25 @@ async function renderAdminSubmissions() {
       </div>
     </div>
     
-    <!-- Modal Pratinjau Teks (Editor-like) -->
-    <div id="sub-content-modal" class="hidden fixed inset-0 z-[60] bg-ink/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col">
+    <!-- Modal Review (Paginated) -->
+    <div id="sub-review-modal" class="hidden fixed inset-0 z-[60] bg-ink/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-4xl max-h-[92vh] rounded-2xl shadow-xl flex flex-col">
         <div class="flex items-center justify-between px-6 py-4 border-b border-cream-dark shrink-0">
-          <h2 id="sub-content-title" class="font-bold text-primary text-sm">Pratinjau File</h2>
-          <button onclick="closeSubContentModal()" class="p-2 rounded-lg hover:bg-cream-dark text-primary/40 transition-colors">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+              <i data-lucide="clipboard-check" class="w-4 h-4 text-gold"></i>
+            </div>
+            <div>
+              <h2 id="sub-rev-title" class="font-bold text-primary text-sm">Review Kiriman</h2>
+              <p class="text-xs text-primary/40">Pratinjau konten & persetujuan</p>
+            </div>
+          </div>
+          <button onclick="closeSubReviewModal()" class="p-2 rounded-lg hover:bg-cream-dark text-primary/40 transition-colors">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
-        <div class="flex-1 p-6 overflow-hidden flex flex-col">
-          <textarea id="sub-content-textarea" class="w-full h-full p-4 rounded-xl border border-gold/30 bg-cream/30 text-sm focus:outline-none resize-none font-mono" readonly></textarea>
+        <div id="sub-rev-body" class="flex-1 overflow-y-auto px-6 pb-6 pt-4">
+          <!-- Diisi via JS -->
         </div>
       </div>
     </div>`;
@@ -2243,30 +2251,97 @@ async function renderAdminSubmissions() {
     }
   };
 
-  window.openSubContentModal = async function(id, name) {
-    const modal = document.getElementById('sub-content-modal');
-    const ta    = document.getElementById('sub-content-textarea');
-    document.getElementById('sub-content-title').textContent = 'Pratinjau: ' + name;
-    ta.value = 'Mengekstrak teks... (membutuhkan waktu untuk PDF/Word)';
+  let _subRev = { id: 0, title: '', pages: [], currentPage: 0 };
+
+  window.openSubReviewModal = async function(id, name) {
+    const modal = document.getElementById('sub-review-modal');
+    const body  = document.getElementById('sub-rev-body');
+    document.getElementById('sub-rev-title').textContent = 'Review: ' + name;
+    
+    _subRev = { id, title: name, pages: [], currentPage: 0 };
+    
+    body.innerHTML = '<div class="text-center py-10"><div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3"></div><p class="text-sm text-primary/50">Mengekstrak file...</p></div>';
     modal.classList.remove('hidden');
     reicons();
 
     try {
       const res = await apiFetch({ action: 'admin_get_submission_content', id: id });
       if (res.error) throw new Error(res.error);
-      if (!res.content || res.content.trim() === '') {
-        ta.value = 'Tidak ada teks yang dapat diekstrak atau file kosong/terenkripsi.';
+      if (!res.pages || res.pages.length === 0) {
+        body.innerHTML = '<div class="text-center py-10 text-sm text-primary/50">Tidak ada teks yang dapat diekstrak atau file kosong/terenkripsi.</div>';
       } else {
-        ta.value = res.content;
+        _subRev.pages = res.pages;
+        _renderSubReviewBody();
       }
     } catch (e) {
       if (handleAuthError(e)) return;
-      ta.value = 'Gagal memuat pratinjau: ' + e.message;
+      body.innerHTML = '<div class="text-center py-10 text-sm text-red-500">Gagal memuat pratinjau: ' + escHtml(e.message) + '</div>';
     }
   };
 
-  window.closeSubContentModal = function() {
-    document.getElementById('sub-content-modal').classList.add('hidden');
+  window._renderSubReviewBody = function() {
+    const total = _subRev.pages.length;
+    const pg    = _subRev.currentPage;
+    const wordCount = _subRev.pages[pg]?.split(/\s+/).filter(Boolean).length || 0;
+
+    document.getElementById('sub-rev-body').innerHTML = `
+      <div class="flex flex-col md:flex-row gap-4 h-full min-h-[400px]">
+        <!-- Sidebar navigasi halaman -->
+        <div class="w-full md:w-48 bg-white rounded-xl border border-cream-dark overflow-y-auto" style="max-height:450px;">
+          <div class="px-3 py-2 bg-cream/50 border-b border-cream-dark text-xs font-semibold text-primary/40 sticky top-0">Hal.</div>
+          <div class="flex flex-col">
+            ${Array.from({length:total},(_,i)=>`
+              <button onclick="window._subRevGoPage(${i})"
+                class="w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-1.5
+                  ${i===pg ? 'bg-primary text-white font-bold' : 'hover:bg-cream/60 text-primary/60'}">
+                <span class="font-mono ${i===pg?'text-white/60':'text-primary/25'}">${String(i+1).padStart(3,'0')}</span>
+                Hal ${i+1}
+              </button>`).join('')}
+          </div>
+        </div>
+
+        <!-- Editor halaman -->
+        <div class="flex-1 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-primary/50">
+              Halaman <span class="text-primary font-bold">${pg+1}</span> dari ${total}
+              <span class="text-primary/30 ml-2">(${wordCount} kata)</span>
+            </span>
+            <div class="flex items-center gap-1">
+              <button onclick="window._subRevGoPage(${pg-1})" ${pg===0?'disabled':''} class="p-1.5 rounded-lg text-primary/40 hover:bg-cream-dark disabled:opacity-25 transition-colors">
+                <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="window._subRevGoPage(${pg+1})" ${pg>=total-1?'disabled':''} class="p-1.5 rounded-lg text-primary/40 hover:bg-cream-dark disabled:opacity-25 transition-colors">
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+          <textarea id="sub-rev-page-text" dir="auto" rows="12" readonly
+            class="w-full flex-1 px-4 py-3 rounded-xl border border-gold/25 bg-cream/20 text-sm focus:outline-none resize-y leading-relaxed font-arabic"
+            style="min-height:280px;">${escHtml(_subRev.pages[pg]||'')}</textarea>
+          
+          <!-- Tombol Aksi -->
+          <div class="flex gap-3 pt-3 mt-auto">
+            <button onclick="subDirectReview(${_subRev.id}, 'approve')" class="flex-1 py-3 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+              <i data-lucide="check" class="w-4 h-4"></i> Approve
+            </button>
+            <button onclick="subDirectReview(${_subRev.id}, 'reject')" class="flex-1 py-3 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-2">
+              <i data-lucide="x" class="w-4 h-4"></i> Disapprove
+            </button>
+          </div>
+        </div>
+      </div>`;
+    reicons();
+  };
+
+  window._subRevGoPage = function(i) {
+    if (i < 0 || i >= _subRev.pages.length) return;
+    _subRev.currentPage = i;
+    _renderSubReviewBody();
+  };
+
+  window.closeSubReviewModal = function() {
+    document.getElementById('sub-review-modal').classList.add('hidden');
   };
 
   const fmtSize = b => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(1) + ' MB';
@@ -2292,10 +2367,11 @@ async function renderAdminSubmissions() {
         reicons(); return;
       }
       const rowsHtml = rows.map(r => {
-        const fileBtn = '<button onclick="openSubContentModal(' + r.id + ', ' + JSON.stringify(r.file_name) + ')" title="Lihat file" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700"><i data-lucide="eye" class="w-4 h-4"></i></button>';
+        const reviewBtn = '<button onclick="openSubReviewModal(' + r.id + ', ' + JSON.stringify(r.file_name) + ')" title="Review" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700 flex items-center gap-1.5 px-2 font-medium text-xs"><i data-lucide="clipboard-check" class="w-4 h-4"></i> Review</button>';
+        const viewBtn = '<button onclick="openSubReviewModal(' + r.id + ', ' + JSON.stringify(r.file_name) + ')" title="Lihat file" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700"><i data-lucide="eye" class="w-4 h-4"></i></button>';
         const deleteBtn  = '<button onclick="subDelete(' + r.id + ')" title="Hapus" class="p-1.5 rounded-lg hover:bg-red-100 text-red-700 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>';
         
-        let actBtns = fileBtn + deleteBtn;
+        let actBtns = r.status === 'pending' ? reviewBtn + deleteBtn : viewBtn + deleteBtn;
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
           + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.file_name) + '</div>'
