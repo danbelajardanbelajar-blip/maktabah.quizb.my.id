@@ -1338,7 +1338,8 @@ async function execAdvancedSearch() {
          ${paginationHtml(page, totalPages, 'goAdvancedPage')}`;
       wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      const recs = await getSearchRecommendationsHtml();
+      const qTerms = searchAdvancedState.terms.filter(t => t.trim()).join(' ');
+      const recs = await getSearchRecommendationsHtml(qTerms);
       wrap.innerHTML = `<div class="text-center py-20 text-primary/40 flex flex-col items-center">
         <i data-lucide="search-x" class="w-12 h-12 text-primary/20 mb-4"></i>
         <p>Maaf, tidak ditemukan halaman yang cocok dengan kata kunci dan kategori yang dipilih.</p>
@@ -1615,23 +1616,25 @@ function skeletonSearchSections() {
 }
 
 // ── Search Recommendations ─────────────────────────────────────
-let _searchRecsCache = null;
-async function getSearchRecommendationsHtml() {
-  if (!_searchRecsCache) {
+async function getSearchRecommendationsHtml(q = '') {
+  if (!window._searchRecsCache) window._searchRecsCache = {};
+  const cacheKey = 'recs_' + q;
+  if (!window._searchRecsCache[cacheKey]) {
     try {
-      const res = await apiFetch({ action: 'search_recommendations' });
-      _searchRecsCache = res.data || [];
-    } catch { _searchRecsCache = []; }
+      const res = await apiFetch({ action: 'search_recommendations', q });
+      window._searchRecsCache[cacheKey] = res.data || [];
+    } catch { window._searchRecsCache[cacheKey] = []; }
   }
-  if (!_searchRecsCache.length) return '';
+  const recs = window._searchRecsCache[cacheKey];
+  if (!recs.length) return '';
   
   return `
     <div class="mt-8 pt-6 border-t border-cream-dark w-full max-w-2xl mx-auto text-center search-section-enter">
       <div class="text-xs font-bold text-primary/40 uppercase tracking-wider mb-4">Mungkin Anda mencari</div>
       <div class="flex flex-wrap justify-center gap-2">
-        ${_searchRecsCache.map(q => `
-          <button onclick="navigate('/search?q=${encodeURIComponent(q)}')" class="px-3 py-1.5 rounded-full border border-gold/30 bg-gold/5 text-gold text-xs hover:bg-gold/10 transition-colors font-medium flex items-center gap-1.5 shadow-sm">
-            <i data-lucide="search" class="w-3 h-3"></i>${escHtml(q)}
+        ${recs.map(item => `
+          <button onclick="navigate('/search?q=${encodeURIComponent(item)}')" class="px-3 py-1.5 rounded-full border border-gold/30 bg-gold/5 text-gold text-xs hover:bg-gold/10 transition-colors font-medium flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="search" class="w-3 h-3"></i>${escHtml(item)}
           </button>
         `).join('')}
       </div>
@@ -1641,7 +1644,8 @@ async function getSearchRecommendationsHtml() {
 
 // ── Empty state (premium) ─────────────────────────────────────
 function emptySearchPrompt() {
-  getSearchRecommendationsHtml().then(recs => {
+  const q = window.searchState?.q || '';
+  getSearchRecommendationsHtml(q).then(recs => {
     const wrap = document.getElementById('search-empty-recs');
     if (wrap && recs) { wrap.innerHTML = recs; reicons(); }
   });
@@ -1994,7 +1998,7 @@ async function execSearch() {
       if (totalHits === 0) {
         const wrap = document.getElementById('search-results');
         if (wrap) {
-          const recs = await getSearchRecommendationsHtml();
+          const recs = await getSearchRecommendationsHtml(searchState.q);
           if (recs) {
             const recDiv = document.createElement('div');
             recDiv.innerHTML = recs;

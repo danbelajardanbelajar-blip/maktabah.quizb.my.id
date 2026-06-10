@@ -720,22 +720,61 @@ class SearchController {
     }
 
     public function handleSearchRecommendations(): void {
-        header('Cache-Control: public, max-age=300'); // Cache 5 minutes
+        header('Cache-Control: public, max-age=120');
         $pdo   = Database::getConnection();
+        $q     = trim($_GET['q'] ?? '');
         
-        // Ambil query pencarian paling populer yang menghasilkan data
-        // Filter query yang memiliki panjang >= 3 agar lebih relevan
-        $stmt = $pdo->prepare(
-            "SELECT query 
-             FROM search_logs 
-             WHERE result_count > 0 AND LENGTH(TRIM(query)) >= 3 
-             GROUP BY LOWER(TRIM(query)) 
-             ORDER BY COUNT(*) DESC 
-             LIMIT 8"
-        );
+        $where = "result_count > 0 AND LENGTH(TRIM(query)) >= 3";
+        $params = [];
+        
+        if ($q !== '') {
+            $words = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
+            $words = array_filter($words, fn($w) => mb_strlen($w) >= 3);
+            
+            if (!empty($words)) {
+                $conds = [];
+                foreach ($words as $i => $w) {
+                    $conds[] = "query LIKE :w$i";
+                    $params[":w$i"] = "%$w%";
+                }
+                $where .= " AND (" . implode(" OR ", $conds) . ")";
+            }
+        }
+        
+        $sql = "SELECT query 
+                FROM search_logs 
+                WHERE $where 
+                GROUP BY LOWER(TRIM(query)) 
+                ORDER BY COUNT(*) DESC, MAX(created_at) DESC 
+                LIMIT 8";
+                
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v, PDO::PARAM_STR);
+        }
         $stmt->execute();
     
         $rows = $stmt->fetchAll();
+        
+        // Fallback if context-aware recommendations are too few
+        if (count($rows) < 3 && $q !== '') {
+            $fallback = $pdo->prepare(
+                "SELECT query 
+                 FROM search_logs 
+                 WHERE result_count > 0 AND LENGTH(TRIM(query)) >= 3 
+                 GROUP BY LOWER(TRIM(query)) 
+                 ORDER BY COUNT(*) DESC 
+                 LIMIT 5"
+            );
+            $fallback->execute();
+            foreach ($fallback->fetchAll() as $fb) {
+                $found = false;
+                foreach ($rows as $r) { if (strtolower(trim($r['query'])) === strtolower(trim($fb['query']))) $found = true; }
+                if (!$found) $rows[] = $fb;
+            }
+        }
+        
+        $rows = array_slice($rows, 0, 8);
         echo json_encode(['data' => array_map(fn($r) => $r['query'], $rows)]);
     }
 
