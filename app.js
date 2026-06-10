@@ -1633,7 +1633,7 @@ async function getSearchRecommendationsHtml(q = '') {
       <div class="text-xs font-bold text-primary/40 uppercase tracking-wider mb-4">Mungkin Anda mencari</div>
       <div class="flex flex-wrap justify-center gap-2">
         ${recs.map(item => `
-          <button onclick="navigate('/search?q=${encodeURIComponent(item)}')" class="px-3 py-1.5 rounded-full border border-gold/30 bg-gold/5 text-gold text-xs hover:bg-gold/10 transition-colors font-medium flex items-center gap-1.5 shadow-sm">
+          <button onclick="navigate('/search?q=${encodeURIComponent(item).replace(/'/g, "%27")}')" class="px-3 py-1.5 rounded-full border border-gold/30 bg-gold/5 text-gold text-xs hover:bg-gold/10 transition-colors font-medium flex items-center gap-1.5 shadow-sm">
             <i data-lucide="search" class="w-3 h-3"></i>${escHtml(item)}
           </button>
         `).join('')}
