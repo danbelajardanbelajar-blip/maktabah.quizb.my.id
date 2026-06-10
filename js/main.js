@@ -41,7 +41,7 @@ const routes = {
   '/catalog': View_kategori__daftar_kategori__kitab_per_kategori.renderKategori,
   '/setting': View_settings.renderSettings,
 };
-
+window.routes = routes;
 
 // Override navigate to use our routes mapping
 function localNavigate(path, push = true) {

@@ -20,13 +20,14 @@ Object.assign(window._adminRoutes = window._adminRoutes || {}, {
   '/admin/feedback': renderAdminFeedbacks,
 });
 
+// Merge admin routes ke routes object app.js
+if (typeof window.routes !== 'undefined') {
+  Object.assign(window.routes, window._adminRoutes);
+}
+
 // Patch router setelah app.js selesai load
 document.addEventListener('DOMContentLoaded', () => {
-  // Merge admin routes ke routes object app.js
-  if (typeof routes !== 'undefined') {
-    Object.assign(routes, window._adminRoutes);
-  }
-  // Jika halaman saat ini adalah rute admin, render langsung
+  // Jika halaman saat ini adalah rute admin, render langsung (optional as core.js already triggers navigate, but kept for safety)
   const base = location.pathname.split('?')[0];
   if (window._adminRoutes[base]) navigate(location.pathname + location.search, false);
 });
