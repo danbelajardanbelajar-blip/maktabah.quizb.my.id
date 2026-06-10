@@ -728,9 +728,13 @@ class SearchController {
         $params = [];
         
         if ($q !== '') {
-            // Hapus tanda kutip agar pemisahan kata lebih bersih untuk pencocokan LIKE
-            $cleanQ = str_replace(['"', "'", '`', '“', '”', '‘', '’'], ' ', $q);
+            // Hapus kutip ganda untuk memecah frasa, namun pertahankan petik tunggal untuk kata seperti qur'an
+            $cleanQ = str_replace(['"', '“', '”'], ' ', $q);
             $words = preg_split('/\s+/u', $cleanQ, -1, PREG_SPLIT_NO_EMPTY);
+            
+            // Bersihkan tanda petik tunggal hanya di awal/akhir kata saja
+            $words = array_map(fn($w) => trim($w, "'`‘’"), $words);
+            
             $words = array_filter($words, fn($w) => mb_strlen($w) >= 3);
             
             if (!empty($words)) {
