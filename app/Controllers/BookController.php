@@ -126,7 +126,7 @@ class BookController {
             return;
         }
     
-        logDownloadBook($id, $book['title'] ?? 'Kitab tanpa judul');
+        $this->logDownloadBook($id, $book['title'] ?? 'Kitab tanpa judul');
     
         // Kelompokkan baris per juz: [ juzNumber => [ row, row, ... ] ]
         $byJuz = [];
@@ -137,10 +137,9 @@ class BookController {
     
         $totalJuz    = count($byJuz);
         $title       = trim($book['title'] ?: 'kitab');
-        $baseFilename = normalizeDownloadFilename($title);
+        $baseFilename = $this->normalizeDownloadFilename($title);
         $isArabic    = (bool)preg_match('/\p{Arabic}/u', $title);
     
-        loadComposerAutoloader();
         $hasPhpWord = class_exists('\PhpOffice\PhpWord\PhpWord');
     
         // ── KASUS 1: Satu juz → download DOCX langsung ───────────
@@ -154,7 +153,7 @@ class BookController {
     
                 header_remove('Content-Type');
                 header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-                header('Content-Disposition: ' . contentDispositionHeader($filename));
+                header('Content-Disposition: ' . $this->contentDispositionHeader($filename));
                 header('Cache-Control: no-store, must-revalidate');
     
                 $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
@@ -164,14 +163,14 @@ class BookController {
     
             // Fallback TXT
             $pages = array_column($pageMeta, 'content');
-            fallbackDownloadTxt($book, $pages);
+            $this->fallbackDownloadTxt($book, $pages);
             return;
         }
     
         // ── KASUS 2: Multi-juz → ZIP berisi N file DOCX ──────────
-        if (!class_exists('ZipArchive')) {
+        if (!class_exists('\ZipArchive')) {
             // ZipArchive tidak tersedia: fallback satu TXT gabungan
-            fallbackDownloadMultiJuzTxt($book, $byJuz, $baseFilename);
+            $this->fallbackDownloadMultiJuzTxt($book, $byJuz, $baseFilename);
             return;
         }
     
@@ -179,9 +178,9 @@ class BookController {
         $tmpDir    = sys_get_temp_dir();
         $tmpPrefix = 'maktabah_' . $id . '_' . uniqid('', true);
         $zipPath   = $tmpDir . DIRECTORY_SEPARATOR . $tmpPrefix . '.zip';
-        $zip       = new ZipArchive();
+        $zip       = new \ZipArchive();
     
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
             http_response_code(500);
             echo json_encode(['error' => 'Gagal membuat file ZIP.']);
             return;
@@ -208,7 +207,7 @@ class BookController {
                 $juzLabel = 'Juz_' . $juzNumber;
                 $txtName  = $baseFilename . '_' . $juzLabel . '.txt';
                 $pages    = array_column($pageMeta, 'content');
-                $content  = buildJuzTxtContent($book, $pages, $juzNumber, $totalJuz);
+                $content  = $this->buildJuzTxtContent($book, $pages, $juzNumber, $totalJuz);
                 $zip->addFromString($txtName, $content);
             }
         }
@@ -238,7 +237,7 @@ class BookController {
         $zipFilename = $baseFilename . '.zip';
         header_remove('Content-Type');
         header('Content-Type: application/zip');
-        header('Content-Disposition: ' . contentDispositionHeader($zipFilename));
+        header('Content-Disposition: ' . $this->contentDispositionHeader($zipFilename));
         header('Content-Length: ' . filesize($zipPath));
         header('Cache-Control: no-store, must-revalidate');
     
@@ -392,13 +391,59 @@ class BookController {
     
         header_remove('Content-Type');
         header('Content-Type: text/plain; charset=UTF-8');
-        header('Content-Disposition: ' . contentDispositionHeader($filename));
+        header('Content-Disposition: ' . $this->contentDispositionHeader($filename));
         echo implode("\n", $lines);
+    }
+
+    public function fallbackDownloadMultiJuzTxt(array $book, array $byJuz, string $baseFilename): void {
+        $filename = $baseFilename . '_all_juz.txt';
+        $lines = [];
+        $lines[] = $book['title'] ?: 'Kitab tanpa judul';
+        if (!empty($book['author'])) {
+            $lines[] = 'Pengarang: ' . $book['author'];
+        }
+        $lines[] = 'Total Juz: ' . count($byJuz);
+        $lines[] = '';
+
+        foreach ($byJuz as $juzNumber => $pageMeta) {
+            $lines[] = '======================================';
+            $lines[] = 'JUZ ' . $juzNumber;
+            $lines[] = '======================================';
+            $pages = array_column($pageMeta, 'content');
+            foreach ($pages as $idx => $content) {
+                $lines[] = '--- Halaman ' . ($idx + 1) . ' ---';
+                $lines[] = $content;
+                $lines[] = '';
+            }
+        }
+
+        header_remove('Content-Type');
+        header('Content-Type: text/plain; charset=UTF-8');
+        header('Content-Disposition: ' . $this->contentDispositionHeader($filename));
+        echo implode("\n", $lines);
+    }
+
+    public function buildJuzTxtContent(array $book, array $pages, int $juzNumber, int $totalJuz): string {
+        $lines = [];
+        $lines[] = $book['title'] ?: 'Kitab tanpa judul';
+        if (!empty($book['author'])) {
+            $lines[] = 'Pengarang: ' . $book['author'];
+        }
+        $lines[] = 'Juz: ' . $juzNumber . ' dari ' . $totalJuz;
+        $lines[] = '';
+        foreach ($pages as $idx => $content) {
+            $lines[] = '--- Halaman ' . ($idx + 1) . ' ---';
+            $lines[] = $content;
+            if ($idx < count($pages) - 1) {
+                $lines[] = '';
+            }
+        }
+        return implode("\n", $lines);
     }
 
     public function logDownloadBook(int $bkid, string $title): void {
         try {
-            ensureDownloadLogsTable();
+            $this->ensureDownloadLogsTable();
             $pdo = Database::getConnection();
             $user = AuthHelper::getSessionUser();
             $ip   = $_SERVER['HTTP_X_FORWARDED_FOR']
