@@ -1391,7 +1391,7 @@ function renderSearchAdvanced(params) {
   }
 
   app().innerHTML = `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div class="mb-8">
         <div class="flex flex-col gap-3">
           <div class="text-sm uppercase tracking-[.2em] text-gold font-bold">Pencarian Lanjutan</div>
@@ -2532,7 +2532,7 @@ window.loadReaderPage = loadReaderPage;
 // ══════════════════════════════════════════════════════════════
 function renderAbout() {
   app().innerHTML = `
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <!-- Header -->
       <div class="text-center mb-10">
         <div class="arabic text-primary text-4xl font-bold mb-2">المكتبة السنية</div>
