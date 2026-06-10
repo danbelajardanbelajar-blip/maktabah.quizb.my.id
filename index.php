@@ -1353,9 +1353,9 @@ endif;
     }); // end DOMContentLoaded
   </script>
 
-  <script src="/app.js?v=<?= time() ?>"></script>
+  <script type="module" src="/js/main.js?v=<?= time() ?>"></script>
   <?php if (($sessionUser['role'] ?? '') === 'admin'): ?>
-    <script src="/admin.js?v=<?= time() ?>"></script>
+    <script src="/admin.js?v=<?= time() ?>" defer></script>
   <?php endif; ?>
 </body>
 </html>
