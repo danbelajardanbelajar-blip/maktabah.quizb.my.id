@@ -1339,7 +1339,9 @@ endif;
     }); // end DOMContentLoaded
   </script>
 
-  <script src="/app.js"></script>
-  <script src="/admin.js"></script>
+  <script src="/app.js?v=<?= time() ?>"></script>
+  <?php if (AuthHelper::isAdmin()): ?>
+    <script src="/admin.js?v=<?= time() ?>"></script>
+  <?php endif; ?>
 </body>
 </html>

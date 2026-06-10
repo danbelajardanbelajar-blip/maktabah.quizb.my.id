@@ -535,7 +535,7 @@ async function renderHome() {
       section.style.display = '';
       chips.innerHTML = queries.map(q => {
         const safe = escHtml(q);
-        const enc  = encodeURIComponent(q);
+        const enc  = encodeURIComponent(q).replace(/'/g, "%27");
         return `<button
           onclick="navigate('/search?q=${enc}')"
           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
@@ -1188,7 +1188,7 @@ function advancedContentCard(book) {
   const pageLabel = book.match_page ? `hal. ${book.match_page}` : '';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-3 cursor-pointer hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         onclick="navigate('/kitab?id=${book.bkid}&content_id=${book.match_id}&q=${encodeURIComponent(buildAdvancedSearchQuery())}')">
+         onclick="navigate('/kitab?id=${book.bkid}&content_id=${book.match_id}&q=${encodeURIComponent(buildAdvancedSearchQuery()).replace(/'/g, "%27")}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${snippetHtml ? `<div class="snippet-bar reader-text line-clamp-4">${snippetHtml}…</div>` : ''}
@@ -1709,10 +1709,10 @@ function contentCard(b, q) {
   const hlSnip  = snippet ? hlText(snippet, q) : '';
   const juzParam  = b.match_juz ? `&juz=${b.match_juz}` : '';
   const pageParam = b.match_page ? `&page=${b.match_page}` : '';
-  const qParam    = q ? `&q=${encodeURIComponent(q)}` : '';
+  const qParam    = q ? `&q=${encodeURIComponent(q).replace(/'/g, "%27")}` : '';
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         onclick="navigate('/kitab?id=${b.bkid}&content_id=${b.match_id}&q=${encodeURIComponent(q)}')">
+         onclick="navigate('/kitab?id=${b.bkid}&content_id=${b.match_id}&q=${encodeURIComponent(q).replace(/'/g, "%27")}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}…</div>` : ''}
