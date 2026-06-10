@@ -1,54 +1,6 @@
 // PAGE: HOME
 import { API, FONTS_LATIN, FONTS_ARABIC, readerFontState, applyReaderFont, $, $$, el, app, reicons, mobileFeedbackBanner, apiFetch, handleAuthError, UPDATE_NOTICE_SESSION_KEY, isMobileViewport, hasDismissedUpdateNotice, setDismissedUpdateNotice, closeUpdateNotice, showUpdateNoticeIfNeeded, logVisitorActivity, navigate, setActiveNav, updateReaderMenus, skeletonCards, bookCard, escHtml, paginationHtml, recentBookCard, saveToRecentlyOpened, getRecentlyOpened } from '../core/core.js';
 
-// ── Recently Opened Books (localStorage) ─────────────────────
-const RECENT_KEY      = 'maktabah_recent_opened';
-const RECENT_MAX      = 8;
-
-function getRecentlyOpened() {
-  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
-  catch { return []; }
-}
-
-function saveToRecentlyOpened(book) {
-  try {
-    const list = getRecentlyOpened().filter(b => String(b.id) !== String(book.id));
-    list.unshift({ ...book, openedAt: Date.now() });
-    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX)));
-  } catch { /* ignore storage errors */ }
-}
-
-function recentBookCard(item) {
-  const timeAgo = (() => {
-    const diff = Date.now() - (item.openedAt || 0);
-    const m = Math.floor(diff / 60000);
-    const h = Math.floor(diff / 3600000);
-    const d = Math.floor(diff / 86400000);
-    if (m < 1)  return 'Baru saja';
-    if (m < 60) return `${m} menit lalu`;
-    if (h < 24) return `${h} jam lalu`;
-    if (d < 7)  return `${d} hari lalu`;
-    return new Date(item.openedAt).toLocaleDateString('id-ID', {day:'numeric',month:'short'});
-  })();
-  return `
-    <div class="book-card bg-white rounded-2xl shadow-card overflow-hidden cursor-pointer relative group"
-         onclick="navigate('/kitab?id=${item.id}')">
-      <!-- Time badge -->
-      <div class="absolute top-2 right-2 z-10">
-        <span style="font-size:10px;background:rgba(26,58,42,.72);color:rgba(212,197,160,.9);padding:2px 7px;border-radius:999px;backdrop-filter:blur(4px);white-space:nowrap;">
-          ${escHtml(timeAgo)}
-        </span>
-      </div>
-      <div class="hero-bg p-5 flex items-center justify-center min-h-[90px]">
-        <div class="arabic text-white text-center font-bold leading-snug text-lg line-clamp-3">${escHtml(item.title)}</div>
-      </div>
-      <div class="p-3">
-        <div class="text-xs text-primary/55 truncate">${escHtml(item.author || '')}</div>
-        ${item.cat ? `<span class="mt-1 inline-block text-[10px] px-2 py-0.5 rounded-full bg-gold/10 text-gold-dark font-medium">${escHtml(item.cat)}</span>` : ''}
-      </div>
-    </div>`;
-}
-
 export async function renderHome() {
   app().innerHTML = `
     <!-- Hero -->
