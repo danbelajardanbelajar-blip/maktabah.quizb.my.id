@@ -2293,16 +2293,9 @@ async function renderAdminSubmissions() {
       }
       const rowsHtml = rows.map(r => {
         const fileBtn = '<button onclick="openSubContentModal(' + r.id + ', ' + JSON.stringify(r.file_name) + ')" title="Lihat file" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700"><i data-lucide="eye" class="w-4 h-4"></i></button>';
-        const approveBtn = '<button onclick="subDirectReview(' + r.id + ', \'approve\')" title="Setujui" class="p-1.5 rounded-lg hover:bg-green-100 text-green-600 transition-colors"><i data-lucide="check" class="w-4 h-4"></i></button>';
-        const rejectBtn  = '<button onclick="subDirectReview(' + r.id + ', \'reject\')" title="Tolak" class="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>';
         const deleteBtn  = '<button onclick="subDelete(' + r.id + ')" title="Hapus" class="p-1.5 rounded-lg hover:bg-red-100 text-red-700 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>';
         
-        let actBtns = '';
-        if (r.status === 'pending') {
-            actBtns = fileBtn + approveBtn + rejectBtn + deleteBtn;
-        } else {
-            actBtns = fileBtn + deleteBtn;
-        }
+        let actBtns = fileBtn + deleteBtn;
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
           + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.file_name) + '</div>'
