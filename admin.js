@@ -141,7 +141,7 @@ function renderDashboard() {
   const isAdmin = u.role === 'admin';
 
   app().innerHTML = `
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
       <!-- Profile card -->
       <div class="bg-white rounded-2xl shadow-card p-6 mb-8 flex items-center gap-5">
         ${u.picture
@@ -1260,7 +1260,7 @@ async function renderAdminCategories() {
   if (!adminGuard()) return;
 
   app().innerHTML = adminNavBar('/admin/categories') + `
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-xl font-bold text-primary flex items-center gap-2">
