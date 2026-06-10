@@ -2207,7 +2207,7 @@ async function renderAdminSubmissions() {
     if (!_subTarget) return;
     const note = document.getElementById('sub-modal-note').value.trim();
     try {
-      const res = await apiFetch({ action: 'admin_review_submission', id: _subTarget.id, review_action: action, note });
+      const res = await adminPost('admin_review_submission', { id: _subTarget.id, review_action: action, note });
       if (res.error) throw new Error(res.error);
       closeSubModal();
       adminToast(action === 'approve' ? 'Kiriman disetujui ✓' : 'Kiriman ditolak');
@@ -2220,7 +2220,7 @@ async function renderAdminSubmissions() {
 
   window.subDirectReview = async function(id, action) {
     try {
-      const res = await apiFetch({ action: 'admin_review_submission', id: id, review_action: action, note: '' });
+      const res = await adminPost('admin_review_submission', { id: id, review_action: action, note: '' });
       if (res.error) throw new Error(res.error);
       adminToast(action === 'approve' ? 'Kiriman disetujui ✓' : 'Kiriman ditolak');
       subLoad();
