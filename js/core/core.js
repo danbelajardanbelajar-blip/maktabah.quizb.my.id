@@ -232,42 +232,7 @@ export function logVisitorActivity(event, data = {}) {
 }
 window.logVisitorActivity = logVisitorActivity;
 
-// ── Router ────────────────────────────────────────────────────
-// Rute admin didaftarkan oleh admin.js setelah DOM ready
-
-
-export function navigate(path, push = true) {
-  if (push) history.pushState({}, '', path);
-  const base = path.split('?')[0];
-  const handler = routes[base] || render404;
-  app().innerHTML = '';
-  // Close kategori dropdown whenever navigating
-  if (typeof window.closeCatDropdown === 'function') window.closeCatDropdown();
-  handler(new URLSearchParams(path.includes('?') ? path.split('?')[1] : ''));
-  setActiveNav(base);
-  updateReaderMenus(base);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  reicons();
-  logVisitorActivity('visit', { route: base });
-}
-
-window.addEventListener('popstate', () => navigate(location.pathname + location.search, false));
-
-document.addEventListener('click', e => {
-  const a = e.target.closest('[data-route]');
-  if (!a) return;
-  e.preventDefault();
-  const route = a.getAttribute('data-route');
-  logVisitorActivity('menu_click', {
-    route,
-    label: a.textContent.trim().replace(/\s+/g, ' '),
-    href: a.href,
-  });
-  navigate(route);
-  // close mobile menu
-  const menu = $('#mobile-menu');
-  if (menu && !menu.classList.contains('hidden-menu')) toggleMobileMenu();
-});
+// Router is now handled in main.js
 
 export function setActiveNav(base) {
   // Desktop top nav links
@@ -440,3 +405,6 @@ export function recentBookCard(item) {
     </div>`;
 }
 
+
+export let navigate = () => {};
+export function setNavigate(fn) { navigate = fn; }

@@ -12,7 +12,8 @@ import * as View_feedback from './views/feedback.js';
 import * as View_404 from './views/404.js';
 
 // Expose to window for admin.js and index.php
-window.navigate = Core.navigate;
+Core.setNavigate(localNavigate);
+window.navigate = localNavigate;
 window.apiFetch = Core.apiFetch;
 window.$ = Core.$;
 window.$$ = Core.$$;
@@ -27,23 +28,23 @@ window.readerFontState = Core.readerFontState;
 const routes = {
   '/': View_home.renderHome,
   '/katalog': View_katalog.renderKatalog,
-  '/kategori': View_kategori__daftar_kategori__kitab_perkategori.renderKategori,
+  '/kategori': View_kategori__daftar_kategori__kitab_per_kategori.renderKategori,
   '/settings': View_settings.renderSettings,
   '/about': View_about.renderAbout,
-  '/search': View_search.renderSearch,
-  '/search-advanced': View_search.renderSearchAdvanced,
+  '/search': View_settings.renderSearch,
+  '/search-advanced': View_settings.renderSearchAdvanced,
   '/kitab': View_detail_kitab__reader.renderDetail,
   '/privacy': View_kebijakan_privasi.renderPrivacy,
-  '/submit-file': View_submit__feedback.renderSubmitFile,
-  '/request': View_submit__feedback.renderRequestKitab,
-  '/feedback': View_submit__feedback.renderFeedback,
-  '/catalog': View_kategori__daftar_kategori__kitab_perkategori.renderKategori,
+  '/submit-file': View_feedback.renderSubmitFile,
+  '/request': View_feedback.renderRequestKitab,
+  '/feedback': View_feedback.renderFeedback,
+  '/catalog': View_kategori__daftar_kategori__kitab_per_kategori.renderKategori,
   '/setting': View_settings.renderSettings,
 };
 
 
 // Override navigate to use our routes mapping
-Core.navigate = function(path, push = true) {
+function localNavigate(path, push = true) {
   if (push) history.pushState({}, '', path);
   const base = path.split('?')[0];
   const handler = routes[base] || View_404.render404;
@@ -56,9 +57,10 @@ Core.navigate = function(path, push = true) {
   Core.reicons();
   Core.logVisitorActivity('visit', { route: base });
 };
-window.navigate = Core.navigate;
+Core.setNavigate(localNavigate);
+window.navigate = localNavigate;
 
-window.addEventListener('popstate', () => Core.navigate(location.pathname + location.search, false));
+window.addEventListener('popstate', () => localNavigate(location.pathname + location.search, false));
 
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-route]');
@@ -70,7 +72,7 @@ document.addEventListener('click', e => {
     label: a.textContent.trim().replace(/\s+/g, ' '),
     href: a.href,
   });
-  Core.navigate(route);
+  localNavigate(route);
   const menu = Core.$('#mobile-menu');
   if (menu && !menu.classList.contains('hidden-menu')) {
      if(typeof toggleMobileMenu === 'function') toggleMobileMenu();

@@ -41,5 +41,4 @@ export function render404() {
   }, 1000);
 }
 
-// ── Export navigate for admin.js ──────────────────────────────
-window.navigate = navigate;
+
