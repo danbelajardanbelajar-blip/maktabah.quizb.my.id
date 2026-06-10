@@ -7,7 +7,6 @@ use App\Helpers\SearchHelper;
 use App\Helpers\AuthHelper;
 use App\Helpers\ResponseHelper;
 use PDO;
-use PDO;
 use Exception;
 use ZipArchive;
 
