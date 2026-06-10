@@ -140,6 +140,9 @@ class BookController {
         $baseFilename = $this->normalizeDownloadFilename($title);
         $isArabic    = (bool)preg_match('/\p{Arabic}/u', $title);
     
+        if (function_exists('loadComposerAutoloader')) {
+            loadComposerAutoloader();
+        }
         $hasPhpWord = class_exists('\PhpOffice\PhpWord\PhpWord');
     
         // ── KASUS 1: Satu juz → download DOCX langsung ───────────
@@ -148,7 +151,7 @@ class BookController {
             $juzNumber = (int)array_key_first($byJuz);
     
             if ($hasPhpWord) {
-                $phpWord = buildJuzDocx($book, $pageMeta, $juzNumber, 1, $isArabic);
+                $phpWord = $this->buildJuzDocx($book, $pageMeta, $juzNumber, 1, $isArabic);
                 $filename = $baseFilename . '.docx';
     
                 header_remove('Content-Type');
@@ -192,7 +195,7 @@ class BookController {
         foreach ($byJuz as $juzNumber => $pageMeta) {
             if ($hasPhpWord) {
                 // Bangun DOCX untuk juz ini, simpan ke temp file
-                $phpWord  = buildJuzDocx($book, $pageMeta, $juzNumber, $totalJuz, $isArabic);
+                $phpWord  = $this->buildJuzDocx($book, $pageMeta, $juzNumber, $totalJuz, $isArabic);
                 $juzLabel = $isArabic ? 'الجزء_' . $juzNumber : 'Juz_' . $juzNumber;
                 $docxName = $baseFilename . '_' . $juzLabel . '.docx';          // nama di dalam ZIP
                 $tmpDocx  = $tmpDir . DIRECTORY_SEPARATOR . $tmpPrefix . '_juz' . $juzNumber . '.docx';
@@ -439,6 +442,64 @@ class BookController {
             }
         }
         return implode("\n", $lines);
+    }
+
+    public function buildJuzDocx(array $book, array $pageMeta, int $juzNumber, int $totalJuz, bool $isArabic) {
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        
+        // Set default font
+        $phpWord->setDefaultFontName($isArabic ? 'Traditional Arabic' : 'Arial');
+        $phpWord->setDefaultFontSize(14);
+        
+        $section = $phpWord->addSection([
+            'orientation' => 'portrait',
+            'marginTop' => 600,
+            'marginRight' => 600,
+            'marginBottom' => 600,
+            'marginLeft' => 600,
+        ]);
+        
+        $pStyle = ['alignment' => 'both'];
+        if ($isArabic) {
+            $pStyle['bidi'] = true;
+        }
+        
+        $fontStyleTitle = ['bold' => true, 'size' => 16];
+        if ($isArabic) { $fontStyleTitle['rtl'] = true; }
+        
+        $fontStyleNormal = ['size' => 14];
+        if ($isArabic) { $fontStyleNormal['rtl'] = true; }
+        
+        // Header
+        $title = $book['title'] ?: 'Kitab tanpa judul';
+        $author = $book['author'] ? 'Pengarang: ' . $book['author'] : '';
+        $juzInfo = 'Juz: ' . $juzNumber . ' dari ' . $totalJuz;
+        
+        $section->addText($title, $fontStyleTitle, $pStyle);
+        if ($author) {
+            $section->addText($author, $fontStyleNormal, $pStyle);
+        }
+        $section->addText($juzInfo, $fontStyleNormal, $pStyle);
+        $section->addText('======================================', $fontStyleNormal, $pStyle);
+        $section->addTextBreak(1);
+        
+        // Content
+        $pages = array_column($pageMeta, 'content');
+        foreach ($pages as $idx => $content) {
+            $section->addText('--- Halaman ' . ($idx + 1) . ' ---', ['bold' => true], $pStyle);
+            
+            $lines = explode("\n", str_replace("\r", "", $content));
+            foreach ($lines as $line) {
+                if (trim($line) !== '') {
+                    $section->addText($line, $fontStyleNormal, $pStyle);
+                } else {
+                    $section->addTextBreak(1);
+                }
+            }
+            $section->addTextBreak(1);
+        }
+        
+        return $phpWord;
     }
 
     public function logDownloadBook(int $bkid, string $title): void {
