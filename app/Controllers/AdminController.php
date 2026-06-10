@@ -7,15 +7,36 @@ use App\Helpers\SearchHelper;
 use App\Helpers\AuthHelper;
 use App\Helpers\ResponseHelper;
 use PDO;
+use PDO;
 use Exception;
+use ZipArchive;
 
 class AdminController {
     
-    private static function escapeArg(string $input): string {
-        if (function_exists('escapeshellarg')) {
-            return \escapeshellarg($input);
+    private function extractTextFromFile(string $filePath): string {
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        if ($ext === 'docx') {
+            if (class_exists('ZipArchive')) {
+                $zip = new ZipArchive();
+                if ($zip->open($filePath) === true) {
+                    $xml = $zip->getFromName('word/document.xml');
+                    $zip->close();
+                    if ($xml !== false) {
+                        // Replace <w:p> with newlines, then strip all XML tags
+                        $xml = str_replace('</w:p>', "\n\n", $xml);
+                        return strip_tags($xml);
+                    }
+                }
+            }
+            return "Gagal membaca isi file .docx (pastikan ZipArchive aktif di server).";
+        } elseif ($ext === 'doc') {
+            return "Pratinjau .doc tidak didukung di server ini. Silakan konversi ke .docx untuk melihat pratinjau.";
+        } elseif ($ext === 'pdf') {
+            return "Pratinjau PDF tidak didukung secara native karena keterbatasan server (shell_exec dinonaktifkan).";
         }
-        return "'" . str_replace("'", "'\\''", $input) . "'";
+        
+        $content = @file_get_contents($filePath);
+        return $content !== false ? (string)$content : '';
     }
 
     public function handleAdminSaveBook(): void {
@@ -253,25 +274,10 @@ class AdminController {
         // --- Konversi ke teks menggunakan antiword / docx2txt / python-docx ---
         $tmpCopy = sys_get_temp_dir() . '/' . uniqid('mkt_', true) . '.' . $origExt;
         move_uploaded_file($tmpFile, $tmpCopy);
-    
-        $rawText = '';
-        if ($origExt === 'docx') {
-            // python-docx (single-quoted shell command to avoid PHP string interpolation issues)
-            $pyArg = self::escapeArg($tmpCopy);
-            $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
-            $out = shell_exec($pyCmd);
-            if (!$out) {
-                // fallback: unzip + grep XML
-                $out = shell_exec('unzip -p ' . $pyArg . ' word/document.xml 2>/dev/null | sed \'s/<[^>]*>//g\' | grep -v \'^$\'');
-            }
-            $rawText = (string)$out;
+          if (!empty($origExt) && in_array($origExt, ['pdf', 'doc', 'docx'])) {
+            $rawText = $this->extractTextFromFile($tmpCopy);
         } else {
-            // antiword untuk .doc
-            $out = shell_exec('antiword ' . self::escapeArg($tmpCopy) . ' 2>/dev/null');
-            if (!$out) {
-                $out = shell_exec('catdoc ' . self::escapeArg($tmpCopy) . ' 2>/dev/null');
-            }
-            $rawText = (string)$out;
+            $rawText = @file_get_contents($tmpCopy) ?: '';
         }
         @unlink($tmpCopy);
     
@@ -707,31 +713,7 @@ class AdminController {
                 
                 if (file_exists($filePath)) {
                     $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-                    $rawText = '';
-                    if ($ext === 'docx') {
-                        $pyArg = self::escapeArg($filePath);
-                        $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
-                        $out = shell_exec($pyCmd);
-                        if (!$out) {
-                            $out = shell_exec('unzip -p ' . $pyArg . ' word/document.xml 2>/dev/null | sed \'s/<[^>]*>//g\' | grep -v \'^$\'');
-                        }
-                        $rawText = (string)$out;
-                    } elseif ($ext === 'doc') {
-                        $out = shell_exec('antiword ' . self::escapeArg($filePath) . ' 2>/dev/null');
-                        if (!$out) {
-                            $out = shell_exec('catdoc ' . self::escapeArg($filePath) . ' 2>/dev/null');
-                        }
-                        $rawText = (string)$out;
-                    } elseif ($ext === 'pdf') {
-                        $out = shell_exec('pdftotext ' . self::escapeArg($filePath) . ' - 2>/dev/null');
-                        if (!$out) {
-                            $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . self::escapeArg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
-                            $out = shell_exec($pyCmd);
-                        }
-                        $rawText = (string)$out;
-                    } else {
-                        $rawText = (string)file_get_contents($filePath);
-                    }
+                    $rawText = $this->extractTextFromFile($filePath);
                     
                     if (!mb_check_encoding($rawText, 'UTF-8')) {
                         $rawText = mb_convert_encoding($rawText, 'UTF-8', 'ISO-8859-1');
@@ -822,31 +804,7 @@ class AdminController {
             }
 
             $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-            $rawText = '';
-            if ($ext === 'docx') {
-                $pyArg = self::escapeArg($filePath);
-                $pyCmd = 'python3 -c \'import docx,sys; d=docx.Document(' . $pyArg . '); print("\\n".join(p.text for p in d.paragraphs))\' 2>/dev/null';
-                $out = shell_exec($pyCmd);
-                if (!$out) {
-                    $out = shell_exec('unzip -p ' . $pyArg . ' word/document.xml 2>/dev/null | sed \'s/<[^>]*>//g\' | grep -v \'^$\'');
-                }
-                $rawText = (string)$out;
-            } elseif ($ext === 'doc') {
-                $out = shell_exec('antiword ' . self::escapeArg($filePath) . ' 2>/dev/null');
-                if (!$out) {
-                    $out = shell_exec('catdoc ' . self::escapeArg($filePath) . ' 2>/dev/null');
-                }
-                $rawText = (string)$out;
-            } elseif ($ext === 'pdf') {
-                $out = shell_exec('pdftotext ' . self::escapeArg($filePath) . ' - 2>/dev/null');
-                if (!$out) {
-                    $pyCmd = 'python3 -c \'import PyPDF2,sys; r=PyPDF2.PdfReader(' . self::escapeArg($filePath) . '); print("\\n".join(p.extract_text() for p in r.pages if p.extract_text()))\' 2>/dev/null';
-                    $out = shell_exec($pyCmd);
-                }
-                $rawText = (string)$out;
-            } else {
-                $rawText = file_get_contents($filePath);
-            }
+            $rawText = $this->extractTextFromFile($filePath);
             
             $rawText = (string)$rawText;
             if (function_exists('mb_check_encoding') && !mb_check_encoding($rawText, 'UTF-8')) {
