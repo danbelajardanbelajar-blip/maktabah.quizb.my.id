@@ -68,6 +68,8 @@ $router->add('admin_get_submissions', 'AdminController', 'handleAdminGetSubmissi
 $router->add('admin_review_submission', 'AdminController', 'handleAdminReviewSubmission');
 $router->add('admin_get_submission_content', 'AdminController', 'handleAdminGetSubmissionContent');
 $router->add('admin_delete_submission', 'AdminController', 'handleAdminDeleteSubmission');
+$router->add('admin_get_requests', 'AdminController', 'handleAdminGetRequests');
+$router->add('admin_update_request_status', 'AdminController', 'handleAdminUpdateRequestStatus');
 
 // Submissions & Requests
 $router->add('submit_file', 'SubmissionController', 'handleSubmitFile');

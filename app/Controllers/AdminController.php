@@ -867,4 +867,68 @@ class AdminController {
         echo json_encode(['success' => true]);
     }
 
+    public function handleAdminGetRequests(): void {
+        AuthHelper::requireAdmin();
+        $pdo    = Database::getConnection();
+        $status = trim($_GET['status'] ?? '');
+        $page   = max(1, intval($_GET['page'] ?? 1));
+        $limit  = 20;
+        $offset = ($page - 1) * $limit;
+
+        $where  = [];
+        $params = [];
+        if (in_array($status, ['pending','fulfilled','rejected'], true)) {
+            $where[]           = 'status = :status';
+            $params[':status'] = $status;
+        }
+        $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM kitab_requests $whereSQL");
+        $cntStmt->execute($params);
+        $total = (int)$cntStmt->fetchColumn();
+
+        $params[':limit']  = $limit;
+        $params[':offset'] = $offset;
+        $stmt = $pdo->prepare(
+            "SELECT * FROM kitab_requests
+             $whereSQL
+             ORDER BY created_at DESC
+             LIMIT :limit OFFSET :offset"
+        );
+        foreach ($params as $k => $v) {
+            $type = is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR;
+            $stmt->bindValue($k, $v, $type);
+        }
+        $stmt->execute();
+        $rows = $stmt->fetchAll();
+
+        echo json_encode([
+            'data'  => $rows,
+            'page'  => $page,
+            'limit' => $limit,
+            'total' => $total,
+            'pages' => ceil($total / $limit)
+        ]);
+    }
+
+    public function handleAdminUpdateRequestStatus(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo   = Database::getConnection();
+
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id     = intval($input['id'] ?? 0);
+        $status = trim($input['status'] ?? '');
+
+        if ($id <= 0 || !in_array($status, ['pending','fulfilled','rejected'], true)) {
+            http_response_code(400); echo json_encode(['error' => 'Input tidak valid.']); return;
+        }
+
+        $stmt = $pdo->prepare("UPDATE kitab_requests SET status = :status WHERE id = :id");
+        $stmt->execute([':status' => $status, ':id' => $id]);
+
+        AuthHelper::logCrudHistory('UPDATE', 'kitab_requests', (string)$id, "Update status menjadi {$status} oleh {$admin['name']}");
+
+        echo json_encode(['success' => true]);
+    }
+
 }
