@@ -69,8 +69,10 @@ $router->add('admin_review_submission', 'AdminController', 'handleAdminReviewSub
 $router->add('admin_get_submission_content', 'AdminController', 'handleAdminGetSubmissionContent');
 $router->add('admin_delete_submission', 'AdminController', 'handleAdminDeleteSubmission');
 
-// Submissions
+// Submissions & Requests
 $router->add('submit_file', 'SubmissionController', 'handleSubmitFile');
+$router->add('submit_request', 'SubmissionController', 'handleSubmitRequest');
+$router->add('setup_kitab_requests', 'SubmissionController', 'setupKitabRequests');
 
 // Stats
 $router->add('stats', 'StatsController', 'handleStats');

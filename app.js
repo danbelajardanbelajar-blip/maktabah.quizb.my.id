@@ -223,6 +223,7 @@ const routes = {
   '/kitab':           renderDetail,
   '/privacy':         renderPrivacy,
   '/submit-file':     renderSubmitFile,
+  '/request':         renderRequestKitab,
   // ── Alias backward-compat (APK lama) ──────────────────────
   '/catalog':         renderKategori,   // alias bahasa Inggris
   '/setting':         renderSettings,   // alias tanpa 's'
@@ -500,13 +501,20 @@ async function renderHome() {
             <i data-lucide="upload-cloud" class="w-6 h-6 text-gold"></i>
           </div>
           <div class="flex-1">
-            <h3 class="text-white font-bold text-base leading-snug mb-1">Kirimkan Hasil Bahsul Masail atau Kitab Anda</h3>
-            <p class="text-white/65 text-xs leading-relaxed mb-4">Bagikan karya & hasil kajian Anda untuk koleksi perpustakaan digital ini.</p>
-            <button onclick="handleSubmitCTA()"
-              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-primary font-semibold text-sm shadow hover:bg-gold-light transition-colors">
-              <i data-lucide="send" class="w-4 h-4"></i>
-              Kirimkan File
-            </button>
+            <h3 class="text-white font-bold text-base leading-snug mb-1">Kirimkan atau Request Hasil Bahsul Masail atau Kitab</h3>
+            <p class="text-white/65 text-xs leading-relaxed mb-4">Bagikan karya Anda atau ajukan permohonan kitab/hasil kajian untuk koleksi perpustakaan digital ini.</p>
+            <div class="flex flex-wrap gap-3">
+              <button onclick="handleSubmitCTA()"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-primary font-semibold text-sm shadow hover:bg-gold-light transition-colors">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                Kirimkan File
+              </button>
+              <button onclick="navigate('/request')"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-white font-semibold text-sm shadow hover:bg-white/20 transition-colors border border-white/20">
+                <i data-lucide="help-circle" class="w-4 h-4"></i>
+                Request Kitab
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -3009,6 +3017,144 @@ async function submitFileForm(e) {
   }
 }
 window.submitFileForm = submitFileForm;
+
+// ── Request Kitab ─────────────────────────────────────────────
+async function renderRequestKitab() {
+  app().innerHTML = `
+    <div class="min-h-screen bg-cream py-10 px-4">
+      <div class="max-w-lg mx-auto">
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-7">
+          <button onclick="navigate('/')" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gold/30 hover:bg-cream-dark transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4 text-primary"></i>
+          </button>
+          <div>
+            <h1 class="text-lg font-bold text-primary">Request Kitab</h1>
+            <p class="text-xs text-primary/50">Ajukan kitab atau hasil bahsul masail</p>
+          </div>
+        </div>
+
+        <!-- Card form -->
+        <div class="bg-white rounded-2xl shadow-card p-6">
+
+          <div id="req-error"   class="hidden mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm"></div>
+          <div id="req-success" class="hidden mb-4 p-4 rounded-xl bg-green-50 text-green-700 text-sm font-medium"></div>
+
+          <form id="req-form" onsubmit="submitRequestForm(event)">
+
+            <!-- Email pengirim -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+                Email Anda <span class="text-red-400">*</span>
+              </label>
+              <input type="email" id="rq-email" name="user_email" required
+                placeholder="email@contoh.com"
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
+              <p class="text-[10px] text-primary/40 mt-1">Kami akan menghubungi Anda jika kitab sudah tersedia.</p>
+            </div>
+
+            <!-- Tipe Request -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+                Tipe Request <span class="text-red-400">*</span>
+              </label>
+              <select id="rq-type" name="request_type" required
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all appearance-none">
+                <option value="">— Pilih Tipe —</option>
+                <option value="bahsul_masail">Hasil Bahsul Masail</option>
+                <option value="kitab">File Kitab</option>
+              </select>
+            </div>
+
+            <!-- Judul -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+                Judul <span class="text-red-400">*</span>
+              </label>
+              <input type="text" id="rq-title" name="title" required
+                placeholder="Contoh: Sahih Al-Bukhari atau Keputusan PCNU"
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
+            </div>
+
+            <!-- Pengarang / Kategori -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Pengarang / Penerbit <span class="text-primary/30 font-normal">(opsional)</span></label>
+              <input type="text" id="rq-author" name="author_or_category"
+                placeholder="Contoh: Imam Al-Bukhari"
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
+            </div>
+
+            <!-- Deskripsi -->
+            <div class="mb-6">
+              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Alasan / Keterangan <span class="text-primary/30 font-normal">(opsional)</span></label>
+              <textarea id="rq-desc" name="description" rows="3"
+                placeholder="Berikan keterangan tambahan jika ada..."
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all resize-none"></textarea>
+            </div>
+
+            <button type="submit" id="rq-submit-btn"
+              class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gold text-primary font-semibold text-sm hover:bg-gold-light transition-colors shadow-sm">
+              <i data-lucide="help-circle" class="w-4 h-4"></i>
+              <span id="rq-btn-label">Kirim Request</span>
+            </button>
+
+          </form>
+        </div>
+
+        <p class="text-xs text-center text-primary/35 mt-5">Semua permohonan akan ditinjau. Tidak semua permohonan dapat segera dipenuhi bergantung ketersediaan.</p>
+      </div>
+    </div>`;
+
+  reicons();
+}
+window.renderRequestKitab = renderRequestKitab;
+
+async function submitRequestForm(e) {
+  e.preventDefault();
+  const errEl  = document.getElementById('req-error');
+  const okEl   = document.getElementById('req-success');
+  const btn    = document.getElementById('rq-submit-btn');
+  const lbl    = document.getElementById('rq-btn-label');
+
+  const showErr = (msg) => { errEl.textContent = msg; errEl.classList.remove('hidden'); okEl.classList.add('hidden'); };
+  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+
+  const email  = document.getElementById('rq-email').value.trim();
+  const type   = document.getElementById('rq-type').value;
+  const title  = document.getElementById('rq-title').value.trim();
+  const author = document.getElementById('rq-author').value.trim();
+  const desc   = document.getElementById('rq-desc').value.trim();
+
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) { showErr('Masukkan email yang valid.'); return; }
+  if (!type)  { showErr('Pilih tipe request terlebih dahulu.'); return; }
+  if (!title) { showErr('Judul wajib diisi.'); return; }
+
+  btn.disabled = true;
+  lbl.textContent = 'Mengirim…';
+
+  const fd = new FormData();
+  fd.append('user_email', email);
+  fd.append('request_type', type);
+  fd.append('title', title);
+  fd.append('author_or_category', author);
+  fd.append('description', desc);
+
+  try {
+    const res = await fetch('/api.php?action=submit_request', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Gagal mengirim.');
+    okEl.textContent = data.message || 'Request berhasil dikirim!';
+    okEl.classList.remove('hidden');
+    document.getElementById('req-form').reset();
+  } catch (err) {
+    showErr(err.message);
+  } finally {
+    btn.disabled = false;
+    lbl.textContent = 'Kirim Request';
+  }
+}
+window.submitRequestForm = submitRequestForm;
 
 // ══════════════════════════════════════════════════════════════
 //  PAGE: 404

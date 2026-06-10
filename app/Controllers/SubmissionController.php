@@ -99,4 +99,54 @@ class SubmissionController {
         echo json_encode(['success' => true, 'message' => 'Kiriman berhasil dikirim dan sedang menunggu review admin.']);
     }
 
+    public function handleSubmitRequest(): void {
+        $pdo = Database::getConnection();
+
+        $email       = trim($_POST['user_email']         ?? '');
+        $requestType = trim($_POST['request_type']       ?? '');
+        $title       = trim($_POST['title']              ?? '');
+        $authorOrCat = trim($_POST['author_or_category'] ?? '');
+        $description = trim($_POST['description']        ?? '');
+
+        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            http_response_code(400); echo json_encode(['error' => 'Email wajib diisi dan valid.']); return;
+        }
+        if ($title === '') {
+            http_response_code(400); echo json_encode(['error' => 'Judul kitab / bahsul masail wajib diisi.']); return;
+        }
+        if (!in_array($requestType, ['bahsul_masail', 'kitab'], true)) {
+            http_response_code(400); echo json_encode(['error' => 'Jenis request tidak valid.']); return;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                "INSERT INTO kitab_requests (user_email, request_type, title, author_or_category, description, status)
+                 VALUES (:email, :type, :title, :author, :desc, 'pending')"
+            );
+            $stmt->execute([
+                ':email'  => $email,
+                ':type'   => $requestType,
+                ':title'  => $title,
+                ':author' => $authorOrCat,
+                ':desc'   => $description,
+            ]);
+            echo json_encode(['success' => true, 'message' => 'Request berhasil dikirim. Kami akan memprosesnya dan memberi tahu Anda via email jika sudah tersedia.']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Terjadi kesalahan sistem saat menyimpan request.']);
+        }
+    }
+
+    public function setupKitabRequests(): void {
+        try {
+            $pdo = Database::getConnection();
+            $sql = file_get_contents(dirname(__DIR__, 2) . '/database/setup_kitab_requests.sql');
+            $pdo->exec($sql);
+            echo json_encode(['success' => true, 'message' => 'Table kitab_requests created successfully!']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
 }
