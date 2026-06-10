@@ -728,7 +728,9 @@ class SearchController {
         $params = [];
         
         if ($q !== '') {
-            $words = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
+            // Hapus tanda kutip agar pemisahan kata lebih bersih untuk pencocokan LIKE
+            $cleanQ = str_replace(['"', "'", '`', '“', '”', '‘', '’'], ' ', $q);
+            $words = preg_split('/\s+/u', $cleanQ, -1, PREG_SPLIT_NO_EMPTY);
             $words = array_filter($words, fn($w) => mb_strlen($w) >= 3);
             
             if (!empty($words)) {
