@@ -1340,7 +1340,7 @@ endif;
   </script>
 
   <script src="/app.js?v=<?= time() ?>"></script>
-  <?php if (AuthHelper::isAdmin()): ?>
+  <?php if (($sessionUser['role'] ?? '') === 'admin'): ?>
     <script src="/admin.js?v=<?= time() ?>"></script>
   <?php endif; ?>
 </body>
