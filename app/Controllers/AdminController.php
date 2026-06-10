@@ -721,6 +721,12 @@ class AdminController {
                             $out = shell_exec($pyCmd);
                         }
                         $rawText = (string)$out;
+                    } else {
+                        $rawText = (string)file_get_contents($filePath);
+                    }
+                    
+                    if (!mb_check_encoding($rawText, 'UTF-8')) {
+                        $rawText = mb_convert_encoding($rawText, 'UTF-8', 'ISO-8859-1');
                     }
 
                     if (strlen(trim($rawText)) > 5) {
@@ -828,6 +834,11 @@ class AdminController {
             $rawText = (string)$out;
         } else {
             $rawText = file_get_contents($filePath);
+        }
+        
+        $rawText = (string)$rawText;
+        if (!mb_check_encoding($rawText, 'UTF-8')) {
+            $rawText = mb_convert_encoding($rawText, 'UTF-8', 'ISO-8859-1');
         }
 
         $pageTexts = [];
