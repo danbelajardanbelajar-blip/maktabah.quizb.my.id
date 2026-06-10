@@ -168,20 +168,25 @@ class SubmissionController {
         $content = trim($_POST['content'] ?? '');
         
         if (!$email || !$content) {
-            ResponseHelper::error('Email dan isi feedback wajib diisi.');
+            http_response_code(400);
+            echo json_encode(['error' => 'Email dan isi feedback wajib diisi.']);
+            return;
         }
         
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            ResponseHelper::error('Format email tidak valid.');
+            http_response_code(400);
+            echo json_encode(['error' => 'Format email tidak valid.']);
+            return;
         }
         
         try {
             $stmt = $pdo->prepare("INSERT INTO feedbacks (email, content) VALUES (?, ?)");
             $stmt->execute([$email, $content]);
-            ResponseHelper::success('Terima kasih! Feedback Anda telah berhasil dikirim.');
+            echo json_encode(['success' => true, 'message' => 'Terima kasih! Feedback Anda telah berhasil dikirim.']);
         } catch (Exception $e) {
             error_log('Feedback Error: ' . $e->getMessage());
-            ResponseHelper::error('Terjadi kesalahan saat menyimpan feedback.');
+            http_response_code(500);
+            echo json_encode(['error' => 'Terjadi kesalahan saat menyimpan feedback.']);
         }
     }
 }
