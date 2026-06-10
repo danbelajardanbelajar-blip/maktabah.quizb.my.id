@@ -1333,12 +1333,17 @@ async function execAdvancedSearch() {
         ${perfBadge}
       </div>`;
     }
-    wrap.innerHTML = res.data.length
-      ? `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book)).join('')}</div>
-         ${paginationHtml(page, totalPages, 'goAdvancedPage')}`
-      : `<div class="text-center py-20 text-primary/40">Maaf, tidak ditemukan halaman yang cocok dengan kata kunci dan kategori yang dipilih.</div>`;
     if (res.data.length) {
+      wrap.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book)).join('')}</div>
+         ${paginationHtml(page, totalPages, 'goAdvancedPage')}`;
       wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      const recs = await getSearchRecommendationsHtml();
+      wrap.innerHTML = `<div class="text-center py-20 text-primary/40 flex flex-col items-center">
+        <i data-lucide="search-x" class="w-12 h-12 text-primary/20 mb-4"></i>
+        <p>Maaf, tidak ditemukan halaman yang cocok dengan kata kunci dan kategori yang dipilih.</p>
+        ${recs}
+      </div>`;
     }
     reicons();
   } catch (err) {
@@ -1608,14 +1613,45 @@ function skeletonSearchSections() {
     sectionDivider() + skelSec('book-open','Judul Kitab', skel(4)) +
     sectionDivider() + skelSec('file-text','Isi Kitab', skel(4));
 }
+
+// ── Search Recommendations ─────────────────────────────────────
+let _searchRecsCache = null;
+async function getSearchRecommendationsHtml() {
+  if (!_searchRecsCache) {
+    try {
+      const res = await apiFetch({ action: 'search_recommendations' });
+      _searchRecsCache = res.data || [];
+    } catch { _searchRecsCache = []; }
+  }
+  if (!_searchRecsCache.length) return '';
+  
+  return `
+    <div class="mt-8 pt-6 border-t border-cream-dark w-full max-w-2xl mx-auto text-center search-section-enter">
+      <div class="text-xs font-bold text-primary/40 uppercase tracking-wider mb-4">Mungkin Anda mencari</div>
+      <div class="flex flex-wrap justify-center gap-2">
+        ${_searchRecsCache.map(q => `
+          <button onclick="navigate('/search?q=${encodeURIComponent(q)}')" class="px-3 py-1.5 rounded-full border border-gold/30 bg-gold/5 text-gold text-xs hover:bg-gold/10 transition-colors font-medium flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="search" class="w-3 h-3"></i>${escHtml(q)}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
 // ── Empty state (premium) ─────────────────────────────────────
 function emptySearchPrompt() {
+  getSearchRecommendationsHtml().then(recs => {
+    const wrap = document.getElementById('search-empty-recs');
+    if (wrap && recs) { wrap.innerHTML = recs; reicons(); }
+  });
   return `<div class="flex flex-col items-center py-20 gap-4">
     <div class="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center">
       <i data-lucide="search" class="w-9 h-9 text-primary/20"></i>
     </div>
     <p class="text-primary/35 text-sm font-medium">Masukkan kata kunci untuk mencari</p>
     <p class="text-primary/20 text-xs">Minimal 2 karakter</p>
+    <div id="search-empty-recs" class="w-full"></div>
   </div>`;
 }
 
@@ -1950,10 +1986,23 @@ async function execSearch() {
 
   const t0 = performance.now();
   let fastDone = 0;
-  const onFastDone = () => {
+  let totalHits = 0;
+  const onFastDone = async () => {
     if (++fastDone === 3) {
       const ms = Math.round(performance.now() - t0);
       if (stats) { stats.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-gold"></i> ${ms} ms`; reicons(); }
+      if (totalHits === 0) {
+        const wrap = document.getElementById('search-results');
+        if (wrap) {
+          const recs = await getSearchRecommendationsHtml();
+          if (recs) {
+            const recDiv = document.createElement('div');
+            recDiv.innerHTML = recs;
+            wrap.appendChild(recDiv);
+            reicons();
+          }
+        }
+      }
     }
   };
 
@@ -1962,7 +2011,9 @@ async function execSearch() {
   fetch(API + '?' + new URLSearchParams({action:'search_categories', q}), {signal:_abortCat.signal})
     .then(r=>r.json()).then(res => {
       if ($('#search-input')?.value.trim() !== q) return;
-      patchHeader('sec-cat','folder-open','Kategori', res.data ? res.data.length : 0);
+      const catCount = res.data ? res.data.length : 0;
+      totalHits += catCount;
+      patchHeader('sec-cat','folder-open','Kategori', catCount);
       const body = $('#sec-cat-body');
       if (!body) return;
       body.innerHTML = res.data && res.data.length
@@ -1980,7 +2031,9 @@ async function execSearch() {
   fetch(API + '?' + new URLSearchParams({action:'search_books', q, page:searchState.bookPage}), {signal:_abortBooks.signal})
     .then(r=>r.json()).then(res => {
       if ($('#search-input')?.value.trim() !== q) return;
-      patchHeader('sec-books','book-open','Judul Kitab', res.total);
+      const bookCount = res.total || 0;
+      totalHits += bookCount;
+      patchHeader('sec-books','book-open','Judul Kitab', bookCount);
       const body = $('#sec-books-body');
       if (!body) return;
       body.innerHTML = res.data && res.data.length
@@ -1999,6 +2052,7 @@ async function execSearch() {
     .then(r=>r.json()).then(res => {
       if ($('#search-input')?.value.trim() !== q) return;
       const total = res.total || 0;
+      totalHits += total;
       patchHeader('sec-content','file-text','Isi Kitab', total);
       const body = $('#sec-content-body');
       if (!body) return;

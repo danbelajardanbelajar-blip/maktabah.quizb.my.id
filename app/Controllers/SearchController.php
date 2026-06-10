@@ -719,4 +719,24 @@ class SearchController {
         echo json_encode(['data' => array_map(fn($r) => $r['query'], $rows)]);
     }
 
+    public function handleSearchRecommendations(): void {
+        header('Cache-Control: public, max-age=300'); // Cache 5 minutes
+        $pdo   = Database::getConnection();
+        
+        // Ambil query pencarian paling populer yang menghasilkan data
+        // Filter query yang memiliki panjang >= 3 agar lebih relevan
+        $stmt = $pdo->prepare(
+            "SELECT query 
+             FROM search_logs 
+             WHERE result_count > 0 AND LENGTH(TRIM(query)) >= 3 
+             GROUP BY LOWER(TRIM(query)) 
+             ORDER BY COUNT(*) DESC 
+             LIMIT 8"
+        );
+        $stmt->execute();
+    
+        $rows = $stmt->fetchAll();
+        echo json_encode(['data' => array_map(fn($r) => $r['query'], $rows)]);
+    }
+
 }

@@ -46,6 +46,7 @@ $router->add('search_books_with_content', 'SearchController', 'handleSearchBooks
 $router->add('search_content_in_book', 'SearchController', 'handleSearchContentInBook');
 $router->add('search', 'SearchController', 'handleSearch');
 $router->add('recent_searches', 'SearchController', 'handleRecentSearches');
+$router->add('search_recommendations', 'SearchController', 'handleSearchRecommendations');
 
 // Auth
 $router->add('auth_me', 'AuthController', 'handleAuthMe');
