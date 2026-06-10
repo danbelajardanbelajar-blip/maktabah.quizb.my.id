@@ -108,15 +108,15 @@ function adminNavBar(active) {
   const isAdmin = u && u.role === 'admin';
   const tabs = [
     { r: '/dashboard',        icon: 'layout-dashboard', label: 'Dashboard',       adminOnly: false },
-    { r: '/admin/books',      icon: 'book',             label: 'Kelola Kitab',    adminOnly: false },
-    { r: '/admin/categories', icon: 'folder',           label: 'Kelola Kategori', adminOnly: false },
-    { r: '/admin/history',     icon: 'history',     label: 'CRUD History',    adminOnly: true,  desktopOnly: true },
-    { r: '/admin/activity',    icon: 'activity',    label: 'Log Aktivitas',   adminOnly: true },
-    { r: '/admin/search-logs', icon: 'search',      label: 'Log Pencarian',   adminOnly: true },
-    { r: '/admin/download-logs', icon: 'download',  label: 'Log Download',    adminOnly: true },
-    { r: '/admin/submissions', icon: 'inbox',       label: 'Review Kiriman',  adminOnly: true },
-    { r: '/admin/requests',    icon: 'help-circle', label: 'Request Kitab',   adminOnly: true },
-    { r: '/admin/feedback',    icon: 'message-square', label: 'Review Feedback', adminOnly: true },
+    { r: '/admin/books',      icon: 'book',             label: 'Kitab',           adminOnly: false },
+    { r: '/admin/categories', icon: 'folder',           label: 'Kategori',        adminOnly: false },
+    { r: '/admin/history',    icon: 'history',          label: 'CRUD History',    adminOnly: true,  desktopOnly: true },
+    { r: '/admin/activity',   icon: 'activity',         label: 'Aktivitas',       adminOnly: true },
+    { r: '/admin/search-logs', icon: 'search',          label: 'Pencarian',       adminOnly: true },
+    { r: '/admin/download-logs', icon: 'download',      label: 'Download',        adminOnly: true },
+    { r: '/admin/submissions', icon: 'inbox',           label: 'Review Kiriman',  adminOnly: true },
+    { r: '/admin/requests',    icon: 'help-circle',     label: 'Request Kitab',   adminOnly: true },
+    { r: '/admin/feedback',    icon: 'message-square',  label: 'Review Feedback', adminOnly: true },
   ];
   return `
     <div class="bg-white border-b border-gold/15 sticky top-16 z-40 shadow-sm">
