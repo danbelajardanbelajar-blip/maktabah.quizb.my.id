@@ -149,4 +149,39 @@ class SubmissionController {
         }
     }
 
+    public function setupFeedback(): void {
+        try {
+            $pdo = Database::getConnection();
+            $sql = file_get_contents(dirname(__DIR__, 2) . '/setup_feedback.sql');
+            $pdo->exec($sql);
+            echo json_encode(['success' => true, 'message' => 'Table feedbacks created successfully!']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function handleSubmitFeedback(): void {
+        $pdo = Database::getConnection();
+        
+        $email   = trim($_POST['email'] ?? '');
+        $content = trim($_POST['content'] ?? '');
+        
+        if (!$email || !$content) {
+            ResponseHelper::error('Email dan isi feedback wajib diisi.');
+        }
+        
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            ResponseHelper::error('Format email tidak valid.');
+        }
+        
+        try {
+            $stmt = $pdo->prepare("INSERT INTO feedbacks (email, content) VALUES (?, ?)");
+            $stmt->execute([$email, $content]);
+            ResponseHelper::success('Terima kasih! Feedback Anda telah berhasil dikirim.');
+        } catch (Exception $e) {
+            error_log('Feedback Error: ' . $e->getMessage());
+            ResponseHelper::error('Terjadi kesalahan saat menyimpan feedback.');
+        }
+    }
 }

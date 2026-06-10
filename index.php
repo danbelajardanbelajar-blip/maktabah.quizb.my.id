@@ -864,6 +864,7 @@ endif;
           <a href="/katalog" data-route="/katalog" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Katalog</a>
           <a href="/search-advanced" data-route="/search-advanced" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Cari Lanjutan</a>
           <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Tentang</a>
+          <a href="/feedback" data-route="/feedback" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Feedback</a>
         </div>
 
         <!-- Search + Settings + Auth (desktop) -->
@@ -1088,6 +1089,7 @@ endif;
             <li><a href="/" data-route="/" class="hover:text-gold transition-colors">Beranda</a></li>
             <li><a href="/katalog" data-route="/katalog" class="hover:text-gold transition-colors">Katalog Kitab</a></li>
             <li><a href="/about" data-route="/about" class="hover:text-gold transition-colors">Tentang Kami</a></li>
+            <li><a href="/feedback" data-route="/feedback" class="hover:text-gold transition-colors">Feedback</a></li>
             <li><a href="/privacy" data-route="/privacy" class="hover:text-gold transition-colors">Kebijakan Privasi</a></li>
           </ul>
         </div>

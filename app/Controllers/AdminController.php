@@ -930,5 +930,53 @@ class AdminController {
 
         echo json_encode(['success' => true]);
     }
+    public function handleAdminGetFeedbacks(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+        
+        $stmt = $pdo->query("SELECT * FROM feedbacks ORDER BY created_at DESC");
+        $feedbacks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo json_encode(['success' => true, 'data' => $feedbacks]);
+    }
 
+    public function handleAdminUpdateFeedbackStatus(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+
+        $id = intval($_POST['id'] ?? 0);
+        $status = $_POST['status'] ?? '';
+
+        if (!$id || !in_array($status, ['pending', 'read', 'resolved'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid input']);
+            return;
+        }
+
+        $stmt = $pdo->prepare("UPDATE feedbacks SET status = :status WHERE id = :id");
+        $stmt->execute([':status' => $status, ':id' => $id]);
+
+        AuthHelper::logCrudHistory('UPDATE', 'feedbacks', (string)$id, "Update status menjadi {$status} oleh {$admin['name']}");
+
+        echo json_encode(['success' => true]);
+    }
+
+    public function handleAdminDeleteFeedback(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+
+        $id = intval($_POST['id'] ?? 0);
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid input']);
+            return;
+        }
+
+        $stmt = $pdo->prepare("DELETE FROM feedbacks WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+
+        AuthHelper::logCrudHistory('DELETE', 'feedbacks', (string)$id, "Hapus feedback oleh {$admin['name']}");
+
+        echo json_encode(['success' => true]);
+    }
 }

@@ -71,10 +71,17 @@ $router->add('admin_delete_submission', 'AdminController', 'handleAdminDeleteSub
 $router->add('admin_get_requests', 'AdminController', 'handleAdminGetRequests');
 $router->add('admin_update_request_status', 'AdminController', 'handleAdminUpdateRequestStatus');
 
-// Submissions & Requests
+// Submissions, Requests & Feedback
 $router->add('submit_file', 'SubmissionController', 'handleSubmitFile');
 $router->add('submit_request', 'SubmissionController', 'handleSubmitRequest');
+$router->add('submit_feedback', 'SubmissionController', 'handleSubmitFeedback');
 $router->add('setup_kitab_requests', 'SubmissionController', 'setupKitabRequests');
+$router->add('setup_feedback', 'SubmissionController', 'setupFeedback');
+
+// Admin Feedback handling
+$router->add('admin_get_feedbacks', 'AdminController', 'handleAdminGetFeedbacks');
+$router->add('admin_update_feedback_status', 'AdminController', 'handleAdminUpdateFeedbackStatus');
+$router->add('admin_delete_feedback', 'AdminController', 'handleAdminDeleteFeedback');
 
 // Stats
 $router->add('stats', 'StatsController', 'handleStats');

@@ -17,6 +17,7 @@ Object.assign(window._adminRoutes = window._adminRoutes || {}, {
   '/admin/download-logs': renderAdminDownloadLogs,
   '/admin/submissions': renderAdminSubmissions,
   '/admin/requests': renderAdminRequests,
+  '/admin/feedback': renderAdminFeedbacks,
 });
 
 // Patch router setelah app.js selesai load
@@ -115,6 +116,7 @@ function adminNavBar(active) {
     { r: '/admin/download-logs', icon: 'download',  label: 'Log Download',    adminOnly: true },
     { r: '/admin/submissions', icon: 'inbox',       label: 'Review Kiriman',  adminOnly: true },
     { r: '/admin/requests',    icon: 'help-circle', label: 'Request Kitab',   adminOnly: true },
+    { r: '/admin/feedback',    icon: 'message-square', label: 'Review Feedback', adminOnly: true },
   ];
   return `
     <div class="bg-white border-b border-gold/15 sticky top-16 z-40 shadow-sm">
@@ -2558,3 +2560,91 @@ async function renderAdminRequests() {
   await reqLoad();
 }
 
+// ══════════════════════════════════════════════════════════════
+//  REVIEW FEEDBACK PENGUNJUNG
+// ══════════════════════════════════════════════════════════════
+async function renderAdminFeedbacks() {
+  const u = window.SESSION_USER;
+  if (!u || u.role !== 'admin') { window.location.href = '/'; return; }
+
+  app().innerHTML = `
+    ${adminNavBar('/admin/feedback')}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+          <i data-lucide="message-square" class="w-6 h-6 text-gold"></i>
+          Review Feedback
+        </h1>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-gold/15 p-4 sm:p-6">
+        <div id="fb-list" class="space-y-4 text-sm text-primary/70">Memuat...</div>
+      </div>
+    </div>
+  `;
+  reicons();
+
+  const listEl = document.getElementById('fb-list');
+  try {
+    const res = await apiFetch('/api.php?action=admin_get_feedbacks');
+    const items = res.data || [];
+    
+    if (!items.length) {
+      listEl.innerHTML = '<div class="text-center py-12 text-primary/40">Belum ada feedback.</div>';
+      return;
+    }
+
+    const statCol = {
+      'pending': '<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs">Pending</span>',
+      'read': '<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">Read</span>',
+      'resolved': '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">Resolved</span>',
+    };
+
+    let html = '';
+    items.forEach(it => {
+      const isPending = it.status === 'pending';
+      html += `
+        <div class="border border-gold/15 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-start ${isPending ? 'bg-cream/20' : 'bg-white'}">
+          <div>
+            <div class="flex items-center gap-3 mb-1">
+              <span class="font-bold text-primary">${escHtml(it.email)}</span>
+              ${statCol[it.status] || ''}
+              <span class="text-xs text-primary/40">${new Date(it.created_at).toLocaleString()}</span>
+            </div>
+            <p class="text-primary/80 whitespace-pre-wrap">${escHtml(it.content)}</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            ${isPending ? `<button onclick="updateFbStat(${it.id}, 'read')" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 text-xs font-semibold">Tandai Dibaca</button>` : ''}
+            ${it.status !== 'resolved' ? `<button onclick="updateFbStat(${it.id}, 'resolved')" class="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-100 text-xs font-semibold">Selesai</button>` : ''}
+            <button onclick="delFb(${it.id})" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg"><i data-lucide="trash" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+      `;
+    });
+    listEl.innerHTML = html;
+    reicons();
+  } catch (e) {
+    if (handleAuthError(e)) return;
+    listEl.innerHTML = '<div class="text-center py-12 text-red-500">Gagal memuat: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+window.updateFbStat = async function(id, status) {
+  try {
+    await apiFetch('/api.php?action=admin_update_feedback_status', 'POST', { id, status });
+    adminToast('Status diperbarui');
+    renderAdminFeedbacks();
+  } catch(e) {
+    alert('Gagal: ' + e.message);
+  }
+};
+
+window.delFb = async function(id) {
+  if (!confirm('Hapus feedback ini?')) return;
+  try {
+    await apiFetch('/api.php?action=admin_delete_feedback', 'POST', { id });
+    adminToast('Feedback dihapus');
+    renderAdminFeedbacks();
+  } catch(e) {
+    alert('Gagal: ' + e.message);
+  }
+};
