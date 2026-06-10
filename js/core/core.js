@@ -51,8 +51,8 @@ applyReaderFont(false);
 
 
 // ── Utility helpers ───────────────────────────────────────────
-const $  = (sel, ctx = document) => ctx.querySelector(sel);
-const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+export const $  = (sel, ctx = document) => ctx.querySelector(sel);
+export const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 export const el = (tag, cls, html = '') => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
