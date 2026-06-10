@@ -2585,7 +2585,7 @@ async function renderAdminFeedbacks() {
 
   const listEl = document.getElementById('fb-list');
   try {
-    const res = await apiFetch('/api.php?action=admin_get_feedbacks');
+    const res = await apiFetch({ action: 'admin_get_feedbacks' });
     const items = res.data || [];
     
     if (!items.length) {
@@ -2630,7 +2630,7 @@ async function renderAdminFeedbacks() {
 
 window.updateFbStat = async function(id, status) {
   try {
-    await apiFetch('/api.php?action=admin_update_feedback_status', 'POST', { id, status });
+    await adminPost('admin_update_feedback_status', { id, status });
     adminToast('Status diperbarui');
     renderAdminFeedbacks();
   } catch(e) {
@@ -2641,7 +2641,7 @@ window.updateFbStat = async function(id, status) {
 window.delFb = async function(id) {
   if (!confirm('Hapus feedback ini?')) return;
   try {
-    await apiFetch('/api.php?action=admin_delete_feedback', 'POST', { id });
+    await adminPost('admin_delete_feedback', { id });
     adminToast('Feedback dihapus');
     renderAdminFeedbacks();
   } catch(e) {
