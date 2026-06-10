@@ -62,6 +62,22 @@ const el = (tag, cls, html = '') => {
 const app     = () => $('#app-content');
 const reicons = () => { if (window.lucide) lucide.createIcons(); };
 
+window.mobileFeedbackBanner = `
+  <div class="md:hidden px-4 mb-24 mt-8">
+    <a href="/feedback" data-route="/feedback" class="block bg-gradient-to-r from-cream-dark to-cream rounded-2xl p-4 border border-gold/20 shadow-sm relative overflow-hidden group no-underline">
+      <div class="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="flex items-center gap-4 relative z-10">
+        <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm text-gold">
+          <i data-lucide="message-square-plus" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-primary mb-1">Menemukan Masalah?</h4>
+          <p class="text-xs text-primary/70 leading-relaxed">Beritahu kami jika ada error di web ini atau ingin memberikan saran.</p>
+        </div>
+      </div>
+    </a>
+  </div>
+`;
 async function apiFetch(params) {
   const url = API + '?' + new URLSearchParams(params).toString();
   const res = await fetch(url);
@@ -525,7 +541,8 @@ async function renderHome() {
           </div>
         </div>
       </div>
-    </section>`;
+    </section>
+    ${window.mobileFeedbackBanner}`;
 
   reicons();
 
@@ -635,7 +652,8 @@ async function renderKatalog(params) {
         ${skeletonCards(12)}
       </div>
       <div id="katalog-pagination"></div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
 
   reicons();
 
@@ -722,7 +740,8 @@ async function renderKategori(params) {
         ${Array.from({length:10},()=>`
           <div class="skeleton h-28 rounded-2xl"></div>`).join('')}
       </div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
 
   reicons();
 
@@ -801,7 +820,8 @@ async function renderKategoriBuku() {
         ${skeletonCards(12)}
       </div>
       <div id="kat-buku-pagination"></div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
 
   reicons();
 
@@ -968,7 +988,8 @@ function renderSettings() {
         <div class="grid grid-cols-2 gap-2">${arChips}</div>
       `)}
 
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
 
   reicons();
 
@@ -1448,7 +1469,8 @@ function renderSearchAdvanced(params) {
       </div>
 
       <div id="adv-results" class="mt-8"></div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
 
   reicons();
 
@@ -1579,7 +1601,8 @@ function renderSearch(params) {
       <div id="search-results">
         ${showSkeleton ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${skeletonCards(6)}</div>` : (newQ.length >= 2 ? '' : emptySearchPrompt())}
       </div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
 
   reicons();
   const inp = $('#search-input'), clr = $('#search-clear'), btn = $('#search-btn');
@@ -1843,7 +1866,8 @@ function _restoreSearchFromCache(q) {
         <div id="cont-no-result" class="${_contResults.length ? 'hidden' : ''}">${noResultBlock('Tidak ada kecocokan pada isi kitab.')}</div>
         <div id="cont-pagination"></div>
       </div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
   reicons();
 
   // Render halaman cache langsung
@@ -1998,7 +2022,8 @@ async function execSearch() {
     <div id="sec-content">
       ${sectionHeader('file-text','Isi Kitab', null, true)}
       <div id="sec-content-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
 
   if (stats) {
     stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencari…</span>`;
@@ -2154,7 +2179,8 @@ async function renderDetail(params) {
           ${Array.from({length:4}, (_,i) => `<div class="skeleton h-${i===0?7:4} rounded-lg w-${i===0?'3/4':i===1?'2/4':'1/3'}"></div>`).join('')}
         </div>
       </div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
   reicons();
 
   try {
@@ -2639,7 +2665,8 @@ function renderAbout() {
         </div>
 
       </div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner}`;
   reicons();
 }
 

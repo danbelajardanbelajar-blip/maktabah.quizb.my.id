@@ -181,7 +181,8 @@ function renderDashboard() {
           <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
         </a>
       </div>
-    </div>`;
+    </div>
+    ${window.mobileFeedbackBanner || ''}`;
   reicons();
 }
 
