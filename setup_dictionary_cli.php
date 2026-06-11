@@ -10,10 +10,12 @@ use App\Config\Database;
 // Memaksimalkan limit memory di PHP
 @ini_set('memory_limit', '1024M');
 
+$progressFile = __DIR__ . '/.dict_progress.txt';
+
 try {
     $pdo = Database::getConnection();
 
-    echo "Membuat tabel search_dictionary...\n";
+    echo "Menyiapkan tabel search_dictionary...\n";
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS search_dictionary (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -22,19 +24,24 @@ try {
             INDEX idx_word (word)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
-    echo "Tabel berhasil dibuat.\n";
 
-    echo "Menghapus data kamus lama (jika ada)...\n";
-    $pdo->exec("TRUNCATE TABLE search_dictionary;");
+    $startOffset = 0;
+    if (file_exists($progressFile)) {
+        $startOffset = (int)file_get_contents($progressFile);
+        echo "Melanjutkan dari baris ke-$startOffset (Resume mode)...\n";
+    } else {
+        echo "Menghapus data kamus lama (jika ada) untuk mulai dari awal...\n";
+        $pdo->exec("TRUNCATE TABLE search_dictionary;");
+    }
 
-    echo "Mengekstrak kosa kata dari book_content (dicicil agar RAM aman)...\n";
-
+    echo "Mengekstrak kosa kata dari book_content...\n";
     $totalRows = (int)$pdo->query("SELECT COUNT(*) FROM book_content")->fetchColumn();
-    echo "Total $totalRows baris yang akan diproses.\n";
+    echo "Total $totalRows baris yang harus diproses.\n";
 
-    $batchSize = 2500; // Jumlah baris yang diambil setiap cicilan
+    $batchSize = 1000;
+    $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f) ON DUPLICATE KEY UPDATE frequency = frequency + VALUES(frequency)");
 
-    for ($offset = 0; $offset < $totalRows; $offset += $batchSize) {
+    for ($offset = $startOffset; $offset < $totalRows; $offset += $batchSize) {
         $stmt = $pdo->prepare("SELECT content FROM book_content ORDER BY id ASC LIMIT :lim OFFSET :off");
         $stmt->bindValue(':lim', $batchSize, PDO::PARAM_INT);
         $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
@@ -58,21 +65,27 @@ try {
                 }
             }
         }
+        $stmt->closeCursor();
+        unset($stmt);
         
-        // Simpan per batch agar memori tidak penuh
         $pdo->beginTransaction();
-        $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f) ON DUPLICATE KEY UPDATE frequency = frequency + VALUES(frequency)");
         foreach ($wordCounts as $w => $f) {
             $insertStmt->execute([':w' => $w, ':f' => $f]);
         }
         $pdo->commit();
         
-        // Kosongkan memori variabel
         unset($wordCounts);
+        gc_collect_cycles();
         
-        echo "Telah memproses " . min($offset + $batchSize, $totalRows) . " dari $totalRows baris...\n";
+        $currentProcessed = min($offset + $batchSize, $totalRows);
+        file_put_contents($progressFile, $currentProcessed);
+        
+        echo "Telah memproses $currentProcessed dari $totalRows baris...\n";
     }
 
+    if (file_exists($progressFile)) {
+        unlink($progressFile);
+    }
     echo "Selesai! Kamus berhasil dibuat dan seluruh kata telah dimasukkan ke database.\n";
 
 } catch (Exception $e) {
