@@ -3,40 +3,55 @@ require __DIR__ . '/app/Config/Database.php';
 
 use App\Config\Database;
 
+// Tingkatkan batas waktu dan memori sebisa mungkin
+@ini_set('max_execution_time', 300);
+@ini_set('memory_limit', '512M');
+
 try {
     $pdo = Database::getConnection();
+    
+    $limit = 100;
+    $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+    
+    if ($offset === 0) {
+        echo "Membuat tabel search_dictionary...<br>";
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS search_dictionary (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                word VARCHAR(191) NOT NULL UNIQUE,
+                frequency INT DEFAULT 1,
+                INDEX idx_word (word)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+        echo "Tabel berhasil dibuat.<br>";
+        
+        echo "Menghapus data kamus lama (jika ada)...<br>";
+        $pdo->exec("TRUNCATE TABLE search_dictionary;");
+    }
 
-    echo "Membuat tabel search_dictionary...\n";
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS search_dictionary (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            word VARCHAR(191) NOT NULL UNIQUE,
-            frequency INT DEFAULT 1,
-            INDEX idx_word (word)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    ");
-    echo "Tabel berhasil dibuat.\n";
+    echo "<h3>Memproses baris ke-$offset hingga " . ($offset + $limit) . "</h3>";
 
-    echo "Menghapus data kamus lama (jika ada)...\n";
-    $pdo->exec("TRUNCATE TABLE search_dictionary;");
+    $stmt = $pdo->prepare("SELECT content FROM book_content ORDER BY id ASC LIMIT :lim OFFSET :off");
+    $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    if (empty($rows)) {
+        echo "<h2>Selesai! Kamus berhasil dibuat dan disimpan.</h2>";
+        echo "<a href='/'>Kembali ke Beranda</a>";
+        exit;
+    }
 
-    echo "Mengekstrak kosa kata dari book_content (ini mungkin memakan waktu)...\n";
-
-    $stmt = $pdo->query("SELECT content FROM book_content");
     $wordCounts = [];
-    $totalRows = 0;
-
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    foreach ($rows as $row) {
         $text = strip_tags($row['content']);
-        // Ganti tanda baca dengan spasi
         $text = preg_replace('/[^\p{L}\p{M}\p{N}]+/u', ' ', $text);
-        // Pecah jadi kata
         $words = preg_split('/\s+/u', mb_strtolower($text, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY);
         
         foreach ($words as $w) {
-            // Abaikan kata yang kurang dari 3 huruf
             if (mb_strlen($w, 'UTF-8') < 3) continue;
-            // Abaikan jika angka murni
             if (is_numeric($w)) continue;
 
             if (!isset($wordCounts[$w])) {
@@ -45,34 +60,25 @@ try {
                 $wordCounts[$w]++;
             }
         }
-        $totalRows++;
-        if ($totalRows % 1000 == 0) {
-            echo "Memproses $totalRows baris...\n";
-        }
     }
 
-    echo "Selesai mengekstrak. Ditemukan " . count($wordCounts) . " kata unik.\n";
-    echo "Menyimpan ke dalam database...\n";
-
-    // Batch insert for performance
     $pdo->beginTransaction();
     $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f) ON DUPLICATE KEY UPDATE frequency = frequency + :f");
-    
-    $count = 0;
     foreach ($wordCounts as $w => $f) {
         $insertStmt->execute([':w' => $w, ':f' => $f]);
-        $count++;
-        if ($count % 5000 == 0) {
-            $pdo->commit();
-            $pdo->beginTransaction();
-            echo "Menyimpan $count kata...\n";
-        }
     }
     $pdo->commit();
 
-    echo "Selesai! Kamus berhasil dibuat dan disimpan.\n";
+    $nextOffset = $offset + $limit;
+    echo "Tersimpan " . count($wordCounts) . " kata unik dari batch ini.<br>";
+    echo "Melanjutkan ke batch berikutnya... mohon tunggu.";
+    echo "<script>
+        setTimeout(function() {
+            window.location.href = '?offset=' + $nextOffset;
+        }, 500);
+    </script>";
 
 } catch (Exception $e) {
     http_response_code(500);
-    echo "Error: " . $e->getMessage() . "\n";
+    echo "Error: " . $e->getMessage() . "<br>";
 }
