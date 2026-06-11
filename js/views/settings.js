@@ -396,10 +396,17 @@ async function execAdvancedSearch() {
       : `<span class="inline-flex items-center gap-1 text-xs text-primary/40"><i data-lucide="zap" class="w-3 h-3 text-gold"></i>${ms} ms</span>`;
 
     if (stats) {
-      stats.innerHTML = `<div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm text-primary/60">Menemukan <strong>${total.toLocaleString('id-ID')}</strong> halaman untuk <strong>${escHtml(queryLabel)}</strong>.</span>
-        ${catLabel}
-        ${perfBadge}
+      let didYouMeanHtml = '';
+      if (res.did_you_mean) {
+        didYouMeanHtml = `<div class="mt-2 text-primary font-medium">Maksud Anda: <a href="?page=advanced&q1=${encodeURIComponent(res.did_you_mean)}" class="text-gold hover:underline cursor-pointer" onclick="navigate(event, this.href)">${escHtml(res.did_you_mean)}</a> ?</div>`;
+      }
+      stats.innerHTML = `<div class="flex flex-col">
+        <div class="flex flex-wrap items-center gap-2 text-sm text-primary/60">
+          <span>Menemukan <strong>${total.toLocaleString('id-ID')}</strong> halaman untuk <strong>${escHtml(queryLabel)}</strong>.</span>
+          ${catLabel}
+          ${perfBadge}
+        </div>
+        ${didYouMeanHtml}
       </div>`;
     }
     const qTerms = searchAdvancedState.terms.filter(t => t.trim()).join(' ');
@@ -1133,11 +1140,15 @@ async function execSearch() {
       patchHeader('sec-content','file-text','Isi Kitab', total);
       const body = $('#sec-content-body');
       if (!body) return;
+      let emptyMsg = 'Maaf, tidak ditemukan halaman yang cocok dengan kata kunci tersebut.';
+      if (total === 0 && res.did_you_mean) {
+          emptyMsg += `<div class="mt-3 text-sm text-primary font-medium">Maksud Anda: <a href="javascript:void(0)" class="text-gold hover:underline" onclick="document.getElementById('search-input').value='${escHtml(res.did_you_mean).replace(/'/g, "\\'")}'; document.getElementById('search-input').dispatchEvent(new Event('input'))">${escHtml(res.did_you_mean)}</a> ?</div>`;
+      }
       body.innerHTML = res.data && res.data.length
         ? `<div class="search-section-enter">
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>
             ${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContPage')}</div>`
-        : noResultBlock('Maaf, tidak ditemukan halaman yang cocok dengan kata kunci tersebut.');
+        : noResultBlock(emptyMsg);
       reicons();
     }).catch(()=>{ const b=$('#sec-content-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
 }

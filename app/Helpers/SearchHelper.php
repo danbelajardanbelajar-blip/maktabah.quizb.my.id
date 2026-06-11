@@ -169,4 +169,101 @@ class SearchHelper {
         
         return trim($snippet);
     }
+
+    public static function utf8_levenshtein(string $str1, string $str2): int {
+        $str1 = mb_strtolower($str1, 'UTF-8');
+        $str2 = mb_strtolower($str2, 'UTF-8');
+        $len1 = mb_strlen($str1, 'UTF-8');
+        $len2 = mb_strlen($str2, 'UTF-8');
+        
+        if ($len1 == 0) return $len2;
+        if ($len2 == 0) return $len1;
+        
+        $prevCol = range(0, $len2);
+        for ($i = 0; $i < $len1; $i++) {
+            $col = [$i + 1];
+            $char1 = mb_substr($str1, $i, 1, 'UTF-8');
+            for ($j = 0; $j < $len2; $j++) {
+                $char2 = mb_substr($str2, $j, 1, 'UTF-8');
+                $cost = ($char1 === $char2) ? 0 : 1;
+                $col[] = min($col[$j] + 1, $prevCol[$j + 1] + 1, $prevCol[$j] + $cost);
+            }
+            $prevCol = $col;
+        }
+        return $prevCol[$len2];
+    }
+
+    public static function getDidYouMean(string $query): ?string {
+        // Hanya cek jika panjang kata memadai
+        $len = mb_strlen($query, 'UTF-8');
+        if ($len < 3 || $len > 30) return null;
+
+        // Cek jika mengandung spasi (frasa), kita bisa memecah tiap kata
+        if (strpos($query, ' ') !== false) {
+            $words = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY);
+            $suggestions = [];
+            $changed = false;
+            foreach ($words as $w) {
+                if (mb_strlen($w, 'UTF-8') >= 3) {
+                    $sug = self::getDidYouMeanSingleWord($w);
+                    if ($sug && mb_strtolower($sug, 'UTF-8') !== mb_strtolower($w, 'UTF-8')) {
+                        $suggestions[] = $sug;
+                        $changed = true;
+                    } else {
+                        $suggestions[] = $w;
+                    }
+                } else {
+                    $suggestions[] = $w;
+                }
+            }
+            return $changed ? implode(' ', $suggestions) : null;
+        }
+
+        $sug = self::getDidYouMeanSingleWord($query);
+        return ($sug && mb_strtolower($sug, 'UTF-8') !== mb_strtolower($query, 'UTF-8')) ? $sug : null;
+    }
+
+    private static function getDidYouMeanSingleWord(string $word): ?string {
+        $pdo = Database::getConnection();
+        $len = mb_strlen($word, 'UTF-8');
+        $minLen = max(3, $len - 2);
+        $maxLen = $len + 2;
+
+        try {
+            // Ambil kandidat dari tabel kamus yang beda panjangnya tak lebih dari 2 karakter
+            // Limit 1000 agar tidak terlalu berat memproses levenshtein di PHP
+            $stmt = $pdo->prepare("SELECT word, frequency FROM search_dictionary WHERE CHAR_LENGTH(word) BETWEEN :minl AND :maxl ORDER BY frequency DESC LIMIT 1000");
+            $stmt->execute([':minl' => $minLen, ':maxl' => $maxLen]);
+            
+            $bestMatch = null;
+            $minDist = -1;
+            $bestFreq = 0;
+
+            foreach ($stmt->fetchAll() as $row) {
+                $w = $row['word'];
+                // Jika isian adalah Latin, bisa pakai levenshtein() bawaan PHP yang lebih cepat
+                // Jika Arab, pakai utf8_levenshtein
+                if (preg_match('/^[a-zA-Z0-9]+$/', $word) && preg_match('/^[a-zA-Z0-9]+$/', $w)) {
+                    $dist = levenshtein(strtolower($word), strtolower($w));
+                } else {
+                    $dist = self::utf8_levenshtein($word, $w);
+                }
+
+                // Toleransi typo: maksimal 2 karakter beda, atau 1 karakter untuk kata pendek
+                $maxDist = ($len <= 4) ? 1 : 2;
+                
+                if ($dist <= $maxDist) {
+                    if ($minDist === -1 || $dist < $minDist || ($dist === $minDist && $row['frequency'] > $bestFreq)) {
+                        $minDist = $dist;
+                        $bestMatch = $w;
+                        $bestFreq = $row['frequency'];
+                    }
+                }
+            }
+            return $minDist >= 0 ? $bestMatch : null;
+        } catch (\Exception $e) {
+            return null; // Abaikan jika tabel belum ada atau error
+        }
+    }
 }
+

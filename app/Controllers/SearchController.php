@@ -517,11 +517,18 @@ class SearchController {
             ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE));
         }
     
+        // Cek didYouMean jika tidak ada hasil
+        $didYouMean = null;
+        if ($total == 0 && count($fields) > 0) {
+            $didYouMean = SearchHelper::getDidYouMean(implode(' ', $fields));
+        }
+
         ResponseHelper::json([
-            'data'        => $rows,
-            'total'       => $total,
-            'page'        => $page,
-            'total_pages' => (int)ceil($total / $limit),
+            'data'         => $rows,
+            'total'        => $total,
+            'page'         => $page,
+            'total_pages'  => (int)ceil($total / $limit),
+            'did_you_mean' => $didYouMean
         ]);
     }
 
@@ -684,14 +691,21 @@ class SearchController {
         $stmtContCount->execute([':lk' => $like]);
         $contTotal = (int)$stmtContCount->fetchColumn();
     
+        // Cek did_you_mean jika tidak ada hasil
+        $didYouMean = null;
+        if ($booksTotal == 0 && $contTotal == 0) {
+            $didYouMean = SearchHelper::getDidYouMean($q);
+        }
+    
         echo json_encode([
-            'query'      => $q,
-            'categories' => $categories,
-            'books'      => [
+            'query'        => $q,
+            'did_you_mean' => $didYouMean,
+            'categories'   => $categories,
+            'books'        => [
                 'data' => $books, 'total' => $booksTotal,
                 'page' => $bookPage, 'total_pages' => (int)ceil($booksTotal / $limit),
             ],
-            'content'    => [
+            'content'      => [
                 'data' => $content, 'total' => $contTotal,
                 'page' => $contPage, 'total_pages' => (int)ceil($contTotal / $limit),
             ],
@@ -781,7 +795,17 @@ class SearchController {
         }
         
         $rows = array_slice($rows, 0, 8);
-        echo json_encode(['data' => array_map(fn($r) => $r['query'], $rows)]);
+        $finalData = array_map(fn($r) => $r['query'], $rows);
+        
+        // Coba berikan didYouMean ke rekomendasi
+        if (count($finalData) < 3 && $q !== '') {
+            $dym = SearchHelper::getDidYouMean($q);
+            if ($dym && !in_array($dym, $finalData)) {
+                array_unshift($finalData, $dym); // taruh di paling atas
+            }
+        }
+        
+        echo json_encode(['data' => $finalData]);
     }
 
 }
