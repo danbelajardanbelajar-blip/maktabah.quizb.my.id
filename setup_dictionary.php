@@ -72,3 +72,7 @@ try {
 
     echo "Selesai! Kamus berhasil dibuat dan disimpan.\n";
 
+} catch (Exception $e) {
+    http_response_code(500);
+    echo "Error: " . $e->getMessage() . "\n";
+}
