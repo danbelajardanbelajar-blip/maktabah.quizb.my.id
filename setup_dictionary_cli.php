@@ -7,6 +7,9 @@ require __DIR__ . '/app/Config/Database.php';
 
 use App\Config\Database;
 
+// Memaksimalkan limit memory di PHP
+@ini_set('memory_limit', '1024M');
+
 try {
     $pdo = Database::getConnection();
 
@@ -24,61 +27,53 @@ try {
     echo "Menghapus data kamus lama (jika ada)...\n";
     $pdo->exec("TRUNCATE TABLE search_dictionary;");
 
-    echo "Mengekstrak kosa kata dari book_content (ini mungkin memakan waktu)...\n";
+    echo "Mengekstrak kosa kata dari book_content (dicicil agar RAM aman)...\n";
 
-    // Hitung total baris
     $totalRows = (int)$pdo->query("SELECT COUNT(*) FROM book_content")->fetchColumn();
     echo "Total $totalRows baris yang akan diproses.\n";
 
-    $stmt = $pdo->query("SELECT content FROM book_content");
-    $wordCounts = [];
-    $processed = 0;
+    $batchSize = 2500; // Jumlah baris yang diambil setiap cicilan
+    $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f) ON DUPLICATE KEY UPDATE frequency = frequency + :f");
 
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $text = strip_tags($row['content']);
-        // Ganti tanda baca dengan spasi
-        $text = preg_replace('/[^\p{L}\p{M}\p{N}]+/u', ' ', $text);
-        // Pecah jadi kata
-        $words = preg_split('/\s+/u', mb_strtolower($text, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY);
+    for ($offset = 0; $offset < $totalRows; $offset += $batchSize) {
+        $stmt = $pdo->prepare("SELECT content FROM book_content ORDER BY id ASC LIMIT :lim OFFSET :off");
+        $stmt->bindValue(':lim', $batchSize, PDO::PARAM_INT);
+        $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
+        $stmt->execute();
         
-        foreach ($words as $w) {
-            // Abaikan kata yang kurang dari 3 huruf
-            if (mb_strlen($w, 'UTF-8') < 3) continue;
-            // Abaikan jika angka murni
-            if (is_numeric($w)) continue;
+        $wordCounts = [];
+        
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $text = strip_tags($row['content']);
+            $text = preg_replace('/[^\p{L}\p{M}\p{N}]+/u', ' ', $text);
+            $words = preg_split('/\s+/u', mb_strtolower($text, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY);
+            
+            foreach ($words as $w) {
+                if (mb_strlen($w, 'UTF-8') < 3) continue;
+                if (is_numeric($w)) continue;
 
-            if (!isset($wordCounts[$w])) {
-                $wordCounts[$w] = 1;
-            } else {
-                $wordCounts[$w]++;
+                if (!isset($wordCounts[$w])) {
+                    $wordCounts[$w] = 1;
+                } else {
+                    $wordCounts[$w]++;
+                }
             }
         }
-        $processed++;
-        if ($processed % 1000 == 0) {
-            echo "Memproses baris ke-$processed dari $totalRows... (" . count($wordCounts) . " kata unik sejauh ini)\n";
+        
+        // Simpan per batch agar memori tidak penuh
+        $pdo->beginTransaction();
+        foreach ($wordCounts as $w => $f) {
+            $insertStmt->execute([':w' => $w, ':f' => $f]);
         }
+        $pdo->commit();
+        
+        // Kosongkan memori variabel
+        unset($wordCounts);
+        
+        echo "Telah memproses " . min($offset + $batchSize, $totalRows) . " dari $totalRows baris...\n";
     }
 
-    echo "Selesai mengekstrak. Ditemukan total " . count($wordCounts) . " kata unik.\n";
-    echo "Menyimpan ke dalam database...\n";
-
-    // Batch insert for performance
-    $pdo->beginTransaction();
-    $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f) ON DUPLICATE KEY UPDATE frequency = frequency + :f");
-    
-    $count = 0;
-    foreach ($wordCounts as $w => $f) {
-        $insertStmt->execute([':w' => $w, ':f' => $f]);
-        $count++;
-        if ($count % 5000 == 0) {
-            $pdo->commit();
-            $pdo->beginTransaction();
-            echo "Menyimpan $count kata...\n";
-        }
-    }
-    $pdo->commit();
-
-    echo "Selesai! Kamus berhasil dibuat dan disimpan ke database.\n";
+    echo "Selesai! Kamus berhasil dibuat dan seluruh kata telah dimasukkan ke database.\n";
 
 } catch (Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
