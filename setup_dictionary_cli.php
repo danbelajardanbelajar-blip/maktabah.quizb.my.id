@@ -33,7 +33,6 @@ try {
     echo "Total $totalRows baris yang akan diproses.\n";
 
     $batchSize = 2500; // Jumlah baris yang diambil setiap cicilan
-    $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f) ON DUPLICATE KEY UPDATE frequency = frequency + :f");
 
     for ($offset = 0; $offset < $totalRows; $offset += $batchSize) {
         $stmt = $pdo->prepare("SELECT content FROM book_content ORDER BY id ASC LIMIT :lim OFFSET :off");
@@ -62,8 +61,9 @@ try {
         
         // Simpan per batch agar memori tidak penuh
         $pdo->beginTransaction();
+        $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f1) ON DUPLICATE KEY UPDATE frequency = frequency + :f2");
         foreach ($wordCounts as $w => $f) {
-            $insertStmt->execute([':w' => $w, ':f' => $f]);
+            $insertStmt->execute([':w' => $w, ':f1' => $f, ':f2' => $f]);
         }
         $pdo->commit();
         

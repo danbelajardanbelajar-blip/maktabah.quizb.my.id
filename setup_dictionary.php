@@ -63,9 +63,9 @@ try {
     }
 
     $pdo->beginTransaction();
-    $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f) ON DUPLICATE KEY UPDATE frequency = frequency + :f");
+    $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f1) ON DUPLICATE KEY UPDATE frequency = frequency + :f2");
     foreach ($wordCounts as $w => $f) {
-        $insertStmt->execute([':w' => $w, ':f' => $f]);
+        $insertStmt->execute([':w' => $w, ':f1' => $f, ':f2' => $f]);
     }
     $pdo->commit();
 
