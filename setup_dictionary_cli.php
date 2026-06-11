@@ -61,9 +61,9 @@ try {
         
         // Simpan per batch agar memori tidak penuh
         $pdo->beginTransaction();
-        $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f1) ON DUPLICATE KEY UPDATE frequency = frequency + :f2");
+        $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f) ON DUPLICATE KEY UPDATE frequency = frequency + VALUES(frequency)");
         foreach ($wordCounts as $w => $f) {
-            $insertStmt->execute([':w' => $w, ':f1' => $f, ':f2' => $f]);
+            $insertStmt->execute([':w' => $w, ':f' => $f]);
         }
         $pdo->commit();
         
