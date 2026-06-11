@@ -265,5 +265,40 @@ class SearchHelper {
             return null; // Abaikan jika tabel belum ada atau error
         }
     }
+
+    public static function syncContentToDictionary(string $content): void {
+        if (empty(trim($content))) return;
+
+        try {
+            $pdo = Database::getConnection();
+            $text = strip_tags($content);
+            $text = preg_replace('/[^\p{L}\p{M}\p{N}]+/u', ' ', $text);
+            $words = preg_split('/\s+/u', mb_strtolower($text, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY);
+            
+            $wordCounts = [];
+            foreach ($words as $w) {
+                if (mb_strlen($w, 'UTF-8') < 3) continue;
+                if (is_numeric($w)) continue;
+
+                if (!isset($wordCounts[$w])) {
+                    $wordCounts[$w] = 1;
+                } else {
+                    $wordCounts[$w]++;
+                }
+            }
+
+            if (empty($wordCounts)) return;
+
+            $insertStmt = $pdo->prepare("INSERT INTO search_dictionary (word, frequency) VALUES (:w, :f) ON DUPLICATE KEY UPDATE frequency = frequency + VALUES(frequency)");
+            
+            $pdo->beginTransaction();
+            foreach ($wordCounts as $w => $f) {
+                $insertStmt->execute([':w' => $w, ':f' => $f]);
+            }
+            $pdo->commit();
+        } catch (\Exception $e) {
+            // Abaikan jika error
+        }
+    }
 }
 

@@ -182,6 +182,7 @@ class AdminController {
             }
             $pdo->prepare("INSERT INTO book_content (bkid, juz, page, content) VALUES (:bkid, :juz, :page, :content)")
                 ->execute([':bkid' => $bkid, ':juz' => $juz, ':page' => $page, ':content' => $content]);
+            SearchHelper::syncContentToDictionary($content);
             // Update jumlah halaman di tabel books
             $pdo->prepare("UPDATE books SET pages = (SELECT COUNT(*) FROM book_content WHERE bkid=:bkid) WHERE bkid=:bkid2")
                 ->execute([':bkid' => $bkid, ':bkid2' => $bkid]);
@@ -196,6 +197,7 @@ class AdminController {
                 $pdo->prepare("UPDATE book_content SET content=:content WHERE bkid=:bkid AND page=:page ORDER BY id ASC LIMIT 1")
                     ->execute([':content' => $content, ':bkid' => $bkid, ':page' => $page]);
             }
+            SearchHelper::syncContentToDictionary($content);
             AuthHelper::logCrudHistory('UPDATE', 'book_content', "bkid:{$bkid}|juz:{$juz}|page:{$page}",
                 "Edit halaman {$page} juz {$juz} pada kitab bkid={$bkid}");
         }
@@ -353,6 +355,7 @@ class AdminController {
                     ':page'    => $pageIndex + 1,
                     ':content' => $pageContent,
                 ]);
+                SearchHelper::syncContentToDictionary($pageContent);
             }
     
             $pdo->commit();
@@ -763,6 +766,7 @@ class AdminController {
                                     ':page'    => $pageIndex + 1,
                                     ':content' => $pageContent,
                                 ]);
+                                SearchHelper::syncContentToDictionary($pageContent);
                             }
                             
                             AuthHelper::logCrudHistory('IMPORT', 'books', (string)$bkid,
