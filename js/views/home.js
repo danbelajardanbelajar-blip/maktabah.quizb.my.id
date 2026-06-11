@@ -160,6 +160,7 @@ export async function renderHome() {
       <span class="flex items-center gap-2"><i data-lucide="folder" class="w-4 h-4 text-gold/60"></i> <strong>${formatNum(stats.total_categories)}</strong> Kategori</span>
       <span class="flex items-center gap-2"><i data-lucide="search" class="w-4 h-4 text-gold/60"></i> <strong>${formatNum(stats.total_searches)}</strong> Pencarian</span>
       <span class="flex items-center gap-2"><i data-lucide="eye" class="w-4 h-4 text-gold/60"></i> <strong>${formatNum(stats.total_visits)}</strong> Kunjungan</span>
+      <span class="flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-gold/60"></i> <strong class="text-emerald-500">${formatNum(stats.online_users || 1)}</strong> Sedang Online</span>
     `;
     reicons();
   } catch(e) { 
