@@ -398,7 +398,7 @@ async function execAdvancedSearch() {
     if (stats) {
       let didYouMeanHtml = '';
       if (res.did_you_mean) {
-        didYouMeanHtml = `<div class="mt-2 text-primary font-medium">Maksud Anda: <a href="?page=advanced&q1=${encodeURIComponent(res.did_you_mean)}" class="text-gold hover:underline cursor-pointer" onclick="navigate(event, this.href)">${escHtml(res.did_you_mean)}</a> ?</div>`;
+        didYouMeanHtml = `<div class="mt-2 text-primary font-medium">Maksud Anda: <a href="/search-advanced?q1=${encodeURIComponent(res.did_you_mean)}" class="text-gold hover:underline cursor-pointer" onclick="event.preventDefault(); navigate(this.getAttribute('href'))">${escHtml(res.did_you_mean)}</a> ?</div>`;
       }
       stats.innerHTML = `<div class="flex flex-col">
         <div class="flex flex-wrap items-center gap-2 text-sm text-primary/60">
