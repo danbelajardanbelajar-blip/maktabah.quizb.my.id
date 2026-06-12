@@ -1,5 +1,4 @@
 // PAGE: FEEDBACK
-import { API, FONTS_LATIN, FONTS_ARABIC, readerFontState, applyReaderFont, $, $$, el, app, reicons, mobileFeedbackBanner, apiFetch, handleAuthError, UPDATE_NOTICE_SESSION_KEY, isMobileViewport, hasDismissedUpdateNotice, setDismissedUpdateNotice, closeUpdateNotice, showUpdateNoticeIfNeeded, logVisitorActivity, navigate, setActiveNav, updateReaderMenus, skeletonCards, bookCard, escHtml, paginationHtml, recentBookCard, saveToRecentlyOpened, getRecentlyOpened } from '../core/core.js';
 
 export function renderFeedback() {
   app().innerHTML = `
@@ -220,7 +219,7 @@ export async function submitFileForm(e) {
   const fileEl = document.getElementById('sf-file');
 
   if (!name)         { showErr('Nama file wajib diisi.'); return; }
-  if (!email || !/^\S+@\S+\.\S+$/.test(email)) { showErr('Masukkan email yang valid.'); return; }
+  if (!email || !/^\\S+@\\S+\\.\\S+$/.test(email)) { showErr('Masukkan email yang valid.'); return; }
   if (!type)         { showErr('Pilih tipe file terlebih dahulu.'); return; }
   if (!fileEl.files?.length) { showErr('Pilih file yang akan dikirim.'); return; }
 
@@ -362,7 +361,7 @@ export async function submitRequestForm(e) {
   const author = document.getElementById('rq-author').value.trim();
   const desc   = document.getElementById('rq-desc').value.trim();
 
-  if (!email || !/^\S+@\S+\.\S+$/.test(email)) { showErr('Masukkan email yang valid.'); return; }
+  if (!email || !/^\\S+@\\S+\\.\\S+$/.test(email)) { showErr('Masukkan email yang valid.'); return; }
   if (!type)  { showErr('Pilih tipe request terlebih dahulu.'); return; }
   if (!title) { showErr('Judul wajib diisi.'); return; }
 
