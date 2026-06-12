@@ -907,7 +907,7 @@ function _restoreSearchFromCache(q) {
         <div id="cont-pagination"></div>
       </div>
     </div>
-    ${mobileFeedbackBanner}`;
+    </div>`;
   reicons();
 
   // Render halaman cache langsung
@@ -1063,7 +1063,7 @@ async function execSearch() {
       ${sectionHeader('file-text','Isi Kitab', null, true)}
       <div id="sec-content-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
     </div>
-    ${mobileFeedbackBanner}`;
+    </div>`;
 
   if (stats) {
     stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencari…</span>`;
