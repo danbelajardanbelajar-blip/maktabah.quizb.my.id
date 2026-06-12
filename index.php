@@ -1355,7 +1355,7 @@ endif;
 
   <script type="module" src="/js/main.js?v=<?= time() ?>"></script>
   <?php if (($sessionUser['role'] ?? '') === 'admin'): ?>
-    <script src="/admin.js?v=<?= time() ?>" defer></script>
+    <script type="module" src="/js/admin_main.js?v=<?= time() ?>"></script>
   <?php endif; ?>
 </body>
 </html>
