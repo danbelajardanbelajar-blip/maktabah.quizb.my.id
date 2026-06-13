@@ -192,7 +192,7 @@ function _srcClear() {
 }
 
 // searchState declared here (used by renderSearch, execSearch, pagination)
-export const searchState = { q: '', bookPage: 1, contPage: 1 };
+export const searchState = { q: '', bookPage: 1, contPage: 1, pdfPage: 1 };
 export const searchAdvancedState = {
   terms: ['', '', '', '', ''],
   cats: [],
@@ -608,6 +608,7 @@ export function renderSearch(params) {
   searchState.q        = newQ;
   searchState.bookPage = 1;
   searchState.contPage = 1;
+  searchState.pdfPage = 1;
 
   // Jika kembali ke query yang sama dengan hasil tersimpan:
   const showSkeleton = newQ.length >= 2;
@@ -659,7 +660,7 @@ export function renderSearch(params) {
 
   inp?.addEventListener('input', e => {
     searchState.q = e.target.value.trim();
-    searchState.bookPage = searchState.contPage = 1;
+    searchState.bookPage = searchState.contPage = searchState.pdfPage = 1;
     clr?.classList.toggle('hidden', !searchState.q);
     if (!searchState.q) { abortAll(); $('#search-results').innerHTML = emptySearchPrompt(); $('#search-stats').innerHTML = ''; reicons(); }
   });
@@ -811,6 +812,35 @@ function bookCardStagger(b, i, q = '') {
              aria-label="${dlTitle}">
             <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
             ${fmtBadge}
+          </a>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── PDF card with stagger animation ─────────────────────────
+function pdfCardStagger(b, i, q = '') {
+  const name  = b.name || 'بدون عنوان';
+  const path  = b.path_visual || '';
+  const nameHtml  = hlText(name, q);
+  const link  = b.link || ('https://drive.google.com/uc?id=' + b.drive_id + '&export=download');
+  return `
+    <div class="book-card search-card-stagger bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
+         style="animation-delay:${i*40}ms" onclick="window.open('${link}', '_blank')">
+      <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${nameHtml}</div>
+      <div class="text-primary/55 text-[10px] line-clamp-2 leading-tight">${escHtml(path)}</div>
+      <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
+        <div class="flex items-center gap-2">
+           <span class="dl-fmt-badge dl-fmt-zip" style="background:rgba(212,82,82,.14); color:#c53030; border-color:rgba(212,82,82,.35);">PDF</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="${link}" target="_blank"
+             class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gold/20 text-gold hover:bg-gold/10 transition"
+             onclick="event.stopPropagation();"
+             title="Unduh PDF"
+             aria-label="Unduh PDF">
+            <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="text-[10px] font-bold">Unduh</span>
           </a>
         </div>
       </div>
@@ -1059,9 +1089,14 @@ async function execSearch() {
       <div id="sec-books-body"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${skeletonCards(4)}</div></div>
     </div>
     ${sectionDivider()}
-    <div id="sec-content">
+    <div id="sec-content" class="mb-2">
       ${sectionHeader('file-text','Isi Kitab', null, true)}
       <div id="sec-content-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
+    </div>
+    ${sectionDivider()}
+    <div id="sec-pdf">
+      ${sectionHeader('download','Download File PDF', null, true)}
+      <div id="sec-pdf-body"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(4)}</div></div>
     </div>
     </div>`;
 
@@ -1074,7 +1109,7 @@ async function execSearch() {
   let fastDone = 0;
   let totalHits = 0;
   const onFastDone = async () => {
-    if (++fastDone === 3) {
+    if (++fastDone === 4) {
       const ms = Math.round(performance.now() - t0);
       if (stats) { stats.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-gold"></i> ${ms} ms`; reicons(); }
       const wrap = document.getElementById('search-results');
@@ -1151,6 +1186,24 @@ async function execSearch() {
         : noResultBlock(emptyMsg);
       reicons();
     }).catch(()=>{ const b=$('#sec-content-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
+
+  // 4. Download file pdf (parallel)
+  let _abortPdf = new AbortController();
+  fetch(API + '?' + new URLSearchParams({action:'search_scholarium_pdfs', q, page:searchState.pdfPage || 1}), {signal:_abortPdf.signal})
+    .then(r=>r.json()).then(res => {
+      if ($('#search-input')?.value.trim() !== q) return;
+      const pdfCount = res.total || 0;
+      totalHits += pdfCount;
+      patchHeader('sec-pdf','download','Download File PDF', pdfCount);
+      const body = $('#sec-pdf-body');
+      if (!body) return;
+      body.innerHTML = res.data && res.data.length
+        ? `<div class="search-section-enter">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${res.data.map((b,i)=>pdfCardStagger(b,i,q)).join('')}</div>
+            ${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchPdfPage')}</div>`
+        : noResultBlock('Tidak ada file PDF yang cocok.');
+      reicons();
+    }).catch(()=>{ const b=$('#sec-pdf-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
 }
 
 window.goSearchBookPage = function(p) {

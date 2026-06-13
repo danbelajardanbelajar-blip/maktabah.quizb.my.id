@@ -829,4 +829,55 @@ class SearchController {
         echo json_encode(['data' => $finalData]);
     }
 
+    public function handleSearchScholarium(): void {
+        header('Cache-Control: public, max-age=120');
+        $qRaw  = trim($_GET['q'] ?? '');
+        $q     = \App\Helpers\SearchHelper::searchPhraseText($qRaw);
+        $page  = max(1, (int)($_GET['page'] ?? 1));
+        $limit = 12;
+        $offset = ($page - 1) * $limit;
+    
+        if (strlen($q) < 2) {
+            echo json_encode(['data' => [], 'total' => 0, 'page' => 1, 'total_pages' => 0]);
+            return;
+        }
+
+        try {
+            $pdo = new PDO("mysql:host=localhost;dbname=quic1934_scholarium;charset=utf8mb4", 'quic1934_zenhkm', '03Maret1990', [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+            ]);
+
+            $like = '%' . $q . '%';
+            
+            $stmt = $pdo->prepare(
+                "SELECT id, drive_id, parent_id, name, type, link, level_depth, path_visual
+                 FROM library_tree
+                 WHERE type = 'FILE' AND name LIKE :q
+                 ORDER BY name ASC
+                 LIMIT :lim OFFSET :off"
+            );
+            $stmt->bindValue(':q', $like, PDO::PARAM_STR);
+            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            $data = $stmt->fetchAll();
+
+            $countStmt = $pdo->prepare("SELECT COUNT(*) FROM library_tree WHERE type = 'FILE' AND name LIKE :q");
+            $countStmt->bindValue(':q', $like, PDO::PARAM_STR);
+            $countStmt->execute();
+            $total = (int)$countStmt->fetchColumn();
+
+            echo json_encode([
+                'data'        => $data,
+                'total'       => $total,
+                'page'        => $page,
+                'total_pages' => (int)ceil($total / $limit),
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode(['error' => 'Database connection failed.', 'details' => $e->getMessage()]);
+        }
+    }
+
 }
