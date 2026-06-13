@@ -206,14 +206,27 @@ function createUpdateNoticeOverlay() {
   document.getElementById('update-notice-link')?.addEventListener('click', setDismissedUpdateNotice);
 }
 
-function isAndroidApp() {
+function getMaktabahAppVersion() {
   const ua = navigator.userAgent || navigator.vendor || window.opera;
-  // APK Android biasa membungkus web dalam WebView, yang mengandung kata 'wv' di User-Agent
-  return (ua.includes('Android') && ua.includes('wv'));
+  const match = ua.match(/MaktabahApp\/([0-9]+)/);
+  if (match) {
+    return parseInt(match[1], 10);
+  }
+  return null;
 }
 
 function showUpdateNoticeIfNeeded() {
-  if (!isMobileViewport() || !isAndroidApp() || hasDismissedUpdateNotice()) return;
+  if (hasDismissedUpdateNotice()) return;
+  
+  const appVersion = getMaktabahAppVersion();
+  
+  // Jika bukan dari APK Maktabah Turats, jangan tampilkan (Desktop & Chrome Android)
+  if (appVersion === null) return;
+  
+  // Jika versi 9 ke atas, jangan tampilkan
+  if (appVersion >= 9) return;
+  
+  // Jika versi <= 8, tampilkan
   createUpdateNoticeOverlay();
 }
 
