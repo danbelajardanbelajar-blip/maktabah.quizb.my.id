@@ -106,6 +106,30 @@ export function renderAbout() {
             </div>
 
           </div>
+
+          ${(function() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const match = ua.match(/MaktabahApp\/([0-9]+)/);
+            if (match) {
+              const appVersion = parseInt(match[1], 10);
+              return `
+                <div class="mt-4 rounded-2xl border border-border bg-surface p-5">
+                  <div class="flex items-center gap-2 mb-4">
+                    <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+                      <i data-lucide="smartphone" class="w-3.5 h-3.5 text-gold"></i>
+                    </div>
+                    <span class="text-xs font-bold tracking-widest uppercase text-gold">Aplikasi Maktabah Turats</span>
+                  </div>
+                  <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border text-sm">
+                    <span class="text-muted">Versi Terinstal</span>
+                    <span class="font-semibold text-primary">Build ${appVersion}</span>
+                  </div>
+                </div>
+              `;
+            }
+            return '';
+          })()}
+
         </div>
 
       </div>
