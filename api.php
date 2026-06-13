@@ -64,6 +64,7 @@ $router->add('admin_import_book', 'AdminController', 'handleAdminImportBook');
 $router->add('admin_get_history', 'AdminController', 'handleAdminGetHistory');
 $router->add('admin_get_activity', 'AdminController', 'handleAdminGetActivity');
 $router->add('admin_get_search_logs', 'AdminController', 'handleAdminGetSearchLogs');
+$router->add('admin_delete_search_log', 'AdminController', 'handleAdminDeleteSearchLog');
 $router->add('admin_get_download_logs', 'AdminController', 'handleAdminGetDownloadLogs');
 $router->add('admin_get_submissions', 'AdminController', 'handleAdminGetSubmissions');
 $router->add('admin_review_submission', 'AdminController', 'handleAdminReviewSubmission');

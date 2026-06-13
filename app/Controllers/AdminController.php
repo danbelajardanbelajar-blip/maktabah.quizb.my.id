@@ -559,6 +559,28 @@ class AdminController {
         ]);
     }
 
+    public function handleAdminDeleteSearchLog(): void {
+        AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+        $req = ResponseHelper::getJsonRequest();
+        
+        $id = isset($req['id']) ? (int)$req['id'] : 0;
+        $query = isset($req['query']) ? trim($req['query']) : '';
+        
+        if ($id > 0) {
+            $stmt = $pdo->prepare("DELETE FROM search_logs WHERE id = ?");
+            $stmt->execute([$id]);
+        } elseif ($query !== '') {
+            $stmt = $pdo->prepare("DELETE FROM search_logs WHERE LOWER(TRIM(query)) = LOWER(TRIM(?))");
+            $stmt->execute([$query]);
+        } else {
+            ResponseHelper::jsonResponse(false, 'Parameter tidak lengkap.');
+            return;
+        }
+        
+        ResponseHelper::jsonResponse(true, 'Log pencarian berhasil dihapus.');
+    }
+
     public function handleAdminGetDownloadLogs(): void {
         $pdo  = Database::getConnection();
         $req  = ResponseHelper::getJsonRequest();

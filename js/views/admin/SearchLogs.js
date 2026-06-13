@@ -108,12 +108,17 @@ async function renderAdminSearchLogs() {
             <div class="text-xs font-semibold text-primary/50 uppercase tracking-wider mb-3">Top Pencarian</div>
             <div class="flex flex-wrap gap-2">
               ${d.top_queries.map(q => `
-                <button onclick="document.getElementById('slf-query').value=${JSON.stringify(q.query)};slLoad(1)"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cream hover:bg-cream-dark text-xs text-primary/70 font-medium transition-colors border border-gold/15">
-                  <i data-lucide="search" class="w-3 h-3 text-gold/60"></i>
-                  ${escHtml(q.query)}
-                  <span class="text-primary/35">${q.cnt}×</span>
-                </button>`).join('')}
+                <div class="inline-flex items-center rounded-full bg-cream hover:bg-cream-dark border border-gold/15 transition-colors overflow-hidden">
+                  <button onclick="document.getElementById('slf-query').value=${JSON.stringify(q.query)};slLoad(1)"
+                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-primary/70 font-medium border-r border-gold/15">
+                    <i data-lucide="search" class="w-3 h-3 text-gold/60"></i>
+                    ${escHtml(q.query)}
+                    <span class="text-primary/35">${q.cnt}×</span>
+                  </button>
+                  <button onclick="slDeleteQuery(${JSON.stringify(q.query)}, event)" class="px-2 py-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Hapus query ini dari log">
+                    <i data-lucide="x" class="w-3 h-3"></i>
+                  </button>
+                </div>`).join('')}
             </div>
           </div>`;
         reicons();
@@ -144,6 +149,7 @@ async function renderAdminSearchLogs() {
                 <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">IP</th>
                 <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">User</th>
                 <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Browser</th>
+                <th class="text-right px-4 py-3 text-xs font-semibold text-primary/50">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
@@ -170,6 +176,11 @@ async function renderAdminSearchLogs() {
                   <td class="px-4 py-3 font-mono text-xs text-primary/50">${escHtml(r.visitor_ip||'—')}</td>
                   <td class="px-4 py-3 text-xs text-primary/60">${escHtml(r.user_name||'Tamu')}</td>
                   <td class="px-4 py-3 text-xs text-primary/40">${escHtml(browserShort)}</td>
+                  <td class="px-4 py-3 text-right">
+                    <button onclick="slDelete(${r.id})" class="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  </td>
                 </tr>`;
               }).join('')}
             </tbody>
@@ -207,6 +218,25 @@ async function renderAdminSearchLogs() {
   window.slFilterDebounce = function() {
     clearTimeout(_slTimer);
     _slTimer = setTimeout(() => slLoad(1), 380);
+  };
+
+  window.slDelete = async function(id) {
+    if (!confirm('Yakin ingin menghapus log pencarian ini?')) return;
+    try {
+      const res = await adminPost('admin_delete_search_log', { id });
+      if (res.success) { adminToast('Log dihapus', 'success'); slLoad(_sl.page); }
+      else adminToast(res.error || 'Gagal menghapus log', 'error');
+    } catch(e) { adminToast(e.message, 'error'); }
+  };
+
+  window.slDeleteQuery = async function(query, e) {
+    e.stopPropagation();
+    if (!confirm(`Yakin ingin menghapus semua riwayat pencarian untuk kata "${query}"?\nIni akan menghilangkannya dari Pencarian Terpopuler.`)) return;
+    try {
+      const res = await adminPost('admin_delete_search_log', { query });
+      if (res.success) { adminToast(`Semua log "${query}" dihapus`, 'success'); slLoad(1); }
+      else adminToast(res.error || 'Gagal menghapus log', 'error');
+    } catch(e) { adminToast(e.message, 'error'); }
   };
 
   await slLoad(1);
