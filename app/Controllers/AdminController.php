@@ -574,11 +574,11 @@ class AdminController {
             $stmt = $pdo->prepare("DELETE FROM search_logs WHERE LOWER(TRIM(query)) = LOWER(TRIM(?))");
             $stmt->execute([$query]);
         } else {
-            ResponseHelper::jsonResponse(false, 'Parameter tidak lengkap.');
+            ResponseHelper::json(['success' => false, 'error' => 'Parameter tidak lengkap.']);
             return;
         }
         
-        ResponseHelper::jsonResponse(true, 'Log pencarian berhasil dihapus.');
+        ResponseHelper::json(['success' => true, 'message' => 'Log pencarian berhasil dihapus.']);
     }
 
     public function handleAdminGetDownloadLogs(): void {
