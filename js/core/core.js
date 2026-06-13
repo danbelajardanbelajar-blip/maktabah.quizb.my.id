@@ -134,6 +134,7 @@ export function handleAuthError(error, fallbackMsg = 'Akses ditolak. Diperlukan 
 
 export const UPDATE_NOTICE_SESSION_KEY = 'updateNoticeDismissedV1';
 const UPDATE_NOTICE_PLAYSTORE_URL = 'https://play.google.com/store/apps/details?id=com.maktabah.premium';
+const LATEST_APK_VERSION_NAME = '1.0.8';
 
 export function isMobileViewport() {
   return window.matchMedia('(max-width: 767px)').matches;
@@ -168,23 +169,23 @@ function createUpdateNoticeOverlay() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" style="color:#f8e6c1;"><path d="M12 5v14m7-7H5"/></svg>
         </div>
         <div style="flex:1;">
-          <div style="font-size:1rem;font-weight:700;letter-spacing:.01em;margin-bottom:6px;">Update Terbaru Telah Tayang</div>
-          <p style="margin:0;font-size:.95rem;line-height:1.6;color:rgba(255,255,255,.84);">Versi terbaru telah diterbitkan dengan pembaruan penting untuk pengalaman aplikasi.</p>
+          <div style="font-size:1rem;font-weight:700;letter-spacing:.01em;margin-bottom:6px;">Update Terbaru Tersedia! (v${LATEST_APK_VERSION_NAME})</div>
+          <p style="margin:0;font-size:.95rem;line-height:1.6;color:rgba(255,255,255,.84);">Versi ${LATEST_APK_VERSION_NAME} telah diterbitkan dengan pembaruan penting untuk pengalaman aplikasi yang lebih baik.</p>
         </div>
       </div>
       <div style="padding:20px 24px 24px;background:#faf8f3;color:#1c1c1e;">
         <div style="display:grid;gap:12px;margin-bottom:20px;">
           <div style="display:flex;align-items:flex-start;gap:10px;">
             <span style="width:10px;height:10px;margin-top:6px;background:#c9a84c;border-radius:999px;flex-shrink:0;"></span>
-            <span style="font-size:.95rem;line-height:1.6;">Pembaruan ikon dan splash screen</span>
+            <span style="font-size:.95rem;line-height:1.6;">Pembaruan Ikon dan Splash Screen</span>
           </div>
           <div style="display:flex;align-items:flex-start;gap:10px;">
             <span style="width:10px;height:10px;margin-top:6px;background:#c9a84c;border-radius:999px;flex-shrink:0;"></span>
-            <span style="font-size:.95rem;line-height:1.6;">Menu download</span>
+            <span style="font-size:.95rem;line-height:1.6;">Tampilan Menu Download Baru</span>
           </div>
           <div style="display:flex;align-items:flex-start;gap:10px;">
             <span style="width:10px;height:10px;margin-top:6px;background:#c9a84c;border-radius:999px;flex-shrink:0;"></span>
-            <span style="font-size:.95rem;line-height:1.6;">Menu kirim file dan kitab</span>
+            <span style="font-size:.95rem;line-height:1.6;">Optimalisasi Sistem dan Log Error</span>
           </div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;">
