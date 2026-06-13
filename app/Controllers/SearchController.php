@@ -733,6 +733,27 @@ class SearchController {
         echo json_encode(['data' => array_map(fn($r) => $r['query'], $rows)]);
     }
 
+    public function handlePopularSearches(): void {
+        header('Cache-Control: public, max-age=120');
+        $pdo   = Database::getConnection();
+        $limit = min(20, max(1, (int)($_GET['limit'] ?? 5)));
+    
+        // Ambil query paling sering dicari, abaikan yang kosong / terlalu pendek
+        $stmt = $pdo->prepare(
+            "SELECT MAX(query) AS query, COUNT(*) AS count
+             FROM search_logs
+             WHERE LENGTH(TRIM(query)) >= 2
+             GROUP BY LOWER(TRIM(query))
+             ORDER BY count DESC, MAX(created_at) DESC
+             LIMIT :lim"
+        );
+        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+    
+        $rows = $stmt->fetchAll();
+        echo json_encode(['data' => array_map(fn($r) => $r['query'], $rows)]);
+    }
+
     public function handleSearchRecommendations(): void {
         header('Cache-Control: public, max-age=120');
         $pdo   = Database::getConnection();

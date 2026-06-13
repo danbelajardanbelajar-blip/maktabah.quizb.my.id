@@ -22,17 +22,37 @@ export async function renderHome() {
       <div class="gold-line"></div>
     </section>
 
-    <!-- Pencarian Terbaru -->
-    <div class="w-full bg-cream" id="recent-search-section" style="display:none">
-      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="flex items-center gap-2 mb-4">
-          <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <i data-lucide="clock" class="w-3.5 h-3.5 text-gold"></i>
+    <!-- Pencarian Terpopuler & Terbaru -->
+    <div class="w-full bg-cream py-8">
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          <!-- Pencarian Terpopuler -->
+          <div id="popular-search-section" style="display:none">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
+                <i data-lucide="trending-up" class="w-3.5 h-3.5 text-gold"></i>
+              </div>
+              <h2 class="text-base font-bold text-primary">Pencarian Terpopuler</h2>
+            </div>
+            <div id="popular-search-chips" class="flex flex-wrap gap-2">
+              ${Array.from({length:5}, () => `<div class="skeleton h-8 w-24 rounded-full"></div>`).join('')}
+            </div>
           </div>
-          <h2 class="text-base font-bold text-primary">Pencarian Terbaru</h2>
-        </div>
-        <div id="recent-search-chips" class="flex flex-wrap gap-2">
-          ${Array.from({length:8}, () => `<div class="skeleton h-8 w-24 rounded-full"></div>`).join('')}
+
+          <!-- Pencarian Terbaru -->
+          <div id="recent-search-section" style="display:none">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-gold"></i>
+              </div>
+              <h2 class="text-base font-bold text-primary">Pencarian Terbaru</h2>
+            </div>
+            <div id="recent-search-chips" class="flex flex-wrap gap-2">
+              ${Array.from({length:5}, () => `<div class="skeleton h-8 w-24 rounded-full"></div>`).join('')}
+            </div>
+          </div>
+
         </div>
       </section>
     </div>
@@ -53,7 +73,7 @@ export async function renderHome() {
           </a>
         </div>
         <div id="recent-opened-grid">
-          ${skeletonCards(4)}
+          ${skeletonCards(5)}
         </div>
       </div>
     </section>
@@ -99,10 +119,36 @@ export async function renderHome() {
     }
   });
 
+  // Load popular searches
+  (async () => {
+    try {
+      const res     = await apiFetch({ action: 'popular_searches', limit: 5 });
+      const queries = res.data || [];
+      const section = document.getElementById('popular-search-section');
+      const chips   = document.getElementById('popular-search-chips');
+      if (!chips || !section) return;
+      if (!queries.length) { section.style.display = 'none'; return; }
+      section.style.display = '';
+      chips.innerHTML = queries.map(q => {
+        const safe = escHtml(q);
+        const enc  = encodeURIComponent(q).replace(/'/g, "%27");
+        return `<button
+          onclick="navigate('/search?q=${enc}')"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
+                 border border-gold/25 bg-white hover:bg-primary hover:text-white hover:border-primary
+                 text-sm text-primary/75 transition-all duration-150 shadow-sm cursor-pointer">
+          <i data-lucide="trending-up" class="w-3 h-3 opacity-50 shrink-0"></i>
+          ${safe}
+        </button>`;
+      }).join('');
+      reicons();
+    } catch { /* abaikan jika gagal */ }
+  })();
+
   // Load recent searches (non-blocking, section hidden jika kosong)
   (async () => {
     try {
-      const res     = await apiFetch({ action: 'recent_searches', limit: 15 });
+      const res     = await apiFetch({ action: 'recent_searches', limit: 5 });
       const queries = res.data || [];
       const section = document.getElementById('recent-search-section');
       const chips   = document.getElementById('recent-search-chips');
@@ -146,7 +192,7 @@ export async function renderHome() {
       return;
     }
     grid.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-      ${recent.map(item => recentBookCard(item)).join('')}
+      ${recent.slice(0, 5).map(item => recentBookCard(item)).join('')}
     </div>`;
     reicons();
   })();
