@@ -109,13 +109,13 @@ async function renderAdminSearchLogs() {
             <div class="flex flex-wrap gap-2">
               ${d.top_queries.map(q => `
                 <div class="inline-flex items-center rounded-full bg-cream hover:bg-cream-dark border border-gold/15 transition-colors overflow-hidden">
-                  <button onclick="document.getElementById('slf-query').value=${JSON.stringify(q.query)};slLoad(1)"
+                  <button onclick="document.getElementById('slf-query').value=${JSON.stringify(q.query).replace(/"/g, '&quot;')};slLoad(1)"
                     class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-primary/70 font-medium border-r border-gold/15">
                     <i data-lucide="search" class="w-3 h-3 text-gold/60"></i>
                     ${escHtml(q.query)}
                     <span class="text-primary/35">${q.cnt}×</span>
                   </button>
-                  <button onclick="slDeleteQuery(${JSON.stringify(q.query)}, event)" class="px-2 py-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Hapus query ini dari log">
+                  <button onclick="slDeleteQuery(${JSON.stringify(q.query).replace(/"/g, '&quot;')}, event)" class="px-2 py-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Hapus query ini dari log">
                     <i data-lucide="x" class="w-3 h-3"></i>
                   </button>
                 </div>`).join('')}
