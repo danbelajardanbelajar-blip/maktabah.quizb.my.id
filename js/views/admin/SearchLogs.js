@@ -155,11 +155,24 @@ async function renderAdminSearchLogs() {
             <tbody class="divide-y divide-gold/8">
               ${d.rows.map(r => {
                 const ua = r.user_agent || '';
-                const browserShort = ua.includes('Chrome') ? 'Chrome'
-                  : ua.includes('Firefox') ? 'Firefox'
-                  : ua.includes('Safari') ? 'Safari'
-                  : ua.includes('Edge') ? 'Edge'
-                  : ua.slice(0, 18) || '—';
+                let browserShort = '—';
+                if (ua.includes('wv') || (ua.includes('Android') && ua.includes('Version/4.0'))) {
+                  browserShort = 'Android App';
+                } else if (ua.includes('Edg/')) {
+                  browserShort = 'Edge';
+                } else if (ua.includes('OPR/') || ua.includes('Opera')) {
+                  browserShort = 'Opera';
+                } else if (ua.includes('SamsungBrowser')) {
+                  browserShort = 'Samsung Internet';
+                } else if (ua.includes('Chrome')) {
+                  browserShort = ua.includes('Mobile') ? 'Chrome Mobile' : 'Chrome Desktop';
+                } else if (ua.includes('Firefox')) {
+                  browserShort = ua.includes('Mobile') ? 'Firefox Mobile' : 'Firefox Desktop';
+                } else if (ua.includes('Safari') && !ua.includes('Chrome')) {
+                  browserShort = ua.includes('Mobile') ? 'Safari Mobile' : 'Safari Desktop';
+                } else if (ua.length > 0) {
+                  browserShort = ua.slice(0, 18);
+                }
                 return `<tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-primary/50 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3">${typeBadge(r.search_type)}</td>
