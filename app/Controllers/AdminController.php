@@ -972,8 +972,9 @@ class AdminController {
         $admin = AuthHelper::requireAdmin();
         $pdo = Database::getConnection();
 
-        $id = intval($_POST['id'] ?? 0);
-        $status = $_POST['status'] ?? '';
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id = intval($input['id'] ?? 0);
+        $status = $input['status'] ?? '';
 
         if (!$id || !in_array($status, ['pending', 'read', 'resolved'])) {
             http_response_code(400);
@@ -993,7 +994,8 @@ class AdminController {
         $admin = AuthHelper::requireAdmin();
         $pdo = Database::getConnection();
 
-        $id = intval($_POST['id'] ?? 0);
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id = intval($input['id'] ?? 0);
         if (!$id) {
             http_response_code(400);
             echo json_encode(['error' => 'Invalid input']);
