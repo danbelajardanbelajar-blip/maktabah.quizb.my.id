@@ -37,7 +37,7 @@ export async function renderHome() {
       </section>
     </div>
 
-    <!-- Kitab yang Baru Saja Dibuka -->
+    <!-- Baru Saja Dibuka -->
     <div class="gold-line"></div>
     <section class="w-full bg-cream-dark py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
