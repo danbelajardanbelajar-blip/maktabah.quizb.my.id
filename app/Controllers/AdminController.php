@@ -585,12 +585,30 @@ class AdminController {
     
         $whereStr = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
     
+        // Total
         $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM download_logs {$whereStr}");
         foreach ($params as $key => $value) {
             $cntStmt->bindValue($key, $value);
         }
         $cntStmt->execute();
         $totalCount = (int)$cntStmt->fetchColumn();
+    
+        // Stats
+        $todayCount = (int)$pdo->query(
+            "SELECT COUNT(*) FROM download_logs WHERE DATE(created_at) = CURDATE()"
+        )->fetchColumn();
+        $weekCount = (int)$pdo->query(
+            "SELECT COUNT(*) FROM download_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+        )->fetchColumn();
+        $uniqueCount = (int)$pdo->query(
+            "SELECT COUNT(DISTINCT bkid) FROM download_logs"
+        )->fetchColumn();
+    
+        // Top Downloads
+        $topDownloads = $pdo->query(
+            "SELECT bkid, book_title, COUNT(*) AS cnt FROM download_logs
+             GROUP BY bkid, book_title ORDER BY cnt DESC LIMIT 10"
+        )->fetchAll();
     
         $offset = ($page - 1) * $limit;
         $stmt = $pdo->prepare(
@@ -610,12 +628,18 @@ class AdminController {
         $stmt->execute();
     
         echo json_encode([
-            'success' => true,
-            'rows'    => $stmt->fetchAll(),
-            'total'   => $totalCount,
-            'page'    => $page,
-            'limit'   => $limit,
-            'pages'   => (int)ceil($totalCount / $limit),
+            'success'       => true,
+            'rows'          => $stmt->fetchAll(),
+            'total'         => $totalCount,
+            'page'          => $page,
+            'limit'         => $limit,
+            'pages'         => (int)ceil($totalCount / $limit),
+            'stats'         => [
+                'today'  => $todayCount,
+                'week'   => $weekCount,
+                'unique' => $uniqueCount,
+            ],
+            'top_downloads' => $topDownloads,
         ]);
     }
 

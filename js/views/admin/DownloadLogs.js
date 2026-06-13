@@ -21,6 +21,10 @@ async function renderAdminDownloadLogs() {
         </div>
       </div>
 
+      <!-- Stats row -->
+      <div id="dl-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6"></div>
+
+      <!-- Filter bar -->
       <div class="bg-white rounded-2xl shadow-card p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div class="flex-1 min-w-[130px]">
           <label class="block text-xs font-semibold text-primary/50 mb-1">ID Kitab</label>
@@ -43,6 +47,10 @@ async function renderAdminDownloadLogs() {
         </button>
       </div>
 
+      <!-- Top downloads -->
+      <div id="dl-topd" class="mb-6"></div>
+
+      <!-- Table -->
       <div id="dl-grid" class="bg-white rounded-2xl shadow-card overflow-hidden">
         <div class="p-10 text-center text-primary/30 text-sm">Memuat data…</div>
       </div>
@@ -66,6 +74,49 @@ async function renderAdminDownloadLogs() {
         bkid: _dl.bkid, query: _dl.query, date: _dl.date
       });
 
+      // Stats
+      const stats = d.stats || {};
+      const statsEl = document.getElementById('dl-stats');
+      if (statsEl) {
+        statsEl.innerHTML = [
+          { icon: 'calendar',      label: 'Hari Ini',      val: stats.today   || 0, color: 'text-blue-600',   bg: 'bg-blue-50'   },
+          { icon: 'calendar-days', label: 'Minggu Ini',    val: stats.week    || 0, color: 'text-green-600',  bg: 'bg-green-50'  },
+          { icon: 'list',          label: 'Total Semua',   val: d.total       || 0, color: 'text-primary',    bg: 'bg-cream/60'  },
+          { icon: 'trending-up',   label: 'Unik (kitab)',  val: stats.unique  || 0, color: 'text-purple-600', bg: 'bg-purple-50' },
+        ].map(s => `
+          <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center shrink-0">
+              <i data-lucide="${s.icon}" class="w-5 h-5 ${s.color}"></i>
+            </div>
+            <div>
+              <div class="text-xs text-primary/40 font-medium">${s.label}</div>
+              <div class="text-xl font-bold text-primary">${s.val.toLocaleString()}</div>
+            </div>
+          </div>`).join('');
+      }
+
+      // Top downloads
+      const topdEl = document.getElementById('dl-topd');
+      if (topdEl && d.top_downloads?.length && !_dl.bkid && !_dl.query && !_dl.date) {
+        topdEl.innerHTML = `
+          <div class="bg-white rounded-2xl shadow-card p-5">
+            <div class="text-xs font-semibold text-primary/50 uppercase tracking-wider mb-3">Top Download</div>
+            <div class="flex flex-wrap gap-2">
+              ${d.top_downloads.map(q => `
+                <button onclick="document.getElementById('dlf-bkid').value=${JSON.stringify(q.bkid)};dlLoad(1)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cream hover:bg-cream-dark text-xs text-primary/70 font-medium transition-colors border border-gold/15">
+                  <i data-lucide="download" class="w-3 h-3 text-gold/60"></i>
+                  ${escHtml(q.book_title)}
+                  <span class="text-primary/35">${q.cnt}×</span>
+                </button>`).join('')}
+            </div>
+          </div>`;
+        reicons();
+      } else if (topdEl) {
+        topdEl.innerHTML = '';
+      }
+
+      // Table
       if (!d.rows?.length) {
         grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm">Tidak ada log download.</div>';
         document.getElementById('dl-pager').innerHTML = '';
