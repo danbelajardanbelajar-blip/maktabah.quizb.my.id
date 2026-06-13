@@ -46,7 +46,7 @@ export async function renderHome() {
             <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
               <i data-lucide="history" class="w-4 h-4 text-gold"></i>
             </div>
-            <h2 class="text-xl font-bold text-primary">Kitab yang Baru Saja Dibuka</h2>
+            <h2 class="text-xl font-bold text-primary">Baru Saja Dibuka</h2>
           </div>
           <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
             Jelajahi Katalog <i data-lucide="arrow-right" class="w-4 h-4"></i>
