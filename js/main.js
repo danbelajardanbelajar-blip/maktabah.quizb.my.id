@@ -52,6 +52,21 @@ window.routes = routes;
 function localNavigate(path, push = true) {
   if (push) history.pushState({}, '', path);
   const base = path.split('?')[0];
+  
+  // Guard for admin routes
+  if (base.startsWith('/admin')) {
+    const u = window.SESSION_USER;
+    if (!u) {
+      window.location.href = '/auth.php?action=login';
+      return;
+    }
+    if (u.role !== 'admin') {
+      history.replaceState({}, '', '/dashboard');
+      path = '/dashboard';
+      return localNavigate('/dashboard', false);
+    }
+  }
+
   const handler = routes[base] || View_404.render404;
   Core.app().innerHTML = '';
   if (typeof window.closeCatDropdown === 'function') window.closeCatDropdown();
