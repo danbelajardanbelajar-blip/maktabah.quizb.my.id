@@ -1,5 +1,4 @@
-import { apiFetch, app, reicons, escHtml, paginationHtml, handleAuthError } from '../../core/core.js';
-import { adminGuard, adminPost, adminToast, adminSpinner, adminNavBar, autoDir, bindAutoDir } from '../../core/AdminUtils.js';
+import { app, reicons, escHtml } from '../core/core.js';
 
 // ══════════════════════════════════════════════════════════════
 //  DASHBOARD

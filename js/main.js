@@ -10,6 +10,7 @@ import * as View_about from './views/about.js';
 import * as View_kebijakan_privasi from './views/kebijakan_privasi.js';
 import * as View_feedback from './views/feedback.js';
 import * as View_404 from './views/404.js';
+import * as View_dashboard from './views/dashboard.js';
 
 // Expose to window for admin.js and index.php
 Core.setNavigate(localNavigate);
@@ -30,6 +31,7 @@ window.bookCard = Core.bookCard;
 // Router Mapping
 const routes = {
   '/': View_home.renderHome,
+  '/dashboard': View_dashboard.renderDashboard,
   '/katalog': View_katalog.renderKatalog,
   '/kategori': View_kategori__daftar_kategori__kitab_per_kategori.renderKategori,
   '/settings': View_settings.renderSettings,

@@ -1,4 +1,3 @@
-import * as Dashboard from './views/admin/Dashboard.js';
 import * as Books from './views/admin/Books.js';
 import * as Categories from './views/admin/Categories.js';
 import * as History from './views/admin/History.js';
@@ -11,7 +10,6 @@ import * as Feedbacks from './views/admin/Feedbacks.js';
 
 // Merge routes
 const adminRoutes = {
-  '/dashboard':        Dashboard.renderDashboard,
   '/admin':            () => window.navigate('/admin/books', true),
   '/admin/books':      Books.renderAdminBooks,
   '/admin/categories': Categories.renderAdminCategories,
