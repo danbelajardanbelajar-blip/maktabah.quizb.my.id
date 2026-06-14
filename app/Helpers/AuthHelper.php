@@ -5,6 +5,36 @@ namespace App\Helpers;
 use App\Config\Database;
 
 class AuthHelper {
+    public static function checkRememberMe(): void {
+        if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
+            try {
+                $pdo = Database::getConnection();
+                $stmt = $pdo->prepare("SELECT * FROM users WHERE remember_token = :token LIMIT 1");
+                $stmt->execute([':token' => $_COOKIE['remember_token']]);
+                $user = $stmt->fetch();
+                
+                if ($user) {
+                    $_SESSION['user'] = [
+                        'id'      => $user['id'],
+                        'name'    => $user['name'],
+                        'email'   => $user['email'],
+                        'picture' => $user['picture'],
+                        'role'    => $user['role'],
+                    ];
+                    
+                    // Update last_login
+                    $updateStmt = $pdo->prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = :id");
+                    $updateStmt->execute([':id' => $user['id']]);
+                } else {
+                    // Invalid token, remove cookie
+                    setcookie('remember_token', '', time() - 3600, "/");
+                }
+            } catch (\Exception $e) {
+                // Ignore DB error for auto-login
+            }
+        }
+    }
+
     public static function getSessionUser(): ?array {
         return $_SESSION['user'] ?? null;
     }

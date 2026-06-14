@@ -22,6 +22,8 @@ spl_autoload_register(function ($class) {
     }
 });
 
+\App\Helpers\AuthHelper::checkRememberMe();
+
 use App\Core\Router;
 
 // Initialize Router
