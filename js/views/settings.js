@@ -1183,7 +1183,7 @@ async function execSearch() {
               dymEl = document.createElement('div');
               dymEl.id = 'global-did-you-mean';
               dymEl.className = 'mb-4 text-sm text-primary font-medium p-3 bg-gold/10 rounded-xl border border-gold/20';
-              dymEl.innerHTML = `<i data-lucide="lightbulb" class="inline w-4 h-4 text-gold mr-1 -mt-1"></i> Maksud Anda: <a href="javascript:void(0)" class="text-gold font-bold hover:underline" onclick="document.getElementById('search-input').value='${escHtml(res.did_you_mean).replace(/'/g, "\\'")}'; document.getElementById('search-input').dispatchEvent(new Event('input'))">${escHtml(res.did_you_mean)}</a> ?`;
+              dymEl.innerHTML = `<i data-lucide="lightbulb" class="inline w-4 h-4 text-gold mr-1 -mt-1"></i> Maksud Anda: <a href="javascript:void(0)" class="text-gold font-bold hover:underline" onclick="document.getElementById('search-input').value='${escHtml(res.did_you_mean).replace(/'/g, "\\'")}'; document.getElementById('search-input').dispatchEvent(new Event('input')); document.getElementById('search-btn').click();">${escHtml(res.did_you_mean)}</a> ?`;
               const wrap = document.getElementById('search-results');
               if (wrap) {
                   wrap.insertBefore(dymEl, wrap.firstChild);
