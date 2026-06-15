@@ -234,10 +234,11 @@ class SearchHelper {
         $maxLen = $len + 2;
 
         try {
-            // Ambil kandidat dari tabel kamus yang beda panjangnya tak lebih dari 2 karakter
-            // Limit 1000 agar tidak terlalu berat memproses levenshtein di PHP
-            $stmt = $pdo->prepare("SELECT word, frequency FROM search_dictionary WHERE CHAR_LENGTH(word) BETWEEN :minl AND :maxl ORDER BY frequency DESC LIMIT 1000");
-            $stmt->execute([':minl' => $minLen, ':maxl' => $maxLen]);
+            // Ambil kandidat kata yang memiliki huruf awal yang sama (sangat cepat karena menggunakan index primary key)
+            // Ini akan memisahkan kata Arab dan Latin secara natural serta menemukan kata dengan frekuensi kecil
+            $firstChar = mb_substr($word, 0, 1, 'UTF-8');
+            $stmt = $pdo->prepare("SELECT word, frequency FROM search_dictionary WHERE word LIKE :prefix AND CHAR_LENGTH(word) BETWEEN :minl AND :maxl ORDER BY frequency DESC LIMIT 2000");
+            $stmt->execute([':prefix' => $firstChar . '%', ':minl' => $minLen, ':maxl' => $maxLen]);
             
             $bestMatch = null;
             $minDist = -1;

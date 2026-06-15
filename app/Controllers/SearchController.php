@@ -517,9 +517,9 @@ class SearchController {
             ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE));
         }
     
-        // Cek didYouMean jika tidak ada hasil
+        // Cek didYouMean untuk memberikan saran kata (selalu cek)
         $didYouMean = null;
-        if ($total == 0 && count($fields) > 0) {
+        if (count($fields) > 0) {
             $didYouMean = SearchHelper::getDidYouMean(implode(' ', $fields));
         }
 
@@ -691,11 +691,8 @@ class SearchController {
         $stmtContCount->execute([':lk' => $like]);
         $contTotal = (int)$stmtContCount->fetchColumn();
     
-        // Cek did_you_mean jika tidak ada hasil
-        $didYouMean = null;
-        if ($booksTotal == 0 && $contTotal == 0) {
-            $didYouMean = SearchHelper::getDidYouMean($q);
-        }
+        // Cek did_you_mean untuk memberikan saran kata (selalu cek)
+        $didYouMean = SearchHelper::getDidYouMean($q);
     
         echo json_encode([
             'query'        => $q,

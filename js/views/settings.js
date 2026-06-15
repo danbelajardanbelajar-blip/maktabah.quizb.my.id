@@ -1176,14 +1176,16 @@ async function execSearch() {
       const body = $('#sec-content-body');
       if (!body) return;
       let emptyMsg = 'Maaf, tidak ditemukan halaman yang cocok dengan kata kunci tersebut.';
-      if (total === 0 && res.did_you_mean) {
-          emptyMsg += `<div class="mt-3 text-sm text-primary font-medium">Maksud Anda: <a href="javascript:void(0)" class="text-gold hover:underline" onclick="document.getElementById('search-input').value='${escHtml(res.did_you_mean).replace(/'/g, "\\'")}'; document.getElementById('search-input').dispatchEvent(new Event('input'))">${escHtml(res.did_you_mean)}</a> ?</div>`;
+      let didYouMeanBlock = '';
+      if (res.did_you_mean) {
+          didYouMeanBlock = `<div class="${res.data && res.data.length ? 'mb-3' : 'mt-3'} text-sm text-primary font-medium">Maksud Anda: <a href="javascript:void(0)" class="text-gold hover:underline" onclick="document.getElementById('search-input').value='${escHtml(res.did_you_mean).replace(/'/g, "\\'")}'; document.getElementById('search-input').dispatchEvent(new Event('input'))">${escHtml(res.did_you_mean)}</a> ?</div>`;
       }
       body.innerHTML = res.data && res.data.length
         ? `<div class="search-section-enter">
+            ${didYouMeanBlock}
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>
             ${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContPage')}</div>`
-        : noResultBlock(emptyMsg);
+        : noResultBlock(emptyMsg + didYouMeanBlock);
       reicons();
     }).catch(()=>{ const b=$('#sec-content-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
 
