@@ -11,6 +11,7 @@ import * as View_kebijakan_privasi from './views/kebijakan_privasi.js';
 import * as View_feedback from './views/feedback.js';
 import * as View_404 from './views/404.js';
 import * as View_dashboard from './views/dashboard.js';
+import * as View_favorit from './views/favorit.js';
 
 // Expose to window for admin.js and index.php
 Core.setNavigate(localNavigate);
@@ -45,6 +46,7 @@ const routes = {
   '/feedback': View_feedback.renderFeedback,
   '/catalog': View_kategori__daftar_kategori__kitab_per_kategori.renderKategori,
   '/setting': View_settings.renderSettings,
+  '/favorit': View_favorit.renderFavorit,
 };
 window.routes = routes;
 

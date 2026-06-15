@@ -876,6 +876,7 @@ endif;
             </button>
           </div>
           <a href="/katalog" data-route="/katalog" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Katalog</a>
+          <a href="/favorit" data-route="/favorit" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Favorit</a>
           <a href="/search-advanced" data-route="/search-advanced" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Cari Lanjutan</a>
           <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Tentang</a>
           <a href="/feedback" data-route="/feedback" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Feedback</a>
@@ -1052,7 +1053,12 @@ endif;
       <!-- Kategori tab (menggantikan Katalog di mobile) -->
       <a href="/kategori" data-route="/kategori" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
         <i data-lucide="layout-grid" class="w-5 h-5"></i>
-        <span class="text-[10px] font-medium">Kategori</span>
+        <span class="text-[10px] font-medium tracking-wide">Kategori</span>
+      </a>
+
+      <a href="/favorit" data-route="/favorit" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="star" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium tracking-wide">Favorit</span>
       </a>
 
       <a href="/settings" data-route="/settings" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
