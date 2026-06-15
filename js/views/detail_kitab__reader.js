@@ -165,7 +165,29 @@ export async function renderDetail(params) {
           </div>
         </div>`}
 
-      </div>`;
+      </div>
+      
+      <!-- Mobile Bottom Action Bar -->
+      ${contentPgs > 0 ? `
+      <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-cream-dark shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-[60] sm:hidden flex justify-around items-center px-2 py-3 text-primary pb-safe">
+        <button id="mobile-font-dec" class="p-2 hover:bg-cream rounded-xl transition flex flex-col items-center gap-1" title="Perkecil Font">
+          <i data-lucide="minus" class="w-5 h-5"></i>
+        </button>
+        <button id="mobile-font-inc" class="p-2 hover:bg-cream rounded-xl transition flex flex-col items-center gap-1" title="Perbesar Font">
+          <i data-lucide="plus" class="w-5 h-5"></i>
+        </button>
+        <button id="mobile-copy" class="p-2 hover:bg-cream rounded-xl transition flex flex-col items-center gap-1" title="Salin">
+          <i data-lucide="copy" class="w-5 h-5"></i>
+        </button>
+        <button id="mobile-share" class="p-2 hover:bg-cream rounded-xl transition flex flex-col items-center gap-1" title="Bagikan">
+          <i data-lucide="share-2" class="w-5 h-5"></i>
+        </button>
+        <button id="mobile-fav" class="p-2 hover:bg-cream rounded-xl transition flex flex-col items-center gap-1" title="Favorit">
+          <i data-lucide="star" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="h-16 sm:hidden"></div>
+      ` : ''}`;
 
     reicons();
 
@@ -177,6 +199,74 @@ export async function renderDetail(params) {
       });
       // Wire up font size slider
       initFontPanelEvents();
+
+      // Mobile action bar events
+      $('#mobile-font-dec')?.addEventListener('click', () => {
+        readerFontState.size = Math.max(14, readerFontState.size - 1);
+        const slider = $('#font-size-slider');
+        const lbl = $('#font-size-label');
+        if (slider) slider.value = readerFontState.size;
+        if (lbl) lbl.textContent = readerFontState.size + 'px';
+        applyReaderFont();
+      });
+      $('#mobile-font-inc')?.addEventListener('click', () => {
+        readerFontState.size = Math.min(28, readerFontState.size + 1);
+        const slider = $('#font-size-slider');
+        const lbl = $('#font-size-label');
+        if (slider) slider.value = readerFontState.size;
+        if (lbl) lbl.textContent = readerFontState.size + 'px';
+        applyReaderFont();
+      });
+      $('#mobile-copy')?.addEventListener('click', () => {
+        const text = $('#reader-area')?.innerText || '';
+        if (text) {
+          navigator.clipboard.writeText(text).then(() => {
+            alert('Teks halaman ini berhasil disalin!');
+          }).catch(() => {
+            alert('Gagal menyalin teks.');
+          });
+        }
+      });
+      $('#mobile-share')?.addEventListener('click', () => {
+        if (navigator.share) {
+          navigator.share({
+            title: title,
+            text: `Baca kitab ${title} di Al-Maktabah As-Sunniyyah`,
+            url: window.location.href
+          }).catch(console.error);
+        } else {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Tautan halaman berhasil disalin!');
+          });
+        }
+      });
+      
+      const favBtn = $('#mobile-fav');
+      if (favBtn) {
+        const checkFav = () => {
+          const favs = JSON.parse(localStorage.getItem('favorite_books') || '[]');
+          return favs.includes(book.bkid);
+        };
+        const updateFavIcon = () => {
+          if (checkFav()) {
+            favBtn.innerHTML = '<i data-lucide="star" class="w-5 h-5 fill-gold text-gold"></i>';
+          } else {
+            favBtn.innerHTML = '<i data-lucide="star" class="w-5 h-5"></i>';
+          }
+          reicons();
+        };
+        updateFavIcon();
+        favBtn.addEventListener('click', () => {
+          let favs = JSON.parse(localStorage.getItem('favorite_books') || '[]');
+          if (favs.includes(book.bkid)) {
+            favs = favs.filter(id => id !== book.bkid);
+          } else {
+            favs.push(book.bkid);
+          }
+          localStorage.setItem('favorite_books', JSON.stringify(favs));
+          updateFavIcon();
+        });
+      }
 
       // Open at jump page (from search result), with keyword highlight
       if (contentId > 0) {
