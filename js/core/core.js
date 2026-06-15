@@ -430,11 +430,16 @@ export function escapeRegex(value) {
 }
 
 export function buildArabicRegexStr(term) {
+  const diacriticsRegex = /[\u064B-\u065F\u0670\u06D6-\u06ED\u06DF-\u06E8\u06EA-\u06ED]/g;
   const diacritics = '[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\u06DF-\\u06E8\\u06EA-\\u06ED]*';
+  
+  // Hapus semua harokat dari kata kunci yang diinputkan pengguna
+  const cleanTerm = String(term).replace(diacriticsRegex, '');
+  
   let result = '';
-  for (let i = 0; i < term.length; i++) {
-    const char = term[i];
-    if (/\\s/.test(char)) {
+  for (let i = 0; i < cleanTerm.length; i++) {
+    const char = cleanTerm[i];
+    if (/\s/.test(char)) {
       // Collapse multiple spaces into one space matcher
       if (!result.endsWith('\\s+')) {
         result += '\\s+';

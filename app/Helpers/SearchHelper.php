@@ -123,6 +123,10 @@ class SearchHelper {
             $term = preg_replace('/^"|"$/', '', $term);
             if (empty($term)) continue;
             
+            // Hapus semua harokat dari kata kunci yang diinputkan pengguna
+            $term = preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}\x{06DF}-\x{06E8}\x{06EA}-\x{06ED}]/u', '', $term);
+            if (empty($term)) continue;
+            
             $patternChars = [];
             $chars = preg_split('//u', $term, -1, PREG_SPLIT_NO_EMPTY);
             foreach ($chars as $char) {
