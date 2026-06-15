@@ -1176,16 +1176,26 @@ async function execSearch() {
       const body = $('#sec-content-body');
       if (!body) return;
       let emptyMsg = 'Maaf, tidak ditemukan halaman yang cocok dengan kata kunci tersebut.';
-      let didYouMeanBlock = '';
+      
       if (res.did_you_mean) {
-          didYouMeanBlock = `<div class="${res.data && res.data.length ? 'mb-3' : 'mt-3'} text-sm text-primary font-medium">Maksud Anda: <a href="javascript:void(0)" class="text-gold hover:underline" onclick="document.getElementById('search-input').value='${escHtml(res.did_you_mean).replace(/'/g, "\\'")}'; document.getElementById('search-input').dispatchEvent(new Event('input'))">${escHtml(res.did_you_mean)}</a> ?</div>`;
+          let dymEl = document.getElementById('global-did-you-mean');
+          if (!dymEl) {
+              dymEl = document.createElement('div');
+              dymEl.id = 'global-did-you-mean';
+              dymEl.className = 'mb-4 text-sm text-primary font-medium p-3 bg-gold/10 rounded-xl border border-gold/20';
+              dymEl.innerHTML = `<i data-lucide="lightbulb" class="inline w-4 h-4 text-gold mr-1 -mt-1"></i> Maksud Anda: <a href="javascript:void(0)" class="text-gold font-bold hover:underline" onclick="document.getElementById('search-input').value='${escHtml(res.did_you_mean).replace(/'/g, "\\'")}'; document.getElementById('search-input').dispatchEvent(new Event('input'))">${escHtml(res.did_you_mean)}</a> ?`;
+              const wrap = document.getElementById('search-results');
+              if (wrap) {
+                  wrap.insertBefore(dymEl, wrap.firstChild);
+              }
+          }
       }
+      
       body.innerHTML = res.data && res.data.length
         ? `<div class="search-section-enter">
-            ${didYouMeanBlock}
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>
             ${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContPage')}</div>`
-        : noResultBlock(emptyMsg + didYouMeanBlock);
+        : noResultBlock(emptyMsg);
       reicons();
     }).catch(()=>{ const b=$('#sec-content-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
 
