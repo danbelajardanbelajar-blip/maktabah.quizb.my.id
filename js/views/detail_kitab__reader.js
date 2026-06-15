@@ -84,6 +84,11 @@ export async function renderDetail(params) {
                 }
               </span>
             </a>
+            <!-- Desktop Favorite Button -->
+            <button id="desktop-fav" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 transition shrink-0" title="Favorit">
+              <i data-lucide="star" class="w-4 h-4"></i>
+              <span class="text-xs font-bold tracking-wide">Favorit</span>
+            </button>
           </div>
         </div>
 
@@ -191,6 +196,41 @@ export async function renderDetail(params) {
 
     reicons();
 
+    // -- Favorite Logic --
+    const checkFav = () => {
+      const favs = JSON.parse(localStorage.getItem('favorite_books') || '[]');
+      return favs.includes(book.bkid);
+    };
+    const updateFavIcon = () => {
+      const isFav = checkFav();
+      const mobFav = $('#mobile-fav');
+      const deskFav = $('#desktop-fav');
+      if (mobFav) {
+        mobFav.innerHTML = isFav ? '<i data-lucide="star" class="w-5 h-5 fill-gold text-gold"></i>' : '<i data-lucide="star" class="w-5 h-5"></i>';
+      }
+      if (deskFav) {
+        deskFav.innerHTML = isFav 
+          ? '<i data-lucide="star" class="w-4 h-4 fill-gold"></i><span class="text-xs font-bold tracking-wide">Favorit</span>' 
+          : '<i data-lucide="star" class="w-4 h-4"></i><span class="text-xs font-bold tracking-wide">Favorit</span>';
+      }
+      reicons();
+    };
+    updateFavIcon();
+
+    const toggleFav = () => {
+      let favs = JSON.parse(localStorage.getItem('favorite_books') || '[]');
+      if (favs.includes(book.bkid)) {
+        favs = favs.filter(id => id !== book.bkid);
+      } else {
+        favs.push(book.bkid);
+      }
+      localStorage.setItem('favorite_books', JSON.stringify(favs));
+      updateFavIcon();
+    };
+
+    $('#mobile-fav')?.addEventListener('click', toggleFav);
+    $('#desktop-fav')?.addEventListener('click', toggleFav);
+
     if (contentPgs > 0) {
       // Wire up font settings gear button
       $('#font-settings-btn')?.addEventListener('click', () => {
@@ -240,33 +280,6 @@ export async function renderDetail(params) {
           });
         }
       });
-      
-      const favBtn = $('#mobile-fav');
-      if (favBtn) {
-        const checkFav = () => {
-          const favs = JSON.parse(localStorage.getItem('favorite_books') || '[]');
-          return favs.includes(book.bkid);
-        };
-        const updateFavIcon = () => {
-          if (checkFav()) {
-            favBtn.innerHTML = '<i data-lucide="star" class="w-5 h-5 fill-gold text-gold"></i>';
-          } else {
-            favBtn.innerHTML = '<i data-lucide="star" class="w-5 h-5"></i>';
-          }
-          reicons();
-        };
-        updateFavIcon();
-        favBtn.addEventListener('click', () => {
-          let favs = JSON.parse(localStorage.getItem('favorite_books') || '[]');
-          if (favs.includes(book.bkid)) {
-            favs = favs.filter(id => id !== book.bkid);
-          } else {
-            favs.push(book.bkid);
-          }
-          localStorage.setItem('favorite_books', JSON.stringify(favs));
-          updateFavIcon();
-        });
-      }
 
       // Open at jump page (from search result), with keyword highlight
       if (contentId > 0) {
