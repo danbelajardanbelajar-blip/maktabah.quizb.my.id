@@ -39,6 +39,7 @@ $router->add('search_scholarium_pdfs', 'SearchController', 'handleSearchScholari
 // Auth
 $router->add('auth_me', 'AuthController', 'handleAuthMe');
 $router->add('log_activity', 'AuthController', 'handleLogActivity');
+$router->add('agree_tos', 'AuthController', 'handleAgreeTos');
 
 // Admin
 $router->add('admin_save_book', 'AdminController', 'handleAdminSaveBook');

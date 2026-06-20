@@ -44,4 +44,38 @@ class AuthController {
         echo json_encode(['success' => true]);
     }
 
+    public function handleAgreeTos(): void {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        $user = AuthHelper::getSessionUser();
+        
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Anda harus login terlebih dahulu.']);
+            return;
+        }
+
+        try {
+            $pdo = Database::getConnection();
+            
+            // Auto-migrate column if not exists (silent catch)
+            try {
+                $pdo->exec("ALTER TABLE users ADD COLUMN agreed_tos TINYINT(1) NOT NULL DEFAULT 0");
+            } catch (\PDOException $e) {
+                // Ignore if exists
+            }
+
+            $stmt = $pdo->prepare("UPDATE users SET agreed_tos = 1 WHERE id = :id");
+            $stmt->execute([':id' => $user['id']]);
+
+            $_SESSION['user']['agreed_tos'] = 1;
+
+            echo json_encode(['success' => true]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Gagal memperbarui status persetujuan.']);
+        }
+    }
+
+
 }

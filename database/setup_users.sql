@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `name`        VARCHAR(255) NOT NULL DEFAULT '',
   `picture`     VARCHAR(512) NOT NULL DEFAULT '',
   `role`        ENUM('user','admin') NOT NULL DEFAULT 'user',
+  `agreed_tos`  TINYINT(1)   NOT NULL DEFAULT 0,
   `created_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `last_login`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (`email`)

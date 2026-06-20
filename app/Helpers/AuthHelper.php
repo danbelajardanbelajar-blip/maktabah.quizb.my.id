@@ -15,11 +15,12 @@ class AuthHelper {
                 
                 if ($user) {
                     $_SESSION['user'] = [
-                        'id'      => $user['id'],
-                        'name'    => $user['name'],
-                        'email'   => $user['email'],
-                        'picture' => $user['picture'],
-                        'role'    => $user['role'],
+                        'id'         => $user['id'],
+                        'name'       => $user['name'],
+                        'email'      => $user['email'],
+                        'picture'    => $user['picture'],
+                        'role'       => $user['role'],
+                        'agreed_tos' => $user['agreed_tos'] ?? 0,
                     ];
                     
                     // Update last_login

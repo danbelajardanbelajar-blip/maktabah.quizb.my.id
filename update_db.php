@@ -1,17 +1,13 @@
 <?php
-require_once __DIR__ . '/app/bootstrap.php';
-use App\Config\Database;
-
+require 'app/bootstrap.php';
 try {
-    $pdo = Database::getConnection();
-
-    $sqlFile = __DIR__ . '/database/setup_tos.sql';
-    if (file_exists($sqlFile)) {
-        $sql = file_get_contents($sqlFile);
-        $pdo->exec($sql);
-        echo "✅ Migration setup_tos.sql successful!\n";
-    }
-
+    $pdo = App\Config\Database::getConnection();
+    $pdo->exec("ALTER TABLE users ADD COLUMN agreed_tos TINYINT(1) NOT NULL DEFAULT 0;");
+    echo "SUCCESS: Column agreed_tos added.\n";
 } catch (Exception $e) {
-    echo "❌ Error: " . $e->getMessage() . "\n";
+    if (strpos($e->getMessage(), 'Duplicate column') !== false) {
+        echo "SUCCESS: Column already exists.\n";
+    } else {
+        echo "ERROR: " . $e->getMessage() . "\n";
+    }
 }
