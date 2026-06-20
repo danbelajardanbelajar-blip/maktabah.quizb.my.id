@@ -4,19 +4,20 @@ namespace App\Helpers;
 
 use Exception;
 
-// Kita asumsikan struktur ini untuk PHPMailer berdasarkan petunjuk
-$vendorPath = dirname(__DIR__, 2) . '/vendor/phpmailer/phpmailer/src/';
-if (file_exists($vendorPath . 'PHPMailer.php')) {
-    require_once $vendorPath . 'Exception.php';
-    require_once $vendorPath . 'PHPMailer.php';
-    require_once $vendorPath . 'SMTP.php';
-} else {
-    // Fallback jika path di server berbeda
-    $vendorPathPublic = $_SERVER['DOCUMENT_ROOT'] . '/vendor/phpmailer/phpmailer/src/';
-    if (file_exists($vendorPathPublic . 'PHPMailer.php')) {
-        require_once $vendorPathPublic . 'Exception.php';
-        require_once $vendorPathPublic . 'PHPMailer.php';
-        require_once $vendorPathPublic . 'SMTP.php';
+// Mengecek beberapa kemungkinan letak folder PHPMailer di cPanel/Server
+$possiblePaths = [
+    dirname(__DIR__, 2) . '/vendor/phpmailer/phpmailer/src/',
+    dirname(__DIR__, 2) . '/vendor/phpmailer/src/',
+    $_SERVER['DOCUMENT_ROOT'] . '/vendor/phpmailer/phpmailer/src/',
+    $_SERVER['DOCUMENT_ROOT'] . '/vendor/phpmailer/src/'
+];
+
+foreach ($possiblePaths as $path) {
+    if (file_exists($path . 'PHPMailer.php')) {
+        require_once $path . 'Exception.php';
+        require_once $path . 'PHPMailer.php';
+        require_once $path . 'SMTP.php';
+        break;
     }
 }
 
@@ -31,18 +32,18 @@ class MailHelper {
 
         $mail = new PHPMailer(true);
         try {
-            // Konfigurasi SMTP (sesuaikan dengan server email sebenarnya)
-            // Karena tidak ada file env, kita letakkan dasar di sini. 
-            // Sebaiknya baca dari config.local.php jika ada.
+            // KONFIGURASI SMTP
+            // ==========================================
             $mail->isSMTP();
-            $mail->Host       = 'localhost'; // Ganti dengan host SMTP asli jika perlu
-            $mail->SMTPAuth   = false;
-            // $mail->Username   = 'admin@maktabah.quizb.my.id';
-            // $mail->Password   = 'password';
-            // $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            $mail->Port       = 25;
+            $mail->Host       = 'mail.maktabah.quizb.my.id'; // GANTI dengan Host SMTP Anda (contoh: smtp.hostinger.com)
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'admin@maktabah.quizb.my.id'; // GANTI dengan alamat email Anda
+            $mail->Password   = 'PASSWORD_EMAIL_ANDA'; // GANTI dengan password email Anda
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Gunakan ENCRYPTION_SMTPS untuk port 465, atau ENCRYPTION_STARTTLS untuk port 587
+            $mail->Port       = 465; // GANTI dengan port SMTP Anda (465 atau 587)
+            // ==========================================
 
-            $mail->setFrom('no-reply@maktabah.quizb.my.id', 'Maktabah Admin');
+            $mail->setFrom('admin@maktabah.quizb.my.id', 'Maktabah Admin');
             $mail->addAddress($toEmail);
 
             $mail->isHTML(true);
