@@ -62,12 +62,16 @@ class BookController {
     
         if (!$book) { http_response_code(404); echo json_encode(['error' => 'Kitab not found.']); return; }
 
-        // Increment views
+        // Increment views safely (ignore if fail)
         try {
             $pdo->prepare("UPDATE books SET views = views + 1 WHERE bkid = :id")->execute([':id' => $id]);
         } catch (\Exception $e) {
-            $this->ensureViewsColumn();
-            $pdo->prepare("UPDATE books SET views = views + 1 WHERE bkid = :id")->execute([':id' => $id]);
+            try {
+                $this->ensureViewsColumn();
+                $pdo->prepare("UPDATE books SET views = views + 1 WHERE bkid = :id")->execute([':id' => $id]);
+            } catch (\Exception $e2) {
+                // Ignore gracefully so book loading continues
+            }
         }
 
         // Ambil daftar juz beserta jumlah halaman masing-masing
@@ -567,4 +571,31 @@ class BookController {
         }
     }
 
+
+    private function ensureViewsColumn(): void {
+        $pdo = Database::getConnection();
+        try {
+            $pdo->query("SELECT views FROM books LIMIT 1");
+        } catch (\Exception $e) {
+            $pdo->exec("ALTER TABLE books ADD COLUMN views INT NOT NULL DEFAULT 0");
+        }
+    }
+
+    public function handlePopularBooks(): void {
+        $pdo = Database::getConnection();
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT b.bkid, b.title, b.author, b.pages, b.iso, c.name AS category_name
+                 FROM books b
+                 LEFT JOIN categories c ON c.id = b.category_id
+                 ORDER BY b.views DESC, b.bkid DESC
+                 LIMIT 5"
+            );
+            $stmt->execute();
+            $books = $stmt->fetchAll();
+            echo json_encode(['data' => $books]);
+        } catch (\Exception $e) {
+            echo json_encode(['data' => []]);
+        }
+    }
 }
