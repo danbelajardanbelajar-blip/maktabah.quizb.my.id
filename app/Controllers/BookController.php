@@ -469,6 +469,12 @@ class BookController {
     public function buildJuzDocx(array $book, array $pageMeta, int $juzNumber, int $totalJuz, bool $isArabic) {
         $phpWord = new \PhpOffice\PhpWord\PhpWord();
         
+        // Fungsi pembersih karakter terlarang XML (mencegah corrupt DOCX)
+        $sanitize = function($text) {
+            $text = mb_convert_encoding($text ?? '', 'UTF-8', 'UTF-8');
+            return preg_replace('/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/u', '', $text);
+        };
+        
         // Set default font
         $phpWord->setDefaultFontName($isArabic ? 'Traditional Arabic' : 'Arial');
         $phpWord->setDefaultFontSize(14);
@@ -493,8 +499,8 @@ class BookController {
         if ($isArabic) { $fontStyleNormal['rtl'] = true; }
         
         // Header
-        $title = $book['title'] ?: 'Kitab tanpa judul';
-        $author = $book['author'] ? 'Pengarang: ' . $book['author'] : '';
+        $title = $sanitize($book['title'] ?: 'Kitab tanpa judul');
+        $author = $book['author'] ? $sanitize('Pengarang: ' . $book['author']) : '';
         $juzInfo = 'Juz: ' . $juzNumber . ' dari ' . $totalJuz;
         
         $section->addText($title, $fontStyleTitle, $pStyle);
@@ -512,7 +518,9 @@ class BookController {
             
             $lines = explode("\n", str_replace("\r", "", $content));
             foreach ($lines as $line) {
+                $line = $sanitize($line);
                 if (trim($line) !== '') {
+                    // PhpWord menggunakan internal escaper, tapi kita pastikan stringnya aman
                     $section->addText($line, $fontStyleNormal, $pStyle);
                 } else {
                     $section->addTextBreak(1);
