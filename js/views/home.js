@@ -4,12 +4,7 @@ import { API, FONTS_LATIN, FONTS_ARABIC, readerFontState, applyReaderFont, $, $$
 export async function renderHome() {
   app().innerHTML = `
     <!-- Hero -->
-    <section class="hero-bg text-white relative">
-      <!-- Tombol Update Khusus Mobile di Pojok Kanan Atas Home -->
-      <button onclick="window.forceAppUpdate(event)" class="md:hidden absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur transition-all flex items-center justify-center z-10" title="Perbarui Aplikasi">
-        <i data-lucide="refresh-cw" class="w-5 h-5 text-white/90"></i>
-      </button>
-
+    <section class="hero-bg text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
         <div class="arabic text-gold text-4xl md:text-6xl font-bold mb-3 leading-tight">المكتبة السنية</div>
         <p class="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto">Perpustakaan digital Islam</p>

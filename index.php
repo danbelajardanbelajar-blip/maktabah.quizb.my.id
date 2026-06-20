@@ -871,12 +871,6 @@ endif;
 
         <!-- Search + Settings + Auth (desktop) -->
         <div class="flex items-center gap-2">
-          <!-- Update Button -->
-          <button id="nav-update-btn" onclick="window.forceAppUpdate(event)"
-            class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Perbarui Sistem (Bypass Cache)">
-            <i data-lucide="refresh-cw" class="w-5 h-5 text-primary"></i>
-          </button>
-          
           <button id="nav-search-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Cari Kitab">
             <i data-lucide="search" class="w-5 h-5 text-primary"></i>
           </button>
@@ -1254,34 +1248,6 @@ endif;
         }
       };
       window.closeSettings = function() { /* no-op: drawer sudah dihapus */ };
-
-      // Force App Update to bypass browser/apk cache without clearing storage
-      window.forceAppUpdate = function(e) {
-        let icon = null;
-        if (e && e.currentTarget) {
-          icon = e.currentTarget.querySelector('i');
-        } else {
-          const btn = document.getElementById('nav-update-btn');
-          if (btn) icon = btn.querySelector('i');
-        }
-        if (icon) icon.classList.add('animate-spin');
-        
-        // Clear caches from CacheStorage API if available (used by Service Workers)
-        if ('caches' in window) {
-          caches.keys().then(function(names) {
-            for (let name of names) {
-              caches.delete(name);
-            }
-          });
-        }
-        
-        // Reload page to fetch fresh HTML/JS, use cache: 'reload' to force network request
-        setTimeout(() => {
-          fetch(window.location.href, { cache: 'reload' })
-            .then(() => window.location.reload(true))
-            .catch(() => window.location.reload(true));
-        }, 400);
-      };
 
       // Apply on page load (before app.js fully runs)
       _applySettings(false);
