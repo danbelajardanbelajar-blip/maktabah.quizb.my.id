@@ -9,7 +9,7 @@ export function renderAgreement() {
     return;
   }
 
-  app.innerHTML = `
+  app().innerHTML = `
     <div class="max-w-3xl mx-auto py-12 px-4 sm:px-6 animate-fade-in relative z-10 pt-24 pb-32">
       <div class="bg-white/80 backdrop-blur-xl border border-gold/30 rounded-3xl shadow-2xl p-8 sm:p-12 relative overflow-hidden">
         <!-- Decoration -->
