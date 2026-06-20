@@ -57,45 +57,47 @@ export async function renderHome() {
       </section>
     </div>
 
-    <!-- Kitab Terpopuler -->
-    <div class="gold-line"></div>
-    <section class="w-full bg-cream py-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
-              <i data-lucide="flame" class="w-4 h-4 text-gold"></i>
-            </div>
-            <h2 class="text-xl font-bold text-primary">Kitab Terpopuler</h2>
-          </div>
-          <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
-            Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </a>
-        </div>
-        <div id="popular-books-grid">
-          ${skeletonCards(5)}
-        </div>
-      </div>
-    </section>
-
-    <!-- Baru Saja Dibuka -->
+    <!-- Terpopuler & Baru Saja Dibuka -->
     <div class="gold-line"></div>
     <section class="w-full bg-cream-dark py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
-              <i data-lucide="history" class="w-4 h-4 text-gold"></i>
+        
+        <!-- Kitab Terpopuler -->
+        <div class="mb-12">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                <i data-lucide="flame" class="w-4 h-4 text-gold"></i>
+              </div>
+              <h2 class="text-xl font-bold text-primary">Kitab Terpopuler</h2>
             </div>
-            <h2 class="text-xl font-bold text-primary">Baru Saja Dibuka</h2>
+            <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
+              Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
           </div>
-          <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
-            Jelajahi Katalog <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </a>
+          <div id="popular-books-grid">
+            ${skeletonCards(5)}
+          </div>
         </div>
-        <div id="recent-opened-grid">
-          ${skeletonCards(5)}
+
+        <!-- Baru Saja Dibuka -->
+        <div>
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                <i data-lucide="history" class="w-4 h-4 text-gold"></i>
+              </div>
+              <h2 class="text-xl font-bold text-primary">Baru Saja Dibuka</h2>
+            </div>
+            <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
+              Jelajahi Katalog <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+          </div>
+          <div id="recent-opened-grid">
+            ${skeletonCards(5)}
+          </div>
         </div>
+
       </div>
     </section>
     <div class="gold-line"></div>
