@@ -751,6 +751,18 @@ class AdminController {
                 ':id'            => $id,
             ]);
 
+            // Notify user if exists
+            if ($sub['user_id']) {
+                $notifMsg = "Kiriman file Anda '{$sub['file_name']}' telah di-" . ($action === 'approve' ? 'setujui' : 'tolak') . ".\nCatatan Admin: {$note}";
+                $insNotif = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, reference_id) VALUES (?, ?, ?, 'submission', ?)");
+                $insNotif->execute([$sub['user_id'], 'Review Kiriman File', $notifMsg, $id]);
+            }
+            if ($sub['user_email']) {
+                $statusText = $action === 'approve' ? 'disetujui' : 'ditolak';
+                $emailBody = "Halo,<br><br>Kiriman file Anda yang berjudul <b>{$sub['file_name']}</b> telah <b>{$statusText}</b> oleh admin.<br><br><b>Catatan Admin:</b><br>{$note}<br><br>Terima kasih.";
+                \App\Helpers\MailHelper::sendNotification($sub['user_email'], 'Status Kiriman File Anda', $emailBody);
+            }
+
             // Auto-import ke daftar kitab jika disetujui
             if ($action === 'approve') {
                 $fileUrl = $sub['file_url'];
@@ -1029,6 +1041,126 @@ class AdminController {
 
         AuthHelper::logCrudHistory('DELETE', 'feedbacks', (string)$id, "Hapus feedback oleh {$admin['name']}");
 
+        echo json_encode(['success' => true]);
+    }
+
+    public function handleAdminReplyFeedback(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id = intval($input['id'] ?? 0);
+        $reply = trim($input['reply'] ?? '');
+
+        if (!$id || !$reply) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID dan balasan wajib diisi']);
+            return;
+        }
+
+        $stmt = $pdo->prepare("SELECT * FROM feedbacks WHERE id = ?");
+        $stmt->execute([$id]);
+        $fb = $stmt->fetch();
+        if (!$fb) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Feedback tidak ditemukan']);
+            return;
+        }
+
+        $upd = $pdo->prepare("UPDATE feedbacks SET admin_reply = ?, status = 'resolved' WHERE id = ?");
+        $upd->execute([$reply, $id]);
+
+        if ($fb['user_id']) {
+            $insNotif = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, reference_id) VALUES (?, ?, ?, 'feedback', ?)");
+            $insNotif->execute([$fb['user_id'], 'Balasan Feedback', "Admin membalas feedback Anda:\n{$reply}", $id]);
+        }
+        if ($fb['email']) {
+            $emailBody = "Halo,<br><br>Admin telah membalas feedback Anda:<br><br><i>\"{$fb['content']}\"</i><br><br><b>Balasan Admin:</b><br>{$reply}<br><br>Terima kasih.";
+            \App\Helpers\MailHelper::sendNotification($fb['email'], 'Balasan Feedback Anda', $emailBody);
+        }
+
+        AuthHelper::logCrudHistory('UPDATE', 'feedbacks', (string)$id, "Membalas feedback oleh {$admin['name']}");
+        echo json_encode(['success' => true]);
+    }
+
+    public function handleAdminReplyRequest(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id = intval($input['id'] ?? 0);
+        $reply = trim($input['reply'] ?? '');
+
+        if (!$id || !$reply) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID dan balasan wajib diisi']);
+            return;
+        }
+
+        $stmt = $pdo->prepare("SELECT * FROM kitab_requests WHERE id = ?");
+        $stmt->execute([$id]);
+        $req = $stmt->fetch();
+        if (!$req) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Request tidak ditemukan']);
+            return;
+        }
+
+        $upd = $pdo->prepare("UPDATE kitab_requests SET admin_reply = ? WHERE id = ?");
+        $upd->execute([$reply, $id]);
+
+        if ($req['user_id']) {
+            $insNotif = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, reference_id) VALUES (?, ?, ?, 'request', ?)");
+            $insNotif->execute([$req['user_id'], 'Balasan Request Kitab', "Admin membalas request kitab Anda '{$req['title']}':\n{$reply}", $id]);
+        }
+        if ($req['user_email']) {
+            $emailBody = "Halo,<br><br>Admin telah memberikan catatan pada request kitab Anda yang berjudul <b>{$req['title']}</b>:<br><br><b>Catatan Admin:</b><br>{$reply}<br><br>Terima kasih.";
+            \App\Helpers\MailHelper::sendNotification($req['user_email'], 'Update Request Kitab Anda', $emailBody);
+        }
+
+        AuthHelper::logCrudHistory('UPDATE', 'kitab_requests', (string)$id, "Membalas request oleh {$admin['name']}");
+        echo json_encode(['success' => true]);
+    }
+
+    public function handleAdminReplySubmission(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id = intval($input['id'] ?? 0);
+        $reply = trim($input['reply'] ?? '');
+
+        if (!$id || !$reply) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID dan balasan wajib diisi']);
+            return;
+        }
+
+        $stmt = $pdo->prepare("SELECT * FROM file_submissions WHERE id = ?");
+        $stmt->execute([$id]);
+        $sub = $stmt->fetch();
+        if (!$sub) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Submission tidak ditemukan']);
+            return;
+        }
+
+        // Just append or set the review_note
+        $newNote = $sub['review_note'] ? $sub['review_note'] . "\n\nAdmin Reply:\n" . $reply : $reply;
+
+        $upd = $pdo->prepare("UPDATE file_submissions SET review_note = ? WHERE id = ?");
+        $upd->execute([$newNote, $id]);
+
+        if ($sub['user_id']) {
+            $insNotif = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, reference_id) VALUES (?, ?, ?, 'submission', ?)");
+            $insNotif->execute([$sub['user_id'], 'Pesan Tambahan Admin', "Admin mengirim pesan terkait kiriman Anda '{$sub['file_name']}':\n{$reply}", $id]);
+        }
+        if ($sub['user_email']) {
+            $emailBody = "Halo,<br><br>Admin telah memberikan pesan/catatan tambahan pada kiriman file Anda yang berjudul <b>{$sub['file_name']}</b>:<br><br><b>Pesan Admin:</b><br>{$reply}<br><br>Terima kasih.";
+            \App\Helpers\MailHelper::sendNotification($sub['user_email'], 'Pesan Kiriman File Anda', $emailBody);
+        }
+
+        AuthHelper::logCrudHistory('UPDATE', 'file_submissions', (string)$id, "Membalas submission oleh {$admin['name']}");
         echo json_encode(['success' => true]);
     }
 }

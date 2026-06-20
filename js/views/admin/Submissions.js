@@ -141,6 +141,20 @@ async function renderAdminSubmissions() {
     }
   };
 
+  window.subReply = async function(id) {
+    const reply = prompt('Masukkan pesan tambahan untuk kiriman ini:');
+    if (reply === null || reply.trim() === '') return;
+    try {
+      const res = await adminPost('admin_reply_submission', { id: id, reply: reply.trim() });
+      if (res.error) throw new Error(res.error);
+      adminToast('Pesan terkirim ✓');
+      subLoad();
+    } catch(e) {
+      if (handleAuthError(e)) return;
+      adminToast('Gagal: ' + e.message, 'error'); 
+    }
+  };
+
   window.subDelete = async function(id) {
     if (!confirm('Yakin ingin menghapus kiriman ini permanen? File fisik juga akan dihapus.')) return;
     try {
@@ -273,9 +287,10 @@ async function renderAdminSubmissions() {
         const escName = escHtml(r.file_name);
         const reviewBtn = '<button onclick="openSubReviewModal(' + r.id + ', this.getAttribute(\'data-name\'))" data-name="' + escName + '" title="Review" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700 flex items-center gap-1.5 px-2 font-medium text-xs"><i data-lucide="clipboard-check" class="w-4 h-4"></i> Review</button>';
         const viewBtn = '<button onclick="openSubReviewModal(' + r.id + ', this.getAttribute(\'data-name\'))" data-name="' + escName + '" title="Lihat file" class="p-1.5 rounded-lg hover:bg-cream-dark transition-colors text-blue-500 hover:text-blue-700"><i data-lucide="eye" class="w-4 h-4"></i></button>';
+        const replyBtn = '<button onclick="subReply(' + r.id + ')" title="Balas/Pesan" class="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-700 transition-colors"><i data-lucide="message-square" class="w-4 h-4"></i></button>';
         const deleteBtn  = '<button onclick="subDelete(' + r.id + ')" title="Hapus" class="p-1.5 rounded-lg hover:bg-red-100 text-red-700 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>';
         
-        let actBtns = r.status === 'pending' ? reviewBtn + deleteBtn : viewBtn + deleteBtn;
+        let actBtns = (r.status === 'pending' ? reviewBtn : viewBtn) + replyBtn + deleteBtn;
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
           + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.file_name) + '</div>'

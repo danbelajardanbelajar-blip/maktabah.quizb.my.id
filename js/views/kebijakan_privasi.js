@@ -404,14 +404,16 @@ export async function renderRequestKitab() {
 
           <form id="req-form" onsubmit="submitRequestForm(event)">
 
-            <!-- Email pengirim -->
+            <!-- Email -->
             <div class="mb-4">
               <label class="block text-xs font-semibold text-primary/55 mb-1.5">
                 Email Anda <span class="text-red-400">*</span>
               </label>
               <input type="email" id="rq-email" name="user_email" required
                 placeholder="email@contoh.com"
-                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
+                value="${window.SESSION_USER ? window.SESSION_USER.email : ''}"
+                ${window.SESSION_USER ? 'readonly' : ''}
+                class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream text-sm transition-all ${window.SESSION_USER ? 'opacity-60 cursor-not-allowed' : 'focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20'}" />
               <p class="text-[10px] text-primary/40 mt-1">Kami akan menghubungi Anda jika kitab sudah tersedia.</p>
             </div>
 

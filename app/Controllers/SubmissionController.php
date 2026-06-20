@@ -100,6 +100,7 @@ class SubmissionController {
     }
 
     public function handleSubmitRequest(): void {
+        $user = AuthHelper::getSessionUser();
         $pdo = Database::getConnection();
 
         $email       = trim($_POST['user_email']         ?? '');
@@ -120,15 +121,16 @@ class SubmissionController {
 
         try {
             $stmt = $pdo->prepare(
-                "INSERT INTO kitab_requests (user_email, request_type, title, author_or_category, description, status)
-                 VALUES (:email, :type, :title, :author, :desc, 'pending')"
+                "INSERT INTO kitab_requests (user_id, user_email, request_type, title, author_or_category, description, status)
+                 VALUES (:user_id, :email, :type, :title, :author, :desc, 'pending')"
             );
             $stmt->execute([
-                ':email'  => $email,
-                ':type'   => $requestType,
-                ':title'  => $title,
-                ':author' => $authorOrCat,
-                ':desc'   => $description,
+                ':user_id' => $user ? $user['id'] : null,
+                ':email'   => $email,
+                ':type'    => $requestType,
+                ':title'   => $title,
+                ':author'  => $authorOrCat,
+                ':desc'    => $description,
             ]);
             echo json_encode(['success' => true, 'message' => 'Request berhasil dikirim. Kami akan memprosesnya dan memberi tahu Anda via email jika sudah tersedia.']);
         } catch (Exception $e) {
@@ -162,6 +164,7 @@ class SubmissionController {
     }
 
     public function handleSubmitFeedback(): void {
+        $user = AuthHelper::getSessionUser();
         $pdo = Database::getConnection();
         
         $email   = trim($_POST['email'] ?? '');
@@ -180,13 +183,89 @@ class SubmissionController {
         }
         
         try {
-            $stmt = $pdo->prepare("INSERT INTO feedbacks (email, content) VALUES (?, ?)");
-            $stmt->execute([$email, $content]);
+            $stmt = $pdo->prepare("INSERT INTO feedbacks (user_id, email, content) VALUES (?, ?, ?)");
+            $stmt->execute([$user ? $user['id'] : null, $email, $content]);
             echo json_encode(['success' => true, 'message' => 'Terima kasih! Feedback Anda telah berhasil dikirim.']);
         } catch (Exception $e) {
             error_log('Feedback Error: ' . $e->getMessage());
             http_response_code(500);
             echo json_encode(['error' => 'Terjadi kesalahan saat menyimpan feedback.']);
         }
+    }
+
+    public function getMyActivities(): void {
+        $user = AuthHelper::getSessionUser();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $pdo = Database::getConnection();
+        $userId = $user['id'];
+
+        // Get Submissions
+        $stmtSub = $pdo->prepare("SELECT id, file_name as title, file_type as type, status, review_note as admin_reply, created_at FROM file_submissions WHERE user_id = ? ORDER BY created_at DESC");
+        $stmtSub->execute([$userId]);
+        $submissions = $stmtSub->fetchAll(PDO::FETCH_ASSOC);
+
+        // Get Requests
+        $stmtReq = $pdo->prepare("SELECT id, title, request_type as type, status, admin_reply, created_at FROM kitab_requests WHERE user_id = ? ORDER BY created_at DESC");
+        $stmtReq->execute([$userId]);
+        $requests = $stmtReq->fetchAll(PDO::FETCH_ASSOC);
+
+        // Get Feedbacks
+        $stmtFb = $pdo->prepare("SELECT id, content as title, 'feedback' as type, status, admin_reply, created_at FROM feedbacks WHERE user_id = ? ORDER BY created_at DESC");
+        $stmtFb->execute([$userId]);
+        $feedbacks = $stmtFb->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'submissions' => $submissions,
+                'requests' => $requests,
+                'feedbacks' => $feedbacks
+            ]
+        ]);
+    }
+
+    public function getMyNotifications(): void {
+        $user = AuthHelper::getSessionUser();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $pdo = Database::getConnection();
+        $userId = $user['id'];
+
+        $stmt = $pdo->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC");
+        $stmt->execute([$userId]);
+        $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode(['success' => true, 'data' => $notifications]);
+    }
+
+    public function markNotificationRead(): void {
+        $user = AuthHelper::getSessionUser();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $id = $_POST['id'] ?? null;
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Notification ID required']);
+            return;
+        }
+
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $user['id']]);
+
+        echo json_encode(['success' => true]);
     }
 }

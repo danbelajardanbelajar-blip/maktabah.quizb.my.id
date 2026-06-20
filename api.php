@@ -63,6 +63,9 @@ $router->add('admin_update_request_status', 'AdminController', 'handleAdminUpdat
 $router->add('submit_file', 'SubmissionController', 'handleSubmitFile');
 $router->add('submit_request', 'SubmissionController', 'handleSubmitRequest');
 $router->add('submit_feedback', 'SubmissionController', 'handleSubmitFeedback');
+$router->add('get_my_activities', 'SubmissionController', 'getMyActivities');
+$router->add('get_my_notifications', 'SubmissionController', 'getMyNotifications');
+$router->add('mark_notification_read', 'SubmissionController', 'markNotificationRead');
 $router->add('setup_kitab_requests', 'SubmissionController', 'setupKitabRequests');
 $router->add('setup_feedback', 'SubmissionController', 'setupFeedback');
 
@@ -70,6 +73,9 @@ $router->add('setup_feedback', 'SubmissionController', 'setupFeedback');
 $router->add('admin_get_feedbacks', 'AdminController', 'handleAdminGetFeedbacks');
 $router->add('admin_update_feedback_status', 'AdminController', 'handleAdminUpdateFeedbackStatus');
 $router->add('admin_delete_feedback', 'AdminController', 'handleAdminDeleteFeedback');
+$router->add('admin_reply_feedback', 'AdminController', 'handleAdminReplyFeedback');
+$router->add('admin_reply_request', 'AdminController', 'handleAdminReplyRequest');
+$router->add('admin_reply_submission', 'AdminController', 'handleAdminReplySubmission');
 
 // Stats
 $router->add('stats', 'StatsController', 'handleStats');

@@ -52,9 +52,11 @@ async function renderAdminFeedbacks() {
               <span class="text-xs text-primary/40">${new Date(it.created_at).toLocaleString()}</span>
             </div>
             <p class="text-primary/80 whitespace-pre-wrap">${escHtml(it.content)}</p>
+            ${it.admin_reply ? `<div class="mt-2 text-xs bg-gold/10 p-2 rounded border border-gold/20 text-gold-dark font-medium">Balasan: ${escHtml(it.admin_reply)}</div>` : ''}
           </div>
           <div class="flex items-center gap-2 shrink-0">
             ${isPending ? `<button onclick="updateFbStat(${it.id}, 'read')" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 text-xs font-semibold">Tandai Dibaca</button>` : ''}
+            <button onclick="fbReply(${it.id})" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-100 text-xs font-semibold">Balas</button>
             ${it.status !== 'resolved' ? `<button onclick="updateFbStat(${it.id}, 'resolved')" class="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-100 text-xs font-semibold">Selesai</button>` : ''}
             <button onclick="delFb(${it.id})" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg"><i data-lucide="trash" class="w-4 h-4"></i></button>
           </div>
@@ -73,6 +75,19 @@ window.updateFbStat = async function(id, status) {
   try {
     await adminPost('admin_update_feedback_status', { id, status });
     adminToast('Status diperbarui');
+    renderAdminFeedbacks();
+  } catch(e) {
+    alert('Gagal: ' + e.message);
+  }
+};
+
+window.fbReply = async function(id) {
+  const reply = prompt('Masukkan balasan untuk feedback ini:');
+  if (reply === null || reply.trim() === '') return;
+  try {
+    const res = await adminPost('admin_reply_feedback', { id: id, reply: reply.trim() });
+    if (res.error) throw new Error(res.error);
+    adminToast('Balasan terkirim ✓');
     renderAdminFeedbacks();
   } catch(e) {
     alert('Gagal: ' + e.message);

@@ -30,6 +30,8 @@ function renderDashboard() {
       <div class="grid grid-cols-2 gap-4 mb-8">
         ${dashCard('/katalog',          'library',        'Katalog Kitab',     'Jelajahi koleksi',          false)}
         ${dashCard('/search',           'search',         'Cari Kitab',        'Cari judul & isi',          false)}
+        ${dashCard('/my-activity',      'activity',       'Aktivitas Saya',    'Riwayat submit & request',  false)}
+        ${dashCard('/notifications',    'bell',           'Notifikasi',        'Pesan dari admin',          false)}
         ${isAdmin ? dashCard('/admin/books',      'book',      'Kitab',             'Tambah / edit / hapus',        true)  : ''}
         ${isAdmin ? dashCard('/admin/categories', 'folder',    'Kategori',          'Atur kategori kitab',          true)  : ''}
         ${isAdmin ? dashCard('/admin/history',    'history',   'CRUD History',      'Jejak perubahan admin',        true)  : ''}

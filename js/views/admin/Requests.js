@@ -70,6 +70,20 @@ async function renderAdminRequests() {
     }
   };
 
+  window.reqReply = async function(id) {
+    const reply = prompt('Masukkan balasan/catatan untuk request ini:');
+    if (reply === null || reply.trim() === '') return;
+    try {
+      const res = await adminPost('admin_reply_request', { id: id, reply: reply.trim() });
+      if (res.error) throw new Error(res.error);
+      adminToast('Balasan terkirim ✓');
+      reqLoad();
+    } catch(e) {
+      if (handleAuthError(e)) return;
+      adminToast('Gagal: ' + e.message, 'error'); 
+    }
+  };
+
   const statusBadge = s => {
     const cls = { pending: 'bg-yellow-100 text-yellow-700', fulfilled: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-600' };
     const lbl = { pending: 'Menunggu', fulfilled: 'Dipenuhi', rejected: 'Ditolak' };
@@ -94,16 +108,18 @@ async function renderAdminRequests() {
       const rowsHtml = rows.map(r => {
         const fulfillBtn = '<button onclick="reqUpdateStatus(' + r.id + ', \'fulfilled\')" title="Tandai Dipenuhi" class="p-1.5 rounded-lg hover:bg-green-100 text-green-700 transition-colors flex items-center gap-1.5 px-2 font-medium text-xs"><i data-lucide="check-circle" class="w-4 h-4"></i> Penuhi</button>';
         const rejectBtn  = '<button onclick="reqUpdateStatus(' + r.id + ', \'rejected\')" title="Tolak" class="p-1.5 rounded-lg hover:bg-red-100 text-red-700 transition-colors"><i data-lucide="x-circle" class="w-4 h-4"></i></button>';
+        const replyBtn   = '<button onclick="reqReply(' + r.id + ')" title="Balas" class="p-1.5 rounded-lg hover:bg-blue-100 text-blue-700 transition-colors"><i data-lucide="message-square" class="w-4 h-4"></i></button>';
         
-        let actBtns = '';
+        let actBtns = replyBtn;
         if (r.status === 'pending') {
-          actBtns = fulfillBtn + rejectBtn;
+          actBtns += fulfillBtn + rejectBtn;
         }
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
           + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.title) + '</div>'
           + '<div class="text-primary/40 text-xs mt-0.5">' + (r.author_or_category ? escHtml(r.author_or_category) + ' · ' : '') + (r.created_at||'').slice(0,10) + '</div>'
           + (r.description ? '<div class="text-primary/40 text-xs mt-0.5 line-clamp-1">“' + escHtml(r.description) + '”</div>' : '')
+          + (r.admin_reply ? '<div class="text-gold text-[10px] mt-1 bg-gold/5 p-1 rounded border border-gold/20">Balasan: ' + escHtml(r.admin_reply) + '</div>' : '')
           + '</td>'
           + '<td class="px-4 py-3"><div class="text-primary/70 text-xs">' + escHtml(r.user_email) + '</div></td>'
           + '<td class="px-4 py-3 hidden md:table-cell text-primary/55 text-xs">' + (r.request_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
