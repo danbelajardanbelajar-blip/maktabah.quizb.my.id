@@ -154,6 +154,30 @@ class SubmissionController {
                 ':author'  => $authorOrCat,
                 ':desc'    => $description,
             ]);
+
+            $actualUserEmail = $email;
+            $actualUserName  = $user['name'] ?? 'Tamu';
+
+            // 1. Email Tanda Terima untuk User
+            $userSubject = "Permintaan Kitab Telah Diterima";
+            $userBody = "<h3>Halo $actualUserName,</h3>
+                <p>Kami telah menerima permintaan kitab Anda: <strong>$title</strong>.</p>
+                <p>Admin kami akan berusaha mencari kitab yang Anda minta. Jika telah ditemukan atau ada balasan, Anda akan segera dihubungi melalui email ini.</p>
+                <p>Jazakumullah khairan,<br>Tim Admin Maktabah As-Sunniyyah</p>";
+            \App\Helpers\MailHelper::sendNotification($actualUserEmail, $userSubject, $userBody);
+
+            // 2. Email Notifikasi untuk Admin
+            $adminSubject = "Notifikasi Request Kitab Baru";
+            $adminBody = "<h3>Halo Admin,</h3>
+                <p>Terdapat permintaan kitab baru dari pengguna:</p>
+                <ul>
+                    <li><strong>Pengirim:</strong> $actualUserName ($actualUserEmail)</li>
+                    <li><strong>Judul/Pengarang:</strong> $title</li>
+                    <li><strong>Deskripsi Tambahan:</strong> $description</li>
+                </ul>
+                <p>Silakan login ke dashboard untuk membalas request tersebut.</p>";
+            \App\Helpers\MailHelper::sendNotification('admin@maktabah.quizb.my.id', $adminSubject, $adminBody);
+
             echo json_encode(['success' => true, 'message' => 'Request berhasil dikirim. Kami akan memprosesnya dan memberi tahu Anda via email jika sudah tersedia.']);
         } catch (Exception $e) {
             http_response_code(500);
