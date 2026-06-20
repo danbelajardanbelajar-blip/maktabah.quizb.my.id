@@ -63,6 +63,7 @@ $router->add('admin_update_request_status', 'AdminController', 'handleAdminUpdat
 $router->add('submit_file', 'SubmissionController', 'handleSubmitFile');
 $router->add('submit_request', 'SubmissionController', 'handleSubmitRequest');
 $router->add('submit_feedback', 'SubmissionController', 'handleSubmitFeedback');
+$router->add('user_reply_activity', 'SubmissionController', 'handleUserReplyActivity');
 $router->add('get_my_activities', 'SubmissionController', 'getMyActivities');
 $router->add('get_my_notifications', 'SubmissionController', 'getMyNotifications');
 $router->add('mark_notification_read', 'SubmissionController', 'markNotificationRead');

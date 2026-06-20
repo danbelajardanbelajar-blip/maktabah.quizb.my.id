@@ -95,7 +95,29 @@ class SubmissionController {
             ':mime_type'     => $mimeType,
             ':description'   => $description,
         ]);
-    
+            $actualUserEmail = $user['email'] ?? $submitterEmail;
+        $actualUserName  = $user['name'] ?? 'Tamu';
+
+        // 1. Email Tanda Terima untuk User
+        $userSubject = "Terima Kasih atas Kiriman File Anda";
+        $userBody = "<h3>Halo $actualUserName,</h3>
+            <p>Kami telah menerima file kiriman Anda dengan nama: <strong>$fileName</strong>.</p>
+            <p>Admin kami akan segera meninjau file tersebut sebelum dipublikasikan ke perpustakaan. Anda akan menerima pemberitahuan lebih lanjut jika file telah disetujui, ditolak, atau jika ada pesan balasan dari Admin.</p>
+            <p>Jazakumullah khairan,<br>Tim Admin Maktabah As-Sunniyyah</p>";
+        \App\Helpers\MailHelper::sendNotification($actualUserEmail, $userSubject, $userBody);
+
+        // 2. Email Notifikasi untuk Admin
+        $adminSubject = "Notifikasi Kiriman File Baru";
+        $adminBody = "<h3>Halo Admin,</h3>
+            <p>Terdapat kiriman file baru yang menunggu untuk ditinjau:</p>
+            <ul>
+                <li><strong>Pengirim:</strong> $actualUserName ($actualUserEmail)</li>
+                <li><strong>Nama File:</strong> $fileName</li>
+                <li><strong>Deskripsi:</strong> $description</li>
+            </ul>
+            <p>Silakan login ke dashboard untuk melakukan peninjauan (Approve/Reject).</p>";
+        \App\Helpers\MailHelper::sendNotification('admin@maktabah.quizb.my.id', $adminSubject, $adminBody);
+
         echo json_encode(['success' => true, 'message' => 'Kiriman berhasil dikirim dan sedang menunggu review admin.']);
     }
 
@@ -185,6 +207,31 @@ class SubmissionController {
         try {
             $stmt = $pdo->prepare("INSERT INTO feedbacks (user_id, email, content) VALUES (?, ?, ?)");
             $stmt->execute([$user ? $user['id'] : null, $email, $content]);
+
+            $actualUserEmail = $email;
+            $actualUserName  = $user['name'] ?? 'Tamu';
+
+            // 1. Email Tanda Terima untuk User
+            $userSubject = "Terima Kasih atas Feedback Anda";
+            $userBody = "<h3>Halo $actualUserName,</h3>
+                <p>Kami telah menerima pesan/feedback Anda untuk pengembangan layanan Maktabah As-Sunniyyah.</p>
+                <p>Berikut salinan pesan Anda:</p>
+                <blockquote><em>$content</em></blockquote>
+                <p>Masukan Anda sangat berarti bagi kami. Jika memerlukan balasan, kami akan segera membalas email Anda.</p>
+                <p>Jazakumullah khairan,<br>Tim Admin Maktabah As-Sunniyyah</p>";
+            \App\Helpers\MailHelper::sendNotification($actualUserEmail, $userSubject, $userBody);
+
+            // 2. Email Notifikasi untuk Admin
+            $adminSubject = "Notifikasi Feedback Baru";
+            $adminBody = "<h3>Halo Admin,</h3>
+                <p>Terdapat pesan/feedback baru masuk:</p>
+                <ul>
+                    <li><strong>Pengirim:</strong> $actualUserName ($actualUserEmail)</li>
+                </ul>
+                <p><strong>Isi Pesan:</strong><br>$content</p>
+                <p>Silakan login ke dashboard untuk membalas feedback tersebut.</p>";
+            \App\Helpers\MailHelper::sendNotification('admin@maktabah.quizb.my.id', $adminSubject, $adminBody);
+
             echo json_encode(['success' => true, 'message' => 'Terima kasih! Feedback Anda telah berhasil dikirim.']);
         } catch (Exception $e) {
             error_log('Feedback Error: ' . $e->getMessage());
@@ -265,6 +312,74 @@ class SubmissionController {
         $pdo = Database::getConnection();
         $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?");
         $stmt->execute([$id, $user['id']]);
+
+        echo json_encode(['success' => true]);
+    }
+
+    public function handleUserReplyActivity(): void {
+        $user = AuthHelper::getSessionUser();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $type = $input['type'] ?? '';
+        $id = $input['id'] ?? 0;
+        $reply = trim($input['reply'] ?? '');
+
+        if (!$type || !$id || !$reply) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid data.']);
+            return;
+        }
+
+        $pdo = Database::getConnection();
+        $table = '';
+        $column = '';
+
+        if ($type === 'submissions') {
+            $table = 'file_submissions';
+            $column = 'review_note';
+        } elseif ($type === 'requests') {
+            $table = 'kitab_requests';
+            $column = 'admin_reply';
+        } elseif ($type === 'feedbacks') {
+            $table = 'feedbacks';
+            $column = 'admin_reply';
+        } else {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid type.']);
+            return;
+        }
+
+        // Fetch existing reply to append to it
+        $stmt = $pdo->prepare("SELECT $column FROM $table WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $user['id']]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not found or unauthorized.']);
+            return;
+        }
+
+        $existing = $row[$column] ?? '';
+        $userName = $user['name'];
+        // Format append: if existing already has content, add a separator
+        $newReply = $existing . "\n\n[$userName]:\n" . $reply;
+
+        $updateStmt = $pdo->prepare("UPDATE $table SET $column = ? WHERE id = ?");
+        $updateStmt->execute([$newReply, $id]);
+
+        // Send email to admin
+        $adminSubject = "Notifikasi Balasan User (" . ucfirst($type) . ")";
+        $adminBody = "<h3>Halo Admin,</h3>
+            <p>User <strong>$userName</strong> membalas pesan Anda terkait <strong>" . ucfirst($type) . " (ID: $id)</strong>.</p>
+            <p><strong>Isi Balasan:</strong><br>$reply</p>
+            <p>Silakan login ke dashboard untuk membalas kembali jika diperlukan.</p>";
+        \App\Helpers\MailHelper::sendNotification('admin@maktabah.quizb.my.id', $adminSubject, $adminBody);
 
         echo json_encode(['success' => true]);
     }

@@ -42,7 +42,7 @@ export async function renderMyActivity() {
         return `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">${escHtml(status)}</span>`;
     };
 
-    const renderList = (title, icon, items, typeLabel) => {
+    const renderList = (title, icon, items, typeLabel, apiType) => {
         if (!items || items.length === 0) return '';
         let listHtml = `<div class="bg-white rounded-2xl shadow-sm border border-gold/10 p-5 sm:p-6 mb-6">
             <h2 class="text-lg font-bold text-primary mb-4 flex items-center gap-2">
@@ -65,8 +65,13 @@ export async function renderMyActivity() {
                     </div>
                     ${item.admin_reply ? `
                         <div class="mt-3 p-3 bg-white rounded-lg border border-gold/20 text-sm">
-                            <p class="text-xs font-bold text-gold mb-1">Balasan Admin:</p>
+                            <p class="text-xs font-bold text-gold mb-1">Histori Pesan:</p>
                             <p class="text-primary/80 whitespace-pre-wrap">${escHtml(item.admin_reply)}</p>
+                            <div class="mt-3 pt-3 border-t border-gold/10 flex justify-end">
+                                <button onclick="window.replyActivity('${apiType}', ${item.id})" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gold-dark hover:text-white bg-gold/10 hover:bg-gold border border-gold/20 rounded-lg transition-all shadow-sm hover:shadow-gold/30">
+                                    <i data-lucide="reply" class="w-3 h-3"></i> Balas Pesan
+                                </button>
+                            </div>
                         </div>
                     ` : ''}
                 </div>`;
@@ -76,9 +81,9 @@ export async function renderMyActivity() {
         return listHtml;
     };
 
-    html += renderList('Kiriman File', 'upload-cloud', submissions, 'Upload');
-    html += renderList('Request Kitab', 'help-circle', requests, 'Request');
-    html += renderList('Feedback', 'message-square', feedbacks, 'Saran/Masukan');
+    html += renderList('Kiriman File', 'upload-cloud', submissions, 'Upload', 'submissions');
+    html += renderList('Request Kitab', 'help-circle', requests, 'Request', 'requests');
+    html += renderList('Feedback', 'message-square', feedbacks, 'Saran/Masukan', 'feedbacks');
 
     if (!html) {
         html = `
@@ -101,3 +106,23 @@ export async function renderMyActivity() {
   }
 }
 window.renderMyActivity = renderMyActivity;
+
+window.replyActivity = async function(apiType, id) {
+  const replyText = prompt('Masukkan balasan Anda ke Admin:');
+  if (replyText === null || replyText.trim() === '') return;
+  
+  try {
+    const res = await apiFetch('/api.php?action=user_reply_activity', {
+      method: 'POST',
+      body: JSON.stringify({ type: apiType, id: id, reply: replyText })
+    });
+    if (res.success) {
+      alert('Balasan berhasil dikirim.');
+      renderMyActivity();
+    } else {
+      alert('Gagal: ' + (res.error || 'Unknown error'));
+    }
+  } catch (e) {
+    alert('Terjadi kesalahan jaringan.');
+  }
+};

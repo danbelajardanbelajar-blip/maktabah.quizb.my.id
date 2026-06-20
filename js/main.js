@@ -14,6 +14,7 @@ import * as View_dashboard from './views/dashboard.js';
 import * as View_favorit from './views/favorit.js';
 import * as View_my_activity from './views/my_activity.js';
 import * as View_notifications from './views/notifications.js';
+import * as View_agreement from './views/agreement.js';
 
 // Expose to window for admin.js and index.php
 Core.setNavigate(localNavigate);
@@ -51,6 +52,7 @@ const routes = {
   '/favorit': View_favorit.renderFavorit,
   '/my-activity': View_my_activity.renderMyActivity,
   '/notifications': View_notifications.renderNotifications,
+  '/agreement': View_agreement.renderAgreement,
 };
 window.routes = routes;
 
@@ -59,9 +61,14 @@ function localNavigate(path, push = true) {
   if (push) history.pushState({}, '', path);
   const base = path.split('?')[0];
   
+  // Guard for First Login (TOS Agreement)
+  const u = window.SESSION_USER;
+  if (u && u.agreed_tos == 0 && base !== '/agreement') {
+    return localNavigate('/agreement');
+  }
+  
   // Guard for admin routes
   if (base.startsWith('/admin')) {
-    const u = window.SESSION_USER;
     if (!u) {
       window.location.href = '/auth.php?action=login';
       return;
