@@ -57,8 +57,8 @@ async function loadNotifications() {
       if (n.type === 'feedback') icon = 'message-square';
 
       html += `
-        <div class="relative p-4 rounded-xl border ${isUnread ? 'bg-white border-gold shadow-sm cursor-pointer' : 'bg-gray-50 border-gray-100'} transition-all"
-             ${isUnread ? `onclick="markNotifRead(${n.id}, this)"` : ''}>
+        <div class="relative p-4 rounded-xl border ${isUnread ? 'bg-white border-gold shadow-sm' : 'bg-gray-50 border-gray-100'} transition-all cursor-pointer hover:shadow-md"
+             onclick="handleNotifClick(${n.id}, ${isUnread})">
             ${isUnread ? '<div class="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-red-500"></div>' : ''}
             <div class="flex items-start gap-4">
                 <div class="w-10 h-10 shrink-0 rounded-full bg-cream flex items-center justify-center border border-gold/20">
@@ -85,21 +85,18 @@ async function loadNotifications() {
   }
 }
 
-window.markNotifRead = async function(id, el) {
-    try {
-        const fd = new FormData();
-        fd.append('id', id);
-        const res = await fetch('/api.php?action=mark_notification_read', { method: 'POST', body: fd });
-        if (res.ok) {
-            el.classList.remove('bg-white', 'border-gold', 'shadow-sm', 'cursor-pointer');
-            el.classList.add('bg-gray-50', 'border-gray-100');
-            el.removeAttribute('onclick');
-            const dot = el.querySelector('.bg-red-500');
-            if (dot) dot.remove();
+window.handleNotifClick = async function(id, isUnread) {
+    if (isUnread) {
+        try {
+            const fd = new FormData();
+            fd.append('id', id);
+            await fetch('/api.php?action=mark_notification_read', { method: 'POST', body: fd });
+        } catch (e) {
+            console.error(e);
         }
-    } catch (e) {
-        console.error(e);
     }
+    // Navigate to my-activity
+    navigate('/my-activity');
 };
 
 window.renderNotifications = renderNotifications;
