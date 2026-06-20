@@ -41,6 +41,15 @@ class MailHelper {
             $mail->Password   = 'i3SPCi7r5998@kH'; 
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; 
             $mail->Port       = 465; 
+            
+            // Bypass verifikasi SSL (sering terjadi masalah di shared hosting jika tidak di-bypass)
+            $mail->SMTPOptions = array(
+                'ssl' => array(
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true
+                )
+            );
             // ==========================================
 
             $mail->setFrom('admin@maktabah.quizb.my.id', 'Maktabah Admin');
