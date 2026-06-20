@@ -6,10 +6,15 @@ use Exception;
 
 // Mengecek beberapa kemungkinan letak folder PHPMailer di cPanel/Server
 $possiblePaths = [
-    dirname(__DIR__, 2) . '/vendor/phpmailer/phpmailer/src/',
+    dirname(__DIR__, 2) . '/vendor/phpmailer/phpmailer/src/', // jika vendor di dalam folder app
     dirname(__DIR__, 2) . '/vendor/phpmailer/src/',
+    dirname(__DIR__, 3) . '/vendor/phpmailer/phpmailer/src/', // jika vendor di public_html sedangkan app di public_html/folder
+    dirname(__DIR__, 3) . '/vendor/phpmailer/src/',
     $_SERVER['DOCUMENT_ROOT'] . '/vendor/phpmailer/phpmailer/src/',
-    $_SERVER['DOCUMENT_ROOT'] . '/vendor/phpmailer/src/'
+    $_SERVER['DOCUMENT_ROOT'] . '/vendor/phpmailer/src/',
+    '/home/quic1934/public_html/vendor/phpmailer/phpmailer/src/', // Hardcoded absolut path berdasar error
+    '/home/quic1934/public_html/vendor/phpmailer/src/',
+    '/home/quic1934/public_html/maktabah.quizb.my.id/vendor/phpmailer/phpmailer/src/'
 ];
 
 foreach ($possiblePaths as $path) {
