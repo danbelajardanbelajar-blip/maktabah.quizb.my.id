@@ -1275,11 +1275,11 @@ endif;
           });
         }
         
-        // Append a timestamp to the URL to bypass browser cache
+        // Reload page to fetch fresh HTML/JS, use cache: 'reload' to force network request
         setTimeout(() => {
-          const url = new URL(window.location.href);
-          url.searchParams.set('force_update', new Date().getTime());
-          window.location.replace(url.toString());
+          fetch(window.location.href, { cache: 'reload' })
+            .then(() => window.location.reload(true))
+            .catch(() => window.location.reload(true));
         }, 400);
       };
 
