@@ -62,7 +62,8 @@ export function renderAgreement() {
     btn.disabled = true;
 
     try {
-      const res = await apiFetch('/api.php?action=agree_tos', { method: 'POST' });
+      const response = await fetch('/api.php?action=agree_tos', { method: 'POST' });
+      const res = await response.json();
       if (res.success) {
         // Update session lokal
         window.SESSION_USER.agreed_tos = 1;
