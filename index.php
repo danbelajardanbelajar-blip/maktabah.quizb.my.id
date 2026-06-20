@@ -347,18 +347,18 @@ endif;
       theme: {
         extend: {
           colors: {
-            primary:  { DEFAULT: '#0f172a', light: '#1e293b', dark: '#020617' },
-            gold:     { DEFAULT: '#d4af37', light: '#fde68a', dark: '#b48600' },
-            cream:    { DEFAULT: '#fdfbf7', dark: '#e2e8f0' },
-            ink:      { DEFAULT: '#0f172a' },
+            primary:  { DEFAULT: '#3f4e4f', light: '#5c6d6e', dark: '#2c3637' },
+            gold:     { DEFAULT: '#a27b5c', light: '#c19b7d', dark: '#835d40' },
+            cream:    { DEFAULT: '#f5f5f0', dark: '#e8e8df' },
+            ink:      { DEFAULT: '#2c3637' },
           },
           fontFamily: {
             latin:  ['Lato', 'sans-serif'],
             arabic: ['"Amiri"', '"Noto Naskh Arabic"', 'serif'],
           },
           boxShadow: {
-            card: '0 2px 16px 0 rgba(15,23,42,.08)',
-            'card-hover': '0 8px 32px 0 rgba(15,23,42,.16)',
+            card: '0 2px 16px 0 rgba(63,78,79,.08)',
+            'card-hover': '0 8px 32px 0 rgba(63,78,79,.16)',
           },
         }
       }
@@ -376,13 +376,13 @@ endif;
   <style>
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Lato', sans-serif; background: #fdfbf7; color: #0f172a; }
+    body { font-family: 'Lato', sans-serif; background: #f5f5f0; color: #2c3637; }
 
     .arabic { font-family: 'Amiri', 'Noto Naskh Arabic', serif; direction: rtl; unicode-bidi: plaintext; }
 
     /* Navbar scroll shadow */
     #navbar { transition: box-shadow .25s ease, background .25s ease; }
-    #navbar.scrolled { box-shadow: 0 2px 20px rgba(15,23,42,.12); background: rgba(253,251,247,.97); backdrop-filter: blur(10px); }
+    #navbar.scrolled { box-shadow: 0 2px 20px rgba(63,78,79,.12); background: rgba(245,245,240,.97); backdrop-filter: blur(10px); }
 
     /* SPA page transitions */
     #app-content { animation: fadeIn .3s ease; text-align: justify; text-justify: inter-word; }
@@ -390,7 +390,7 @@ endif;
 
     /* Card hover */
     .book-card { transition: transform .2s ease, box-shadow .2s ease; }
-    .book-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(15,23,42,.16); }
+    .book-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(63,78,79,.16); }
 
     /* ── Download format badge (ZIP / DOCX) ─────────────────────
        Shown next to the download icon to indicate output format.
@@ -410,18 +410,18 @@ endif;
       white-space: nowrap;
       pointer-events: none;
     }
-    .dl-fmt-zip  { background: rgba(212,175,55,.14); color: #b48600; border-color: rgba(212,175,55,.35); }
-    .dl-fmt-docx { background: rgba(15,23,42,.09);  color: #0f172a; border-color: rgba(15,23,42,.20); }
-    html.dark .dl-fmt-zip  { background: rgba(212,175,55,.18); color: #d4af37; border-color: rgba(212,175,55,.35); }
-    html.dark .dl-fmt-docx { background: rgba(226,232,240,.10); color: #94a3b8; border-color: rgba(226,232,240,.25); }
+    .dl-fmt-zip  { background: rgba(162,123,92,.14); color: #835d40; border-color: rgba(162,123,92,.35); }
+    .dl-fmt-docx { background: rgba(63,78,79,.09);  color: #2c3637; border-color: rgba(63,78,79,.20); }
+    html.dark .dl-fmt-zip  { background: rgba(162,123,92,.18); color: #a27b5c; border-color: rgba(162,123,92,.35); }
+    html.dark .dl-fmt-docx { background: rgba(92,109,110,.10); color: #5c6d6e; border-color: rgba(92,109,110,.25); }
 
     /* Hero gradient */
     .hero-bg {
-      background: linear-gradient(135deg, #0f172a 0%, #020617 40%, #0f172a 70%, #1e293b 100%);
+      background: linear-gradient(135deg, #3f4e4f 0%, #2c3637 40%, #3f4e4f 70%, #5c6d6e 100%);
     }
 
     /* Gold accent line */
-    .gold-line { background: linear-gradient(90deg, transparent, #d4af37, transparent); height: 1px; }
+    .gold-line { background: linear-gradient(90deg, transparent, #a27b5c, transparent); height: 1px; }
 
     /* Skeleton shimmer */
     .skeleton { background: linear-gradient(90deg, #e8e4d9 25%, #f0ece0 50%, #e8e4d9 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
