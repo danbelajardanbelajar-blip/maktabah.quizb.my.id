@@ -175,6 +175,9 @@ export async function renderDetail(params) {
       <!-- Mobile Bottom Action Bar -->
       ${contentPgs > 0 ? `
       <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-cream-dark shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-[60] sm:hidden flex justify-around items-center px-2 py-3 text-primary pb-safe">
+        <a href="/" data-route="/" class="p-2 hover:bg-cream rounded-xl transition flex flex-col items-center gap-1 no-underline text-primary" title="Beranda">
+          <i data-lucide="home" class="w-5 h-5"></i>
+        </a>
         <button id="mobile-font-dec" class="p-2 hover:bg-cream rounded-xl transition flex flex-col items-center gap-1" title="Perkecil Font">
           <i data-lucide="minus" class="w-5 h-5"></i>
         </button>
