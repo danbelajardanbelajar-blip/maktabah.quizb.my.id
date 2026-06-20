@@ -347,18 +347,18 @@ endif;
       theme: {
         extend: {
           colors: {
-            primary:  { DEFAULT: '#1a3a2a', light: '#2d5c42', dark: '#0f2218' },
-            gold:     { DEFAULT: '#c9a84c', light: '#e0c074', dark: '#a07828' },
-            cream:    { DEFAULT: '#faf8f3', dark: '#f0ece0' },
-            ink:      { DEFAULT: '#1c1c1e' },
+            primary:  { DEFAULT: '#064e3b', light: '#047857', dark: '#022c22' },
+            gold:     { DEFAULT: '#f59e0b', light: '#fbbf24', dark: '#d97706' },
+            cream:    { DEFAULT: '#f8fafc', dark: '#e2e8f0' },
+            ink:      { DEFAULT: '#0f172a' },
           },
           fontFamily: {
             latin:  ['Lato', 'sans-serif'],
             arabic: ['"Amiri"', '"Noto Naskh Arabic"', 'serif'],
           },
           boxShadow: {
-            card: '0 2px 16px 0 rgba(26,58,42,.08)',
-            'card-hover': '0 8px 32px 0 rgba(26,58,42,.16)',
+            card: '0 2px 16px 0 rgba(6,78,59,.08)',
+            'card-hover': '0 8px 32px 0 rgba(6,78,59,.16)',
           },
         }
       }
@@ -376,13 +376,13 @@ endif;
   <style>
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Lato', sans-serif; background: #faf8f3; color: #1c1c1e; }
+    body { font-family: 'Lato', sans-serif; background: #f8fafc; color: #0f172a; }
 
     .arabic { font-family: 'Amiri', 'Noto Naskh Arabic', serif; direction: rtl; unicode-bidi: plaintext; }
 
     /* Navbar scroll shadow */
     #navbar { transition: box-shadow .25s ease, background .25s ease; }
-    #navbar.scrolled { box-shadow: 0 2px 20px rgba(26,58,42,.12); background: rgba(250,248,243,.97); backdrop-filter: blur(10px); }
+    #navbar.scrolled { box-shadow: 0 2px 20px rgba(6,78,59,.12); background: rgba(248,250,252,.97); backdrop-filter: blur(10px); }
 
     /* SPA page transitions */
     #app-content { animation: fadeIn .3s ease; text-align: justify; text-justify: inter-word; }
@@ -390,7 +390,7 @@ endif;
 
     /* Card hover */
     .book-card { transition: transform .2s ease, box-shadow .2s ease; }
-    .book-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(26,58,42,.16); }
+    .book-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(6,78,59,.16); }
 
     /* ── Download format badge (ZIP / DOCX) ─────────────────────
        Shown next to the download icon to indicate output format.
