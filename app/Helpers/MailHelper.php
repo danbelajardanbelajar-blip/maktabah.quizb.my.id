@@ -35,12 +35,12 @@ class MailHelper {
             // KONFIGURASI SMTP
             // ==========================================
             $mail->isSMTP();
-            $mail->Host       = 'mail.maktabah.quizb.my.id'; // GANTI dengan Host SMTP Anda (contoh: smtp.hostinger.com)
+            $mail->Host       = 'maktabah.quizb.my.id'; 
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'admin@maktabah.quizb.my.id'; // GANTI dengan alamat email Anda
-            $mail->Password   = 'PASSWORD_EMAIL_ANDA'; // GANTI dengan password email Anda
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Gunakan ENCRYPTION_SMTPS untuk port 465, atau ENCRYPTION_STARTTLS untuk port 587
-            $mail->Port       = 465; // GANTI dengan port SMTP Anda (465 atau 587)
+            $mail->Username   = 'admin@maktabah.quizb.my.id'; 
+            $mail->Password   = 'i3SPCi7r5998@kH'; 
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; 
+            $mail->Port       = 465; 
             // ==========================================
 
             $mail->setFrom('admin@maktabah.quizb.my.id', 'Maktabah Admin');
