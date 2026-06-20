@@ -1,4 +1,4 @@
-import { apiFetch, app, reicons, escHtml, paginationHtml, handleAuthError } from '../../core/core.js';
+import { apiFetch, $, app, reicons, escHtml, paginationHtml, handleAuthError, showPromptModal } from '../../core/core.js';
 import { adminGuard, adminPost, adminToast, adminSpinner, adminNavBar, autoDir, bindAutoDir } from '../../core/AdminUtils.js';
 
 // ══════════════════════════════════════════════════════════════
@@ -70,18 +70,19 @@ async function renderAdminRequests() {
     }
   };
 
-  window.reqReply = async function(id) {
-    const reply = prompt('Masukkan balasan/catatan untuk request ini:');
-    if (reply === null || reply.trim() === '') return;
-    try {
-      const res = await adminPost('admin_reply_request', { id: id, reply: reply.trim() });
-      if (res.error) throw new Error(res.error);
-      adminToast('Balasan terkirim ✓');
-      reqLoad();
-    } catch(e) {
-      if (handleAuthError(e)) return;
-      adminToast('Gagal: ' + e.message, 'error'); 
-    }
+  window.reqReply = function(id) {
+    showPromptModal('Balas Request', 'Masukkan balasan/catatan untuk request ini:', async (reply) => {
+      if (!reply || reply.trim() === '') return;
+      try {
+        const res = await adminPost('admin_reply_request', { id: id, reply: reply.trim() });
+        if (res.error) throw new Error(res.error);
+        adminToast('Balasan terkirim ✓');
+        reqLoad();
+      } catch(e) {
+        if (handleAuthError(e)) return;
+        adminToast('Gagal: ' + e.message, 'error'); 
+      }
+    });
   };
 
   const statusBadge = s => {

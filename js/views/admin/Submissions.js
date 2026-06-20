@@ -1,4 +1,4 @@
-import { apiFetch, app, reicons, escHtml, paginationHtml, handleAuthError } from '../../core/core.js';
+import { apiFetch, $, app, reicons, escHtml, paginationHtml, handleAuthError, showPromptModal } from '../../core/core.js';
 import { adminGuard, adminPost, adminToast, adminSpinner, adminNavBar, autoDir, bindAutoDir } from '../../core/AdminUtils.js';
 
 // ══════════════════════════════════════════════════════════════
@@ -141,18 +141,19 @@ async function renderAdminSubmissions() {
     }
   };
 
-  window.subReply = async function(id) {
-    const reply = prompt('Masukkan pesan tambahan untuk kiriman ini:');
-    if (reply === null || reply.trim() === '') return;
-    try {
-      const res = await adminPost('admin_reply_submission', { id: id, reply: reply.trim() });
-      if (res.error) throw new Error(res.error);
-      adminToast('Pesan terkirim ✓');
-      subLoad();
-    } catch(e) {
-      if (handleAuthError(e)) return;
-      adminToast('Gagal: ' + e.message, 'error'); 
-    }
+  window.subReply = function(id) {
+    showPromptModal('Balas Kiriman', 'Masukkan pesan tambahan untuk kiriman ini:', async (reply) => {
+      if (!reply || reply.trim() === '') return;
+      try {
+        const res = await adminPost('admin_reply_submission', { id: id, reply: reply.trim() });
+        if (res.error) throw new Error(res.error);
+        adminToast('Pesan terkirim ✓');
+        subLoad();
+      } catch(e) {
+        if (handleAuthError(e)) return;
+        adminToast('Gagal: ' + e.message, 'error'); 
+      }
+    });
   };
 
   window.subDelete = async function(id) {

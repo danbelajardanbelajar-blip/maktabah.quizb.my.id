@@ -1,4 +1,4 @@
-import { apiFetch, navigate, app, reicons, escHtml } from '../core/core.js';
+import { apiFetch, navigate, app, reicons, escHtml, showPromptModal } from '../core/core.js';
 
 export async function renderMyActivity() {
   if (!window.SESSION_USER) {
@@ -107,22 +107,21 @@ export async function renderMyActivity() {
 }
 window.renderMyActivity = renderMyActivity;
 
-window.replyActivity = async function(apiType, id) {
-  const replyText = prompt('Masukkan balasan Anda ke Admin:');
-  if (replyText === null || replyText.trim() === '') return;
-  
-  try {
-    const res = await apiFetch('/api.php?action=user_reply_activity', {
-      method: 'POST',
-      body: JSON.stringify({ type: apiType, id: id, reply: replyText })
-    });
-    if (res.success) {
-      alert('Balasan berhasil dikirim.');
-      renderMyActivity();
-    } else {
-      alert('Gagal: ' + (res.error || 'Unknown error'));
+window.replyActivity = function(apiType, id) {
+  showPromptModal('Balas Pesan', 'Masukkan balasan Anda ke Admin di bawah ini:', async (replyText) => {
+    try {
+      const res = await apiFetch('/api.php?action=user_reply_activity', {
+        method: 'POST',
+        body: JSON.stringify({ type: apiType, id: id, reply: replyText })
+      });
+      if (res.success) {
+        alert('Balasan berhasil dikirim.');
+        renderMyActivity();
+      } else {
+        alert('Gagal: ' + (res.error || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Terjadi kesalahan jaringan.');
     }
-  } catch (e) {
-    alert('Terjadi kesalahan jaringan.');
-  }
+  });
 };

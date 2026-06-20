@@ -62,6 +62,46 @@ export const el = (tag, cls, html = '') => {
 export const app     = () => $('#app-content');
 export const reicons = () => { if (window.lucide) lucide.createIcons(); };
 
+export function showPromptModal(title, message, callback) {
+  const overlay = el('div', 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm opacity-0 transition-opacity duration-200');
+  const modal = el('div', 'bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-200');
+  
+  modal.innerHTML = `
+    <div class="p-5 sm:p-6">
+      <h3 class="text-lg font-bold text-primary mb-2">${title}</h3>
+      <p class="text-sm text-primary/70 mb-4">${message}</p>
+      <textarea id="promptModalText" rows="4" class="w-full bg-cream-light/50 border border-gold/30 text-primary text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold placeholder-primary/30 transition-all resize-none mb-4" placeholder="Ketik pesan Anda di sini..."></textarea>
+      <div class="flex justify-end gap-3">
+        <button id="promptModalCancel" class="px-4 py-2 text-sm font-semibold text-primary/60 hover:text-primary transition-colors">Batal</button>
+        <button id="promptModalSubmit" class="px-5 py-2 text-sm font-bold text-white bg-gold hover:bg-gold-dark rounded-xl shadow-sm hover:shadow-gold/30 transition-all">Kirim</button>
+      </div>
+    </div>
+  `;
+  
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  // Animate in
+  requestAnimationFrame(() => {
+    overlay.classList.remove('opacity-0');
+    modal.classList.remove('scale-95');
+  });
+
+  const close = () => {
+    overlay.classList.add('opacity-0');
+    modal.classList.add('scale-95');
+    setTimeout(() => overlay.remove(), 200);
+  };
+
+  $('#promptModalCancel', overlay).onclick = close;
+  $('#promptModalSubmit', overlay).onclick = () => {
+    const val = $('#promptModalText', overlay).value.trim();
+    if (!val) return;
+    close();
+    callback(val);
+  };
+}
+
 export const mobileFeedbackBanner = `
   <div class="md:hidden px-4 mb-24 mt-8">
     <a href="/feedback" data-route="/feedback" class="block bg-gradient-to-r from-cream-dark to-cream rounded-2xl p-4 border border-gold/20 shadow-sm relative overflow-hidden group no-underline">
