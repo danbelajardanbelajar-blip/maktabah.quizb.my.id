@@ -57,6 +57,27 @@ export async function renderHome() {
       </section>
     </div>
 
+    <!-- Kitab Terpopuler -->
+    <div class="gold-line"></div>
+    <section class="w-full bg-cream py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
+              <i data-lucide="flame" class="w-4 h-4 text-gold"></i>
+            </div>
+            <h2 class="text-xl font-bold text-primary">Kitab Terpopuler</h2>
+          </div>
+          <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
+            Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
+        <div id="popular-books-grid">
+          ${skeletonCards(5)}
+        </div>
+      </div>
+    </section>
+
     <!-- Baru Saja Dibuka -->
     <div class="gold-line"></div>
     <section class="w-full bg-cream-dark py-12">
@@ -167,6 +188,27 @@ export async function renderHome() {
           ${safe}
         </button>`;
       }).join('');
+      reicons();
+    } catch { /* abaikan jika gagal */ }
+  })();
+
+  // Load Kitab Terpopuler
+  (async () => {
+    try {
+      const grid = document.getElementById('popular-books-grid');
+      if (!grid) return;
+      const res = await apiFetch({ action: 'popular_books' });
+      const books = res.data || [];
+      if (!books.length) {
+        grid.innerHTML = `
+          <div class="col-span-full flex flex-col items-center justify-center gap-3 py-10 text-center">
+            <p class="text-primary/45 text-sm">Belum ada data popularitas.</p>
+          </div>`;
+        return;
+      }
+      grid.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        ${books.map(b => bookCard(b)).join('')}
+      </div>`;
       reicons();
     } catch { /* abaikan jika gagal */ }
   })();

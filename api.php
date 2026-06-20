@@ -18,6 +18,7 @@ $router->add('book', 'BookController', 'handleBook');
 $router->add('download_book', 'BookController', 'handleDownloadBook');
 $router->add('content', 'BookController', 'handleContent');
 $router->add('latest', 'BookController', 'handleLatest');
+$router->add('popular_books', 'BookController', 'handlePopularBooks');
 
 // Categories
 $router->add('categories', 'CategoryController', 'handleCategories');

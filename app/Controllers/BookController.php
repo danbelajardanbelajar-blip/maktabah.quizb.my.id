@@ -61,7 +61,15 @@ class BookController {
         $book = $stmt->fetch();
     
         if (!$book) { http_response_code(404); echo json_encode(['error' => 'Kitab not found.']); return; }
-    
+
+        // Increment views
+        try {
+            $pdo->prepare("UPDATE books SET views = views + 1 WHERE bkid = :id")->execute([':id' => $id]);
+        } catch (\Exception $e) {
+            $this->ensureViewsColumn();
+            $pdo->prepare("UPDATE books SET views = views + 1 WHERE bkid = :id")->execute([':id' => $id]);
+        }
+
         // Ambil daftar juz beserta jumlah halaman masing-masing
         // Kolom juz sudah diisi oleh fill_juz.php (SMALLINT, default 1)
         $juzStmt = $pdo->prepare(
