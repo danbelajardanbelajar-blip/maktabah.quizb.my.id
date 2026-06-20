@@ -58,7 +58,14 @@ class MailHelper {
             // ==========================================
 
             $mail->setFrom('admin@maktabah.quizb.my.id', 'Maktabah Admin');
-            $mail->addAddress($toEmail);
+
+            if (is_array($toEmail)) {
+                foreach ($toEmail as $email) {
+                    $mail->addAddress($email);
+                }
+            } else {
+                $mail->addAddress($toEmail);
+            }
 
             $mail->isHTML(true);
             $mail->Subject = $subject;

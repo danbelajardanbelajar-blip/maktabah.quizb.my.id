@@ -116,7 +116,7 @@ class SubmissionController {
                 <li><strong>Deskripsi:</strong> $description</li>
             </ul>
             <p>Silakan login ke dashboard untuk melakukan peninjauan (Approve/Reject).</p>";
-        \App\Helpers\MailHelper::sendNotification('admin@maktabah.quizb.my.id', $adminSubject, $adminBody);
+        \App\Helpers\MailHelper::sendNotification(['admin@maktabah.quizb.my.id', 'zenhkm@gmail.com'], $adminSubject, $adminBody);
 
         echo json_encode(['success' => true, 'message' => 'Kiriman berhasil dikirim dan sedang menunggu review admin.']);
     }
@@ -176,7 +176,7 @@ class SubmissionController {
                     <li><strong>Deskripsi Tambahan:</strong> $description</li>
                 </ul>
                 <p>Silakan login ke dashboard untuk membalas request tersebut.</p>";
-            \App\Helpers\MailHelper::sendNotification('admin@maktabah.quizb.my.id', $adminSubject, $adminBody);
+            \App\Helpers\MailHelper::sendNotification(['admin@maktabah.quizb.my.id', 'zenhkm@gmail.com'], $adminSubject, $adminBody);
 
             echo json_encode(['success' => true, 'message' => 'Request berhasil dikirim. Kami akan memprosesnya dan memberi tahu Anda via email jika sudah tersedia.']);
         } catch (Exception $e) {
@@ -254,7 +254,7 @@ class SubmissionController {
                 </ul>
                 <p><strong>Isi Pesan:</strong><br>$content</p>
                 <p>Silakan login ke dashboard untuk membalas feedback tersebut.</p>";
-            \App\Helpers\MailHelper::sendNotification('admin@maktabah.quizb.my.id', $adminSubject, $adminBody);
+            \App\Helpers\MailHelper::sendNotification(['admin@maktabah.quizb.my.id', 'zenhkm@gmail.com'], $adminSubject, $adminBody);
 
             echo json_encode(['success' => true, 'message' => 'Terima kasih! Feedback Anda telah berhasil dikirim.']);
         } catch (Exception $e) {
@@ -403,7 +403,7 @@ class SubmissionController {
             <p>User <strong>$userName</strong> membalas pesan Anda terkait <strong>" . ucfirst($type) . " (ID: $id)</strong>.</p>
             <p><strong>Isi Balasan:</strong><br>$reply</p>
             <p>Silakan login ke dashboard untuk membalas kembali jika diperlukan.</p>";
-        \App\Helpers\MailHelper::sendNotification('admin@maktabah.quizb.my.id', $adminSubject, $adminBody);
+        \App\Helpers\MailHelper::sendNotification(['admin@maktabah.quizb.my.id', 'zenhkm@gmail.com'], $adminSubject, $adminBody);
 
         echo json_encode(['success' => true]);
     }
