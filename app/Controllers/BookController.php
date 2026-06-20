@@ -166,6 +166,11 @@ class BookController {
                 $phpWord = $this->buildJuzDocx($book, $pageMeta, $juzNumber, 1, $isArabic);
                 $filename = $baseFilename . '.docx';
     
+                // Bersihkan output buffer yang mungkin mengandung whitespace / karakter sampah
+                while (ob_get_level()) {
+                    @ob_end_clean();
+                }
+
                 header_remove('Content-Type');
                 header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
                 header('Content-Disposition: ' . $this->contentDispositionHeader($filename));
@@ -250,6 +255,11 @@ class BookController {
     
         // ── Kirim ZIP ke browser ──────────────────────────────────
         $zipFilename = $baseFilename . '.zip';
+        // Bersihkan output buffer yang mungkin mengandung whitespace / karakter sampah
+        while (ob_get_level()) {
+            @ob_end_clean();
+        }
+
         header_remove('Content-Type');
         header('Content-Type: application/zip');
         header('Content-Disposition: ' . $this->contentDispositionHeader($zipFilename));
