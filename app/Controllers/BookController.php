@@ -471,7 +471,13 @@ class BookController {
         
         // Fungsi pembersih karakter terlarang XML (mencegah corrupt DOCX)
         $sanitize = function($text) {
+            // Pastikan UTF-8
             $text = mb_convert_encoding($text ?? '', 'UTF-8', 'UTF-8');
+            // Decode HTML entities (e.g., &amp;)
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_XML1, 'UTF-8');
+            // Hapus tag HTML yang mungkin ada di konten
+            $text = strip_tags($text);
+            // Buang karakter kontrol yang tidak diizinkan dalam XML
             return preg_replace('/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/u', '', $text);
         };
         
