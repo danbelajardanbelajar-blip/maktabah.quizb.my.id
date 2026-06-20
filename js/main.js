@@ -3,7 +3,7 @@ import { navigate, handleAuthError, apiFetch, escHtml } from './core/core.js';
 
 import * as View_home from './views/home.js';
 import * as View_katalog from './views/katalog.js';
-import * as View_kategori from './views/kategori__(daftar_kategori_+_kitab_per_kategori).js';
+import * as View_kategori__daftar_kategori__kitab_per_kategori from './views/kategori__daftar_kategori__kitab_per_kategori.js';
 import * as View_settings from './views/settings.js';
 import * as View_detail_kitab__reader from './views/detail_kitab__reader.js';
 import * as View_about from './views/about.js';
@@ -36,7 +36,7 @@ const routes = {
   '/': View_home.renderHome,
   '/dashboard': View_dashboard.renderDashboard,
   '/katalog': View_katalog.renderKatalog,
-  '/kategori': View_kategori.renderKategori,
+  '/kategori': View_kategori__daftar_kategori__kitab_per_kategori.renderKategori,
   '/settings': View_settings.renderSettings,
   '/about': View_about.renderAbout,
   '/search': View_settings.renderSearch,
@@ -46,7 +46,7 @@ const routes = {
   '/submit-file': View_feedback.renderSubmitFile,
   '/request': View_feedback.renderRequestKitab,
   '/feedback': View_feedback.renderFeedback,
-  '/catalog': View_kategori.renderKategori,
+  '/catalog': View_kategori__daftar_kategori__kitab_per_kategori.renderKategori,
   '/setting': View_settings.renderSettings,
   '/favorit': View_favorit.renderFavorit,
   '/my-activity': View_my_activity.renderMyActivity,
