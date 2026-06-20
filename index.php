@@ -410,18 +410,18 @@ endif;
       white-space: nowrap;
       pointer-events: none;
     }
-    .dl-fmt-zip  { background: rgba(201,168,76,.14); color: #a07828; border-color: rgba(201,168,76,.35); }
-    .dl-fmt-docx { background: rgba(26,58,42,.09);  color: #1a3a2a; border-color: rgba(26,58,42,.20); }
-    html.dark .dl-fmt-zip  { background: rgba(201,168,76,.18); color: #c9a84c; border-color: rgba(201,168,76,.35); }
-    html.dark .dl-fmt-docx { background: rgba(212,197,160,.10); color: #a0b898; border-color: rgba(212,197,160,.25); }
+    .dl-fmt-zip  { background: rgba(212,175,55,.14); color: #b48600; border-color: rgba(212,175,55,.35); }
+    .dl-fmt-docx { background: rgba(15,23,42,.09);  color: #0f172a; border-color: rgba(15,23,42,.20); }
+    html.dark .dl-fmt-zip  { background: rgba(212,175,55,.18); color: #d4af37; border-color: rgba(212,175,55,.35); }
+    html.dark .dl-fmt-docx { background: rgba(226,232,240,.10); color: #94a3b8; border-color: rgba(226,232,240,.25); }
 
     /* Hero gradient */
     .hero-bg {
-      background: linear-gradient(135deg, #1a3a2a 0%, #0f2218 40%, #1e3a2f 70%, #2d5c42 100%);
+      background: linear-gradient(135deg, #0f172a 0%, #020617 40%, #0f172a 70%, #1e293b 100%);
     }
 
     /* Gold accent line */
-    .gold-line { background: linear-gradient(90deg, transparent, #c9a84c, transparent); height: 1px; }
+    .gold-line { background: linear-gradient(90deg, transparent, #d4af37, transparent); height: 1px; }
 
     /* Skeleton shimmer */
     .skeleton { background: linear-gradient(90deg, #e8e4d9 25%, #f0ece0 50%, #e8e4d9 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
