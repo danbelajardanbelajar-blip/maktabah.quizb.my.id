@@ -497,7 +497,7 @@ export function parseSearchTerms(q) {
   // If user wrapped phrase in quotes, respect quoted groups and separate others.
   if (/".*"/u.test(q)) {
     const terms = [];
-    const regex = /"([^\"]+)"|([^"\s]+)/g;
+    const regex = /"([^"]+)"|([^"\s]+)/g;
     let match;
     while ((match = regex.exec(q)) !== null) {
       const term = (match[1] || match[2] || '').trim();
@@ -506,14 +506,9 @@ export function parseSearchTerms(q) {
     return terms;
   }
 
-  // If the query contains whitespace (multi-word) treat it as a single phrase
-  // so matches require the words to appear together in the same order.
-  if (/\s+/u.test(q)) {
-    return [q];
-  }
-
-  // Single-word query
-  return [q];
+  // Jika tidak ada tanda kutip, pisah berdasarkan spasi
+  // agar setiap kata bisa disorot (highlight) secara mandiri di mana pun posisinya di dalam teks.
+  return q.split(/\s+/).filter(Boolean);
 }
 
 export function highlightTextNodes(container, terms) {
