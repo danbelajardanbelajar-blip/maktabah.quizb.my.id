@@ -4,7 +4,7 @@ import { API, FONTS_LATIN, FONTS_ARABIC, readerFontState, applyReaderFont, $, $$
 export function renderPrivacy() {
   const LAST_UPDATED = '21 Juni 2026';
   const SITE_URL     = 'https://maktabah.quizb.my.id';
-  const CONTACT      = 'admin@quizb.my.id';
+  const CONTACT      = 'zenhkm@gmail.com';
 
   app().innerHTML = `
     <div class="max-w-3xl mx-auto px-4 sm:px-6 py-12 pb-20">
