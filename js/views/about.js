@@ -198,8 +198,8 @@ export function renderAbout() {
             <i data-lucide="library" class="w-4 h-4 text-gold"></i> Katalog & Kategori Kitab
           </h2>
           <p class="text-sm mb-4">Perpustakaan kami membagi ribuan kitab ke dalam beberapa klasifikasi disiplin ilmu (kategori) untuk mempermudah Anda dalam menelusurinya:</p>
-          <div id="about-cats-container" class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-            <span class="text-gold/50 text-xs col-span-full">Memuat katalog...</span>
+          <div id="about-cats-container">
+            <span class="text-gold/50 text-xs">Memuat katalog...</span>
           </div>
         </div>
 
@@ -243,17 +243,8 @@ export function renderAbout() {
       const cats = res.data || [];
       const catsContainer = document.getElementById('about-cats-container');
       if (catsContainer && cats.length > 0) {
-        catsContainer.innerHTML = cats.map(c => `
-          <div class="bg-surface border border-border rounded-xl p-3 flex items-start gap-3 shadow-sm hover:border-gold/30 transition-colors">
-            <div class="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center shrink-0">
-              <i data-lucide="folder" class="w-4 h-4 text-gold"></i>
-            </div>
-            <div>
-              <div class="font-semibold text-primary text-xs mb-0.5">${escHtml(c.name)}</div>
-              <div class="text-[10px] text-muted">${c.count || 0} Kitab</div>
-            </div>
-          </div>
-        `).join('');
+        catsContainer.className = "text-sm text-primary/80 leading-relaxed bg-surface border border-border rounded-xl p-5 shadow-sm";
+        catsContainer.innerHTML = "Disiplin ilmu yang saat ini tersedia mencakup: " + cats.map(c => `<strong class="text-primary">${escHtml(c.name)}</strong> <span class="text-[11px] text-muted">(${c.count || 0} Kitab)</span>`).join(', ') + ".";
       }
       reicons();
     } catch(e) { }
