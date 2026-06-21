@@ -6,6 +6,9 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
+# Sitemap route
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
 # Allow api.php directly
 RewriteRule ^api\.php$ - [L]
 
