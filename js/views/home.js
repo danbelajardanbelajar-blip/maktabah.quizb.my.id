@@ -152,13 +152,24 @@ export async function renderHome() {
       if (!chips || !section) return;
       if (!queries.length) { section.style.display = 'none'; return; }
       section.style.display = '';
-      chips.innerHTML = queries.map(q => {
+      chips.innerHTML = queries.map(qObj => {
+        const q = typeof qObj === 'string' ? qObj : qObj.query;
+        const detail = typeof qObj === 'object' && qObj.detail ? JSON.parse(qObj.detail) : null;
         const safe = escHtml(q);
         let route = '';
         if (q.includes('|')) {
           const parts = q.split('|').map(p => p.trim());
           const params = new URLSearchParams();
           parts.forEach((p, i) => { if (p) params.set('q' + (i + 1), p); });
+          
+          if (detail && detail.cats && detail.cats.length > 0) {
+            params.set('cats', detail.cats.join(','));
+          } else if (detail && detail.all_cats) {
+            params.set('all_cats', '1');
+          } else if (!detail) {
+            params.set('all_cats', '1'); // Default to all cats if no detail is found
+          }
+          
           route = '/search-advanced?' + params.toString().replace(/'/g, "%27");
         } else {
           route = '/search?q=' + encodeURIComponent(q).replace(/'/g, "%27");
@@ -186,13 +197,24 @@ export async function renderHome() {
       if (!chips || !section) return;
       if (!queries.length) { section.style.display = 'none'; return; }
       section.style.display = '';
-      chips.innerHTML = queries.map(q => {
+      chips.innerHTML = queries.map(qObj => {
+        const q = typeof qObj === 'string' ? qObj : qObj.query;
+        const detail = typeof qObj === 'object' && qObj.detail ? JSON.parse(qObj.detail) : null;
         const safe = escHtml(q);
         let route = '';
         if (q.includes('|')) {
           const parts = q.split('|').map(p => p.trim());
           const params = new URLSearchParams();
           parts.forEach((p, i) => { if (p) params.set('q' + (i + 1), p); });
+          
+          if (detail && detail.cats && detail.cats.length > 0) {
+            params.set('cats', detail.cats.join(','));
+          } else if (detail && detail.all_cats) {
+            params.set('all_cats', '1');
+          } else if (!detail) {
+            params.set('all_cats', '1'); // Default to all cats if no detail is found
+          }
+          
           route = '/search-advanced?' + params.toString().replace(/'/g, "%27");
         } else {
           route = '/search?q=' + encodeURIComponent(q).replace(/'/g, "%27");

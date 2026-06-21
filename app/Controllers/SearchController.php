@@ -716,18 +716,25 @@ class SearchController {
     
         // Ambil query unik terbaru, abaikan yang kosong / terlalu pendek
         $stmt = $pdo->prepare(
-            "SELECT query, MAX(created_at) AS last_at
-             FROM search_logs
-             WHERE LENGTH(TRIM(query)) >= 2
-             GROUP BY LOWER(TRIM(query))
-             ORDER BY last_at DESC
+            "SELECT s1.query, s1.query_detail
+             FROM search_logs s1
+             INNER JOIN (
+                 SELECT LOWER(TRIM(query)) as lq, MAX(id) as max_id
+                 FROM search_logs
+                 WHERE LENGTH(TRIM(query)) >= 2
+                 GROUP BY LOWER(TRIM(query))
+             ) s2 ON s1.id = s2.max_id
+             ORDER BY s1.id DESC
              LIMIT :lim"
         );
         $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmt->execute();
     
         $rows = $stmt->fetchAll();
-        echo json_encode(['data' => array_map(fn($r) => $r['query'], $rows)]);
+        echo json_encode(['data' => array_map(fn($r) => [
+            'query' => $r['query'],
+            'detail' => $r['query_detail']
+        ], $rows)]);
     }
 
     public function handlePopularSearches(): void {
@@ -737,18 +744,25 @@ class SearchController {
     
         // Ambil query paling sering dicari, abaikan yang kosong / terlalu pendek
         $stmt = $pdo->prepare(
-            "SELECT MAX(query) AS query, COUNT(*) AS count
-             FROM search_logs
-             WHERE LENGTH(TRIM(query)) >= 2
-             GROUP BY LOWER(TRIM(query))
-             ORDER BY count DESC, MAX(created_at) DESC
+            "SELECT s1.query, s1.query_detail, s2.cnt
+             FROM search_logs s1
+             INNER JOIN (
+                 SELECT LOWER(TRIM(query)) as lq, COUNT(*) as cnt, MAX(id) as max_id
+                 FROM search_logs
+                 WHERE LENGTH(TRIM(query)) >= 2
+                 GROUP BY LOWER(TRIM(query))
+             ) s2 ON s1.id = s2.max_id
+             ORDER BY s2.cnt DESC, s1.id DESC
              LIMIT :lim"
         );
         $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmt->execute();
     
         $rows = $stmt->fetchAll();
-        echo json_encode(['data' => array_map(fn($r) => $r['query'], $rows)]);
+        echo json_encode(['data' => array_map(fn($r) => [
+            'query' => $r['query'],
+            'detail' => $r['query_detail']
+        ], $rows)]);
     }
 
     public function handleSearchRecommendations(): void {
@@ -760,13 +774,9 @@ class SearchController {
         $params = [];
         
         if ($q !== '') {
-            // Hapus kutip ganda untuk memecah frasa, namun pertahankan petik tunggal untuk kata seperti qur'an
             $cleanQ = str_replace(['"', '“', '”'], ' ', $q);
             $words = preg_split('/\s+/u', $cleanQ, -1, PREG_SPLIT_NO_EMPTY);
-            
-            // Bersihkan tanda petik tunggal hanya di awal/akhir kata saja
             $words = array_map(fn($w) => trim($w, "'`‘’"), $words);
-            
             $words = array_filter($words, fn($w) => mb_strlen($w) >= 3);
             
             if (!empty($words)) {
@@ -779,11 +789,15 @@ class SearchController {
             }
         }
         
-        $sql = "SELECT query 
-                FROM search_logs 
-                WHERE $where 
-                GROUP BY LOWER(TRIM(query)) 
-                ORDER BY COUNT(*) DESC, MAX(created_at) DESC 
+        $sql = "SELECT s1.query, s1.query_detail 
+                FROM search_logs s1
+                INNER JOIN (
+                    SELECT LOWER(TRIM(query)) as lq, COUNT(*) as cnt, MAX(id) as max_id
+                    FROM search_logs 
+                    WHERE $where 
+                    GROUP BY LOWER(TRIM(query))
+                ) s2 ON s1.id = s2.max_id
+                ORDER BY s2.cnt DESC, s1.id DESC 
                 LIMIT 8";
                 
         $stmt = $pdo->prepare($sql);
@@ -797,12 +811,16 @@ class SearchController {
         // Fallback if context-aware recommendations are too few
         if (count($rows) < 3 && $q !== '') {
             $fallback = $pdo->prepare(
-                "SELECT query 
-                 FROM search_logs 
-                 WHERE result_count > 0 AND LENGTH(TRIM(query)) >= 3 
-                 GROUP BY LOWER(TRIM(query)) 
-                 ORDER BY COUNT(*) DESC 
-                 LIMIT 5"
+                "SELECT s1.query, s1.query_detail 
+                 FROM search_logs s1
+                 INNER JOIN (
+                     SELECT LOWER(TRIM(query)) as lq, COUNT(*) as cnt, MAX(id) as max_id
+                     FROM search_logs
+                     WHERE result_count > 0 AND LENGTH(TRIM(query)) >= 3
+                     GROUP BY LOWER(TRIM(query))
+                 ) s2 ON s1.id = s2.max_id
+                 ORDER BY s2.cnt DESC, s1.id DESC
+                 LIMIT 8"
             );
             $fallback->execute();
             foreach ($fallback->fetchAll() as $fb) {
@@ -813,13 +831,22 @@ class SearchController {
         }
         
         $rows = array_slice($rows, 0, 8);
-        $finalData = array_map(fn($r) => $r['query'], $rows);
+        $finalData = array_map(fn($r) => [
+            'query' => $r['query'],
+            'detail' => $r['query_detail'] ?? null
+        ], $rows);
         
         // Coba berikan didYouMean ke rekomendasi
         if (count($finalData) < 3 && $q !== '') {
             $dym = SearchHelper::getDidYouMean($q);
-            if ($dym && !in_array($dym, $finalData)) {
-                array_unshift($finalData, $dym); // taruh di paling atas
+            if ($dym) {
+                $dymExists = false;
+                foreach ($finalData as $fd) {
+                    if (strtolower(trim($fd['query'])) === strtolower(trim($dym))) $dymExists = true;
+                }
+                if (!$dymExists) {
+                    array_unshift($finalData, ['query' => $dym, 'detail' => null]); // taruh di paling atas
+                }
             }
         }
         

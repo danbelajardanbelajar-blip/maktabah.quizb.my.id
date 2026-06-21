@@ -713,12 +713,24 @@ async function getSearchRecommendationsHtml(q = '') {
     <div class="mt-8 pt-6 border-t border-cream-dark w-full max-w-2xl mx-auto text-center search-section-enter">
       <div class="text-xs font-bold text-primary/40 uppercase tracking-wider mb-4">Mungkin Anda mencari</div>
       <div class="flex flex-wrap justify-center gap-2">
-        ${recs.map(item => {
+        ${recs.map(itemObj => {
+          const item = typeof itemObj === 'string' ? itemObj : itemObj.query;
+          const detail = typeof itemObj === 'object' && itemObj.detail ? JSON.parse(itemObj.detail) : null;
+          
           let route = '';
           if (item.includes('|')) {
             const parts = item.split('|').map(p => p.trim());
             const params = new URLSearchParams();
             parts.forEach((p, i) => { if (p) params.set('q' + (i + 1), p); });
+            
+            if (detail && detail.cats && detail.cats.length > 0) {
+              params.set('cats', detail.cats.join(','));
+            } else if (detail && detail.all_cats) {
+              params.set('all_cats', '1');
+            } else if (!detail) {
+              params.set('all_cats', '1');
+            }
+            
             route = '/search-advanced?' + params.toString().replace(/'/g, "%27");
           } else {
             route = '/search?q=' + encodeURIComponent(item).replace(/'/g, "%27");
