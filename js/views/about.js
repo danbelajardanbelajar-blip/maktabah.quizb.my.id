@@ -181,11 +181,83 @@ export function renderAbout() {
           })()}
 
         </div>
+        
+        <!-- Statistik Web -->
+        <div class="mt-8">
+          <h2 class="text-primary font-bold text-base mb-4 flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-4 h-4 text-gold"></i> Statistik Maktabah
+          </h2>
+          <div id="about-stats-container" class="flex flex-wrap items-center justify-center gap-4 text-sm text-primary/70">
+            <span class="text-gold/50 text-xs">Memuat statistik...</span>
+          </div>
+        </div>
+
+        <!-- Katalog Kategori -->
+        <div class="mt-8">
+          <h2 class="text-primary font-bold text-base mb-4 flex items-center gap-2">
+            <i data-lucide="library" class="w-4 h-4 text-gold"></i> Katalog & Kategori Kitab
+          </h2>
+          <p class="text-sm mb-4">Perpustakaan kami membagi ribuan kitab ke dalam beberapa klasifikasi disiplin ilmu (kategori) untuk mempermudah Anda dalam menelusurinya:</p>
+          <div id="about-cats-container" class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <span class="text-gold/50 text-xs col-span-full">Memuat katalog...</span>
+          </div>
+        </div>
 
       </div>
     </div>
     ${mobileFeedbackBanner}`;
   reicons();
+  
+  // Load dynamic data (Stats & Cats)
+  (async () => {
+    try {
+      const stats = await apiFetch({ action: 'stats' });
+      const formatNum = (n) => (n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      
+      const statsContainer = document.getElementById('about-stats-container');
+      if (statsContainer) {
+        statsContainer.innerHTML = `
+          <div class="bg-surface border border-border rounded-xl px-5 py-3 flex items-center gap-3">
+            <i data-lucide="book-open" class="w-4 h-4 text-gold"></i>
+            <div><div class="font-bold text-primary">${formatNum(stats.total_books)}</div><div class="text-[10px] uppercase tracking-wider text-muted">Kitab</div></div>
+          </div>
+          <div class="bg-surface border border-border rounded-xl px-5 py-3 flex items-center gap-3">
+            <i data-lucide="folder" class="w-4 h-4 text-gold"></i>
+            <div><div class="font-bold text-primary">${formatNum(stats.total_categories)}</div><div class="text-[10px] uppercase tracking-wider text-muted">Kategori</div></div>
+          </div>
+          <div class="bg-surface border border-border rounded-xl px-5 py-3 flex items-center gap-3">
+            <i data-lucide="search" class="w-4 h-4 text-gold"></i>
+            <div><div class="font-bold text-primary">${formatNum(stats.total_searches)}</div><div class="text-[10px] uppercase tracking-wider text-muted">Pencarian</div></div>
+          </div>
+          <div class="bg-surface border border-border rounded-xl px-5 py-3 flex items-center gap-3">
+            <i data-lucide="eye" class="w-4 h-4 text-gold"></i>
+            <div><div class="font-bold text-primary">${formatNum(stats.total_visits)}</div><div class="text-[10px] uppercase tracking-wider text-muted">Kunjungan</div></div>
+          </div>
+        `;
+      }
+      reicons();
+    } catch(e) { }
+
+    try {
+      const res = await apiFetch({ action: 'categories' });
+      const cats = res.data || [];
+      const catsContainer = document.getElementById('about-cats-container');
+      if (catsContainer && cats.length > 0) {
+        catsContainer.innerHTML = cats.map(c => `
+          <div class="bg-surface border border-border rounded-xl p-3 flex items-start gap-3 shadow-sm hover:border-gold/30 transition-colors">
+            <div class="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center shrink-0">
+              <i data-lucide="folder" class="w-4 h-4 text-gold"></i>
+            </div>
+            <div>
+              <div class="font-semibold text-primary text-xs mb-0.5">${escHtml(c.name)}</div>
+              <div class="text-[10px] text-muted">${c.count || 0} Kitab</div>
+            </div>
+          </div>
+        `).join('');
+      }
+      reicons();
+    } catch(e) { }
+  })();
 }
 
 
