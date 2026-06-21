@@ -336,6 +336,7 @@ endif;
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="المكتبة السنية — perpustakaan digital Islam memuat ribuan kitab salaf." />
+  <meta name="google-site-verification" content="Mf1jf_wj_XAyYcuKEMWcKVjPTy8hWToL3lUYzQA6_Kc" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
   <title>المكتبة السنية — Al-Maktabah As-Sunniyyah</title>
