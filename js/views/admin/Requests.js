@@ -85,6 +85,19 @@ async function renderAdminRequests() {
     });
   };
 
+  window.reqDelete = async function(id) {
+    if (!confirm('Hapus request ini secara permanen?')) return;
+    try {
+      const res = await adminPost('admin_delete_request', { id: id });
+      if (res.error) throw new Error(res.error);
+      adminToast('Request dihapus ✓');
+      reqLoad();
+    } catch(e) {
+      if (handleAuthError(e)) return;
+      adminToast('Gagal: ' + e.message, 'error');
+    }
+  };
+
   const statusBadge = s => {
     const cls = { pending: 'bg-yellow-100 text-yellow-700', fulfilled: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-600' };
     const lbl = { pending: 'Menunggu', fulfilled: 'Dipenuhi', rejected: 'Ditolak' };
@@ -110,11 +123,13 @@ async function renderAdminRequests() {
         const fulfillBtn = '<button onclick="reqUpdateStatus(' + r.id + ', \'fulfilled\')" title="Tandai Dipenuhi" class="p-1.5 rounded-lg hover:bg-green-100 text-green-700 transition-colors flex items-center gap-1.5 px-2 font-medium text-xs"><i data-lucide="check-circle" class="w-4 h-4"></i> Penuhi</button>';
         const rejectBtn  = '<button onclick="reqUpdateStatus(' + r.id + ', \'rejected\')" title="Tolak" class="p-1.5 rounded-lg hover:bg-red-100 text-red-700 transition-colors"><i data-lucide="x-circle" class="w-4 h-4"></i></button>';
         const replyBtn   = '<button onclick="reqReply(' + r.id + ')" title="Balas" class="p-1.5 rounded-lg hover:bg-blue-100 text-blue-700 transition-colors"><i data-lucide="message-square" class="w-4 h-4"></i></button>';
+        const deleteBtn  = '<button onclick="reqDelete(' + r.id + ')" title="Hapus" class="p-1.5 rounded-lg hover:bg-red-100 text-red-700 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>';
         
         let actBtns = replyBtn;
         if (r.status === 'pending') {
           actBtns += fulfillBtn + rejectBtn;
         }
+        actBtns += deleteBtn;
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
           + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.title) + '</div>'

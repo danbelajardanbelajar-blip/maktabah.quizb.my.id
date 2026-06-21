@@ -60,6 +60,7 @@ $router->add('admin_get_submission_content', 'AdminController', 'handleAdminGetS
 $router->add('admin_delete_submission', 'AdminController', 'handleAdminDeleteSubmission');
 $router->add('admin_get_requests', 'AdminController', 'handleAdminGetRequests');
 $router->add('admin_update_request_status', 'AdminController', 'handleAdminUpdateRequestStatus');
+$router->add('admin_delete_request', 'AdminController', 'handleAdminDeleteRequest');
 
 // Submissions, Requests & Feedback
 $router->add('submit_file', 'SubmissionController', 'handleSubmitFile');

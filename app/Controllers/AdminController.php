@@ -992,6 +992,25 @@ class AdminController {
 
         echo json_encode(['success' => true]);
     }
+
+    public function handleAdminDeleteRequest(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo   = Database::getConnection();
+
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id    = intval($input['id'] ?? 0);
+
+        if ($id <= 0) {
+            http_response_code(400); echo json_encode(['error' => 'Input tidak valid.']); return;
+        }
+
+        $stmt = $pdo->prepare("DELETE FROM kitab_requests WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+
+        AuthHelper::logCrudHistory('DELETE', 'kitab_requests', (string)$id, "Delete request oleh {$admin['name']}");
+
+        echo json_encode(['success' => true]);
+    }
     public function handleAdminGetFeedbacks(): void {
         $admin = AuthHelper::requireAdmin();
         $pdo = Database::getConnection();
