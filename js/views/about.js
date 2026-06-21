@@ -43,7 +43,57 @@ export function renderAbout() {
           </ul>
         </div>
 
-        <div class="bg-cream rounded-2xl p-6 text-center">
+        <!-- Fitur & Update Terbaru -->
+        <div>
+          <h2 class="text-primary font-bold text-base mb-4 flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4 text-gold"></i> Update & Fitur Terbaru
+          </h2>
+          <div class="grid sm:grid-cols-2 gap-4">
+            
+            <div class="bg-surface border border-border rounded-2xl p-5 flex items-start gap-4 hover:border-gold/40 transition-all shadow-sm group">
+              <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
+                <i data-lucide="search" class="w-5 h-5 text-gold"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-primary mb-1">Pencarian Cerdas (Smart Search)</h3>
+                <p class="text-xs text-muted leading-relaxed">Mendukung kueri multi-kata fleksibel, abai harokat, dan secara otomatis mengingat preferensi filter kategori Anda pada Pencarian Lanjut (Advanced Search).</p>
+              </div>
+            </div>
+
+            <div class="bg-surface border border-border rounded-2xl p-5 flex items-start gap-4 hover:border-gold/40 transition-all shadow-sm group">
+              <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
+                <i data-lucide="send" class="w-5 h-5 text-gold"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-primary mb-1">Pengajuan & Request Anonim</h3>
+                <p class="text-xs text-muted leading-relaxed">Kini Anda bisa membagikan dokumen Bahsul Masail atau meminta kitab khusus secara anonim (tanpa perlu akun Google) secara instan.</p>
+              </div>
+            </div>
+
+            <div class="bg-surface border border-border rounded-2xl p-5 flex items-start gap-4 hover:border-gold/40 transition-all shadow-sm group">
+              <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 text-gold"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-primary mb-1">Manajemen Panel Modern</h3>
+                <p class="text-xs text-muted leading-relaxed">Ekosistem di balik layar kini didukung panel admin yang sangat rapi untuk meninjau, menyortir, dan mempublikasikan kitab dalam hitungan detik.</p>
+              </div>
+            </div>
+
+            <div class="bg-surface border border-border rounded-2xl p-5 flex items-start gap-4 hover:border-gold/40 transition-all shadow-sm group">
+              <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
+                <i data-lucide="zap" class="w-5 h-5 text-gold"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-primary mb-1">Arsitektur Super Cepat</h3>
+                <p class="text-xs text-muted leading-relaxed">Dibangun sebagai Single Page Application (SPA), menelusuri ratusan halaman buku dan katalog kini terasa tanpa jeda (zero reload).</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="bg-cream rounded-2xl p-6 text-center mt-6">
           <div class="arabic text-primary text-lg font-bold mb-1">طلب العلم فريضة على كل مسلم</div>
           <div class="text-primary/50 text-xs">HR. Ibnu Mājah — Menuntut ilmu adalah kewajiban setiap Muslim</div>
         </div>
