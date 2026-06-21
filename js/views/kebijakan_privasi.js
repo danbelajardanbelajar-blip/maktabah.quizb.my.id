@@ -2,7 +2,7 @@
 import { API, FONTS_LATIN, FONTS_ARABIC, readerFontState, applyReaderFont, $, $$, el, app, reicons, mobileFeedbackBanner, apiFetch, handleAuthError, UPDATE_NOTICE_SESSION_KEY, isMobileViewport, hasDismissedUpdateNotice, setDismissedUpdateNotice, closeUpdateNotice, showUpdateNoticeIfNeeded, logVisitorActivity, navigate, setActiveNav, updateReaderMenus, skeletonCards, bookCard, escHtml, paginationHtml, recentBookCard, saveToRecentlyOpened, getRecentlyOpened } from '../core/core.js';
 
 export function renderPrivacy() {
-  const LAST_UPDATED = '13 Mei 2026';
+  const LAST_UPDATED = '21 Juni 2026';
   const SITE_URL     = 'https://maktabah.quizb.my.id';
   const CONTACT      = 'admin@quizb.my.id';
 
@@ -32,23 +32,33 @@ export function renderPrivacy() {
       <div class="space-y-6">
 
         ${privacySection('database', 'Informasi yang Kami Kumpulkan', `
-          <p class="text-secondary mb-4">Saat Anda masuk menggunakan akun Google, kami menerima informasi berikut dari Google:</p>
-          <div class="grid sm:grid-cols-2 gap-3">
+          <p class="text-secondary mb-3 font-semibold text-primary">1. Melalui Autentikasi Google</p>
+          <p class="text-secondary mb-3">Saat Anda masuk menggunakan akun Google, kami menerima informasi berikut dari Google:</p>
+          <div class="grid sm:grid-cols-2 gap-3 mb-6">
             ${privacySubCard('user', 'Nama Lengkap', 'Nama yang terdaftar pada akun Google Anda.')}
             ${privacySubCard('mail', 'Alamat Email', 'Email utama akun Google Anda.')}
             ${privacySubCard('image', 'Foto Profil', 'URL foto profil publik Google Anda.')}
-            ${privacySubCard('key', 'ID Google', 'Identitas unik dari Google (tidak dapat digunakan di luar layanan ini).')}
+            ${privacySubCard('key', 'ID Google', 'Identitas unik dari Google.')}
           </div>
-          <p class="text-secondary mt-4 text-sm">Kami <strong>tidak</strong> menyimpan kata sandi Anda. Otentikasi sepenuhnya ditangani oleh Google.</p>
+          
+          <p class="text-secondary mb-3 font-semibold text-primary">2. Formulir Interaktif (Kirim / Request)</p>
+          <p class="text-secondary mb-4">Ketika Anda menggunakan fitur <strong>Kirimkan File</strong> atau <strong>Request Kitab</strong> tanpa login, kami mengumpulkan alamat email yang Anda ketikkan secara manual agar kami dapat menghubungi Anda terkait status permintaan tersebut.</p>
+
+          <p class="text-secondary mb-3 font-semibold text-primary">3. Riwayat & Preferensi Pencarian</p>
+          <p class="text-secondary mb-4">Sistem mencatat riwayat kueri pencarian Anda (termasuk kata kunci dan preferensi centang kategori di Pencarian Lanjut). Data ini kami gunakan secara eksklusif untuk menyajikan histori pencarian yang personal dan meningkatkan akurasi sistem rekomendasi pencarian.</p>
+
+          <p class="text-secondary mt-5 text-sm bg-gold/5 border border-gold/20 p-3 rounded-xl">Kami <strong>tidak</strong> menyimpan kata sandi Anda. Autentikasi sepenuhnya ditangani oleh Google dengan protokol yang aman.</p>
         `)}
 
         ${privacySection('settings', 'Cara Kami Menggunakan Informasi', `
           <ul class="space-y-2 text-secondary">
             ${privacyItem('Membuat dan mengelola akun pengguna Anda di platform ini.')}
             ${privacyItem('Menampilkan nama dan foto profil Anda di antarmuka aplikasi.')}
+            ${privacyItem('Menghubungi Anda untuk merespons status pengajuan "Kirim File" atau "Request Kitab".')}
+            ${privacyItem('Menyimpan riwayat dan preferensi pencarian Anda untuk fitur pengingat (Advanced Search) dan rekomendasi yang lebih pintar.')}
             ${privacyItem('Menentukan hak akses Anda (pengguna biasa atau administrator).')}
             ${privacyItem('Mencatat waktu login terakhir untuk keperluan keamanan.')}
-            ${privacyItem('Kami tidak menggunakan data Anda untuk iklan, analitik pihak ketiga, atau tujuan komersial.')}
+            ${privacyItem('Kami <strong>tidak menggunakan</strong> data Anda untuk iklan, analitik pihak ketiga, atau tujuan komersial lainnya.')}
           </ul>
         `)}
 
