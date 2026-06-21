@@ -713,11 +713,20 @@ async function getSearchRecommendationsHtml(q = '') {
     <div class="mt-8 pt-6 border-t border-cream-dark w-full max-w-2xl mx-auto text-center search-section-enter">
       <div class="text-xs font-bold text-primary/40 uppercase tracking-wider mb-4">Mungkin Anda mencari</div>
       <div class="flex flex-wrap justify-center gap-2">
-        ${recs.map(item => `
-          <button onclick="navigate('/search?q=${encodeURIComponent(item).replace(/'/g, "%27")}')" class="px-3 py-1.5 rounded-full border border-gold/30 bg-gold/5 text-gold text-xs hover:bg-gold/10 transition-colors font-medium flex items-center gap-1.5 shadow-sm">
+        ${recs.map(item => {
+          let route = '';
+          if (item.includes('|')) {
+            const parts = item.split('|').map(p => p.trim());
+            const params = new URLSearchParams();
+            parts.forEach((p, i) => { if (p) params.set('q' + (i + 1), p); });
+            route = '/search-advanced?' + params.toString().replace(/'/g, "%27");
+          } else {
+            route = '/search?q=' + encodeURIComponent(item).replace(/'/g, "%27");
+          }
+          return `<button onclick="navigate('${route}')" class="px-3 py-1.5 rounded-full border border-gold/30 bg-gold/5 text-gold text-xs hover:bg-gold/10 transition-colors font-medium flex items-center gap-1.5 shadow-sm">
             <i data-lucide="search" class="w-3 h-3"></i>${escHtml(item)}
-          </button>
-        `).join('')}
+          </button>`;
+        }).join('')}
       </div>
     </div>
   `;

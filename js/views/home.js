@@ -154,9 +154,17 @@ export async function renderHome() {
       section.style.display = '';
       chips.innerHTML = queries.map(q => {
         const safe = escHtml(q);
-        const enc  = encodeURIComponent(q).replace(/'/g, "%27");
+        let route = '';
+        if (q.includes('|')) {
+          const parts = q.split('|').map(p => p.trim());
+          const params = new URLSearchParams();
+          parts.forEach((p, i) => { if (p) params.set('q' + (i + 1), p); });
+          route = '/search-advanced?' + params.toString().replace(/'/g, "%27");
+        } else {
+          route = '/search?q=' + encodeURIComponent(q).replace(/'/g, "%27");
+        }
         return `<button
-          onclick="navigate('/search?q=${enc}')"
+          onclick="navigate('${route}')"
           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
                  border border-gold/25 bg-white hover:bg-primary hover:text-white hover:border-primary
                  text-sm text-primary/75 transition-all duration-150 shadow-sm cursor-pointer">
@@ -180,9 +188,17 @@ export async function renderHome() {
       section.style.display = '';
       chips.innerHTML = queries.map(q => {
         const safe = escHtml(q);
-        const enc  = encodeURIComponent(q).replace(/'/g, "%27");
+        let route = '';
+        if (q.includes('|')) {
+          const parts = q.split('|').map(p => p.trim());
+          const params = new URLSearchParams();
+          parts.forEach((p, i) => { if (p) params.set('q' + (i + 1), p); });
+          route = '/search-advanced?' + params.toString().replace(/'/g, "%27");
+        } else {
+          route = '/search?q=' + encodeURIComponent(q).replace(/'/g, "%27");
+        }
         return `<button
-          onclick="navigate('/search?q=${enc}')"
+          onclick="navigate('${route}')"
           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
                  border border-gold/25 bg-white hover:bg-primary hover:text-white hover:border-primary
                  text-sm text-primary/75 transition-all duration-150 shadow-sm cursor-pointer">
