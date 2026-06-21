@@ -55,17 +55,21 @@ class SearchHelper {
         }
 
         if (strpos($q, ' ') !== false) {
-            return '"' . self::ftEscape($q) . '"';
+            $words = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
+            $parts = [];
+            foreach ($words as $w) {
+                $clean = self::ftEscape($w);
+                if ($clean !== '') {
+                    $parts[] = '+' . $clean . '*';
+                }
+            }
+            return implode(' ', $parts);
         }
 
         $clean = self::ftEscape($q);
         if ($clean === '') return '';
         
-        if (mb_strlen($clean) <= 2) {
-            return $clean . '*';
-        } else {
-            return '+' . $clean . '*';
-        }
+        return '+' . $clean . '*';
     }
 
     public static function booleanQueryFromFieldsOr(array $fields): string {
@@ -80,7 +84,17 @@ class SearchHelper {
             }
 
             if (strpos($field, ' ') !== false) {
-                $parts[] = '"' . self::ftEscape($field) . '"';
+                $words = preg_split('/\s+/u', $field, -1, PREG_SPLIT_NO_EMPTY);
+                $subparts = [];
+                foreach ($words as $w) {
+                    $clean = self::ftEscape($w);
+                    if ($clean !== '') {
+                        $subparts[] = '+' . $clean . '*';
+                    }
+                }
+                if (!empty($subparts)) {
+                    $parts[] = '(' . implode(' ', $subparts) . ')';
+                }
                 continue;
             }
 
