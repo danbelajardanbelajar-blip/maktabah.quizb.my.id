@@ -4,22 +4,41 @@ import { API, FONTS_LATIN, FONTS_ARABIC, readerFontState, applyReaderFont, $, $$
 export async function renderHome() {
   app().innerHTML = `
     <!-- Hero -->
-    <section class="hero-bg text-white">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
-        <div class="arabic text-gold text-4xl md:text-6xl font-bold mb-3 leading-tight">المكتبة السنية</div>
-        <p class="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto">Perpustakaan digital Islam</p>
-        <!-- Search -->
-        <div class="max-w-xl mx-auto relative">
-          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/40"></i>
-          <input id="hero-search" type="text" placeholder="Cari teks, judul atau pengarang kitab…"
-            class="w-full pl-12 pr-4 py-4 rounded-2xl text-ink text-sm bg-white shadow-xl focus:outline-none focus:ring-2 focus:ring-gold/50 transition-all" />
+    <section class="hero-bg text-white relative overflow-hidden">
+      <!-- Decorative background glow -->
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none"></div>
+      
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center relative z-10">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-gold text-xs font-semibold tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(201,162,39,0.15)] backdrop-blur-md">
+          <span class="w-1.5 h-1.5 rounded-full bg-gold animate-pulse"></span>
+          Perpustakaan Digital Islam
         </div>
+        
+        <div class="arabic text-gold text-5xl md:text-7xl font-bold mb-4 leading-tight drop-shadow-[0_4px_24px_rgba(201,162,39,0.4)]">المكتبة السنية</div>
+        <p class="text-white/80 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-light tracking-wide leading-relaxed">
+          Eksplorasi ribuan literatur klasik dan khazanah keilmuan Islam dalam genggaman Anda.
+        </p>
+        
+        <!-- Search -->
+        <div class="max-w-2xl mx-auto relative group">
+          <div class="absolute -inset-1 bg-gradient-to-r from-gold/30 via-primary-light/30 to-gold/30 rounded-3xl blur opacity-40 group-hover:opacity-70 transition duration-1000 group-hover:duration-300"></div>
+          <div class="relative flex items-center">
+            <i data-lucide="search" class="absolute left-6 w-5 h-5 text-primary/60"></i>
+            <input id="hero-search" type="text" placeholder="Cari teks, judul, atau pengarang kitab…"
+              class="w-full pl-14 pr-32 py-5 rounded-2xl text-ink text-base bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus:outline-none focus:ring-2 focus:ring-gold transition-all placeholder:text-gray-400" />
+            <button id="hero-search-btn" class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] hover:from-[#15803D] hover:to-[#166534] text-gold px-6 py-3 rounded-xl text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)] hover:shadow-[0_6px_20px_rgba(201,162,39,0.3)]">
+              Cari Kitab
+            </button>
+          </div>
+        </div>
+
         <!-- stats -->
-        <div id="hero-stats" class="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-white/50">
-          <span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> Memuat statistik…</span>
+        <div id="hero-stats" class="mt-14 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm text-white/80 font-medium">
+          <span class="flex items-center gap-2 bg-white/5 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/10 shadow-lg"><i data-lucide="book-open" class="w-4 h-4 text-gold"></i> Memuat statistik…</span>
         </div>
       </div>
-      <div class="gold-line"></div>
+      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"></div>
     </section>
 
     <!-- Pencarian Terpopuler & Terbaru -->
@@ -134,13 +153,12 @@ export async function renderHome() {
   reicons();
 
   // Hero search
-  // Live search input listener removed, relying on Enter key.
-  $('#hero-search')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      const q = e.target.value.trim();
-      if (q) navigate('/search?q=' + encodeURIComponent(q));
-    }
-  });
+  const doHeroSearch = () => {
+    const q = $('#hero-search')?.value.trim();
+    if (q) navigate('/search?q=' + encodeURIComponent(q));
+  };
+  $('#hero-search')?.addEventListener('keydown', e => { if (e.key === 'Enter') doHeroSearch(); });
+  $('#hero-search-btn')?.addEventListener('click', doHeroSearch);
 
   // Load popular searches
   (async () => {

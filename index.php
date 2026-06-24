@@ -508,9 +508,21 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
     html.dark .dl-fmt-zip  { background: rgba(162,123,92,.18); color: #a27b5c; border-color: rgba(162,123,92,.35); }
     html.dark .dl-fmt-docx { background: rgba(92,109,110,.10); color: #5c6d6e; border-color: rgba(92,109,110,.25); }
 
-    /* Hero gradient */
+    /* Hero Premium Green Gradient */
     .hero-bg {
-      background: linear-gradient(135deg, #3f4e4f 0%, #1F2937 40%, #3f4e4f 70%, #5c6d6e 100%);
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,162,39,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(22,101,52,0.4) 0%, transparent 60%),
+        linear-gradient(145deg, #06402b 0%, #14532D 45%, #0f3d20 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a227' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      z-index: 0;
     }
 
     /* Gold accent line */
