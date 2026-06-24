@@ -328,18 +328,94 @@ if ($maintenanceMode) :
   exit();
 endif;
 // ── Akhir blok maintenance ──────────────────────────────────
+
+// ── Setup SEO Meta Tags ─────────────────────────────────────
+$seoTitle = 'المكتبة السنية — Al-Maktabah As-Sunniyyah';
+$seoDesc = 'المكتبة السنية — perpustakaan digital Islam memuat ribuan kitab salaf.';
+$seoUrl = 'https://' . $_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?');
+$seoImage = 'https://' . $_SERVER['HTTP_HOST'] . '/favicon.png';
+$seoType = 'website';
+$schemaJson = null;
+
+// Deteksi jika user mengakses /kitab?id=...
+$reqPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+if ($reqPath === '/kitab' && isset($_GET['id'])) {
+    $bookId = (int)$_GET['id'];
+    try {
+        global $pdo;
+        $stmt = $pdo->prepare("SELECT bkname, author, betaka FROM books WHERE bkid = :id LIMIT 1");
+        $stmt->execute(['id' => $bookId]);
+        $book = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($book) {
+            $seoTitle = $book['bkname'] . ' - Al-Maktabah As-Sunniyyah';
+            $seoDesc = "Membaca dan mengunduh kitab " . $book['bkname'] . " karya " . $book['author'] . ". " . mb_substr(strip_tags($book['betaka']), 0, 150) . "...";
+            $seoUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/kitab?id=' . $bookId;
+            $seoType = 'book';
+
+            // Schema.org untuk Kitab
+            $schemaArr = [
+                "@context" => "https://schema.org",
+                "@type" => "Book",
+                "name" => $book['bkname'],
+                "author" => [
+                    "@type" => "Person",
+                    "name" => $book['author']
+                ],
+                "url" => $seoUrl
+            ];
+            $schemaJson = json_encode($schemaArr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+    } catch (Exception $e) {
+        // Abaikan jika error, fallback ke meta default
+    }
+} else {
+    // Schema.org untuk Beranda
+    $schemaArr = [
+        "@context" => "https://schema.org",
+        "@type" => "WebSite",
+        "name" => "Al-Maktabah As-Sunniyyah",
+        "url" => "https://" . $_SERVER['HTTP_HOST'] . "/",
+        "description" => "Perpustakaan digital Islam memuat ribuan kitab salaf."
+    ];
+    $schemaJson = json_encode($schemaArr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+// ────────────────────────────────────────────────────────────
 ?>
 
 <!DOCTYPE html>
-<html lang="ar" dir="ltr">
+<html lang="id" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="المكتبة السنية — perpustakaan digital Islam memuat ribuan kitab salaf." />
+  <meta name="description" content="<?= htmlspecialchars($seoDesc) ?>" />
   <meta name="google-site-verification" content="Mf1jf_wj_XAyYcuKEMWcKVjPTy8hWToL3lUYzQA6_Kc" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
-  <title>المكتبة السنية — Al-Maktabah As-Sunniyyah</title>
+  <link rel="canonical" href="<?= htmlspecialchars($seoUrl) ?>" />
+  
+  <title><?= htmlspecialchars($seoTitle) ?></title>
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="<?= htmlspecialchars($seoType) ?>" />
+  <meta property="og:url" content="<?= htmlspecialchars($seoUrl) ?>" />
+  <meta property="og:title" content="<?= htmlspecialchars($seoTitle) ?>" />
+  <meta property="og:description" content="<?= htmlspecialchars($seoDesc) ?>" />
+  <meta property="og:image" content="<?= htmlspecialchars($seoImage) ?>" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="<?= htmlspecialchars($seoUrl) ?>" />
+  <meta property="twitter:title" content="<?= htmlspecialchars($seoTitle) ?>" />
+  <meta property="twitter:description" content="<?= htmlspecialchars($seoDesc) ?>" />
+  <meta property="twitter:image" content="<?= htmlspecialchars($seoImage) ?>" />
+
+  <?php if ($schemaJson): ?>
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+<?= $schemaJson ?>
+  </script>
+  <?php endif; ?>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
