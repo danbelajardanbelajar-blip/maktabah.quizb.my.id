@@ -244,7 +244,7 @@ export function renderAbout() {
       const catsContainer = document.getElementById('about-cats-container');
       if (catsContainer && cats.length > 0) {
         catsContainer.className = "text-sm text-primary/80 leading-relaxed bg-surface border border-border rounded-xl p-5 shadow-sm";
-        catsContainer.innerHTML = "Disiplin ilmu yang saat ini tersedia mencakup: " + cats.map(c => `<strong class="text-primary">${escHtml(c.name)}</strong> <span class="text-[11px] text-muted">(${c.count || 0} Kitab)</span>`).join(', ') + ".";
+        catsContainer.innerHTML = "Disiplin ilmu yang saat ini tersedia mencakup: " + cats.map(c => `<strong class="text-primary">${escHtml(c.name)}</strong>`).join(', ') + ".";
       }
       reicons();
     } catch(e) { }
