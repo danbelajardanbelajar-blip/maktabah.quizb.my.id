@@ -498,7 +498,7 @@ class AdminController {
         $params = [];
     
         if ($searchType) { $where[] = 'search_type = :type';  $params[':type']  = $searchType; }
-        if ($query)      { $where[] = 'query LIKE :query';     $params[':query'] = "%{$query}%"; }
+        if ($query)      { $where[] = '(query LIKE :query OR visitor_ip LIKE :query)'; $params[':query'] = "%{$query}%"; }
         if ($date)       { $where[] = 'DATE(created_at) = :date'; $params[':date'] = $date; }
     
         $whereStr = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
