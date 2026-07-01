@@ -1163,7 +1163,7 @@ window.submitImportBok = async () => {
   fd.append('category_id', $('#bok-category').value);
 
   try {
-    let res = await fetch('api.php?action=admin_import_bok', {
+    let res = await fetch('/api.php?action=admin_import_bok', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
       body: fd
