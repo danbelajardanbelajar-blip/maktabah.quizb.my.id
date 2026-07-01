@@ -302,15 +302,25 @@ export async function renderDetail(params) {
           if (list) {
             let html = '';
             data.forEach(item => {
-              const padding = item.level > 1 ? 'pl-6 border-l-2 border-gold/30' : 'pl-2 border-l-2 border-gold';
+              const titleStr = item.title || '';
+              const isAr = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(titleStr);
+              
+              const padding = item.level > 1 
+                ? (isAr ? 'pr-6 border-r-2 border-gold/30' : 'pl-6 border-l-2 border-gold/30') 
+                : (isAr ? 'pr-2 border-r-2 border-gold' : 'pl-2 border-l-2 border-gold');
+                
               const bg = item.level == 1 ? 'bg-cream/30 font-medium text-primary' : 'bg-transparent text-primary/80';
-              const title = item.title ? item.title.replace(/</g, '&lt;') : '';
+              const title = titleStr.replace(/</g, '&lt;');
               const totalJuzLabel = book.total_juz > 1 ? `Juz ${item.juz} · ` : '';
-              html += `<div class="py-2 pr-2 cursor-pointer hover:bg-gold/10 transition-colors text-sm rounded mb-1 ${padding} ${bg}" 
+              
+              const dir = isAr ? 'rtl' : 'ltr';
+              const titleClass = isAr ? 'arabic text-right' : 'text-left font-medium text-slate-800';
+              
+              html += `<div class="py-2 px-2 cursor-pointer hover:bg-gold/10 transition-colors text-sm rounded mb-1 ${padding} ${bg}" 
                   onclick="window.loadReaderPage(${readerState.bkid}, ${item.page}, '', ${item.juz}); $('#reader-toc-panel').classList.add('hidden');">
-                <div class="flex justify-between items-start gap-3">
-                  <span class="arabic" dir="rtl">${title}</span>
-                  <span class="text-[10px] text-primary/50 whitespace-nowrap mt-1">${totalJuzLabel}Hal. ${item.page}</span>
+                <div class="flex justify-between items-start gap-3" dir="${dir}">
+                  <span class="${titleClass}">${title}</span>
+                  <span class="text-[10px] text-primary/50 whitespace-nowrap mt-1" dir="ltr">${totalJuzLabel}Hal. ${item.page}</span>
                 </div>
               </div>`;
             });

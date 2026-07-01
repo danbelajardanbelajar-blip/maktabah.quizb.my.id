@@ -1137,7 +1137,7 @@ function _renderTocEditor() {
           <div class="pt-2 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
           <div class="flex-1 grid grid-cols-12 gap-2">
             <div class="col-span-7">
-              <input type="text" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none focus:border-primary/30 toc-input-title" placeholder="Judul Bab..." value="${escHtml(it.title || '')}" onchange="tocUpdateItem(${idx}, 'title', this.value)">
+              <input type="text" dir="${/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(it.title || '') ? 'rtl' : 'ltr'}" class="${/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(it.title || '') ? 'arabic' : ''} w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none focus:border-primary/30 toc-input-title" placeholder="Judul Bab..." value="${escHtml(it.title || '')}" onchange="tocUpdateItem(${idx}, 'title', this.value)">
             </div>
             <div class="col-span-1">
               <input type="number" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none focus:border-primary/30" placeholder="Level" value="${it.level || 1}" onchange="tocUpdateItem(${idx}, 'level', this.value)" title="Level (1=Bab, 2=Subbab)">
