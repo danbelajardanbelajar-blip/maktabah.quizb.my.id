@@ -1133,8 +1133,8 @@ function _renderTocEditor() {
   } else {
     tocAS.items.forEach((it, idx) => {
       html += `
-        <div class="flex items-start gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm toc-item-row" data-idx="${idx}">
-          <div class="pt-2 cursor-move text-gray-300 hover:text-gray-500"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
+        <div class="flex items-start gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm toc-item-row transition-colors" data-idx="${idx}" draggable="true" ondragstart="tocDragStart(${idx})" ondragover="tocDragOver(event)" ondrop="tocDrop(${idx})" ondragenter="tocDragEnter(event)" ondragleave="tocDragLeave(event)">
+          <div class="pt-2 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
           <div class="flex-1 grid grid-cols-12 gap-2">
             <div class="col-span-7">
               <input type="text" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none focus:border-primary/30 toc-input-title" placeholder="Judul Bab..." value="${escHtml(it.title || '')}" onchange="tocUpdateItem(${idx}, 'title', this.value)">
@@ -1161,6 +1161,34 @@ function _renderTocEditor() {
   body.innerHTML = html;
   reicons();
 }
+
+window.tocDragStart = function(idx) {
+  window.tocDragStartIndex = idx;
+};
+window.tocDragOver = function(e) {
+  e.preventDefault();
+};
+window.tocDragEnter = function(e) {
+  const row = e.target.closest('.toc-item-row');
+  if (row) row.classList.add('bg-cream');
+};
+window.tocDragLeave = function(e) {
+  const row = e.target.closest('.toc-item-row');
+  if (row) row.classList.remove('bg-cream');
+};
+window.tocDrop = function(idx) {
+  const fromIdx = window.tocDragStartIndex;
+  if (fromIdx === undefined || fromIdx === -1 || fromIdx === idx) {
+    const row = document.querySelectorAll('.toc-item-row')[idx];
+    if (row) row.classList.remove('bg-cream');
+    return;
+  }
+  
+  const item = tocAS.items.splice(fromIdx, 1)[0];
+  tocAS.items.splice(idx, 0, item);
+  
+  _renderTocEditor();
+};
 
 window.tocUpdateItem = function(idx, field, val) {
   if (!tocAS.items[idx]) return;
