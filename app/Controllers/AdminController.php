@@ -397,7 +397,7 @@ class AdminController {
                 $catName = $cs->fetchColumn() ?: '';
             }
 
-            $stmt = $pdo->prepare("INSERT INTO books (title, author, category_id, category_name, total_juz, pages, created_at) VALUES (?, ?, ?, ?, 1, 0, NOW())");
+            $stmt = $pdo->prepare("INSERT INTO books (title, author, category_id, category_name, pages, created_at) VALUES (?, ?, ?, ?, 0, NOW())");
             $stmt->execute([$title, $author, $catId ?: null, $catName]);
             $newBookId = $pdo->lastInsertId();
 
@@ -511,8 +511,8 @@ class AdminController {
             $stmtPages->execute([$bkid]);
             $totalPages = (int)$stmtPages->fetchColumn() ?: 0;
 
-            $stmtUpdate = $pdo->prepare("UPDATE books SET total_juz = ?, pages = ? WHERE id = ?");
-            $stmtUpdate->execute([$maxJuz, $totalPages, $bkid]);
+            $stmtUpdate = $pdo->prepare("UPDATE books SET pages = ? WHERE id = ?");
+            $stmtUpdate->execute([$totalPages, $bkid]);
 
             // Get book title for log
             $stmtTitle = $pdo->prepare("SELECT title FROM books WHERE id = ?");
