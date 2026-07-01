@@ -637,7 +637,7 @@ class BookController {
         }
         
         try {
-            $stmt = $pdo->prepare("SELECT * FROM book_toc WHERE bkid = :bkid ORDER BY page ASC, id ASC");
+            $stmt = $pdo->prepare("SELECT * FROM book_toc WHERE bkid = :bkid ORDER BY juz ASC, page ASC, id ASC");
             $stmt->execute([':bkid' => $bkid]);
             $toc = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             echo json_encode($toc);

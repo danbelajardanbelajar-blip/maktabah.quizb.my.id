@@ -1193,7 +1193,7 @@ class AdminController {
         $bkid = (int)($_GET['bkid'] ?? 0);
         
         try {
-            $stmt = $pdo->prepare("SELECT * FROM book_toc WHERE bkid = ? ORDER BY page ASC, id ASC");
+            $stmt = $pdo->prepare("SELECT * FROM book_toc WHERE bkid = ? ORDER BY juz ASC, page ASC, id ASC");
             $stmt->execute([$bkid]);
             echo json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
         } catch (\Exception $e) {
@@ -1256,7 +1256,7 @@ class AdminController {
         }
 
         try {
-            $stmt = $pdo->prepare("SELECT page, juz, content FROM book_content WHERE bkid = ? ORDER BY page ASC");
+            $stmt = $pdo->prepare("SELECT page, juz, content FROM book_content WHERE bkid = ? ORDER BY juz ASC, page ASC, id ASC");
             $stmt->execute([$bkid]);
             $pages = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
