@@ -1271,7 +1271,7 @@ class AdminController {
                         if (strpos($line, '.') === false && strpos($line, '،') === false && strpos($line, '؟') === false) {
                             // Extract traditional headings as well as potential standard short lines if they look good
                             if (preg_match('/^(كتاب|باب|فصل|مقدمة|خاتمة|المبحث|المطلب|القسم|تنبيه|فائدة|مسألة)/u', $line) || 
-                                (mb_strlen($line) <= 40 && strpos($line, ' ') !== false && mb_substr($line, -1) !== ':')) {
+                                (mb_strlen($line) <= 60 && strpos($line, ' ') !== false && mb_substr($line, -1) !== ':')) {
                                 $tocItems[] = [
                                     'title' => mb_substr($line, 0, 200),
                                     'juz' => $p['juz'],
