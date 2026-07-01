@@ -317,9 +317,12 @@ function bookModalHtml() {
                 class="w-full text-sm text-primary/60 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors">
             </div>
 
-            <div id="bok-import-loading" class="hidden flex-col items-center justify-center my-4 space-y-3">
-              <div class="w-8 h-8 border-4 border-cream-dark border-t-gold rounded-full animate-spin"></div>
-              <p class="text-xs text-primary/60 font-medium">Sedang memproses, mohon tunggu...</p>
+            <div id="bok-import-loading" class="hidden flex-col justify-center my-4 space-y-2 w-full">
+              <div class="text-sm font-semibold text-primary" id="bok-import-status">Membaca file...</div>
+              <div class="w-full bg-cream-dark rounded-full h-2">
+                <div id="bok-import-progress" class="bg-gold h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+              <div class="text-xs text-primary/60" id="bok-import-detail">0%</div>
             </div>
 
             <div class="flex justify-end gap-3" id="bok-import-actions">
