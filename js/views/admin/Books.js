@@ -194,8 +194,12 @@ async function bksLoad() {
                           <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                         </button>
                         <button title="Kelola Isi" onclick="gotoContent(${b.bkid})"
-                          class="p-2 rounded-lg hover:bg-yellow-50 text-yellow-500/60 hover:text-yellow-700 transition-colors">
-                          <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                          class="p-2 text-primary/40 hover:text-primary hover:bg-cream-dark rounded-lg transition-colors">
+                          <i data-lucide="file-text" class="w-4 h-4"></i>
+                        </button>
+                        <button title="Kelola Daftar Isi" onclick="openTocModal(${b.bkid}, \`${b.title.replace(/`/g,'\\`')}\`)"
+                          class="p-2 text-primary/40 hover:text-primary hover:bg-cream-dark rounded-lg transition-colors">
+                          <i data-lucide="list" class="w-4 h-4"></i>
                         </button>
                         <button title="Hapus" onclick="bkDelete(${b.bkid},\`${b.title.replace(/`/g,'\\`')}\`)"
                           class="p-2 rounded-lg hover:bg-red-50 text-red-300 hover:text-red-600 transition-colors">
@@ -1054,6 +1058,163 @@ window.contAddPage = async function() {
   } catch(e) {
     if (handleAuthError(e)) return;
     adminToast(e.message || 'Gagal buat halaman', 'error');
+  }
+};
+
+// ==========================================
+// TOC Management
+// ==========================================
+let tocAS = { bkid: 0, title: '', items: [] };
+
+window.openTocModal = async function(bkid, title) {
+  tocAS = { bkid, title, items: [] };
+  const m = document.getElementById('admin-modal-container');
+  m.innerHTML = `
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 flex flex-col max-h-[90vh] animate-slide-up">
+      <div class="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-xl z-10">
+        <h3 class="font-lora font-bold text-lg text-primary truncate pr-4">Daftar Isi: ${title}</h3>
+        <button onclick="closeTocModal()" class="p-2 rounded-lg hover:bg-cream-dark text-primary/40 transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-4 overflow-y-auto flex-1 bg-gray-50/50" id="toc-modal-body">
+        <div class="flex items-center justify-center py-12"><div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div></div>
+      </div>
+      <div class="p-4 border-t border-gray-100 flex items-center justify-between bg-white rounded-b-xl">
+        <button onclick="tocAutoGenerate()" class="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-2">
+          <i data-lucide="wand-2" class="w-4 h-4"></i> Auto Generate
+        </button>
+        <div class="flex gap-2">
+          <button onclick="closeTocModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">Batal</button>
+          <button onclick="tocSave()" id="toc-save-btn" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+            <i data-lucide="save" class="w-4 h-4"></i> Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+  reicons();
+  
+  try {
+    const data = await apiFetch({ action: 'admin_get_toc', bkid });
+    tocAS.items = Array.isArray(data) ? data : [];
+    _renderTocEditor();
+  } catch(e) {
+    if (handleAuthError(e)) return;
+    document.getElementById('toc-modal-body').innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">Gagal memuat: ${e.message}</div>`;
+  }
+};
+
+window.closeTocModal = function() {
+  const m = document.getElementById('admin-modal-container');
+  m.classList.add('hidden');
+  m.classList.remove('flex');
+  m.innerHTML = '';
+};
+
+function _renderTocEditor() {
+  const body = document.getElementById('toc-modal-body');
+  if (!body) return;
+  
+  let html = `
+    <div class="mb-4">
+      <button onclick="tocAddItem(0)" class="text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+        <i data-lucide="plus" class="w-3 h-3"></i> Tambah Item Pertama
+      </button>
+    </div>
+    <div class="space-y-2" id="toc-items-container">
+  `;
+  
+  if (tocAS.items.length === 0) {
+    html += `<div class="text-center py-8 text-sm text-primary/40">Belum ada daftar isi. Gunakan tombol Auto Generate atau tambah manual.</div>`;
+  } else {
+    tocAS.items.forEach((it, idx) => {
+      html += `
+        <div class="flex items-start gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm toc-item-row" data-idx="${idx}">
+          <div class="pt-2 cursor-move text-gray-300 hover:text-gray-500"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
+          <div class="flex-1 grid grid-cols-12 gap-2">
+            <div class="col-span-7">
+              <input type="text" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none focus:border-primary/30 toc-input-title" placeholder="Judul Bab..." value="${escapeHtml(it.title || '')}" onchange="tocUpdateItem(${idx}, 'title', this.value)">
+            </div>
+            <div class="col-span-1">
+              <input type="number" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none focus:border-primary/30" placeholder="Level" value="${it.level || 1}" onchange="tocUpdateItem(${idx}, 'level', this.value)" title="Level (1=Bab, 2=Subbab)">
+            </div>
+            <div class="col-span-2">
+              <input type="number" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none focus:border-primary/30" placeholder="Juz" value="${it.juz || 1}" onchange="tocUpdateItem(${idx}, 'juz', this.value)" title="Juz">
+            </div>
+            <div class="col-span-2">
+              <input type="number" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none focus:border-primary/30" placeholder="Halaman" value="${it.page || 1}" onchange="tocUpdateItem(${idx}, 'page', this.value)" title="Halaman">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <button onclick="tocRemoveItem(${idx})" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Hapus"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <button onclick="tocAddItem(${idx+1})" class="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="Sisipkan di Bawah"><i data-lucide="plus" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+      `;
+    });
+  }
+  html += `</div>`;
+  body.innerHTML = html;
+  reicons();
+}
+
+window.tocUpdateItem = function(idx, field, val) {
+  if (!tocAS.items[idx]) return;
+  tocAS.items[idx][field] = field === 'title' ? val : parseInt(val, 10) || 1;
+};
+
+window.tocAddItem = function(atIndex) {
+  let prev = atIndex > 0 ? tocAS.items[atIndex - 1] : { juz: 1, page: 1, level: 1 };
+  tocAS.items.splice(atIndex, 0, { title: '', juz: prev.juz, page: prev.page, level: prev.level });
+  _renderTocEditor();
+};
+
+window.tocRemoveItem = function(idx) {
+  tocAS.items.splice(idx, 1);
+  _renderTocEditor();
+};
+
+window.tocAutoGenerate = async function() {
+  if (!confirm("Auto Generate akan menimpa/menghapus Daftar Isi yang sedang Anda edit (jika belum disimpan). Lanjutkan?")) return;
+  const body = document.getElementById('toc-modal-body');
+  body.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-primary/50 text-sm gap-3"><div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>Memindai isi kitab... Ini mungkin memakan waktu beberapa detik.</div>`;
+  
+  try {
+    const data = await adminPost('admin_generate_toc', { bkid: tocAS.bkid });
+    if (data.success && Array.isArray(data.data)) {
+      tocAS.items = data.data;
+      if (tocAS.items.length === 0) adminToast("Tidak ditemukan pola bab yang otomatis.", "info");
+      else adminToast(`Ditemukan ${tocAS.items.length} bab.`);
+      _renderTocEditor();
+    } else {
+      throw new Error(data.error || "Gagal auto-generate");
+    }
+  } catch(e) {
+    if (handleAuthError(e)) return;
+    adminToast(e.message, 'error');
+    _renderTocEditor();
+  }
+};
+
+window.tocSave = async function() {
+  const btn = document.getElementById('toc-save-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Menyimpan…'; }
+  try {
+    // Filter out empty titles
+    const cleanItems = tocAS.items.filter(x => x.title.trim() !== '');
+    const data = await adminPost('admin_save_toc', { bkid: tocAS.bkid, items: cleanItems });
+    if (data.success) {
+      adminToast('Daftar Isi berhasil disimpan');
+      closeTocModal();
+    } else throw new Error(data.error || 'Gagal menyimpan');
+  } catch(e) {
+    if (handleAuthError(e)) return;
+    adminToast(e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan'; reicons(); }
   }
 };
 

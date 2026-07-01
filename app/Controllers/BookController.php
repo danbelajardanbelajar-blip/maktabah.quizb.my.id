@@ -625,4 +625,26 @@ class BookController {
             echo json_encode(['data' => []]);
         }
     }
+
+    public function handleGetBookToc(): void {
+        header('Cache-Control: public, max-age=300');
+        $pdo = Database::getConnection();
+        $bkid = (int)($_GET['bkid'] ?? 0);
+        
+        if ($bkid <= 0) {
+            echo json_encode([]);
+            return;
+        }
+        
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM book_toc WHERE bkid = :bkid ORDER BY page ASC, id ASC");
+            $stmt->execute([':bkid' => $bkid]);
+            $toc = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            echo json_encode($toc);
+        } catch (\Exception $e) {
+            // Table might not exist yet
+            echo json_encode([]);
+        }
+    }
 }
+

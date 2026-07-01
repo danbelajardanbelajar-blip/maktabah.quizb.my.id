@@ -139,6 +139,11 @@ export async function renderDetail(params) {
                   class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2">
                   <i data-lucide="search" class="w-4 h-4"></i>
                 </button>
+                <!-- TOC Button -->
+                <button id="reader-toc-btn" title="Daftar Isi"
+                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2 hidden">
+                  <i data-lucide="list" class="w-4 h-4"></i>
+                </button>
               </div>
             </div>
 
@@ -152,6 +157,14 @@ export async function renderDetail(params) {
                 <button id="in-book-search-submit" class="px-4 py-2 bg-gold text-white rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors">Cari</button>
               </div>
               <div id="in-book-search-results" class="mt-3 space-y-2 hidden max-h-60 overflow-y-auto pr-1"></div>
+            </div>
+
+            <!-- TOC panel -->
+            <div id="reader-toc-panel" class="hidden mb-4 p-3 sm:p-4 border border-gold/20 rounded-2xl bg-white shadow-sm">
+              <h4 class="font-lora font-bold text-primary mb-3 text-sm">Daftar Isi</h4>
+              <div id="reader-toc-list" class="max-h-80 overflow-y-auto pr-1 space-y-1">
+                <!-- TOC items injected here -->
+              </div>
             </div>
 
             <!-- Content area — direction & font controlled by CSS vars + unicode-bidi -->
@@ -264,9 +277,47 @@ export async function renderDetail(params) {
           panel.classList.toggle('hidden');
           if (!panel.classList.contains('hidden')) {
             $('#in-book-search-input')?.focus();
+            $('#reader-toc-panel')?.classList.add('hidden');
           }
         }
       });
+      
+      // TOC events
+      $('#reader-toc-btn')?.addEventListener('click', () => {
+        const panel = $('#reader-toc-panel');
+        if (panel) {
+          panel.classList.toggle('hidden');
+          if (!panel.classList.contains('hidden')) {
+            $('#in-book-search-panel')?.classList.add('hidden');
+          }
+        }
+      });
+      
+      // Fetch TOC
+      apiFetch({ action: 'book_toc', bkid: readerState.bkid }).then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const btn = $('#reader-toc-btn');
+          if (btn) btn.classList.remove('hidden');
+          const list = $('#reader-toc-list');
+          if (list) {
+            let html = '';
+            data.forEach(item => {
+              const padding = item.level > 1 ? 'pl-6 border-l-2 border-gold/30' : 'pl-2 border-l-2 border-gold';
+              const bg = item.level == 1 ? 'bg-cream/30 font-medium text-primary' : 'bg-transparent text-primary/80';
+              const title = item.title ? item.title.replace(/</g, '&lt;') : '';
+              const totalJuzLabel = book.total_juz > 1 ? `Juz ${item.juz} · ` : '';
+              html += `<div class="py-2 pr-2 cursor-pointer hover:bg-gold/10 transition-colors text-sm rounded mb-1 ${padding} ${bg}" 
+                  onclick="window.loadReaderPage(${readerState.bkid}, ${item.page}, '', ${item.juz}); $('#reader-toc-panel').classList.add('hidden');">
+                <div class="flex justify-between items-start gap-3">
+                  <span class="arabic" dir="rtl">${title}</span>
+                  <span class="text-[10px] text-primary/50 whitespace-nowrap mt-1">${totalJuzLabel}Hal. ${item.page}</span>
+                </div>
+              </div>`;
+            });
+            list.innerHTML = html;
+          }
+        }
+      }).catch(console.error);
       
       const doInBookSearch = async () => {
         const q = $('#in-book-search-input')?.value.trim();

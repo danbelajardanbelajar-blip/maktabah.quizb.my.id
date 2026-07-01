@@ -19,6 +19,7 @@ $router->add('download_book', 'BookController', 'handleDownloadBook');
 $router->add('content', 'BookController', 'handleContent');
 $router->add('latest', 'BookController', 'handleLatest');
 $router->add('popular_books', 'BookController', 'handlePopularBooks');
+$router->add('book_toc', 'BookController', 'handleGetBookToc');
 
 // Categories
 $router->add('categories', 'CategoryController', 'handleCategories');
@@ -49,6 +50,9 @@ $router->add('admin_delete_category', 'AdminController', 'handleAdminDeleteCateg
 $router->add('admin_save_content', 'AdminController', 'handleAdminSaveContent');
 $router->add('admin_delete_content', 'AdminController', 'handleAdminDeleteContent');
 $router->add('admin_import_book', 'AdminController', 'handleAdminImportBook');
+$router->add('admin_get_toc', 'AdminController', 'handleAdminGetToc');
+$router->add('admin_save_toc', 'AdminController', 'handleAdminSaveToc');
+$router->add('admin_generate_toc', 'AdminController', 'handleAdminGenerateToc');
 $router->add('admin_get_history', 'AdminController', 'handleAdminGetHistory');
 $router->add('admin_get_activity', 'AdminController', 'handleAdminGetActivity');
 $router->add('admin_get_search_logs', 'AdminController', 'handleAdminGetSearchLogs');

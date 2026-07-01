@@ -1186,4 +1186,108 @@ class AdminController {
         AuthHelper::logCrudHistory('UPDATE', 'file_submissions', (string)$id, "Membalas submission oleh {$admin['name']}");
         echo json_encode(['success' => true]);
     }
+
+    public function handleAdminGetToc(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+        $bkid = (int)($_GET['bkid'] ?? 0);
+        
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM book_toc WHERE bkid = ? ORDER BY page ASC, id ASC");
+            $stmt->execute([$bkid]);
+            echo json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+        } catch (\Exception $e) {
+            echo json_encode([]);
+        }
+    }
+
+    public function handleAdminSaveToc(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+        $input = json_decode(file_get_contents('php://input'), true);
+        $bkid = (int)($input['bkid'] ?? 0);
+        $items = $input['items'] ?? [];
+
+        if (!$bkid) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID kitab wajib diisi']);
+            return;
+        }
+
+        try {
+            $pdo->beginTransaction();
+            // Clear existing TOC for this book
+            $del = $pdo->prepare("DELETE FROM book_toc WHERE bkid = ?");
+            $del->execute([$bkid]);
+
+            if (!empty($items)) {
+                $ins = $pdo->prepare("INSERT INTO book_toc (bkid, title, juz, page, level) VALUES (?, ?, ?, ?, ?)");
+                foreach ($items as $item) {
+                    $title = trim($item['title'] ?? '');
+                    if ($title === '') continue;
+                    $ins->execute([
+                        $bkid,
+                        $title,
+                        (int)($item['juz'] ?? 1),
+                        (int)($item['page'] ?? 1),
+                        (int)($item['level'] ?? 1)
+                    ]);
+                }
+            }
+            $pdo->commit();
+            AuthHelper::logCrudHistory('UPDATE', 'book_toc', (string)$bkid, "Update Daftar Isi Kitab oleh {$admin['name']}");
+            echo json_encode(['success' => true]);
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function handleAdminGenerateToc(): void {
+        $admin = AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+        $input = json_decode(file_get_contents('php://input'), true);
+        $bkid = (int)($input['bkid'] ?? 0);
+        if (!$bkid) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID kitab wajib diisi']);
+            return;
+        }
+
+        try {
+            $stmt = $pdo->prepare("SELECT page, juz, content FROM book_content WHERE bkid = ? ORDER BY page ASC");
+            $stmt->execute([$bkid]);
+            $pages = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $tocItems = [];
+            foreach ($pages as $p) {
+                // normalize newlines
+                $normalized = str_replace(['\r', '\n'], ["\r", "\n"], $p['content']);
+                $lines = preg_split('/[\r\n]+/', $normalized);
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (mb_strlen($line) >= 3 && mb_strlen($line) <= 80) {
+                        if (strpos($line, '.') === false && strpos($line, '،') === false && strpos($line, '؟') === false) {
+                            // Extract traditional headings as well as potential standard short lines if they look good
+                            if (preg_match('/^(كتاب|باب|فصل|مقدمة|خاتمة|المبحث|المطلب|القسم|تنبيه|فائدة|مسألة)/u', $line) || 
+                                (mb_strlen($line) <= 40 && strpos($line, ' ') !== false && mb_substr($line, -1) !== ':')) {
+                                $tocItems[] = [
+                                    'title' => mb_substr($line, 0, 200),
+                                    'juz' => $p['juz'],
+                                    'page' => $p['page'],
+                                    'level' => preg_match('/^(كتاب|باب)/u', $line) ? 1 : 2
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+
+            echo json_encode(['success' => true, 'data' => $tocItems]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
 }
