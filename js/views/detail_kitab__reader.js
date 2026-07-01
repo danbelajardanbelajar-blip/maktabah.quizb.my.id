@@ -134,11 +134,25 @@ export async function renderDetail(params) {
                   class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2">
                   <i data-lucide="settings-2" class="w-4 h-4"></i>
                 </button>
+                <!-- In-book Search Button -->
+                <button id="in-book-search-btn" title="Cari di Kitab ini"
+                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2">
+                  <i data-lucide="search" class="w-4 h-4"></i>
+                </button>
               </div>
             </div>
 
             <!-- Font settings panel (slide-down) -->
             <div id="font-panel-wrap">${renderFontPanel()}</div>
+            
+            <!-- In-book search panel -->
+            <div id="in-book-search-panel" class="hidden mb-4 p-3 sm:p-4 border border-gold/20 rounded-2xl bg-white shadow-sm">
+              <div class="flex gap-2">
+                <input type="text" id="in-book-search-input" placeholder="Cari kata dalam kitab ini..." class="flex-1 px-3 py-2 border border-gold/30 rounded-xl text-sm text-primary focus:outline-none focus:border-gold" />
+                <button id="in-book-search-submit" class="px-4 py-2 bg-gold text-white rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors">Cari</button>
+              </div>
+              <div id="in-book-search-results" class="mt-3 space-y-2 hidden max-h-60 overflow-y-auto pr-1"></div>
+            </div>
 
             <!-- Content area — direction & font controlled by CSS vars + unicode-bidi -->
             <div id="reader-area"
@@ -242,6 +256,52 @@ export async function renderDetail(params) {
       });
       // Wire up font size slider
       initFontPanelEvents();
+
+      // In-book search events
+      $('#in-book-search-btn')?.addEventListener('click', () => {
+        const panel = $('#in-book-search-panel');
+        if (panel) {
+          panel.classList.toggle('hidden');
+          if (!panel.classList.contains('hidden')) {
+            $('#in-book-search-input')?.focus();
+          }
+        }
+      });
+      
+      const doInBookSearch = async () => {
+        const q = $('#in-book-search-input')?.value.trim();
+        if (!q || q.length < 2) return;
+        
+        const resDiv = $('#in-book-search-results');
+        if (resDiv) {
+          resDiv.innerHTML = '<div class="text-center py-4"><div class="w-6 h-6 border-2 border-gold/30 border-t-gold rounded-full animate-spin mx-auto" style="border-width:2px"></div></div>';
+          resDiv.classList.remove('hidden');
+        }
+        
+        try {
+          const res = await apiFetch({ action: 'search_content_in_book', bkid: readerState.bkid, q: q });
+          if (res && res.found && res.data.length > 0) {
+            let html = '';
+            res.data.forEach(item => {
+              const totalJuzLabel = book.total_juz > 1 ? `Juz ${item.match_juz} · ` : '';
+              html += `<div class="p-3 border border-cream-dark rounded-xl hover:border-gold/50 cursor-pointer transition-colors bg-cream/50" onclick="window.loadReaderPage(${readerState.bkid}, ${item.match_page}, '${q.replace(/'/g, "\\'")}', ${item.match_juz}, ${item.match_id})">
+                <div class="text-xs font-semibold text-gold mb-1.5">${totalJuzLabel}Halaman ${item.match_page}</div>
+                <div class="text-sm arabic leading-loose text-primary" dir="rtl">${item.snippet}</div>
+              </div>`;
+            });
+            if (resDiv) resDiv.innerHTML = html;
+          } else {
+            if (resDiv) resDiv.innerHTML = '<div class="text-center text-sm text-primary/50 py-4">Kata kunci tidak ditemukan dalam kitab ini.</div>';
+          }
+        } catch(e) {
+          if (resDiv) resDiv.innerHTML = '<div class="text-center text-sm text-red-500 py-4">Gagal melakukan pencarian.</div>';
+        }
+      };
+
+      $('#in-book-search-submit')?.addEventListener('click', doInBookSearch);
+      $('#in-book-search-input')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doInBookSearch();
+      });
 
       // Mobile action bar events
       $('#mobile-font-dec')?.addEventListener('click', () => {
