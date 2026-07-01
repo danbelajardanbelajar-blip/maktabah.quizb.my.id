@@ -837,6 +837,7 @@ window._impConfirm = async function() {
     adminToast(`✅ ${total} halaman berhasil diimpor!`);
     closeImportModal();
     bksLoad(); // refresh tabel kitab
+    setTimeout(() => { window.gotoContent(res.bkid); }, 500);
 
   } catch(e) {
     if (handleAuthError(e)) return;
@@ -1275,6 +1276,7 @@ window.submitImportBok = async () => {
         closeImportBokModal();
         window.loadBooks();
         showToast("Kitab JSON berhasil diimpor.");
+        window.gotoContent(bkid);
       }, 500);
       
     } catch (err) {
