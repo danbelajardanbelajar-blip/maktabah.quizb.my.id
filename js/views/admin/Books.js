@@ -36,6 +36,10 @@ async function renderAdminBooks() {
             <p class="text-primary/40 text-xs mt-1">Tambah, edit, hapus, dan kelola isi kitab</p>
           </div>
           <div class="flex items-center gap-2">
+            <button onclick="openImportBokModal()"
+              class="flex items-center gap-2 px-4 py-2.5 border border-primary text-primary rounded-xl text-sm font-semibold hover:bg-cream-dark transition-colors">
+              <i data-lucide="database" class="w-4 h-4"></i> Import Bok
+            </button>
             <button onclick="openImportWordModal()"
               class="flex items-center gap-2 px-4 py-2.5 border border-primary text-primary rounded-xl text-sm font-semibold hover:bg-cream-dark transition-colors">
               <i data-lucide="file-up" class="w-4 h-4"></i> Import Word
@@ -273,6 +277,38 @@ function bookModalHtml() {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ IMPORT BOK (SHAMELA) MODAL ══════════════════════════════ -->
+    <div id="import-bok-modal" class="fixed inset-0 z-[400] hidden" style="background:rgba(15,34,24,.65);backdrop-filter:blur(6px);">
+      <div class="flex items-center justify-center min-h-full p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+          <button onclick="closeImportBokModal()" class="absolute top-4 right-4 p-2 rounded-lg hover:bg-cream-dark text-primary/40 transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+          
+          <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="database" class="w-6 h-6 text-primary"></i>
+          </div>
+          
+          <h2 class="font-bold text-primary text-lg text-center mb-2">Import Kitab Shamela (.bok)</h2>
+          <p class="text-sm text-primary/60 text-center mb-6 leading-relaxed">
+            Membaca file database Microsoft Access (.bok) memerlukan ekstensi <code class="bg-slate-100 px-1 rounded text-xs text-rose-600">pdo_odbc</code> aktif di server PHP Anda.
+          </p>
+          
+          <div class="bg-cream p-4 rounded-xl text-xs text-primary/80 mb-6 space-y-2">
+            <p><strong>Cara Penggunaan:</strong></p>
+            <p>Saat ini, proses import file berukuran besar disarankan melalui antarmuka Command Line (CLI) demi mencegah <em>timeout</em> server.</p>
+            <p>Silakan jalankan <code>php import_shamela.php "D:\path\file.bok"</code> di terminal server Anda.</p>
+          </div>
+          
+          <div class="flex justify-center">
+            <button onclick="closeImportBokModal()" class="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm w-full">
+              Mengerti
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1060,6 +1096,16 @@ window.contAddPage = async function() {
     if (handleAuthError(e)) return;
     adminToast(e.message || 'Gagal buat halaman', 'error');
   }
+};
+
+// ==========================================
+// IMPORT BOK (SHAMELA) MODAL
+// ==========================================
+window.openImportBokModal = () => {
+  $('#import-bok-modal')?.classList.remove('hidden');
+};
+window.closeImportBokModal = () => {
+  $('#import-bok-modal')?.classList.add('hidden');
 };
 
 // ==========================================
