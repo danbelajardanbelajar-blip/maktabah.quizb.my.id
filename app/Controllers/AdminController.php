@@ -511,11 +511,11 @@ class AdminController {
             $stmtPages->execute([$bkid]);
             $totalPages = (int)$stmtPages->fetchColumn() ?: 0;
 
-            $stmtUpdate = $pdo->prepare("UPDATE books SET pages = ? WHERE id = ?");
+            $stmtUpdate = $pdo->prepare("UPDATE books SET pages = ? WHERE bkid = ?");
             $stmtUpdate->execute([$totalPages, $bkid]);
 
             // Get book title for log
-            $stmtTitle = $pdo->prepare("SELECT title FROM books WHERE id = ?");
+            $stmtTitle = $pdo->prepare("SELECT title FROM books WHERE bkid = ?");
             $stmtTitle->execute([$bkid]);
             $title = $stmtTitle->fetchColumn() ?: 'Unknown';
 
