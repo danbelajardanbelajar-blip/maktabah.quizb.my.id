@@ -161,7 +161,15 @@ export async function renderDetail(params) {
 
             <!-- TOC panel -->
             <div id="reader-toc-panel" class="hidden mb-4 p-3 sm:p-4 border border-gold/20 rounded-2xl bg-white shadow-sm">
-              <h4 class="font-lora font-bold text-primary mb-3 text-sm">Daftar Isi</h4>
+              <div class="flex items-center justify-between mb-3 gap-3">
+                <h4 class="font-lora font-bold text-primary text-sm shrink-0">Daftar Isi</h4>
+                <div class="relative flex-1 max-w-sm">
+                  <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-primary/40">
+                    <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                  </div>
+                  <input type="text" id="reader-toc-search" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-lg focus:ring-gold focus:border-gold block pl-8 p-1.5 transition-colors" placeholder="Cari judul bab...">
+                </div>
+              </div>
               <div id="reader-toc-list" class="max-h-80 overflow-y-auto pr-1 space-y-1">
                 <!-- TOC items injected here -->
               </div>
@@ -294,38 +302,56 @@ export async function renderDetail(params) {
       });
       
       // Fetch TOC
+      let currentTocData = [];
+      const renderTocList = (filterQuery = '') => {
+        const list = $('#reader-toc-list');
+        if (!list) return;
+        
+        const q = filterQuery.toLowerCase();
+        const filtered = q ? currentTocData.filter(item => (item.title || '').toLowerCase().includes(q)) : currentTocData;
+        
+        if (filtered.length === 0) {
+          list.innerHTML = '<div class="py-4 text-center text-sm text-primary/40">Tidak ada daftar isi ditemukan.</div>';
+          return;
+        }
+
+        let html = '';
+        filtered.forEach(item => {
+          const titleStr = item.title || '';
+          const isAr = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(titleStr);
+          
+          const padding = item.level > 1 
+            ? (isAr ? 'pr-6 border-r-2 border-gold/30' : 'pl-6 border-l-2 border-gold/30') 
+            : (isAr ? 'pr-2 border-r-2 border-gold' : 'pl-2 border-l-2 border-gold');
+            
+          const bg = item.level == 1 ? 'bg-cream/30 font-medium text-primary' : 'bg-transparent text-primary/80';
+          const title = titleStr.replace(/</g, '&lt;');
+          const totalJuzLabel = book.total_juz > 1 ? `Juz ${item.juz} · ` : '';
+          
+          const dir = isAr ? 'rtl' : 'ltr';
+          const titleClass = isAr ? 'arabic text-right' : 'text-left font-medium text-slate-800';
+          
+          html += `<div class="py-2 px-2 cursor-pointer hover:bg-gold/10 transition-colors text-sm rounded mb-1 ${padding} ${bg}" 
+              onclick="window.loadReaderPage(${readerState.bkid}, ${item.page}, '', ${item.juz}); $('#reader-toc-panel').classList.add('hidden');">
+            <div class="flex justify-between items-start gap-3" dir="${dir}">
+              <span class="${titleClass}">${title}</span>
+              <span class="text-[10px] text-primary/50 whitespace-nowrap mt-1" dir="ltr">${totalJuzLabel}Hal. ${item.page}</span>
+            </div>
+          </div>`;
+        });
+        list.innerHTML = html;
+      };
+
+      $('#reader-toc-search')?.addEventListener('input', (e) => {
+        renderTocList(e.target.value);
+      });
+
       apiFetch({ action: 'book_toc', bkid: readerState.bkid }).then(data => {
         if (Array.isArray(data) && data.length > 0) {
+          currentTocData = data;
           const btn = $('#reader-toc-btn');
           if (btn) btn.classList.remove('hidden');
-          const list = $('#reader-toc-list');
-          if (list) {
-            let html = '';
-            data.forEach(item => {
-              const titleStr = item.title || '';
-              const isAr = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(titleStr);
-              
-              const padding = item.level > 1 
-                ? (isAr ? 'pr-6 border-r-2 border-gold/30' : 'pl-6 border-l-2 border-gold/30') 
-                : (isAr ? 'pr-2 border-r-2 border-gold' : 'pl-2 border-l-2 border-gold');
-                
-              const bg = item.level == 1 ? 'bg-cream/30 font-medium text-primary' : 'bg-transparent text-primary/80';
-              const title = titleStr.replace(/</g, '&lt;');
-              const totalJuzLabel = book.total_juz > 1 ? `Juz ${item.juz} · ` : '';
-              
-              const dir = isAr ? 'rtl' : 'ltr';
-              const titleClass = isAr ? 'arabic text-right' : 'text-left font-medium text-slate-800';
-              
-              html += `<div class="py-2 px-2 cursor-pointer hover:bg-gold/10 transition-colors text-sm rounded mb-1 ${padding} ${bg}" 
-                  onclick="window.loadReaderPage(${readerState.bkid}, ${item.page}, '', ${item.juz}); $('#reader-toc-panel').classList.add('hidden');">
-                <div class="flex justify-between items-start gap-3" dir="${dir}">
-                  <span class="${titleClass}">${title}</span>
-                  <span class="text-[10px] text-primary/50 whitespace-nowrap mt-1" dir="ltr">${totalJuzLabel}Hal. ${item.page}</span>
-                </div>
-              </div>`;
-            });
-            list.innerHTML = html;
-          }
+          renderTocList();
         }
       }).catch(console.error);
       
