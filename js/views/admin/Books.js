@@ -299,16 +299,38 @@ function bookModalHtml() {
           </p>
           
           <div class="bg-cream p-4 rounded-xl text-xs text-primary/80 mb-6 space-y-2">
-            <p><strong>Cara Penggunaan:</strong></p>
-            <p>Saat ini, proses import file berukuran besar disarankan melalui antarmuka Command Line (CLI) demi mencegah <em>timeout</em> server.</p>
-            <p>Silakan jalankan <code>php import_shamela.php "D:\path\file.bok"</code> di terminal server Anda.</p>
+            <p><strong>Catatan:</strong></p>
+            <p>Proses import file database (.bok) memakan waktu yang cukup lama. Harap jangan menutup jendela atau menyegarkan halaman saat proses sedang berlangsung.</p>
           </div>
           
-          <div class="flex justify-center">
-            <button onclick="closeImportBokModal()" class="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm w-full">
-              Mengerti
-            </button>
-          </div>
+          <form id="form-import-bok" onsubmit="event.preventDefault(); submitImportBok();">
+            <div class="mb-4">
+              <label class="block text-sm font-semibold text-primary mb-2">Kategori (Opsional)</label>
+              <select id="bok-category" class="w-full bg-white border border-cream-dark rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gold">
+                <option value="">-- Pilih Kategori --</option>
+              </select>
+            </div>
+            
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-primary mb-2">File Kitab (.bok)</label>
+              <input type="file" id="bok-file" accept=".bok,.mdb" required
+                class="w-full text-sm text-primary/60 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors">
+            </div>
+
+            <div id="bok-import-loading" class="hidden flex-col items-center justify-center my-4 space-y-3">
+              <div class="w-8 h-8 border-4 border-cream-dark border-t-gold rounded-full animate-spin"></div>
+              <p class="text-xs text-primary/60 font-medium">Sedang memproses, mohon tunggu...</p>
+            </div>
+
+            <div class="flex justify-end gap-3" id="bok-import-actions">
+              <button type="button" onclick="closeImportBokModal()" class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">
+                Batal
+              </button>
+              <button type="submit" class="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm">
+                Mulai Import
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -1102,10 +1124,55 @@ window.contAddPage = async function() {
 // IMPORT BOK (SHAMELA) MODAL
 // ==========================================
 window.openImportBokModal = () => {
+  $('#form-import-bok')?.reset();
+  $('#bok-import-loading')?.classList.add('hidden');
+  $('#bok-import-actions')?.classList.remove('hidden');
   $('#import-bok-modal')?.classList.remove('hidden');
+
+  let sel = $('#bok-category');
+  if (sel) {
+    sel.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+    categoriesState.forEach(c => {
+      sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+    });
+  }
 };
 window.closeImportBokModal = () => {
   $('#import-bok-modal')?.classList.add('hidden');
+};
+window.submitImportBok = async () => {
+  let fileInput = $('#bok-file');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert("Pilih file .bok terlebih dahulu.");
+    return;
+  }
+
+  $('#bok-import-loading').classList.remove('hidden');
+  $('#bok-import-actions').classList.add('hidden');
+  $('#bok-import-loading').style.display = 'flex';
+
+  let fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  fd.append('category_id', $('#bok-category').value);
+
+  try {
+    let res = await fetch('api.php?action=admin_import_bok', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      body: fd
+    });
+    let data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload error');
+    
+    alert(`Berhasil! ${data.pages} bagian dan ${data.toc} daftar isi telah diimpor.`);
+    closeImportBokModal();
+    loadBooks();
+  } catch (err) {
+    alert("Gagal mengimpor: " + err.message);
+    $('#bok-import-loading').classList.add('hidden');
+    $('#bok-import-actions').classList.remove('hidden');
+    $('#bok-import-loading').style.display = 'none';
+  }
 };
 
 // ==========================================

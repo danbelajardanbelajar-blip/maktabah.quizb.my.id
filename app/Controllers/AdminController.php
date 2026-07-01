@@ -372,6 +372,165 @@ class AdminController {
         }
     }
 
+    public function handleAdminImportBok(): void {
+        header('Content-Type: application/json');
+        AuthHelper::requireAdmin();
+
+        if (!extension_loaded('pdo_odbc')) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Ekstensi pdo_odbc tidak aktif di server. Aktifkan pdo_odbc pada php.ini.']);
+            return;
+        }
+
+        if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            $err = isset($_FILES['file']['error']) ? $_FILES['file']['error'] : 'Unknown error';
+            echo json_encode(['error' => "Gagal mengunggah file. Kode error upload: $err"]);
+            return;
+        }
+
+        $tmpPath = $_FILES['file']['tmp_name'];
+        $name = $_FILES['file']['name'];
+        
+        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if ($ext !== 'bok' && $ext !== 'mdb') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Format file tidak didukung. Harap unggah file .bok atau .mdb']);
+            return;
+        }
+
+        // Extremely generous limits for massive files
+        set_time_limit(0);
+        ini_set('memory_limit', '2048M');
+
+        $pdo = Database::getConnection();
+
+        try {
+            $dsn = "odbc:Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=$tmpPath;";
+            $odbc = new PDO($dsn);
+            $odbc->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
+            $stmt = $odbc->query("SELECT * FROM title");
+            $titleRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$titleRow) {
+                http_response_code(400); 
+                echo json_encode(['error' => 'Tidak dapat menemukan tabel "title" pada file ini.']); 
+                return;
+            }
+
+            $shamelaBkId = $titleRow['bkid'] ?? $titleRow['bk_id'] ?? null;
+            $rawTitle = $titleRow['bk'] ?? $titleRow['tit'] ?? 'Kitab Tanpa Judul';
+            $rawAuthor = $titleRow['auth'] ?? $titleRow['author'] ?? 'Anonim';
+
+            $toUtf8 = function($text) {
+                if (empty($text)) return '';
+                $utf8 = @iconv('windows-1256', 'UTF-8//IGNORE', $text);
+                return $utf8 !== false ? $utf8 : $text;
+            };
+
+            $title = trim($toUtf8($rawTitle));
+            $author = trim($toUtf8($rawAuthor));
+
+            $catId = isset($_POST['category_id']) ? (int)$_POST['category_id'] : 0;
+            $catName = '';
+            if ($catId) {
+                $cs = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
+                $cs->execute([':id' => $catId]);
+                $catName = $cs->fetchColumn() ?: '';
+            }
+
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare("INSERT INTO books (title, author, category_id, category_name, total_juz, pages, created_at) VALUES (?, ?, ?, ?, 1, 0, NOW())");
+            $stmt->execute([$title, $author, $catId ?: null, $catName]);
+            $newBookId = $pdo->lastInsertId();
+
+            $stmtTables = $odbc->query("SELECT Name FROM MSysObjects WHERE Type=1 AND Flags=0");
+            $contentTable = null;
+            $tocTable = null;
+
+            while ($row = $stmtTables->fetch(PDO::FETCH_ASSOC)) {
+                $tableName = $row['Name'];
+                if (preg_match('/^b(\d+)$/i', $tableName)) {
+                    $contentTable = $tableName;
+                } else if (preg_match('/^t(\d+)$/i', $tableName)) {
+                    $tocTable = $tableName;
+                } else if (preg_match('/^book$/i', $tableName)) {
+                    $contentTable = $tableName;
+                } else if (preg_match('/^toc$/i', $tableName)) {
+                    $tocTable = $tableName;
+                }
+            }
+
+            if (!$contentTable) {
+                if ($shamelaBkId) {
+                    $contentTable = "b" . $shamelaBkId;
+                    $tocTable = "t" . $shamelaBkId;
+                } else {
+                    throw new Exception("Tidak dapat menemukan tabel teks isi kitab (bXXX).");
+                }
+            }
+
+            $contentStmt = $odbc->query("SELECT * FROM `$contentTable` ORDER BY id ASC");
+            $insertContent = $pdo->prepare("INSERT INTO book_content (bkid, page, juz, content) VALUES (?, ?, ?, ?)");
+            
+            $maxJuz = 1;
+            $rowCount = 0;
+            
+            while ($row = $contentStmt->fetch(PDO::FETCH_ASSOC)) {
+                $part = isset($row['part']) ? (int)$row['part'] : 1;
+                $page = isset($row['page']) ? (int)$row['page'] : 1;
+                
+                $nass = isset($row['nass']) ? $row['nass'] : '';
+                if (empty($nass) && isset($row['text'])) $nass = $row['text'];
+                
+                $nass = trim($toUtf8($nass));
+                if ($nass === '') continue;
+                
+                if ($part > $maxJuz) $maxJuz = $part;
+                if ($part <= 0) $part = 1;
+
+                $insertContent->execute([$newBookId, $page, $part, $nass]);
+                $rowCount++;
+            }
+
+            $pdo->prepare("UPDATE books SET total_juz = ?, pages = ? WHERE id = ?")->execute([$maxJuz, $rowCount, $newBookId]);
+
+            $tocCount = 0;
+            if ($tocTable) {
+                try {
+                    $tocStmt = $odbc->query("SELECT * FROM `$tocTable` ORDER BY id ASC");
+                    $insertToc = $pdo->prepare("INSERT INTO book_toc (bkid, title, level, page, juz) VALUES (?, ?, ?, ?, ?)");
+                    
+                    while ($row = $tocStmt->fetch(PDO::FETCH_ASSOC)) {
+                        $lvl = isset($row['lvl']) ? (int)$row['lvl'] : 1;
+                        $tit = isset($row['tit']) ? $row['tit'] : '';
+                        if (empty($tit) && isset($row['title'])) $tit = $row['title'];
+                        
+                        $part = isset($row['part']) ? (int)$row['part'] : 1;
+                        $page = isset($row['page']) ? (int)$row['page'] : 1;
+                        if ($part <= 0) $part = 1;
+                        
+                        $tit = trim($toUtf8($tit));
+                        if ($tit !== '') {
+                            $insertToc->execute([$newBookId, $tit, $lvl, $page, $part]);
+                            $tocCount++;
+                        }
+                    }
+                } catch (Exception $e) {}
+            }
+            
+            $pdo->commit();
+            AuthHelper::logCrudHistory('IMPORT', 'books', (string)$newBookId, "Impor kitab Shamela (.bok): {$title} | Paragraf/Halaman: {$rowCount} | TOC: {$tocCount}");
+            echo json_encode(['success' => true, 'bkid' => $newBookId, 'pages' => $rowCount, 'toc' => $tocCount]);
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => 'Import gagal: ' . $e->getMessage()]);
+        }
+    }
+
     public function handleAdminGetHistory(): void {
         $pdo  = Database::getConnection();
         $req  = ResponseHelper::getJsonRequest();
