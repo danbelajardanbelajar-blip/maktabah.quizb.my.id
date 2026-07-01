@@ -293,14 +293,14 @@ function bookModalHtml() {
             <i data-lucide="database" class="w-6 h-6 text-primary"></i>
           </div>
           
-          <h2 class="font-bold text-primary text-lg text-center mb-2">Import Kitab Shamela (.bok)</h2>
+          <h2 class="font-bold text-primary text-lg text-center mb-2">Import Kitab (.json)</h2>
           <p class="text-sm text-primary/60 text-center mb-6 leading-relaxed">
-            Membaca file database Microsoft Access (.bok) memerlukan ekstensi <code class="bg-slate-100 px-1 rounded text-xs text-rose-600">pdo_odbc</code> aktif di server PHP Anda.
+            Unggah file JSON hasil konversi Bok Converter. Sistem akan memproses data dalam potongan (chunk) agar stabil.
           </p>
           
           <div class="bg-cream p-4 rounded-xl text-xs text-primary/80 mb-6 space-y-2">
             <p><strong>Catatan:</strong></p>
-            <p>Proses import file database (.bok) memakan waktu yang cukup lama. Harap jangan menutup jendela atau menyegarkan halaman saat proses sedang berlangsung.</p>
+            <p>Proses import kitab memakan waktu yang cukup lama. Harap jangan menutup jendela atau menyegarkan halaman saat proses sedang berlangsung.</p>
           </div>
           
           <form id="form-import-bok" onsubmit="event.preventDefault(); submitImportBok();">
@@ -312,8 +312,8 @@ function bookModalHtml() {
             </div>
             
             <div class="mb-6">
-              <label class="block text-sm font-semibold text-primary mb-2">File Kitab (.bok)</label>
-              <input type="file" id="bok-file" accept=".bok,.mdb" required
+              <label class="block text-sm font-semibold text-primary mb-2">File Kitab (.json)</label>
+              <input type="file" id="bok-file" accept=".json" required
                 class="w-full text-sm text-primary/60 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors">
             </div>
 
@@ -1121,12 +1121,15 @@ window.contAddPage = async function() {
 };
 
 // ==========================================
-// IMPORT BOK (SHAMELA) MODAL
+// IMPORT BOK (JSON CHUNKS) MODAL
 // ==========================================
 window.openImportBokModal = async () => {
   $('#form-import-bok')?.reset();
-  $('#bok-import-loading')?.classList.add('hidden');
-  $('#bok-import-actions')?.classList.remove('hidden');
+  $('#bok-import-loading').classList.add('hidden');
+  $('#bok-import-actions').classList.remove('hidden');
+  $('#bok-import-progress').style.width = '0%';
+  $('#bok-import-detail').innerText = '0%';
+  $('#bok-import-status').innerText = 'Membaca file...';
   $('#import-bok-modal')?.classList.remove('hidden');
 
   let sel = $('#bok-category');
