@@ -1168,7 +1168,17 @@ window.submitImportBok = async () => {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
       body: fd
     });
-    let data = await res.json();
+    
+    let text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("Server returned non-JSON response:", text);
+      // Create a blob URL to show the HTML error safely in a new tab or console
+      throw new Error("Server mengembalikan respons HTML (Buka Console/F12 untuk melihat detailnya). Kemungkinan file terlalu besar (Limit Nginx/Cloudflare) atau terjadi Fatal Error di server.");
+    }
+
     if (!res.ok) throw new Error(data.error || 'Upload error');
     
     alert(`Berhasil! ${data.pages} bagian dan ${data.toc} daftar isi telah diimpor.`);
