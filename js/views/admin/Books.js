@@ -78,7 +78,8 @@ async function renderAdminBooks() {
 
     </div>
 
-    ${bookModalHtml()}`;
+    ${bookModalHtml()}
+    <div id="admin-modal-container" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 bg-primary/60 backdrop-blur-sm"></div>`;
 
   reicons();
 
