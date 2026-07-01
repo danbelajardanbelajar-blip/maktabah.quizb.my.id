@@ -1156,46 +1156,141 @@ window.closeImportBokModal = () => {
 window.submitImportBok = async () => {
   let fileInput = $('#bok-file');
   if (!fileInput.files || fileInput.files.length === 0) {
-    alert("Pilih file .bok terlebih dahulu.");
+    alert("Pilih file .json terlebih dahulu.");
     return;
   }
 
   $('#bok-import-loading').classList.remove('hidden');
   $('#bok-import-actions').classList.add('hidden');
   $('#bok-import-loading').style.display = 'flex';
+  
+  const updateProgress = (pct, text) => {
+    $('#bok-import-progress').style.width = pct + '%';
+    $('#bok-import-detail').innerText = pct + '%';
+    if (text) $('#bok-import-status').innerText = text;
+  };
 
-  let fd = new FormData();
-  fd.append('file', fileInput.files[0]);
-  fd.append('category_id', $('#bok-category').value);
-
-  try {
-    let res = await fetch('/api.php?action=admin_import_bok', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
-      body: fd
-    });
-    
-    let text = await res.text();
-    let data;
+  updateProgress(0, 'Membaca file JSON secara lokal...');
+  
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  
+  reader.onload = async (e) => {
     try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error("Server returned non-JSON response:", text);
-      // Create a blob URL to show the HTML error safely in a new tab or console
-      throw new Error("Server mengembalikan respons HTML (Buka Console/F12 untuk melihat detailnya). Kemungkinan file terlalu besar (Limit Nginx/Cloudflare) atau terjadi Fatal Error di server.");
+      updateProgress(5, 'Mem-parsing JSON...');
+      const data = JSON.parse(e.target.result);
+      
+      if (!data.book || !data.contents) {
+        throw new Error("Format JSON tidak valid. Pastikan file hasil dari Bok Converter JSON.");
+      }
+      
+      const catId = $('#bok-category').value;
+      
+      // Step 1: Init book
+      updateProgress(10, 'Menginisialisasi kitab...');
+      const initRes = await fetch('/api.php?action=admin_import_json_init', {
+        method: 'POST',
+        headers: { 
+          'Authorization': 'Bearer ' + localStorage.getItem('token'),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: data.book.title,
+          author: data.book.author,
+          category_id: catId
+        })
+      });
+      
+      const initData = await initRes.json();
+      if (!initData.success || !initData.bkid) {
+        throw new Error(initData.error || "Gagal menginisialisasi kitab.");
+      }
+      
+      const bkid = initData.bkid;
+      
+      // Step 2: Upload contents in chunks
+      const CHUNK_SIZE = 500;
+      const contents = data.contents;
+      const totalContentChunks = Math.ceil(contents.length / CHUNK_SIZE);
+      
+      for (let i = 0; i < totalContentChunks; i++) {
+        const chunk = contents.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+        const progress = Math.round(10 + ((i + 1) / totalContentChunks * 70));
+        updateProgress(progress, `Menyimpan teks... (Bagian ${i + 1}/${totalContentChunks})`);
+        
+        const chunkRes = await fetch('/api.php?action=admin_import_json_chunk', {
+          method: 'POST',
+          headers: { 
+            'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ bkid: bkid, contents: chunk })
+        });
+        
+        const chunkData = await chunkRes.json();
+        if (!chunkData.success) throw new Error(chunkData.error || "Gagal upload chunk.");
+      }
+      
+      // Step 3: Upload TOCs in chunks
+      if (data.tocs && data.tocs.length > 0) {
+        const tocs = data.tocs;
+        const totalTocChunks = Math.ceil(tocs.length / CHUNK_SIZE);
+        
+        for (let i = 0; i < totalTocChunks; i++) {
+          const chunk = tocs.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+          const progress = Math.round(80 + ((i + 1) / totalTocChunks * 15));
+          updateProgress(progress, `Menyimpan daftar isi... (Bagian ${i + 1}/${totalTocChunks})`);
+          
+          const tocRes = await fetch('/api.php?action=admin_import_json_toc_chunk', {
+            method: 'POST',
+            headers: { 
+              'Authorization': 'Bearer ' + localStorage.getItem('token'),
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ bkid: bkid, tocs: chunk })
+          });
+          
+          const tocData = await tocRes.json();
+          if (!tocData.success) throw new Error(tocData.error || "Gagal upload toc chunk.");
+        }
+      }
+      
+      // Step 4: Finish
+      updateProgress(98, 'Menyelesaikan proses...');
+      const finishRes = await fetch('/api.php?action=admin_import_json_finish', {
+        method: 'POST',
+        headers: { 
+          'Authorization': 'Bearer ' + localStorage.getItem('token'),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ bkid: bkid })
+      });
+      
+      const finishData = await finishRes.json();
+      if (!finishData.success) throw new Error(finishData.error || "Gagal menyelesaikan proses.");
+      
+      updateProgress(100, 'Selesai!');
+      
+      setTimeout(() => {
+        closeImportBokModal();
+        window.loadBooks();
+        showToast("Kitab JSON berhasil diimpor.");
+      }, 500);
+      
+    } catch (err) {
+      alert("Gagal mengimpor: " + err.message);
+      $('#bok-import-loading').classList.add('hidden');
+      $('#bok-import-actions').classList.remove('hidden');
     }
-
-    if (!res.ok) throw new Error(data.error || 'Upload error');
-    
-    alert(`Berhasil! ${data.pages} bagian dan ${data.toc} daftar isi telah diimpor.`);
-    closeImportBokModal();
-    loadBooks();
-  } catch (err) {
-    alert("Gagal mengimpor: " + err.message);
+  };
+  
+  reader.onerror = () => {
+    alert("Gagal membaca file lokal.");
     $('#bok-import-loading').classList.add('hidden');
     $('#bok-import-actions').classList.remove('hidden');
-    $('#bok-import-loading').style.display = 'none';
-  }
+  };
+  
+  reader.readAsText(file);
 };
 
 // ==========================================
