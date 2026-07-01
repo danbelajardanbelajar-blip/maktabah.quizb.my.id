@@ -1123,7 +1123,7 @@ window.contAddPage = async function() {
 // ==========================================
 // IMPORT BOK (SHAMELA) MODAL
 // ==========================================
-window.openImportBokModal = () => {
+window.openImportBokModal = async () => {
   $('#form-import-bok')?.reset();
   $('#bok-import-loading')?.classList.add('hidden');
   $('#bok-import-actions')?.classList.remove('hidden');
@@ -1132,9 +1132,16 @@ window.openImportBokModal = () => {
   let sel = $('#bok-category');
   if (sel) {
     sel.innerHTML = '<option value="">-- Pilih Kategori --</option>';
-    categoriesState.forEach(c => {
-      sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-    });
+    try {
+      const r = await apiFetch({ action: 'categories' });
+      if (r && r.data) {
+        r.data.forEach(c => {
+          sel.innerHTML += `<option value="${c.id}">${escHtml(c.name)}</option>`;
+        });
+      }
+    } catch (e) {
+      console.error("Failed to load categories for bok modal", e);
+    }
   }
 };
 window.closeImportBokModal = () => {
