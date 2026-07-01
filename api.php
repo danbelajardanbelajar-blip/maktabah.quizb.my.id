@@ -50,7 +50,10 @@ $router->add('admin_delete_category', 'AdminController', 'handleAdminDeleteCateg
 $router->add('admin_save_content', 'AdminController', 'handleAdminSaveContent');
 $router->add('admin_delete_content', 'AdminController', 'handleAdminDeleteContent');
 $router->add('admin_import_book', 'AdminController', 'handleAdminImportBook');
-$router->add('admin_import_bok', 'AdminController', 'handleAdminImportBok');
+$router->add('admin_import_json_init', 'AdminController', 'handleAdminImportJsonInit');
+$router->add('admin_import_json_chunk', 'AdminController', 'handleAdminImportJsonChunk');
+$router->add('admin_import_json_toc_chunk', 'AdminController', 'handleAdminImportJsonTocChunk');
+$router->add('admin_import_json_finish', 'AdminController', 'handleAdminImportJsonFinish');
 $router->add('admin_get_toc', 'AdminController', 'handleAdminGetToc');
 $router->add('admin_save_toc', 'AdminController', 'handleAdminSaveToc');
 $router->add('admin_generate_toc', 'AdminController', 'handleAdminGenerateToc');
