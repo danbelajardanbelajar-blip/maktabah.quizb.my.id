@@ -38,7 +38,7 @@ async function renderAdminBooks() {
           <div class="flex items-center gap-2">
             <button onclick="openImportBokModal()"
               class="flex items-center gap-2 px-4 py-2.5 border border-primary text-primary rounded-xl text-sm font-semibold hover:bg-cream-dark transition-colors">
-              <i data-lucide="database" class="w-4 h-4"></i> Import Bok
+              <i data-lucide="database" class="w-4 h-4"></i> Import JSON
             </button>
             <button onclick="openImportWordModal()"
               class="flex items-center gap-2 px-4 py-2.5 border border-primary text-primary rounded-xl text-sm font-semibold hover:bg-cream-dark transition-colors">
