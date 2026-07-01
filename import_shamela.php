@@ -70,7 +70,7 @@ try {
     echo "[+] Ditemukan Kitab: $bookTitle (Penulis: $bookAuthor)\n";
 
     // Insert into MySQL `books` table
-    $stmt = $mysql->prepare("INSERT INTO books (title, author, total_juz, created_at) VALUES (?, ?, 1, NOW())");
+    $stmt = $mysql->prepare("INSERT INTO books (title, author, created_at) VALUES (?, ?, NOW())");
     $stmt->execute([$bookTitle, $bookAuthor]);
     $newBookId = $mysql->lastInsertId();
     echo "[+] Kitab disimpan di MySQL dengan ID: $newBookId\n";
@@ -136,8 +136,7 @@ try {
     $mysql->commit();
     echo "[+] Selesai mengimpor $rowCount bagian teks.\n";
 
-    // Update total juz
-    $mysql->prepare("UPDATE books SET total_juz = ? WHERE id = ?")->execute([$maxJuz, $newBookId]);
+    // Total juz and pages are calculated dynamically or updated elsewhere
 
     // 5. Import TOC
     if ($tocTable) {
