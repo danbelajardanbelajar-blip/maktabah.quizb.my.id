@@ -36,6 +36,10 @@ async function renderAdminBooks() {
             <p class="text-primary/40 text-xs mt-1">Tambah, edit, hapus, dan kelola isi kitab</p>
           </div>
           <div class="flex items-center gap-2">
+            <button onclick="openImportMultipleBokModal()"
+              class="flex items-center gap-2 px-4 py-2.5 border border-primary text-primary rounded-xl text-sm font-semibold hover:bg-cream-dark transition-colors">
+              <i data-lucide="layers" class="w-4 h-4"></i> Import Multiple
+            </button>
             <button onclick="openImportBokModal()"
               class="flex items-center gap-2 px-4 py-2.5 border border-primary text-primary rounded-xl text-sm font-semibold hover:bg-cream-dark transition-colors">
               <i data-lucide="database" class="w-4 h-4"></i> Import JSON
@@ -355,6 +359,65 @@ function bookModalHtml() {
           <!-- Body -->
           <div id="import-body" class="overflow-y-auto flex-1 px-6 pb-6"></div>
 
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ IMPORT MULTIPLE JSON MODAL ══════════════════════════════ -->
+    <div id="import-multiple-bok-modal" class="fixed inset-0 z-[400] hidden" style="background:rgba(15,34,24,.65);backdrop-filter:blur(6px);">
+      <div class="flex items-center justify-center min-h-full p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-cream-dark shrink-0">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+                <i data-lucide="layers" class="w-4 h-4 text-gold"></i>
+              </div>
+              <div>
+                <h2 class="font-bold text-primary text-sm">Import Multiple JSON</h2>
+                <p class="text-xs text-primary/40">Upload massal kitab JSON (Chunking & Auto TOC)</p>
+              </div>
+            </div>
+            <button onclick="closeImportMultipleBokModal()" class="p-2 rounded-lg hover:bg-cream-dark text-primary/40 transition-colors">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+          
+          <div class="overflow-y-auto flex-1 px-6 py-6">
+            <form id="import-multiple-bok-form" onsubmit="event.preventDefault(); submitImportMultipleBok();">
+              <div class="mb-4">
+                <label class="block text-sm font-semibold text-primary mb-2">Kategori (Opsional)</label>
+                <select id="bok-multiple-category" class="w-full bg-white border border-cream-dark rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gold">
+                  <option value="">-- Pilih Kategori --</option>
+                </select>
+              </div>
+              
+              <div class="mb-6">
+                <label class="block text-sm font-semibold text-primary mb-2">File Kitab (.json)</label>
+                <input type="file" id="bok-multiple-file" accept="application/json,.json" multiple="multiple"
+                  class="w-full text-sm text-primary/60 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors cursor-pointer border border-cream-dark rounded-xl p-2">
+                <p class="text-xs text-primary/50 mt-2">Gunakan CTRL+A atau Shift+Klik untuk memilih banyak file JSON sekaligus.</p>
+              </div>
+
+              <!-- Progress Bar -->
+              <div id="bok-multiple-progress-container" class="hidden mb-4">
+                <div class="w-full h-4 bg-cream-dark rounded-full overflow-hidden">
+                  <div id="bok-multiple-progress-bar" class="h-full bg-gold transition-all duration-300 w-0"></div>
+                </div>
+                <div id="bok-multiple-progress-text" class="text-xs text-primary/60 font-semibold mt-2 text-center">0 / 0 terselesaikan</div>
+              </div>
+
+              <!-- Log Area -->
+              <div id="bok-multiple-log" class="hidden h-48 overflow-y-auto bg-[#1c2f1e] text-cream rounded-xl p-3 font-mono text-[11px] mb-6 space-y-1">
+              </div>
+
+              <div class="flex justify-end gap-3" id="bok-multiple-actions">
+                <button type="button" onclick="closeImportMultipleBokModal()" class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">Tutup</button>
+                <button type="submit" id="bok-multiple-submit-btn" class="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm flex items-center gap-2">
+                  <i data-lucide="upload-cloud" class="w-4 h-4"></i> Mulai Proses Massal
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>`;
@@ -1690,6 +1753,133 @@ window.tocSave = async function() {
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan'; reicons(); }
   }
+};
+
+window.openImportMultipleBokModal = async function() {
+  document.getElementById('import-multiple-bok-form').reset();
+  const catSel = document.getElementById('bok-multiple-category');
+  if (catSel) {
+    catSel.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+    try {
+      const r = await apiFetch({ action: 'categories' });
+      if (r && r.data) {
+        r.data.forEach(c => {
+          catSel.innerHTML += `<option value="${c.id}">${escHtml(c.name)}</option>`;
+        });
+      }
+    } catch(e) {}
+  }
+  document.getElementById('bok-multiple-log').innerHTML = '';
+  document.getElementById('bok-multiple-log').classList.add('hidden');
+  document.getElementById('bok-multiple-progress-container').classList.add('hidden');
+  
+  const btn = document.getElementById('bok-multiple-submit-btn');
+  btn.disabled = false;
+  btn.innerHTML = '<i data-lucide="upload-cloud" class="w-4 h-4"></i> Mulai Proses Massal';
+  btn.onclick = null; // reset if previously changed to close modal
+
+  document.getElementById('bok-multiple-file').disabled = false;
+  
+  document.getElementById('import-multiple-bok-modal').classList.remove('hidden');
+  reicons();
+};
+
+window.closeImportMultipleBokModal = function() {
+  document.getElementById('import-multiple-bok-modal').classList.add('hidden');
+  if (window._multipleImportCompleted) {
+    bksSearch();
+    window._multipleImportCompleted = false;
+  }
+};
+
+window.submitImportMultipleBok = async function() {
+  const fileInput = document.getElementById('bok-multiple-file');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert("Pilih minimal 1 file .json terlebih dahulu.");
+    return;
+  }
+  
+  const filesQueue = Array.from(fileInput.files);
+  const totalFiles = filesQueue.length;
+  let completedFiles = 0;
+  
+  const btn = document.getElementById('bok-multiple-submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Memproses...';
+  fileInput.disabled = true;
+  
+  const logArea = document.getElementById('bok-multiple-log');
+  const progressContainer = document.getElementById('bok-multiple-progress-container');
+  const progressBar = document.getElementById('bok-multiple-progress-bar');
+  const progressText = document.getElementById('bok-multiple-progress-text');
+  
+  logArea.classList.remove('hidden');
+  logArea.innerHTML = `<div><span class="text-gold">INFO:</span> Memulai upload ${totalFiles} file...</div>`;
+  progressContainer.classList.remove('hidden');
+  
+  const catId = document.getElementById('bok-multiple-category')?.value || '';
+
+  const updateProgress = () => {
+    let percent = (completedFiles / totalFiles) * 100;
+    progressBar.style.width = percent + '%';
+    progressText.textContent = `${completedFiles} / ${totalFiles} file terselesaikan (${Math.round(percent)}%)`;
+  };
+  
+  const addLog = (msg, type='info') => {
+    const div = document.createElement('div');
+    const time = new Date().toLocaleTimeString('id-ID');
+    if(type === 'error') {
+      div.innerHTML = `[${time}] <span class="text-red-400 font-bold">ERROR:</span> ${msg}`;
+    } else if (type === 'success') {
+      div.innerHTML = `[${time}] <span class="text-green-400 font-bold">SUKSES:</span> ${msg}`;
+    } else {
+      div.innerHTML = `[${time}] <span class="text-gold font-bold">INFO:</span> ${msg}`;
+    }
+    logArea.appendChild(div);
+    logArea.scrollTop = logArea.scrollHeight;
+  };
+  
+  updateProgress();
+
+  async function uploadNext() {
+    if (filesQueue.length === 0) {
+      addLog("SEMUA PROSES SELESAI.", "success");
+      btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Selesai (Tutup)';
+      btn.disabled = false;
+      btn.onclick = closeImportMultipleBokModal;
+      reicons();
+      window._multipleImportCompleted = true;
+      return;
+    }
+    
+    const file = filesQueue.shift();
+    addLog(`Memproses file: ${file.name}...`);
+    
+    const formData = new FormData();
+    formData.append('json_file', file);
+    if (catId) formData.append('cat_id', catId);
+    
+    try {
+      const resp = await fetch('api_import_json.php', { method: 'POST', body: formData });
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      const res = await resp.json();
+      
+      if (res.status === 'success') {
+        const tocStatus = res.auto_toc ? ' (Dibuat otomatis)' : ' (Sudah ada)';
+        addLog(`${res.title} -> ${res.pages_count} Hal, ${res.juz_count} Juz, TOC: ${tocStatus}`, 'success');
+      } else {
+        addLog(`Gagal: ${res.message}`, 'error');
+      }
+    } catch(err) {
+      addLog(`Request Error: ${err.message}`, 'error');
+    }
+    
+    completedFiles++;
+    updateProgress();
+    setTimeout(uploadNext, 500);
+  }
+  
+  uploadNext();
 };
 
 export { renderAdminBooks };

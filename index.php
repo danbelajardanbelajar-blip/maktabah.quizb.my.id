@@ -1026,10 +1026,6 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
                   <i data-lucide="book" class="w-4 h-4 text-gold/60"></i> Kitab
                 </a>
-                <a href="/import_json_ui.php"
-                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="upload-cloud" class="w-4 h-4 text-gold/60"></i> Import JSON
-                </a>
                 <a href="/admin/categories" data-route="/admin/categories"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
                   <i data-lucide="folder" class="w-4 h-4 text-gold/60"></i> Kategori
