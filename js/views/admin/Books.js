@@ -1226,15 +1226,19 @@ window.submitImportBok = async () => {
       const jsonStr = e.target.result;
       const data = JSON.parse(jsonStr);
       
-      if (!data.buku) throw new Error("Format JSON tidak dikenali. Pastikan ini hasil Bok Converter.");
-      if (!data.halaman || !Array.isArray(data.halaman) || data.halaman.length === 0) throw new Error("Tidak ada halaman yang ditemukan dalam JSON.");
+      const bookMeta = data.book || data.buku;
+      const bookPages = data.contents || data.halaman;
+      const bookTocs = data.tocs || data.daftar_isi || data.toc;
 
-      _bokImp.title = data.buku.title || file.name.replace(/\.[^/.]+$/, "");
-      _bokImp.author = data.buku.author || '';
+      if (!bookMeta) throw new Error("Format JSON tidak dikenali. Pastikan ini hasil Bok Converter.");
+      if (!bookPages || !Array.isArray(bookPages) || bookPages.length === 0) throw new Error("Tidak ada halaman yang ditemukan dalam JSON.");
+
+      _bokImp.title = bookMeta.title || file.name.replace(/\.[^/.]+$/, "");
+      _bokImp.author = bookMeta.author || '';
       // Read current value of category
       _bokImp.catId = document.getElementById('bok-category')?.value || '';
-      _bokImp.pages = data.halaman;
-      _bokImp.toc = data.daftar_isi || [];
+      _bokImp.pages = bookPages;
+      _bokImp.toc = bookTocs || [];
       _bokImp.currentPage = 0;
 
       _setBokImportStep(2);
