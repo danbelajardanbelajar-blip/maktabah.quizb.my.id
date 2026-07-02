@@ -1825,19 +1825,29 @@ window.submitImportMultipleBok = async function() {
     progressText.textContent = `${completedFiles} / ${totalFiles} file terselesaikan (${Math.round(percent)}%)`;
   };
   
+  // Escape HTML entities agar tag dari response server tetap terlihat sebagai teks biasa
+  const escHtmlLog = (str) => String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
   const addLog = (msg, type='info') => {
     const div = document.createElement('div');
     const time = new Date().toLocaleTimeString('id-ID');
+    const safeMsg = escHtmlLog(msg);
     if(type === 'error') {
-      div.innerHTML = `[${time}] <span class="text-red-400 font-bold">ERROR:</span> ${msg}`;
+      div.innerHTML = `[${time}] <span class="text-red-400 font-bold">ERROR:</span> ${safeMsg}`;
     } else if (type === 'success') {
-      div.innerHTML = `[${time}] <span class="text-green-400 font-bold">SUKSES:</span> ${msg}`;
+      div.innerHTML = `[${time}] <span class="text-green-400 font-bold">SUKSES:</span> ${safeMsg}`;
     } else {
-      div.innerHTML = `[${time}] <span class="text-gold font-bold">INFO:</span> ${msg}`;
+      div.innerHTML = `[${time}] <span class="text-gold font-bold">INFO:</span> ${safeMsg}`;
     }
     logArea.appendChild(div);
     logArea.scrollTop = logArea.scrollHeight;
   };
+
   
   updateProgress();
 

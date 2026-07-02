@@ -1,172 +1,169 @@
 <?php
-// api_import_json.php
-// Tangkap semua output sebelum header dikirim
+/**
+ * api_import_json.php
+ * Endpoint import massal kitab dari file JSON satu-per-satu.
+ * Pattern: kumpulkan $result, bersihkan buffer, output JSON satu kali di akhir.
+ */
+
+// 1. Tangkap SEMUA output sebelum JSON kita — termasuk warning PHP, notice, dll.
 ob_start();
 
-// Nonaktifkan display errors ke output, tapi log ke error_log server
+// 2. Sembunyikan error dari output, tapi tetap log ke server error_log
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 error_reporting(E_ALL);
 
-// Naikkan limit untuk file kitab besar
-@set_time_limit(300);         // 5 menit
+// 3. Naikkan limit resource untuk file kitab besar
+@set_time_limit(300);
 @ini_set('memory_limit', '256M');
 
-// Shutdown handler — tangkap Fatal Error dan kembalikan JSON bersih
-register_shutdown_function(function() {
+// 4. Shutdown handler — tangkap Fatal Error, kembalikan JSON valid
+register_shutdown_function(function () {
     $err = error_get_last();
-    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        ob_clean();
+    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        // Buang apapun yang sudah tertulis
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
         if (!headers_sent()) {
-            header('Content-Type: application/json');
+            header('Content-Type: application/json; charset=utf-8');
         }
         echo json_encode([
             'status'  => 'error',
-            'message' => 'PHP Fatal Error: ' . $err['message'] . ' in ' . basename($err['file']) . ':' . $err['line']
+            'message' => 'PHP Fatal: ' . $err['message']
+                       . ' — ' . basename($err['file']) . ':' . $err['line'],
         ]);
     }
 });
 
-header('Content-Type: application/json');
-
-// Pastikan tidak ada namespace autoloader dari app
-require_once __DIR__ . '/app/Config/Database.php';
-
-// ── Validasi Method ─────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    ob_end_clean();
-    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+// 5. Satu fungsi untuk kirim respons dan keluar — selalu bersih
+function sendJson(array $data): void
+{
+    // Buang semua output buffer yang mungkin berisi garbage
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// ── Validasi File Upload ─────────────────────────────────────
+// ── Require Database ─────────────────────────────────────────────────────────
+require_once __DIR__ . '/app/Config/Database.php';
+
+// ── Validasi Method ───────────────────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJson(['status' => 'error', 'message' => 'Method not allowed']);
+}
+
+// ── Validasi Upload File ──────────────────────────────────────────────────────
 if (!isset($_FILES['json_file'])) {
-    // Cek apakah file terlalu besar sehingga PHP membuang semua superglobal
-    $contentLength = isset($_SERVER['CONTENT_LENGTH']) ? (int)$_SERVER['CONTENT_LENGTH'] : 0;
-    if ($contentLength > 0 && empty($_FILES) && empty($_POST)) {
-        $maxPost = ini_get('post_max_size');
-        ob_end_clean();
-        echo json_encode([
-            'status'  => 'error',
-            'message' => "File terlalu besar: melebihi post_max_size ({$maxPost}). Coba split file menjadi lebih kecil."
-        ]);
-    } else {
-        ob_end_clean();
-        echo json_encode(['status' => 'error', 'message' => 'Tidak ada file yang diunggah.']);
+    $cl = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
+    if ($cl > 0 && empty($_FILES) && empty($_POST)) {
+        $max = ini_get('post_max_size');
+        sendJson(['status' => 'error', 'message' => "File terlalu besar — melebihi post_max_size ({$max})"]);
     }
-    exit;
+    sendJson(['status' => 'error', 'message' => 'Tidak ada file yang diunggah (json_file missing)']);
 }
 
 if ($_FILES['json_file']['error'] !== UPLOAD_ERR_OK) {
-    $errCode = $_FILES['json_file']['error'];
-    $errMsgs = [
-        UPLOAD_ERR_INI_SIZE   => 'File melebihi upload_max_filesize di php.ini (' . ini_get('upload_max_filesize') . ')',
-        UPLOAD_ERR_FORM_SIZE  => 'File melebihi MAX_FILE_SIZE yang ditentukan di form',
-        UPLOAD_ERR_PARTIAL    => 'File hanya terupload sebagian, coba lagi',
-        UPLOAD_ERR_NO_FILE    => 'Tidak ada file yang dipilih',
-        UPLOAD_ERR_NO_TMP_DIR => 'Server tidak punya direktori temp (hubungi hosting)',
-        UPLOAD_ERR_CANT_WRITE => 'Gagal menulis file ke disk server',
-        UPLOAD_ERR_EXTENSION  => 'Upload diblokir oleh ekstensi PHP server',
+    $code = $_FILES['json_file']['error'];
+    $msgs = [
+        UPLOAD_ERR_INI_SIZE   => 'File melebihi upload_max_filesize (' . ini_get('upload_max_filesize') . ')',
+        UPLOAD_ERR_FORM_SIZE  => 'File melebihi MAX_FILE_SIZE form',
+        UPLOAD_ERR_PARTIAL    => 'Upload tidak lengkap, silakan coba lagi',
+        UPLOAD_ERR_NO_FILE    => 'Tidak ada file dipilih',
+        UPLOAD_ERR_NO_TMP_DIR => 'Server tidak punya direktori temp',
+        UPLOAD_ERR_CANT_WRITE => 'Gagal menulis ke disk server',
+        UPLOAD_ERR_EXTENSION  => 'Upload diblokir ekstensi PHP',
     ];
-    $msg = $errMsgs[$errCode] ?? 'Upload error tidak dikenal (kode: ' . $errCode . ')';
-    ob_end_clean();
-    echo json_encode(['status' => 'error', 'message' => $msg]);
-    exit;
+    sendJson(['status' => 'error', 'message' => $msgs[$code] ?? "Upload error kode: $code"]);
 }
 
-// ── Baca & Parse File JSON ───────────────────────────────────
+// ── Baca File ─────────────────────────────────────────────────────────────────
 $fileTmpPath = $_FILES['json_file']['tmp_name'];
 $fileName    = $_FILES['json_file']['name'];
-$fileSize    = $_FILES['json_file']['size'];
+$fileSize    = (int)$_FILES['json_file']['size'];
 
 if ($fileSize === 0) {
-    ob_end_clean();
-    echo json_encode(['status' => 'error', 'message' => 'File kosong (0 bytes): ' . $fileName]);
-    exit;
+    sendJson(['status' => 'error', 'message' => "File kosong (0 bytes): $fileName"]);
 }
 
-$jsonData = file_get_contents($fileTmpPath);
-if ($jsonData === false) {
-    ob_end_clean();
-    echo json_encode(['status' => 'error', 'message' => 'Gagal membaca file upload dari server temp.']);
-    exit;
+$jsonRaw = file_get_contents($fileTmpPath);
+if ($jsonRaw === false) {
+    sendJson(['status' => 'error', 'message' => 'Gagal membaca file dari temp dir server']);
 }
 
-// Hapus BOM jika ada
-$jsonData = ltrim($jsonData, "\xEF\xBB\xBF");
+// Hapus UTF-8 BOM kalau ada
+$jsonRaw = ltrim($jsonRaw, "\xEF\xBB\xBF");
 
-$data = json_decode($jsonData, true);
-
+// ── Parse JSON ────────────────────────────────────────────────────────────────
+$data = json_decode($jsonRaw, true);
 if (json_last_error() !== JSON_ERROR_NONE) {
-    ob_end_clean();
-    echo json_encode([
+    sendJson([
         'status'  => 'error',
-        'message' => 'Format JSON tidak valid: ' . json_last_error_msg() . ' — di file: ' . $fileName
+        'message' => 'JSON tidak valid: ' . json_last_error_msg() . " — file: $fileName",
     ]);
-    exit;
 }
 
 if (!is_array($data)) {
-    ob_end_clean();
-    echo json_encode(['status' => 'error', 'message' => 'JSON bukan object/array yang valid: ' . $fileName]);
-    exit;
+    sendJson(['status' => 'error', 'message' => "JSON bukan object: $fileName"]);
 }
 
-// ── Validasi Struktur ────────────────────────────────────────
-// Support dua format: {buku, halaman} atau {book, contents}
-$buku   = $data['buku']    ?? $data['book']     ?? null;
-$halaman = $data['halaman'] ?? $data['contents'] ?? null;
+// ── Validasi Struktur ─────────────────────────────────────────────────────────
+// Support format: {buku/halaman} atau {book/contents}
+$buku    = $data['buku']     ?? $data['book']     ?? null;
+$halaman = $data['halaman']  ?? $data['contents'] ?? null;
 
-if (!$buku) {
-    ob_end_clean();
-    echo json_encode(['status' => 'error', 'message' => 'JSON tidak punya node "buku" atau "book": ' . $fileName]);
-    exit;
+if (!$buku || !is_array($buku)) {
+    sendJson(['status' => 'error', 'message' => "Node 'buku'/'book' tidak ditemukan: $fileName"]);
 }
 if (!$halaman || !is_array($halaman)) {
-    ob_end_clean();
-    echo json_encode(['status' => 'error', 'message' => 'JSON tidak punya node "halaman" atau "contents" (array): ' . $fileName]);
-    exit;
+    sendJson(['status' => 'error', 'message' => "Node 'halaman'/'contents' tidak ditemukan: $fileName"]);
 }
 if (count($halaman) === 0) {
-    ob_end_clean();
-    echo json_encode(['status' => 'error', 'message' => 'Array halaman kosong di file: ' . $fileName]);
-    exit;
+    sendJson(['status' => 'error', 'message' => "Array halaman kosong: $fileName"]);
 }
 
-$catId  = isset($_POST['cat_id']) && $_POST['cat_id'] !== '' ? (int)$_POST['cat_id'] : null;
-$title  = $buku['title']  ?? 'Kitab Tanpa Judul';
-$author = $buku['author'] ?? 'Anonim';
+$catId  = (isset($_POST['cat_id']) && $_POST['cat_id'] !== '') ? (int)$_POST['cat_id'] : null;
+$title  = trim((string)($buku['title']  ?? 'Kitab Tanpa Judul'));
+$author = trim((string)($buku['author'] ?? 'Anonim'));
 $pages  = $halaman;
 $tocs   = $data['daftar_isi'] ?? $data['tocs'] ?? $data['toc'] ?? [];
 
-// ── Transaksi Database ───────────────────────────────────────
+if ($title === '') {
+    $title = pathinfo($fileName, PATHINFO_FILENAME);
+}
+
+// ── Transaksi Database ────────────────────────────────────────────────────────
 try {
     $mysql = \App\Config\Database::getConnection();
     $mysql->beginTransaction();
 
-    // Insert Book
+    // Insert book
     if ($catId) {
-        $stmt = $mysql->prepare("INSERT INTO books (title, author, cat_id, created_at) VALUES (?, ?, ?, NOW())");
+        $stmt = $mysql->prepare('INSERT INTO books (title, author, cat_id, created_at) VALUES (?, ?, ?, NOW())');
         $stmt->execute([$title, $author, $catId]);
     } else {
-        $stmt = $mysql->prepare("INSERT INTO books (title, author, created_at) VALUES (?, ?, NOW())");
+        $stmt = $mysql->prepare('INSERT INTO books (title, author, created_at) VALUES (?, ?, NOW())');
         $stmt->execute([$title, $author]);
     }
-    $bkid = $mysql->lastInsertId();
+    $bkid = (int)$mysql->lastInsertId();
 
-    // Insert Pages
-    $insertContent = $mysql->prepare(
-        "INSERT INTO book_content (bkid, page, juz, content) VALUES (?, ?, ?, ?)"
+    // Insert pages
+    $stmtContent = $mysql->prepare(
+        'INSERT INTO book_content (bkid, page, juz, content) VALUES (?, ?, ?, ?)'
     );
     $pagesCount = 0;
     $juzMap     = [];
 
-    foreach ($pages as $p) {
-        $pageNum = isset($p['page']) ? (int)$p['page'] : ($pagesCount + 1);
+    foreach ($pages as $idx => $p) {
+        $pageNum = isset($p['page']) ? (int)$p['page'] : ($idx + 1);
         $juzNum  = isset($p['juz'])  ? (int)$p['juz']  : 1;
-        $text    = $p['text'] ?? '';
-
-        $insertContent->execute([$bkid, $pageNum, $juzNum, $text]);
+        $text    = (string)($p['text'] ?? '');
+        $stmtContent->execute([$bkid, $pageNum, $juzNum, $text]);
         $pagesCount++;
         $juzMap[$juzNum] = true;
     }
@@ -174,51 +171,55 @@ try {
 
     // Insert TOC
     $autoTocRun = false;
-    if (!empty($tocs)) {
-        $insertToc = $mysql->prepare(
-            "INSERT INTO book_toc (bkid, title, level, page, juz) VALUES (?, ?, ?, ?, ?)"
+    if (!empty($tocs) && is_array($tocs)) {
+        $stmtToc = $mysql->prepare(
+            'INSERT INTO book_toc (bkid, title, level, page, juz) VALUES (?, ?, ?, ?, ?)'
         );
         foreach ($tocs as $t) {
-            $insertToc->execute([
+            $stmtToc->execute([
                 $bkid,
-                $t['title'] ?? '',
-                $t['level'] ?? 1,
-                $t['page']  ?? 1,
-                $t['juz']   ?? 1,
+                mb_substr((string)($t['title'] ?? ''), 0, 200),
+                (int)($t['level'] ?? 1),
+                (int)($t['page']  ?? 1),
+                (int)($t['juz']   ?? 1),
             ]);
         }
     } else {
-        // Auto generate TOC dari pola konten
+        // Auto-generate TOC dari pola konten Arab
         $autoTocRun = true;
-        $insertToc  = $mysql->prepare(
-            "INSERT INTO book_toc (bkid, title, level, page, juz) VALUES (?, ?, ?, ?, ?)"
+        $stmtToc    = $mysql->prepare(
+            'INSERT INTO book_toc (bkid, title, level, page, juz) VALUES (?, ?, ?, ?, ?)'
         );
-
-        foreach ($pages as $p) {
-            $content = $p['text'] ?? '';
+        foreach ($pages as $idx => $p) {
+            $content = (string)($p['text'] ?? '');
             $lines   = preg_split('/[\r\n]+/', $content);
             foreach ($lines as $line) {
                 $line = trim($line);
                 $len  = mb_strlen($line);
-                if ($len < 3 || $len > 80) continue;
-                if (strpos($line, '.') !== false
-                    || strpos($line, '،') !== false
-                    || strpos($line, '؟') !== false
-                    || strpos($line, '@') !== false) continue;
-                if (!preg_match('/[a-zA-Z\p{Arabic}]{2,}/u', $line)) continue;
-                if (preg_match('/^[-_@\s]*ص?\s*\d+\s*[-_@\s]*$/u', $line)) continue;
+                if ($len < 3 || $len > 80)                                              continue;
+                if (mb_strpos($line, '.') !== false
+                    || mb_strpos($line, '،') !== false
+                    || mb_strpos($line, '؟') !== false
+                    || mb_strpos($line, '@') !== false)                                 continue;
+                if (!preg_match('/[a-zA-Z\p{Arabic}]{2,}/u', $line))                   continue;
+                if (preg_match('/^[-_@\s]*ص?\s*\d+\s*[-_@\s]*$/u', $line))            continue;
 
-                $isChapter = preg_match('/^(كتاب|باب|فصل|مقدمة|خاتمة|المبحث|المطلب|القسم|تنبيه|فائدة|مسألة)/u', $line);
-                $isShort   = ($len <= 60 && strpos($line, ' ') !== false && mb_substr($line, -1) !== ':');
+                $isChapter = (bool)preg_match(
+                    '/^(كتاب|باب|فصل|مقدمة|خاتمة|المبحث|المطلب|القسم|تنبيه|فائدة|مسألة)/u',
+                    $line
+                );
+                $isShort = ($len <= 60
+                    && mb_strpos($line, ' ') !== false
+                    && mb_substr($line, -1) !== ':');
 
                 if ($isChapter || $isShort) {
                     $level = preg_match('/^(كتاب|باب)/u', $line) ? 1 : 2;
-                    $insertToc->execute([
+                    $stmtToc->execute([
                         $bkid,
                         mb_substr($line, 0, 200),
                         $level,
-                        $p['page'] ?? 1,
-                        $p['juz']  ?? 1,
+                        isset($p['page']) ? (int)$p['page'] : ($idx + 1),
+                        isset($p['juz'])  ? (int)$p['juz']  : 1,
                     ]);
                 }
             }
@@ -227,25 +228,22 @@ try {
 
     $mysql->commit();
 
-    // Bersihkan output buffer sebelum kirim JSON success
-    ob_end_clean();
-    echo json_encode([
+    sendJson([
         'status'      => 'success',
         'title'       => $title,
-        'bkid'        => (int)$bkid,
+        'bkid'        => $bkid,
         'filename'    => $fileName,
         'pages_count' => $pagesCount,
         'juz_count'   => $juzCount,
         'auto_toc'    => $autoTocRun,
     ]);
 
-} catch (\Exception $e) {
+} catch (\Throwable $e) {
     if (isset($mysql) && $mysql->inTransaction()) {
-        $mysql->rollBack();
+        try { $mysql->rollBack(); } catch (\Throwable $_) {}
     }
-    ob_end_clean();
-    echo json_encode([
+    sendJson([
         'status'  => 'error',
-        'message' => 'Database error: ' . $e->getMessage()
+        'message' => 'DB error: ' . $e->getMessage(),
     ]);
 }
