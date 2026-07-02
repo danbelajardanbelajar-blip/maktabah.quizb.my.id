@@ -1299,20 +1299,20 @@ function _renderBokImportStep2() {
               const absIdx = startIdx + i;
               const juz = _bokImp.pages[absIdx].juz;
               const hal = _bokImp.pages[absIdx].page;
-              return \`
-                <button onclick="window._bokImpGoPage(\${absIdx})"
+              return `
+                <button onclick="window._bokImpGoPage(${absIdx})"
                   class="w-full px-2 md:px-3 py-2 text-left text-[11px] transition-colors flex flex-col
-                    \${absIdx === pg ? 'bg-primary text-white' : 'hover:bg-cream/60 text-primary/60'}">
-                  <div class="\${absIdx === pg ? 'font-bold' : ''}">ID: \${absIdx + 1}</div>
-                  <div class="\${absIdx === pg ? 'text-white/70' : 'text-primary/40'}">Juz \${juz}, Hal \${hal}</div>
-                </button>\`;
+                    ${absIdx === pg ? 'bg-primary text-white' : 'hover:bg-cream/60 text-primary/60'}">
+                  <div class="${absIdx === pg ? 'font-bold' : ''}">ID: ${absIdx + 1}</div>
+                  <div class="${absIdx === pg ? 'text-white/70' : 'text-primary/40'}">Juz ${juz}, Hal ${hal}</div>
+                </button>`;
             }).join('')}
           </div>
           ${totalSidebarPages > 1 ? `
           <div class="flex justify-between items-center p-1 border-t border-cream-dark bg-gray-50 shrink-0">
-            <button onclick="window._bokImpGoSidebar(\${currentSidebarPage - 1})" \${currentSidebarPage === 0 ? 'disabled' : ''} class="p-1 rounded bg-cream text-primary/50 disabled:opacity-30 hover:bg-cream-dark"><i data-lucide="chevron-left" class="w-3 h-3"></i></button>
-            <span class="text-[10px] text-primary/50 font-medium">\${currentSidebarPage + 1}/\${totalSidebarPages}</span>
-            <button onclick="window._bokImpGoSidebar(\${currentSidebarPage + 1})" \${currentSidebarPage >= totalSidebarPages - 1 ? 'disabled' : ''} class="p-1 rounded bg-cream text-primary/50 disabled:opacity-30 hover:bg-cream-dark"><i data-lucide="chevron-right" class="w-3 h-3"></i></button>
+            <button onclick="window._bokImpGoSidebar(${currentSidebarPage - 1})" ${currentSidebarPage === 0 ? 'disabled' : ''} class="p-1 rounded bg-cream text-primary/50 disabled:opacity-30 hover:bg-cream-dark"><i data-lucide="chevron-left" class="w-3 h-3"></i></button>
+            <span class="text-[10px] text-primary/50 font-medium">${currentSidebarPage + 1}/${totalSidebarPages}</span>
+            <button onclick="window._bokImpGoSidebar(${currentSidebarPage + 1})" ${currentSidebarPage >= totalSidebarPages - 1 ? 'disabled' : ''} class="p-1 rounded bg-cream text-primary/50 disabled:opacity-30 hover:bg-cream-dark"><i data-lucide="chevron-right" class="w-3 h-3"></i></button>
           </div>` : ''}
         </div>
 
