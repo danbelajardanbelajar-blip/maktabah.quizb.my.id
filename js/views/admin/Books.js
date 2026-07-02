@@ -1447,7 +1447,7 @@ window._bokImpConfirm = async function() {
       const chunkRes = await fetch('/api.php?action=admin_import_json_chunk', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token'), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bkid: bkid, pages: chunk })
+        body: JSON.stringify({ bkid: bkid, contents: chunk })
       });
       const chunkData = await chunkRes.json();
       if (!chunkData.success) throw new Error(chunkData.error || "Gagal upload chunk.");
