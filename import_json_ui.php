@@ -15,9 +15,8 @@
         
         .upload-area { border: 2px dashed #3498db; padding: 50px 20px; text-align: center; border-radius: 10px; margin: 30px 0; background: #ebf5fb; transition: background 0.3s; }
         .upload-area:hover { background: #d6eaf8; }
-        .upload-area input { display: none; }
-        .upload-area label { background: #3498db; color: #fff; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.3s; box-shadow: 0 2px 5px rgba(52, 152, 219, 0.4); }
-        .upload-area label:hover { background: #2980b9; }
+        .upload-area input[type=file] { display: block; margin: 0 auto 20px auto; font-size: 16px; cursor: pointer; padding: 10px; background: #fff; border: 1px solid #bdc3c7; border-radius: 5px; width: 80%; max-width: 400px; }
+        .upload-area label { display: none; }
         
         #fileCount { margin-top: 20px; font-weight: bold; color: #2c3e50; font-size: 16px; }
         
@@ -42,8 +41,7 @@
     <p>Silakan pilih banyak file <code>.json</code> hasil ekspor dari aplikasi desktop Maktabah Syamilah. Sistem akan mengunggah dan memprosesnya secara bergiliran (AJAX Chunking) agar tidak membebani server dan mencegah <em>timeout</em>.</p>
     
     <div class="upload-area">
-        <label for="jsonFiles">Pilih File JSON</label>
-        <input type="file" id="jsonFiles" multiple accept=".json">
+        <input type="file" id="jsonFiles" name="jsonFiles[]" multiple="multiple" accept="application/json, .json">
         <div id="fileCount">Belum ada file terpilih.</div>
         <button id="btnStart">Mulai Import</button>
     </div>
