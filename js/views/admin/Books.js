@@ -1870,7 +1870,8 @@ window.submitImportMultipleBok = async function() {
     if (catId) formData.append('cat_id', catId);
     
     try {
-      const resp = await fetch('api_import_json.php', { method: 'POST', body: formData });
+      const resp = await fetch('/api_import_json.php', { method: 'POST', body: formData });
+
       
       const text = await resp.text();
       
