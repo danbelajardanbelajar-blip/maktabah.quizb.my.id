@@ -1861,24 +1861,33 @@ window.submitImportMultipleBok = async function() {
     
     try {
       const resp = await fetch('api_import_json.php', { method: 'POST', body: formData });
-      if (!resp.ok) throw new Error("HTTP " + resp.status);
       
       const text = await resp.text();
-      let res;
-      try {
-        res = JSON.parse(text);
-      } catch (e) {
-        throw new Error("Invalid response from server: " + text.substring(0, 100));
-      }
       
-      if (res.status === 'success') {
-        const tocStatus = res.auto_toc ? ' (Dibuat otomatis)' : ' (Sudah ada)';
-        addLog(`${res.title} -> ${res.pages_count} Hal, ${res.juz_count} Juz, TOC: ${tocStatus}`, 'success');
+      if (!text || text.trim() === '') {
+        // Response kosong — kemungkinan server timeout / fatal error tanpa output
+        addLog(`[HTTP ${resp.status}] Server mengembalikan response kosong. Cek error log server atau ukuran file.`, 'error');
       } else {
-        addLog(`Gagal: ${res.message}`, 'error');
+        let res;
+        try {
+          res = JSON.parse(text);
+        } catch (e) {
+          // Bukan JSON — tampilkan 300 karakter pertama agar debug mudah
+          addLog(`[HTTP ${resp.status}] Response bukan JSON: ${text.substring(0, 300)}`, 'error');
+          res = null;
+        }
+        
+        if (res) {
+          if (res.status === 'success') {
+            const tocStatus = res.auto_toc ? ' (Auto TOC)' : ' (TOC dari file)';
+            addLog(`${res.title} → ${res.pages_count} Hal, ${res.juz_count} Juz${tocStatus}`, 'success');
+          } else {
+            addLog(`Gagal: ${res.message || 'Error tidak diketahui'}`, 'error');
+          }
+        }
       }
     } catch(err) {
-      addLog(`Request Error: ${err.message}`, 'error');
+      addLog(`Network Error: ${err.message}`, 'error');
     }
     
     completedFiles++;
