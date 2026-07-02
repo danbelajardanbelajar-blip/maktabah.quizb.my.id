@@ -437,7 +437,13 @@ class BookController {
             $pages = array_column($pageMeta, 'content');
             foreach ($pages as $idx => $content) {
                 $lines[] = '--- Halaman ' . ($idx + 1) . ' ---';
-                $lines[] = $content;
+                // Bersihkan HTML untuk TXT fallback
+                $cleanContent = preg_replace('/<br\s*\/?>/i', "\n", $content);
+                $cleanContent = preg_replace('/<\/p>/i', "\n\n", $cleanContent);
+                $cleanContent = preg_replace('/<hr\s*\/?>/i', "\nـــــــــــــــــــــــــــــ\n", $cleanContent);
+                $cleanContent = strip_tags($cleanContent);
+
+                $lines[] = $cleanContent;
                 $lines[] = '';
             }
         }
@@ -458,7 +464,14 @@ class BookController {
         $lines[] = '';
         foreach ($pages as $idx => $content) {
             $lines[] = '--- Halaman ' . ($idx + 1) . ' ---';
-            $lines[] = $content;
+            
+            $cleanContent = preg_replace('/<br\s*\/?>/i', "\n", $content);
+            $cleanContent = preg_replace('/<\/p>/i', "\n\n", $cleanContent);
+            $cleanContent = preg_replace('/<hr\s*\/?>/i', "\nـــــــــــــــــــــــــــــ\n", $cleanContent);
+            $cleanContent = strip_tags($cleanContent);
+            
+            $lines[] = $cleanContent;
+            
             if ($idx < count($pages) - 1) {
                 $lines[] = '';
             }
@@ -525,6 +538,11 @@ class BookController {
         foreach ($pages as $idx => $content) {
             $section->addText('--- Halaman ' . ($idx + 1) . ' ---', ['bold' => true], $pStyle);
             
+            // Tangani tag HTML structural sebelum di-strip oleh fungsi $sanitize
+            $content = preg_replace('/<br\s*\/?>/i', "\n", $content);
+            $content = preg_replace('/<\/p>/i', "\n\n", $content);
+            $content = preg_replace('/<hr\s*\/?>/i', "\nـــــــــــــــــــــــــــــ\n", $content);
+
             $lines = explode("\n", str_replace("\r", "", $content));
             foreach ($lines as $line) {
                 $line = $sanitize($line);
