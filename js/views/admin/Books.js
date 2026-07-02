@@ -1862,7 +1862,14 @@ window.submitImportMultipleBok = async function() {
     try {
       const resp = await fetch('api_import_json.php', { method: 'POST', body: formData });
       if (!resp.ok) throw new Error("HTTP " + resp.status);
-      const res = await resp.json();
+      
+      const text = await resp.text();
+      let res;
+      try {
+        res = JSON.parse(text);
+      } catch (e) {
+        throw new Error("Invalid response from server: " + text.substring(0, 100));
+      }
       
       if (res.status === 'success') {
         const tocStatus = res.auto_toc ? ' (Dibuat otomatis)' : ' (Sudah ada)';

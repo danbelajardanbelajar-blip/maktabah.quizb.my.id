@@ -1,5 +1,8 @@
 <?php
 // api_import_json.php
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/app/Config/Database.php';
@@ -9,10 +12,31 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-if (!isset($_FILES['json_file']) || $_FILES['json_file']['error'] !== UPLOAD_ERR_OK) {
-    echo json_encode(["status" => "error", "message" => "No file uploaded or upload error"]);
+if (!isset($_FILES['json_file'])) {
+    $msg = "No file uploaded.";
+    if (empty($_POST) && empty($_FILES) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
+        $msg = "Upload error: The uploaded file exceeds the post_max_size directive in php.ini.";
+    }
+    echo json_encode(["status" => "error", "message" => $msg]);
     exit;
 }
+
+if ($_FILES['json_file']['error'] !== UPLOAD_ERR_OK) {
+    $errCode = $_FILES['json_file']['error'];
+    $errMsgs = [
+        UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
+        UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
+        UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded',
+        UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+        UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
+        UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+        UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
+    ];
+    $msg = isset($errMsgs[$errCode]) ? $errMsgs[$errCode] : 'Unknown upload error code: ' . $errCode;
+    echo json_encode(["status" => "error", "message" => $msg]);
+    exit;
+}
+
 
 $fileTmpPath = $_FILES['json_file']['tmp_name'];
 $fileName = $_FILES['json_file']['name'];
