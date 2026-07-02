@@ -142,15 +142,21 @@ try {
     $mysql = \App\Config\Database::getConnection();
     $mysql->beginTransaction();
 
-    // Insert book
+    // Lookup category_name dari tabel categories (sesuai struktur tabel books)
+    $catName = '';
     if ($catId) {
-        $stmt = $mysql->prepare('INSERT INTO books (title, author, cat_id, created_at) VALUES (?, ?, ?, NOW())');
-        $stmt->execute([$title, $author, $catId]);
-    } else {
-        $stmt = $mysql->prepare('INSERT INTO books (title, author, created_at) VALUES (?, ?, NOW())');
-        $stmt->execute([$title, $author]);
+        $cs = $mysql->prepare('SELECT name FROM categories WHERE id = :id LIMIT 1');
+        $cs->execute([':id' => $catId]);
+        $catName = (string)($cs->fetchColumn() ?: '');
     }
+
+    // Insert book — kolom sesuai schema: category_id, category_name, pages
+    $stmt = $mysql->prepare(
+        'INSERT INTO books (title, author, category_id, category_name, pages, created_at) VALUES (?, ?, ?, ?, 0, NOW())'
+    );
+    $stmt->execute([$title, $author, $catId ?: null, $catName]);
     $bkid = (int)$mysql->lastInsertId();
+
 
     // Insert pages
     $stmtContent = $mysql->prepare(
