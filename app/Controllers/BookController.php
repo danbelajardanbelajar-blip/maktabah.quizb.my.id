@@ -543,7 +543,9 @@ class BookController {
             $content = preg_replace('/<\/p>/i', "\n\n", $content);
             $content = preg_replace('/<hr\s*\/?>/i', "\nـــــــــــــــــــــــــــــ\n", $content);
 
-            $lines = explode("\n", str_replace("\r", "", $content));
+            // Gunakan preg_split untuk menangani semua format newline (\r\n, \n, atau hanya \r)
+            // agar teks tidak tergabung jika databasenya hanya menggunakan \r (Mac style)
+            $lines = preg_split("/\r\n|\n|\r/", $content);
             foreach ($lines as $line) {
                 $line = $sanitize($line);
                 if (trim($line) !== '') {
