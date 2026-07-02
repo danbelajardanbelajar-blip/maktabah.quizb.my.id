@@ -1233,8 +1233,12 @@ window.submitImportBok = async () => {
       if (!bookMeta) throw new Error("Format JSON tidak dikenali. Pastikan ini hasil Bok Converter.");
       if (!bookPages || !Array.isArray(bookPages) || bookPages.length === 0) throw new Error("Tidak ada halaman yang ditemukan dalam JSON.");
 
-      _bokImp.title = bookMeta.title || file.name.replace(/\.[^/.]+$/, "");
-      _bokImp.author = bookMeta.author || '';
+      let parsedTitle = bookMeta.title || "";
+      if (!parsedTitle || parsedTitle.toLowerCase() === "kitab tanpa judul") {
+        parsedTitle = file.name.replace(/\.[^/.]+$/, "");
+      }
+      _bokImp.title = parsedTitle;
+      _bokImp.author = bookMeta.author || 'Anonim';
       // Read current value of category
       _bokImp.catId = document.getElementById('bok-category')?.value || '';
       _bokImp.pages = bookPages;
