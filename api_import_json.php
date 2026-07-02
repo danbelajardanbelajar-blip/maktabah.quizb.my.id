@@ -232,6 +232,10 @@ try {
         }
     }
 
+    // Update kolom pages di tabel books — wajib agar tampil jumlah halaman yang benar
+    $mysql->prepare('UPDATE books SET pages = (SELECT COUNT(*) FROM book_content WHERE bkid=:b) WHERE bkid=:b2')
+          ->execute([':b' => $bkid, ':b2' => $bkid]);
+
     $mysql->commit();
 
     sendJson([
@@ -243,6 +247,7 @@ try {
         'juz_count'   => $juzCount,
         'auto_toc'    => $autoTocRun,
     ]);
+
 
 } catch (\Throwable $e) {
     if (isset($mysql) && $mysql->inTransaction()) {
