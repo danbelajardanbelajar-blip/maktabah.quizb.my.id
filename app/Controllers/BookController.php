@@ -629,17 +629,19 @@ class BookController {
     }
 
     public function handlePopularBooks(): void {
-        $pdo = Database::getConnection();
         try {
-            $stmt = $pdo->prepare(
-                "SELECT b.bkid, b.title, b.author, b.pages, b.iso, c.name AS category_name
-                 FROM books b
-                 LEFT JOIN categories c ON c.id = b.category_id
-                 ORDER BY b.views DESC, b.bkid DESC
-                 LIMIT 5"
-            );
-            $stmt->execute();
-            $books = $stmt->fetchAll();
+            $books = \App\Helpers\CacheHelper::remember('popular_books', 600, function() {
+                $pdo = Database::getConnection();
+                $stmt = $pdo->prepare(
+                    "SELECT b.bkid, b.title, b.author, b.pages, b.iso, c.name AS category_name
+                     FROM books b
+                     LEFT JOIN categories c ON c.id = b.category_id
+                     ORDER BY b.views DESC, b.bkid DESC
+                     LIMIT 5"
+                );
+                $stmt->execute();
+                return $stmt->fetchAll();
+            });
             echo json_encode(['data' => $books]);
         } catch (\Exception $e) {
             echo json_encode(['data' => []]);

@@ -711,58 +711,64 @@ class SearchController {
 
     public function handleRecentSearches(): void {
         header('Cache-Control: public, max-age=120');
-        $pdo   = Database::getConnection();
         $limit = min(20, max(1, (int)($_GET['limit'] ?? 15)));
     
-        // Ambil query unik terbaru, abaikan yang kosong / terlalu pendek
-        $stmt = $pdo->prepare(
-            "SELECT s1.query, s1.query_detail
-             FROM search_logs s1
-             INNER JOIN (
-                 SELECT LOWER(TRIM(query)) as lq, MAX(id) as max_id
-                 FROM search_logs
-                 WHERE LENGTH(TRIM(query)) >= 2
-                 GROUP BY LOWER(TRIM(query))
-             ) s2 ON s1.id = s2.max_id
-             ORDER BY s1.id DESC
-             LIMIT :lim"
-        );
-        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-    
-        $rows = $stmt->fetchAll();
-        echo json_encode(['data' => array_map(fn($r) => [
-            'query' => $r['query'],
-            'detail' => $r['query_detail']
-        ], $rows)]);
+        $data = \App\Helpers\CacheHelper::remember('recent_searches_' . $limit, 600, function() use ($limit) {
+            $pdo   = Database::getConnection();
+            $stmt = $pdo->prepare(
+                "SELECT s1.query, s1.query_detail
+                 FROM search_logs s1
+                 INNER JOIN (
+                     SELECT LOWER(TRIM(query)) as lq, MAX(id) as max_id
+                     FROM search_logs
+                     WHERE LENGTH(TRIM(query)) >= 2
+                     GROUP BY LOWER(TRIM(query))
+                 ) s2 ON s1.id = s2.max_id
+                 ORDER BY s1.id DESC
+                 LIMIT :lim"
+            );
+            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+        
+            $rows = $stmt->fetchAll();
+            return array_map(fn($r) => [
+                'query' => $r['query'],
+                'detail' => $r['query_detail']
+            ], $rows);
+        });
+
+        echo json_encode(['data' => $data]);
     }
 
     public function handlePopularSearches(): void {
         header('Cache-Control: public, max-age=120');
-        $pdo   = Database::getConnection();
         $limit = min(20, max(1, (int)($_GET['limit'] ?? 5)));
     
-        // Ambil query paling sering dicari, abaikan yang kosong / terlalu pendek
-        $stmt = $pdo->prepare(
-            "SELECT s1.query, s1.query_detail, s2.cnt
-             FROM search_logs s1
-             INNER JOIN (
-                 SELECT LOWER(TRIM(query)) as lq, COUNT(*) as cnt, MAX(id) as max_id
-                 FROM search_logs
-                 WHERE LENGTH(TRIM(query)) >= 2
-                 GROUP BY LOWER(TRIM(query))
-             ) s2 ON s1.id = s2.max_id
-             ORDER BY s2.cnt DESC, s1.id DESC
-             LIMIT :lim"
-        );
-        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-    
-        $rows = $stmt->fetchAll();
-        echo json_encode(['data' => array_map(fn($r) => [
-            'query' => $r['query'],
-            'detail' => $r['query_detail']
-        ], $rows)]);
+        $data = \App\Helpers\CacheHelper::remember('popular_searches_' . $limit, 600, function() use ($limit) {
+            $pdo   = Database::getConnection();
+            $stmt = $pdo->prepare(
+                "SELECT s1.query, s1.query_detail, s2.cnt
+                 FROM search_logs s1
+                 INNER JOIN (
+                     SELECT LOWER(TRIM(query)) as lq, COUNT(*) as cnt, MAX(id) as max_id
+                     FROM search_logs
+                     WHERE LENGTH(TRIM(query)) >= 2
+                     GROUP BY LOWER(TRIM(query))
+                 ) s2 ON s1.id = s2.max_id
+                 ORDER BY s2.cnt DESC, s1.id DESC
+                 LIMIT :lim"
+            );
+            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+        
+            $rows = $stmt->fetchAll();
+            return array_map(fn($r) => [
+                'query' => $r['query'],
+                'detail' => $r['query_detail']
+            ], $rows);
+        });
+
+        echo json_encode(['data' => $data]);
     }
 
     public function handleSearchRecommendations(): void {

@@ -54,3 +54,6 @@ composer.lock
 *.sql.zip
 *_backup.sql
 auth.php
+
+# -- Caching --
+/cache/
