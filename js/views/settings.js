@@ -164,11 +164,11 @@ window.renderSettingsRefresh = function() {
 
 
 // Per-section abort controllers + progressive content search token
-let _abortCat = null, _abortBooks = null, _abortCont = null;
+let _abortCat = null, _abortBooks = null, _abortCont = null, _abortContAnd = null;
 let _contentSearchToken = null; // token string to cancel progressive search
 function abortAll() {
-  [_abortCat, _abortBooks, _abortCont].forEach(c => { try { c && c.abort(); } catch(_){} });
-  _abortCat = _abortBooks = _abortCont = null;
+  [_abortCat, _abortBooks, _abortCont, _abortContAnd].forEach(c => { try { c && c.abort(); } catch(_){} });
+  _abortCat = _abortBooks = _abortCont = _abortContAnd = null;
   // Cancel progressive content search — tapi SIMPAN progres ke cache dulu
   _contentSearchToken = null;
 }
@@ -192,7 +192,7 @@ function _srcClear() {
 }
 
 // searchState declared here (used by renderSearch, execSearch, pagination)
-export const searchState = { q: '', bookPage: 1, contPage: 1, pdfPage: 1 };
+export const searchState = { q: '', bookPage: 1, contPage: 1, pdfPage: 1, contAndPage: 1 };
 export const searchAdvancedState = {
   terms: ['', '', '', '', ''],
   cats: [],
@@ -609,6 +609,7 @@ export function renderSearch(params) {
   searchState.bookPage = 1;
   searchState.contPage = 1;
   searchState.pdfPage = 1;
+  searchState.contAndPage = 1;
 
   // Jika kembali ke query yang sama dengan hasil tersimpan:
   const showSkeleton = newQ.length >= 2;
@@ -660,7 +661,7 @@ export function renderSearch(params) {
 
   inp?.addEventListener('input', e => {
     searchState.q = e.target.value.trim();
-    searchState.bookPage = searchState.contPage = searchState.pdfPage = 1;
+    searchState.bookPage = searchState.contPage = searchState.pdfPage = searchState.contAndPage = 1;
     clr?.classList.toggle('hidden', !searchState.q);
     if (!searchState.q) { abortAll(); $('#search-results').innerHTML = emptySearchPrompt(); $('#search-stats').innerHTML = ''; reicons(); }
   });
@@ -1115,6 +1116,11 @@ async function execSearch() {
       <div id="sec-content-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
     </div>
     ${sectionDivider()}
+    <div id="sec-content-and" class="mb-2 hidden">
+      ${sectionHeader('layers','Isi Kitab (Kata Tersebar)', null, true)}
+      <div id="sec-content-and-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
+    </div>
+    ${sectionDivider()}
     <div id="sec-pdf">
       ${sectionHeader('download','Download File PDF', null, true)}
       <div id="sec-pdf-body"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(4)}</div></div>
@@ -1220,6 +1226,31 @@ async function execSearch() {
       reicons();
     }).catch(()=>{ const b=$('#sec-content-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
 
+  // 3b. Isi Kitab (parallel) dengan logika AND (hanya jika ada spasi)
+  const qWords = q.trim().split(/\s+/);
+  if (qWords.length > 1) {
+    $('#sec-content-and')?.classList.remove('hidden');
+    _abortContAnd = new AbortController();
+    const paramsAnd = { action: 'search_advanced', page: searchState.contAndPage || 1, all_cats: '1' };
+    qWords.slice(0, 5).forEach((w, i) => paramsAnd['q' + (i+1)] = w);
+    
+    fetch(API + '?' + new URLSearchParams(paramsAnd), {signal:_abortContAnd.signal})
+      .then(r=>r.json()).then(res => {
+        if ($('#search-input')?.value.trim() !== q) return;
+        patchHeader('sec-content-and','layers','Isi Kitab (Kata Tersebar)', res.total || 0);
+        const bodyAnd = $('#sec-content-and-body');
+        if (!bodyAnd) return;
+        bodyAnd.innerHTML = res.data && res.data.length
+          ? `<div class="search-section-enter">
+              <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, qWords)).join('')}</div>
+              ${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContAndPage')}</div>`
+          : noResultBlock('Maaf, tidak ditemukan halaman yang cocok dengan kata kunci tersebut.');
+        reicons();
+      }).catch(()=>{ const b=$('#sec-content-and-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); });
+  } else {
+    $('#sec-content-and')?.classList.add('hidden');
+  }
+
   // 4. Download file pdf (parallel)
   let _abortPdf = new AbortController();
   fetch(API + '?' + new URLSearchParams({action:'search_scholarium_pdfs', q, page:searchState.pdfPage || 1}), {signal:_abortPdf.signal})
@@ -1270,6 +1301,27 @@ window.goSearchContPage = function(p) {
         ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContPage')}</div>`
         : noResultBlock('Tidak ada hasil.');
       reicons(); $('#sec-content')?.scrollIntoView({behavior:'smooth',block:'start'});
+    }).catch(()=>{});
+};
+
+window.goSearchContAndPage = function(p) {
+  searchState.contAndPage = p;
+  const q = searchState.q, bodyAnd = $('#sec-content-and-body');
+  if (bodyAnd) bodyAnd.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div>`;
+  _abortContAnd = new AbortController();
+  
+  const qWords = q.trim().split(/\s+/);
+  const paramsAnd = { action: 'search_advanced', page: p, all_cats: '1' };
+  qWords.slice(0, 5).forEach((w, i) => paramsAnd['q' + (i+1)] = w);
+
+  fetch(API + '?' + new URLSearchParams(paramsAnd), {signal:_abortContAnd.signal})
+    .then(r=>r.json()).then(res => {
+      patchHeader('sec-content-and','layers','Isi Kitab (Kata Tersebar)', res.total || 0);
+      if (!bodyAnd) return;
+      bodyAnd.innerHTML = res.data && res.data.length
+        ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, qWords)).join('')}</div>${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContAndPage')}</div>`
+        : noResultBlock('Tidak ada hasil.');
+      reicons(); $('#sec-content-and')?.scrollIntoView({behavior:'smooth',block:'start'});
     }).catch(()=>{});
 };
 
