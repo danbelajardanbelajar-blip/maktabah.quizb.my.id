@@ -206,7 +206,9 @@ try {
                 if (mb_strpos($line, '.') !== false
                     || mb_strpos($line, '،') !== false
                     || mb_strpos($line, '؟') !== false
-                    || mb_strpos($line, '@') !== false)                                 continue;
+                    || mb_strpos($line, '@') !== false
+                    || mb_strpos($line, 'صفحة') !== false
+                    || mb_strpos($line, 'بسم الله الرحمن الرحيم') !== false)                                 continue;
                 if (!preg_match('/[a-zA-Z\p{Arabic}]{2,}/u', $line))                   continue;
                 if (preg_match('/^[-_@\s]*ص?\s*\d+\s*[-_@\s]*$/u', $line))            continue;
 

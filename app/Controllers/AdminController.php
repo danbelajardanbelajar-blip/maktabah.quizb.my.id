@@ -1424,7 +1424,7 @@ class AdminController {
                 foreach ($lines as $line) {
                     $line = trim($line);
                     if (mb_strlen($line) >= 3 && mb_strlen($line) <= 80) {
-                        if (strpos($line, '.') === false && strpos($line, '،') === false && strpos($line, '؟') === false && strpos($line, '@') === false) {
+                        if (strpos($line, '.') === false && strpos($line, '،') === false && strpos($line, '؟') === false && strpos($line, '@') === false && strpos($line, 'صفحة') === false && strpos($line, 'بسم الله الرحمن الرحيم') === false) {
                             // Exclude lines that don't have at least one real word (2+ letters) or look like pure page numbers
                             if (preg_match('/[a-zA-Z\p{Arabic}]{2,}/u', $line) && !preg_match('/^[-_@\s]*ص?\s*\d+\s*[-_@\s]*$/u', $line)) {
                                 // Extract traditional headings as well as potential standard short lines if they look good
