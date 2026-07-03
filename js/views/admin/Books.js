@@ -527,7 +527,7 @@ window.openImportWordModal = async function() {
   try { await _loadMammoth(); } catch {
     adminToast('Gagal memuat parser Word. Periksa koneksi internet.', 'error'); return;
   }
-  _imp.pages = []; _imp.currentPage = 0;
+  _imp.pages = []; _imp.juzs = []; _imp.currentPage = 0;
   _setImportStep(1);
   document.getElementById('import-modal').classList.remove('hidden');
   _renderImportStep1();
@@ -694,6 +694,7 @@ window._impProcess = async function() {
       .filter(p => p.length > 0);
 
     _imp.pages = _paginate(paragraphs, wpp);
+    _imp.juzs = new Array(_imp.pages.length).fill(1);
     _imp.currentPage = 0;
 
     if (!_imp.pages.length) { showErr('Tidak ada konten yang dapat diekstrak.'); return; }
@@ -758,10 +759,16 @@ function _renderImportStep2() {
         <!-- Editor halaman -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-primary/50">
-              Halaman <span class="text-primary font-bold">${pg+1}</span> dari ${total}
-              <span class="text-primary/30 ml-2">(${wordCount} kata)</span>
-            </span>
+            <div class="flex items-center gap-4">
+              <span class="text-xs font-semibold text-primary/50">
+                Halaman <span class="text-primary font-bold">${pg+1}</span> dari ${total}
+                <span class="text-primary/30 ml-2">(${wordCount} kata)</span>
+              </span>
+              <div class="flex items-center gap-2">
+                <label for="imp-page-juz" class="text-xs font-semibold text-primary/50">Juz:</label>
+                <input type="number" id="imp-page-juz" value="${_imp.juzs[pg] || 1}" min="1" class="w-16 px-2 py-1 bg-cream/50 rounded-lg border border-gold/30 text-sm text-center focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/50">
+              </div>
+            </div>
             <div class="flex items-center gap-1">
               <button onclick="window._impGoPage(${pg-1})" ${pg===0?'disabled':''} class="p-1.5 rounded-lg text-primary/40 hover:bg-cream-dark disabled:opacity-25 transition-colors">
                 <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
@@ -819,21 +826,27 @@ function _renderImportStep2() {
 window._impGoPage = function(i) {
   // Simpan edit halaman saat ini dulu
   const ta = document.getElementById('imp-page-text');
+  const juzIn = document.getElementById('imp-page-juz');
   if (ta) _imp.pages[_imp.currentPage] = ta.value;
+  if (juzIn) _imp.juzs[_imp.currentPage] = parseInt(juzIn.value) || 1;
   _imp.currentPage = Math.max(0, Math.min(_imp.pages.length-1, i));
   _renderImportStep2();
 };
 
 window._impSavePage = function() {
   const ta = document.getElementById('imp-page-text');
+  const juzIn = document.getElementById('imp-page-juz');
   if (ta) _imp.pages[_imp.currentPage] = ta.value;
+  if (juzIn) _imp.juzs[_imp.currentPage] = parseInt(juzIn.value) || 1;
   adminToast(`Halaman ${_imp.currentPage+1} disimpan ✓`);
 };
 
 window._impBack = function() {
   // Simpan edit halaman terakhir
   const ta = document.getElementById('imp-page-text');
+  const juzIn = document.getElementById('imp-page-juz');
   if (ta) _imp.pages[_imp.currentPage] = ta.value;
+  if (juzIn) _imp.juzs[_imp.currentPage] = parseInt(juzIn.value) || 1;
   _setImportStep(1);
   _renderImportStep1();
   // Restore data
@@ -852,7 +865,9 @@ window._impBack = function() {
 window._impConfirm = async function() {
   // Simpan edit halaman terakhir
   const ta = document.getElementById('imp-page-text');
+  const juzIn = document.getElementById('imp-page-juz');
   if (ta) _imp.pages[_imp.currentPage] = ta.value;
+  if (juzIn) _imp.juzs[_imp.currentPage] = parseInt(juzIn.value) || 1;
 
   const total   = _imp.pages.length;
   const msg     = document.getElementById('imp-step2-msg');
@@ -871,6 +886,7 @@ window._impConfirm = async function() {
       category_id: _imp.catId ? +_imp.catId : 0,
       iso:         _imp.iso,
       pages:       _imp.pages,
+      juzs:        _imp.juzs,
     });
 
     if (!res.success) throw new Error(res.error || 'Import gagal.');

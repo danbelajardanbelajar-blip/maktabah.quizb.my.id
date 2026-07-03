@@ -245,6 +245,7 @@ class AdminController {
         $catId  = (int)($_POST['category_id'] ?? $json['category_id'] ?? 0);
         $iso    = $_POST['iso']               ?? $json['iso'] ?? 'ar';
         $pages  = $json['pages'] ?? null;
+        $juzs   = $json['juzs'] ?? [];
     
         if (!$title) { http_response_code(400); echo json_encode(['error' => 'Judul wajib diisi.']); return; }
     
@@ -347,12 +348,14 @@ class AdminController {
             }
     
             $insertContent = $pdo->prepare(
-                "INSERT INTO book_content (bkid, page, content) VALUES (:bkid, :page, :content)"
+                "INSERT INTO book_content (bkid, page, juz, content) VALUES (:bkid, :page, :juz, :content)"
             );
             foreach ($pages as $pageIndex => $pageContent) {
+                $juz = isset($juzs[$pageIndex]) ? (int)$juzs[$pageIndex] : 1;
                 $insertContent->execute([
                     ':bkid'    => $bkid,
                     ':page'    => $pageIndex + 1,
+                    ':juz'     => $juz,
                     ':content' => $pageContent,
                 ]);
                 SearchHelper::syncContentToDictionary($pageContent);
