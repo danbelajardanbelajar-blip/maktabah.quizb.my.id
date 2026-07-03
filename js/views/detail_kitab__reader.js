@@ -184,14 +184,14 @@ export async function renderDetail(params) {
             </div>
 
             <!-- Nav buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-between mt-5 gap-2 sm:gap-3 w-full">
+            <div class="flex items-center justify-between mt-6 gap-2 sm:gap-3 w-full bg-slate-50/50 sm:bg-transparent p-1.5 sm:p-0 rounded-2xl">
               <button id="reader-prev"
-                class="flex items-center justify-center gap-1 sm:gap-2 flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl border border-gold/30 text-xs sm:text-sm font-medium text-primary hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                class="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl border border-gold/30 text-xs sm:text-sm font-medium text-primary hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 <i data-lucide="chevron-left" class="w-4 h-4 shrink-0"></i> <span class="hidden sm:inline">Sebelumnya</span>
               </button>
-              <span id="reader-label" class="text-xs text-primary/40 whitespace-nowrap"></span>
+              <span id="reader-label" class="text-xs sm:text-sm text-primary/50 font-medium whitespace-nowrap text-center flex-1 overflow-hidden text-ellipsis px-1"></span>
               <button id="reader-next"
-                class="flex items-center justify-center gap-1 sm:gap-2 flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-medium hover:bg-primary-light disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                class="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-medium hover:bg-primary-light disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 <span class="hidden sm:inline">Berikutnya</span> <i data-lucide="chevron-right" class="w-4 h-4 shrink-0"></i>
               </button>
             </div>
