@@ -25,8 +25,8 @@ export async function renderDetail(params) {
 
 
   app().innerHTML = `
-    <div class="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 py-10">
-      <button onclick="history.back()" class="flex items-center gap-2 text-primary/60 hover:text-primary text-sm mb-6 transition-colors">
+    <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-5 sm:py-10">
+      <button onclick="history.back()" class="flex items-center gap-2 text-primary/60 hover:text-primary text-sm mb-4 sm:mb-6 transition-colors">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali
       </button>
       <div id="detail-content">
@@ -93,7 +93,8 @@ export async function renderDetail(params) {
         </div>
 
         <!-- ── Meta (description / author info) ── -->
-        <div class="px-3 sm:px-8 md:px-10 pt-6 sm:pt-8 space-y-5">
+        ${(description || authorInfo) ? `
+        <div class="px-3 sm:px-8 md:px-10 pt-5 sm:pt-8 space-y-5">
           ${description ? `
             <div>
               <h3 class="text-xs font-semibold text-primary/40 uppercase tracking-wider mb-2">Deskripsi</h3>
@@ -105,11 +106,12 @@ export async function renderDetail(params) {
               <p class="text-primary/75 text-sm leading-relaxed arabic">${escHtml(authorInfo)}</p>
             </div>` : ''}
         </div>
+        ` : ''}
 
         <!-- ── Reader ── -->
         ${contentPgs > 0 ? `
-        <div class="px-3 sm:px-8 md:px-10 pb-6 sm:pb-10 mt-6 sm:mt-8">
-          <div class="border-t border-cream-dark pt-6">
+        <div class="px-3 sm:px-8 md:px-10 pb-6 sm:pb-10 mt-4 sm:mt-8">
+          <div class="border-t border-cream-dark pt-5 sm:pt-6">
 
             <!-- Reader toolbar -->
             <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
