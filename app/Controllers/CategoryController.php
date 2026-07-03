@@ -12,15 +12,28 @@ use Exception;
 class CategoryController {
     public function handleCategories(): void {
         $pdo  = Database::getConnection();
+        
+        // Coba ambil jumlah kitab per kategori lebih efisien
+        $counts = [];
+        try {
+            $stmtCounts = $pdo->query("SELECT category_id, COUNT(bkid) as c FROM books GROUP BY category_id");
+            $counts = $stmtCounts->fetchAll(PDO::FETCH_KEY_PAIR);
+        } catch (\Exception $e) {}
+
+        // Ambil semua kategori
         $stmt = $pdo->query(
-            "SELECT c.id, c.name, c.catord, c.lvl,
-                    COUNT(b.bkid) AS book_count
-             FROM categories c
-             LEFT JOIN books b ON b.category_id = c.id
-             GROUP BY c.id
-             ORDER BY c.catord ASC, c.name ASC"
+            "SELECT id, name, catord, lvl
+             FROM categories
+             ORDER BY catord ASC, name ASC"
         );
-        echo json_encode(['data' => $stmt->fetchAll()]);
+        $categories = $stmt->fetchAll();
+        
+        // Gabungkan
+        foreach ($categories as &$c) {
+            $c['book_count'] = isset($counts[$c['id']]) ? (int)$counts[$c['id']] : 0;
+        }
+
+        echo json_encode(['data' => $categories]);
     }
 
 }
