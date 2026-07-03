@@ -45,9 +45,12 @@ export async function renderDetail(params) {
     const author      = book.author      || 'مجهول المؤلف';
     const authorInfo  = book.author_info || '';
     const description = book.description || book.info || '';
-    const pages       = book.pages       ? book.pages + ' hal.' : '';
     const catName     = book.cat_name    || book.category_name || '';
     const contentPgs  = book.content_pages || 0;
+    
+    // Hanya tampilkan badge emas (metadata asli) jika angkanya berbeda dengan jumlah yang tersedia di database
+    const showGoldPages = book.pages && (parseInt(book.pages) !== parseInt(contentPgs));
+    const pages       = showGoldPages ? book.pages + ' hal.' : '';
 
     readerState.total    = contentPgs;
     readerState.totalJuz = book.total_juz || 1;
