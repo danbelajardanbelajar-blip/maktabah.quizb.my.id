@@ -1179,6 +1179,22 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
     </div>
   </nav>
 
+  <!-- ===================== APK UPDATE MODAL ===================== -->
+  <div id="apk-update-modal-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,34,24,.8);backdrop-filter:blur(4px);align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s ease;">
+    <div id="apk-update-modal" style="background:#F8FAF9;border-radius:1.5rem;padding:2rem 1.5rem;width:90%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,.2);text-align:center;transform:translateY(20px);transition:transform 0.3s ease;">
+      <div style="background:#C9A227;color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+        <i data-lucide="download" style="width:32px;height:32px;"></i>
+      </div>
+      <h3 style="font-family:'Amiri',serif;font-size:1.75rem;color:#14532D;margin-bottom:0.75rem;font-weight:700;">Update Tersedia!</h3>
+      <p style="color:rgba(20,83,45,.75);font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem;">
+        Versi terbaru aplikasi المكتبة السنية (v1.0.9) telah dirilis.<br>Silakan update aplikasi Anda untuk pengalaman yang lebih baik.
+      </p>
+      <button onclick="closeApkUpdateModal()" style="background:#14532D;color:#fff;border:none;padding:0.75rem 2rem;border-radius:99px;font-weight:700;font-size:1rem;cursor:pointer;width:100%;box-shadow:0 4px 15px rgba(20,83,45,.2);">
+        Mengerti
+      </button>
+    </div>
+  </div>
+
   <!-- ===================== FONT SETTINGS MODAL ===================== -->
   <div id="font-modal-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(15,34,24,.55);backdrop-filter:blur(4px);" onclick="if(event.target===this)closeFontModal()">
     <div id="font-modal" style="position:absolute;bottom:0;left:0;right:0;max-height:90vh;overflow-y:auto;background:#F8FAF9;border-radius:1.5rem 1.5rem 0 0;padding:1.5rem 1.25rem 2rem;box-shadow:0 -8px 40px rgba(20,83,45,.18);">
@@ -1462,6 +1478,43 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
           lucide.createIcons();
         });
       }
+
+      // Check for APK update (only show once)
+      setTimeout(() => {
+        const ua = navigator.userAgent || '';
+        const isWebView = /wv/.test(ua) || (/Android/i.test(ua) && /Version\//i.test(ua));
+        
+        // Cek apakah versi sudah 1.0.9 (Version Code 10)
+        // Disarankan: di APK baru (v1.0.9) set User-Agent dengan tambahan 'MaktabahApp/10'
+        // Atau inject JS: window.APP_VERSION_CODE = 10;
+        const isNewApk = (window.APP_VERSION_CODE && window.APP_VERSION_CODE >= 10) || /MaktabahApp\/([0-9]+)/.test(ua);
+
+        if (isWebView && !isNewApk && !localStorage.getItem('apk_update_warned_v10')) {
+          const overlay = document.getElementById('apk-update-modal-overlay');
+          const modal = document.getElementById('apk-update-modal');
+          if (overlay && modal) {
+            overlay.style.display = 'flex';
+            // Trigger reflow
+            void overlay.offsetWidth;
+            overlay.style.opacity = '1';
+            modal.style.transform = 'translateY(0)';
+            if (window.lucide) lucide.createIcons();
+          }
+        }
+      }, 2000);
+
+      window.closeApkUpdateModal = function() {
+        const overlay = document.getElementById('apk-update-modal-overlay');
+        const modal = document.getElementById('apk-update-modal');
+        if (overlay && modal) {
+          overlay.style.opacity = '0';
+          modal.style.transform = 'translateY(20px)';
+          setTimeout(() => {
+            overlay.style.display = 'none';
+            localStorage.setItem('apk_update_warned_v10', '1');
+          }, 300);
+        }
+      };
 
     }); // end DOMContentLoaded
   </script>
