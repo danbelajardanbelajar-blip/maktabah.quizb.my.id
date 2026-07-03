@@ -50,7 +50,7 @@ if ($action === 'generate_single') {
             foreach ($lines as $line) {
                 $line = trim($line);
                 if (mb_strlen($line) >= 3 && mb_strlen($line) <= 80) {
-                    if (strpos($line, '.') === false && strpos($line, '،') === false && strpos($line, '؟') === false && strpos($line, '@') === false) {
+                    if (strpos($line, '.') === false && strpos($line, '،') === false && strpos($line, '؟') === false && strpos($line, '@') === false && strpos($line, 'صفحة') === false && strpos($line, 'بسم الله الرحمن الرحيم') === false) {
                         if (preg_match('/[a-zA-Z\p{Arabic}]{2,}/u', $line) && !preg_match('/^[-_@\s]*ص?\s*\d+\s*[-_@\s]*$/u', $line)) {
                             if (preg_match('/^(كتاب|باب|فصل|مقدمة|خاتمة|المبحث|المطلب|القسم|تنبيه|فائدة|مسألة)/u', $line) || 
                                 (mb_strlen($line) <= 60 && strpos($line, ' ') !== false && mb_substr($line, -1) !== ':')) {
