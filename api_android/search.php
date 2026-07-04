@@ -50,7 +50,6 @@ $stmtCont = $pdo->prepare(
      FROM book_content bc
      JOIN books b ON b.bkid = bc.bkid
      WHERE bc.content LIKE :lk
-     ORDER BY bc.bkid DESC, bc.page ASC
      LIMIT :lim OFFSET :off"
 );
 $stmtCont->bindValue(':lk',  $like, PDO::PARAM_STR);
