@@ -1486,11 +1486,14 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
         const isWebView = isPhpRequestedWithApp || /wv/.test(ua) || (/Android/i.test(ua) && /Version\//i.test(ua));
         
         // Cek apakah versi sudah 1.0.9 (Version Code 10)
-        // Disarankan: di APK baru (v1.0.9) set User-Agent dengan tambahan 'MaktabahApp/10'
-        // Atau inject JS: window.APP_VERSION_CODE = 10;
-        const isNewApk = (window.APP_VERSION_CODE && window.APP_VERSION_CODE >= 10) || /MaktabahApp\/([0-9]+)/.test(ua);
+        let uaVersionCode = 0;
+        const uaMatch = ua.match(/MaktabahApp\/([0-9]+)/);
+        if (uaMatch) {
+            uaVersionCode = parseInt(uaMatch[1], 10);
+        }
+        const isNewApk = (window.APP_VERSION_CODE && window.APP_VERSION_CODE >= 10) || (uaVersionCode >= 10);
 
-        if (isWebView && !isNewApk && !localStorage.getItem('apk_update_warned_v10')) {
+        if (isWebView && !isNewApk && !localStorage.getItem('apk_update_warned_v10_rev2')) {
           const overlay = document.getElementById('apk-update-modal-overlay');
           const modal = document.getElementById('apk-update-modal');
           if (overlay && modal) {
@@ -1512,7 +1515,7 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
           modal.style.transform = 'translateY(20px)';
           setTimeout(() => {
             overlay.style.display = 'none';
-            localStorage.setItem('apk_update_warned_v10', '1');
+            localStorage.setItem('apk_update_warned_v10_rev2', '1');
           }, 300);
         }
       };
