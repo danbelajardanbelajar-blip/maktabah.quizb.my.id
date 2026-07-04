@@ -43,8 +43,6 @@ if ($page === 1) {
 $contOffset = ($page - 1) * $limit;
 $fetchLimit = $limit + 1;
 
-// Tambahkan timeout agar tidak menggantung jika terlalu berat
-$pdo->setAttribute(PDO::ATTR_TIMEOUT, 10);
 // Eksekusi query
 $stmtCont = $pdo->prepare(
     "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page, b.title, b.author, b.category_name,
