@@ -57,7 +57,7 @@ $stmtBooksCount = $pdo->prepare(
 $stmtBooksCount->execute([':lk' => $like, ':lk2' => $like]);
 $booksTotal = (int)$stmtBooksCount->fetchColumn();
 
-// 2. Content (Optimized with LIKE since FULLTEXT may fail for short words or missing indexes)
+// 2. Content (Optimized to avoid full table scans: removed ORDER BY and COUNT)
 $contOffset = ($contPage - 1) * $limit;
 $stmtCont = $pdo->prepare(
     "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page, b.title, b.author, b.category_name,
@@ -65,7 +65,6 @@ $stmtCont = $pdo->prepare(
      FROM book_content bc
      JOIN books b ON b.bkid = bc.bkid
      WHERE bc.content LIKE :q
-     ORDER BY bc.bkid DESC, bc.page ASC
      LIMIT :lim OFFSET :off"
 );
 $stmtCont->bindValue(':q',  $like, PDO::PARAM_STR);
@@ -80,11 +79,10 @@ $content = array_map(function($row) use ($terms) {
     return $row;
 }, $contentRows);
 
-$stmtContCount = $pdo->prepare(
-    "SELECT COUNT(*) FROM book_content WHERE content LIKE :q"
-);
-$stmtContCount->execute([':q' => $like]);
-$contTotal = (int)$stmtContCount->fetchColumn();
+// Estimasi total page tanpa harus full table scan COUNT(*)
+$hasMoreContent = count($contentRows) == $limit;
+$contTotalPages = $hasMoreContent ? ($contPage + 1) : $contPage;
+$contTotal = $contTotalPages * $limit; // Estimasi kasar
 
 // Response
 echo json_encode([
@@ -95,6 +93,6 @@ echo json_encode([
     ],
     'content'      => [
         'data' => $content, 'total' => $contTotal,
-        'page' => $contPage, 'total_pages' => (int)ceil($contTotal / $limit),
+        'page' => $contPage, 'total_pages' => $contTotalPages,
     ],
 ]);
