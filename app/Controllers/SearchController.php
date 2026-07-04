@@ -612,6 +612,9 @@ class SearchController {
     }
 
     public function handleSearch(): void {
+        set_time_limit(300); // Mencegah 500 error karena max_execution_time PHP terlampaui
+        ini_set('memory_limit', '512M');
+        
         $pdo      = Database::getConnection();
         $q        = trim($_GET['q'] ?? '');
         $bookPage = max(1, (int)($_GET['book_page']    ?? 1));
@@ -662,18 +665,20 @@ class SearchController {
         $stmtBooksCount->execute([':lk' => $like, ':lk2' => $like]);
         $booksTotal = (int)$stmtBooksCount->fetchColumn();
     
-        // 3. Content
+        // 3. Content (menggunakan FULLTEXT MATCH AGAINST agar super cepat dan tidak 500 Timeout)
         $contOffset = ($contPage - 1) * $limit;
         $stmtCont = $pdo->prepare(
             "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page, b.title, b.author, b.category_name,
-                    bc.content AS snippet
+                    bc.content AS snippet,
+                    MATCH(bc.content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
              FROM book_content bc
              JOIN books b ON b.bkid = bc.bkid
-             WHERE bc.content LIKE :lk
-             ORDER BY bc.bkid DESC, bc.page ASC
+             WHERE MATCH(bc.content) AGAINST (:q2 IN BOOLEAN MODE)
+             ORDER BY rel DESC, bc.bkid DESC, bc.page ASC
              LIMIT :lim OFFSET :off"
         );
-        $stmtCont->bindValue(':lk',  $like, PDO::PARAM_STR);
+        $stmtCont->bindValue(':q1',  $qStar, PDO::PARAM_STR);
+        $stmtCont->bindValue(':q2',  $qStar, PDO::PARAM_STR);
         $stmtCont->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmtCont->bindValue(':off', $contOffset, PDO::PARAM_INT);
         $stmtCont->execute();
@@ -686,9 +691,9 @@ class SearchController {
         }, $content);
     
         $stmtContCount = $pdo->prepare(
-            "SELECT COUNT(*) FROM book_content WHERE content LIKE :lk"
+            "SELECT COUNT(*) FROM book_content WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)"
         );
-        $stmtContCount->execute([':lk' => $like]);
+        $stmtContCount->execute([':q' => $qStar]);
         $contTotal = (int)$stmtContCount->fetchColumn();
     
         // Cek did_you_mean untuk memberikan saran kata (selalu cek)
