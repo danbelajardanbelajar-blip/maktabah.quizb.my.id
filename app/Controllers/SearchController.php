@@ -74,45 +74,25 @@ class SearchController {
     
         // --- Query ---
         $stmt = $pdo->prepare(
-            "SELECT bkid, title, author, pages, iso, category_id, category_name, MAX(rel) AS rel
-             FROM (
-                SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
-                       MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
-                FROM books b
-                WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE) OR b.author LIKE :lk1
-                
-                UNION ALL
-                
-                SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
-                       0 AS rel
-                FROM book_content bc
-                JOIN books b ON b.bkid = bc.bkid
-                WHERE MATCH(bc.content) AGAINST (:q3 IN BOOLEAN MODE)
-             ) as combined
-             GROUP BY bkid
-             ORDER BY rel DESC, title ASC
+            "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
+                    MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+             FROM books b
+             WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
+             ORDER BY rel DESC, b.title ASC
              LIMIT :lim OFFSET :off"
         );
         $stmt->bindValue(':q1',  $qStar, PDO::PARAM_STR);
         $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
-        $stmt->bindValue(':q3',  $qStar, PDO::PARAM_STR);
-        $stmt->bindValue(':lk1', $like, PDO::PARAM_STR);
         $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
         $stmt->execute();
         $books = $stmt->fetchAll();
     
         $countStmt = $pdo->prepare(
-            "SELECT COUNT(DISTINCT bkid) FROM (
-                SELECT bkid FROM books WHERE MATCH(title) AGAINST (:q1 IN BOOLEAN MODE) OR author LIKE :lk1
-                UNION ALL
-                SELECT bkid FROM book_content WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
-             ) as c"
+            "SELECT COUNT(*) FROM books
+             WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)"
         );
-        $countStmt->bindValue(':q1', $qStar, PDO::PARAM_STR);
-        $countStmt->bindValue(':q2', $qStar, PDO::PARAM_STR);
-        $countStmt->bindValue(':lk1', $like, PDO::PARAM_STR);
-        $countStmt->execute();
+        $countStmt->execute([':q' => $qStar]);
         $total = (int)$countStmt->fetchColumn();
     
         // --- Cache store ---
@@ -633,8 +613,7 @@ class SearchController {
 
     public function handleSearch(): void {
         $pdo      = Database::getConnection();
-        $qRaw     = trim($_GET['q'] ?? '');
-        $q        = SearchHelper::searchPhraseText($qRaw);
+        $q        = trim($_GET['q'] ?? '');
         $bookPage = max(1, (int)($_GET['book_page']    ?? 1));
         $contPage = max(1, (int)($_GET['content_page'] ?? 1));
         $limit    = 12;
@@ -649,7 +628,7 @@ class SearchController {
         if (strlen($q) < 2) { echo json_encode($empty); return; }
     
         $like  = '%' . $q . '%';
-        $qStar = SearchHelper::booleanSearchTerm($qRaw);
+        $qStar = $q . '*';
     
         // 1. Categories
         $stmtCat = $pdo->prepare(
@@ -687,32 +666,29 @@ class SearchController {
         $contOffset = ($contPage - 1) * $limit;
         $stmtCont = $pdo->prepare(
             "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page, b.title, b.author, b.category_name,
-                    bc.content AS snippet,
-                    MATCH(bc.content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+                    bc.content AS snippet
              FROM book_content bc
              JOIN books b ON b.bkid = bc.bkid
-             WHERE MATCH(bc.content) AGAINST (:q2 IN BOOLEAN MODE)
-             ORDER BY rel DESC, bc.bkid DESC, bc.page ASC
+             WHERE bc.content LIKE :lk
+             ORDER BY bc.bkid DESC, bc.page ASC
              LIMIT :lim OFFSET :off"
         );
-        $stmtCont->bindValue(':q1',  $qStar, PDO::PARAM_STR);
-        $stmtCont->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+        $stmtCont->bindValue(':lk',  $like, PDO::PARAM_STR);
         $stmtCont->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmtCont->bindValue(':off', $contOffset, PDO::PARAM_INT);
         $stmtCont->execute();
         $content = $stmtCont->fetchAll();
     
-        $terms = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
+        $terms = preg_split('/\s+/u', SearchHelper::searchPhraseText($q), -1, PREG_SPLIT_NO_EMPTY);
         $content = array_map(function($row) use ($terms) {
             $row['snippet'] = SearchHelper::extractSmartSnippet((string)($row['snippet'] ?? ''), $terms);
-            unset($row['rel']);
             return $row;
         }, $content);
     
         $stmtContCount = $pdo->prepare(
-            "SELECT COUNT(*) FROM book_content WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)"
+            "SELECT COUNT(*) FROM book_content WHERE content LIKE :lk"
         );
-        $stmtContCount->execute([':q' => $qStar]);
+        $stmtContCount->execute([':lk' => $like]);
         $contTotal = (int)$stmtContCount->fetchColumn();
     
         // Cek did_you_mean untuk memberikan saran kata (selalu cek)
