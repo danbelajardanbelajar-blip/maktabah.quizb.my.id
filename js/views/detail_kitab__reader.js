@@ -481,6 +481,74 @@ export async function renderDetail(params) {
         if (readerState.page < readerState.total) loadReaderPage(readerState.bkid, readerState.page + 1, '', readerState.juz);
       });
 
+      // Swipe gestures for reader-area
+      const readerArea = $('#reader-area');
+      if (readerArea) {
+        let touchstartX = 0;
+        let touchstartY = 0;
+        let isSwiping = false;
+
+        readerArea.addEventListener('touchstart', e => {
+          touchstartX = e.changedTouches[0].screenX;
+          touchstartY = e.changedTouches[0].screenY;
+          isSwiping = false;
+          readerArea.style.transition = 'none';
+        }, { passive: true });
+
+        readerArea.addEventListener('touchmove', e => {
+          const x = e.changedTouches[0].screenX;
+          const y = e.changedTouches[0].screenY;
+          const diffX = x - touchstartX;
+          const diffY = y - touchstartY;
+          // Only trigger if horizontal swipe is dominant
+          if (Math.abs(diffX) > Math.abs(diffY) + 10) {
+            isSwiping = true;
+            // dampening effect
+            readerArea.style.transform = `translateX(${diffX * 0.3}px)`;
+          }
+        }, { passive: true });
+
+        readerArea.addEventListener('touchend', e => {
+          if (!isSwiping) {
+            readerArea.style.transform = 'translateX(0)';
+            return;
+          }
+          const touchendX = e.changedTouches[0].screenX;
+          const diffX = touchendX - touchstartX;
+
+          readerArea.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+
+          if (diffX < -50) {
+            // Swipe left -> Next
+            if (readerState.page < readerState.total) {
+              readerArea.style.transform = 'translateX(-30px)';
+              readerArea.style.opacity = '0';
+              setTimeout(() => {
+                $('#reader-next')?.click();
+                readerArea.style.transform = 'translateX(0)';
+              }, 250);
+            } else {
+              readerArea.style.transform = 'translateX(0)';
+            }
+          } else if (diffX > 50) {
+            // Swipe right -> Prev
+            if (readerState.page > 1) {
+              readerArea.style.transform = 'translateX(30px)';
+              readerArea.style.opacity = '0';
+              setTimeout(() => {
+                $('#reader-prev')?.click();
+                readerArea.style.transform = 'translateX(0)';
+              }, 250);
+            } else {
+              readerArea.style.transform = 'translateX(0)';
+            }
+          } else {
+            // Reset if swipe is too short
+            readerArea.style.transform = 'translateX(0)';
+          }
+        });
+      }
+
       // page input jump
       let jumpTimer;
       $('#reader-page-input')?.addEventListener('input', e => {
