@@ -1216,6 +1216,15 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
     </div>
   </div>
 
+  <!-- ===================== PLAYSTORE FLOATING BUTTON (Non-App Mobile) ===================== -->
+  <a id="floating-playstore-btn" 
+     href="https://play.google.com/store/apps/details?id=com.maktabah.premium" 
+     target="_blank" 
+     style="display:none; position:fixed; bottom:80px; right:20px; z-index:800; background:#C9A227; color:#fff; width:56px; height:56px; border-radius:50%; box-shadow:0 6px 20px rgba(201,162,39,.4); align-items:center; justify-content:center; text-decoration:none; transition:transform 0.2s;" 
+     title="Download Aplikasi Maktabah">
+     <i data-lucide="smartphone" style="width:28px; height:28px;"></i>
+  </a>
+
   <!-- ===================== FOOTER ===================== -->
   <footer class="bg-primary text-white mt-16 hidden md:block">
     <div class="gold-line"></div>
@@ -1507,6 +1516,15 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
             void overlay.offsetWidth;
             overlay.style.opacity = '1';
             modal.style.transform = 'translateY(0)';
+            if (window.lucide) lucide.createIcons();
+          }
+        }
+
+        // Tampilkan floating playstore icon jika diakses dari HP browser biasa
+        if (!isWebView && window.innerWidth <= 768) {
+          const fab = document.getElementById('floating-playstore-btn');
+          if (fab) {
+            fab.style.display = 'flex';
             if (window.lucide) lucide.createIcons();
           }
         }
