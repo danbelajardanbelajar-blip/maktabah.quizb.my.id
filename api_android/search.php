@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
 // Sesuaikan path karena file ini berada di dalam folder api_android/
