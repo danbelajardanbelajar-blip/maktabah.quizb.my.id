@@ -1189,9 +1189,14 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
       <p style="color:rgba(20,83,45,.75);font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem;">
         Versi terbaru aplikasi المكتبة السنية (v1.0.9) telah dirilis.<br>Silakan update aplikasi Anda untuk pengalaman yang lebih baik.
       </p>
-      <button onclick="closeApkUpdateModal()" style="background:#14532D;color:#fff;border:none;padding:0.75rem 2rem;border-radius:99px;font-weight:700;font-size:1rem;cursor:pointer;width:100%;box-shadow:0 4px 15px rgba(20,83,45,.2);">
-        Mengerti
-      </button>
+      <div style="display:flex; flex-direction:column; gap:0.75rem;">
+        <a href="https://play.google.com/store/apps/details?id=com.maktabah.premium" target="_blank" onclick="closeApkUpdateModal()" style="background:#14532D;color:#fff;border:none;padding:0.75rem 2rem;border-radius:99px;font-weight:700;font-size:1rem;cursor:pointer;width:100%;box-shadow:0 4px 15px rgba(20,83,45,.2);text-decoration:none;display:inline-block;box-sizing:border-box;">
+          Update Sekarang
+        </a>
+        <button onclick="closeApkUpdateModal()" style="background:transparent;color:#14532D;border:1px solid rgba(20,83,45,.3);padding:0.75rem 2rem;border-radius:99px;font-weight:700;font-size:1rem;cursor:pointer;width:100%;box-sizing:border-box;">
+          Nanti Saja
+        </button>
+      </div>
     </div>
   </div>
 
