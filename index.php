@@ -1482,7 +1482,8 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
       // Check for APK update (only show once)
       setTimeout(() => {
         const ua = navigator.userAgent || '';
-        const isWebView = /wv/.test(ua) || (/Android/i.test(ua) && /Version\//i.test(ua));
+        const isPhpRequestedWithApp = <?= (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') ? 'true' : 'false' ?>;
+        const isWebView = isPhpRequestedWithApp || /wv/.test(ua) || (/Android/i.test(ua) && /Version\//i.test(ua));
         
         // Cek apakah versi sudah 1.0.9 (Version Code 10)
         // Disarankan: di APK baru (v1.0.9) set User-Agent dengan tambahan 'MaktabahApp/10'
