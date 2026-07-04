@@ -9,7 +9,7 @@ use App\Helpers\SearchHelper;
 $pdo      = Database::getConnection();
 $q        = trim($_GET['q'] ?? '');
 $page     = max(1, (int)($_GET['page'] ?? 1));
-$limit    = 12;
+$limit    = 5;
 
 $empty = [
     'query'      => $q,
