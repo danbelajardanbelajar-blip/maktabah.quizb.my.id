@@ -1,7 +1,6 @@
 <?php
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
-// Sesuaikan path karena file ini berada di dalam folder api_android/
 require_once dirname(__DIR__) . '/app/bootstrap.php';
 
 use App\Config\Database;
@@ -9,14 +8,13 @@ use App\Helpers\SearchHelper;
 
 $pdo      = Database::getConnection();
 $q        = trim($_GET['q'] ?? '');
-$bookPage = max(1, (int)($_GET['book_page']    ?? 1));
-$contPage = max(1, (int)($_GET['content_page'] ?? 1));
+$page     = max(1, (int)($_GET['page'] ?? 1));
 $limit    = 12;
 
 $empty = [
     'query'      => $q,
-    'books'      => ['data' => [], 'total' => 0, 'page' => 1, 'total_pages' => 0],
-    'content'    => ['data' => [], 'total' => 0, 'page' => 1, 'total_pages' => 0],
+    'books'      => ['data' => []],
+    'content'    => ['data' => [], 'next_page' => null],
 ];
 
 if (strlen($q) < 2) {
@@ -25,47 +23,49 @@ if (strlen($q) < 2) {
 }
 
 $like  = '%' . $q . '%';
-$qStar = $q . '*'; // For FULLTEXT
 
-// 1. Books (LIKE is fast enough for books table)
-$bookOffset = ($bookPage - 1) * $limit;
-$stmtBooks = $pdo->prepare(
-    "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name
-     FROM books b
-     WHERE b.title LIKE :lk OR b.author LIKE :lk2
-     ORDER BY b.bkid DESC LIMIT :lim OFFSET :off"
-);
-$stmtBooks->bindValue(':lk',  $like, PDO::PARAM_STR);
-$stmtBooks->bindValue(':lk2', $like, PDO::PARAM_STR);
-$stmtBooks->bindValue(':lim', $limit, PDO::PARAM_INT);
-$stmtBooks->bindValue(':off', $bookOffset, PDO::PARAM_INT);
-$stmtBooks->execute();
-$books = $stmtBooks->fetchAll(PDO::FETCH_ASSOC);
+$books = [];
+// 1. Books (Hanya di halaman 1)
+if ($page === 1) {
+    $stmtBooks = $pdo->prepare(
+        "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name
+         FROM books b
+         WHERE b.title LIKE :lk OR b.author LIKE :lk2
+         ORDER BY b.bkid DESC LIMIT 10" // Batasi maksimal 10 kitab teratas
+    );
+    $stmtBooks->bindValue(':lk',  $like, PDO::PARAM_STR);
+    $stmtBooks->bindValue(':lk2', $like, PDO::PARAM_STR);
+    $stmtBooks->execute();
+    $books = $stmtBooks->fetchAll(PDO::FETCH_ASSOC);
+}
 
-$stmtBooksCount = $pdo->prepare(
-    "SELECT COUNT(*) FROM books WHERE title LIKE :lk OR author LIKE :lk2"
-);
-$stmtBooksCount->execute([':lk' => $like, ':lk2' => $like]);
-$booksTotal = (int)$stmtBooksCount->fetchColumn();
+// 2. Content (Menggunakan LIKE tanpa COUNT(*) agar cepat, limit + 1 untuk deteksi next page)
+$contOffset = ($page - 1) * $limit;
+$fetchLimit = $limit + 1;
 
-// 2. Content (Menggunakan FULLTEXT MATCH AGAINST agar tidak terjadi 500 error)
-$contOffset = ($contPage - 1) * $limit;
+// Tambahkan timeout agar tidak menggantung jika terlalu berat
+$pdo->setAttribute(PDO::ATTR_TIMEOUT, 10);
+// Eksekusi query
 $stmtCont = $pdo->prepare(
     "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page, b.title, b.author, b.category_name,
-            bc.content AS snippet,
-            MATCH(bc.content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+            bc.content AS snippet
      FROM book_content bc
      JOIN books b ON b.bkid = bc.bkid
-     WHERE MATCH(bc.content) AGAINST (:q2 IN BOOLEAN MODE)
-     ORDER BY rel DESC, bc.bkid DESC, bc.page ASC
+     WHERE bc.content LIKE :lk
+     ORDER BY bc.bkid DESC, bc.page ASC
      LIMIT :lim OFFSET :off"
 );
-$stmtCont->bindValue(':q1',  $qStar, PDO::PARAM_STR);
-$stmtCont->bindValue(':q2',  $qStar, PDO::PARAM_STR);
-$stmtCont->bindValue(':lim', $limit, PDO::PARAM_INT);
+$stmtCont->bindValue(':lk',  $like, PDO::PARAM_STR);
+$stmtCont->bindValue(':lim', $fetchLimit, PDO::PARAM_INT);
 $stmtCont->bindValue(':off', $contOffset, PDO::PARAM_INT);
 $stmtCont->execute();
 $contentRows = $stmtCont->fetchAll(PDO::FETCH_ASSOC);
+
+$hasNextPage = false;
+if (count($contentRows) > $limit) {
+    $hasNextPage = true;
+    array_pop($contentRows); // Buang elemen ke-13
+}
 
 $terms = preg_split('/\s+/u', SearchHelper::searchPhraseText($q), -1, PREG_SPLIT_NO_EMPTY);
 $content = array_map(function($row) use ($terms) {
@@ -73,21 +73,14 @@ $content = array_map(function($row) use ($terms) {
     return $row;
 }, $contentRows);
 
-$stmtContCount = $pdo->prepare(
-    "SELECT COUNT(*) FROM book_content WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)"
-);
-$stmtContCount->execute([':q' => $qStar]);
-$contTotal = (int)$stmtContCount->fetchColumn();
-
 // Response
 echo json_encode([
     'query'   => $q,
     'books'   => [
-        'data' => $books, 'total' => $booksTotal,
-        'page' => $bookPage, 'total_pages' => (int)ceil($booksTotal / $limit),
+        'data' => $books
     ],
     'content' => [
-        'data' => $content, 'total' => $contTotal,
-        'page' => $contPage, 'total_pages' => (int)ceil($contTotal / $limit),
+        'data' => $content, 
+        'next_page' => $hasNextPage ? ($page + 1) : null
     ],
 ]);
