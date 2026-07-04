@@ -1,7 +1,8 @@
 ﻿<?php
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
-require_once __DIR__ . '/app/bootstrap.php';
+// Sesuaikan path karena file ini berada di dalam folder api_android/
+require_once dirname(__DIR__) . '/app/bootstrap.php';
 
 use App\Config\Database;
 use App\Helpers\SearchHelper;
