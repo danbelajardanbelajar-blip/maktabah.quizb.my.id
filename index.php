@@ -1220,9 +1220,10 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
   <a id="floating-playstore-btn" 
      href="https://play.google.com/store/apps/details?id=com.maktabah.premium" 
      target="_blank" 
-     style="display:none; position:fixed; bottom:80px; right:20px; z-index:800; background:#C9A227; color:#fff; width:56px; height:56px; border-radius:50%; box-shadow:0 6px 20px rgba(201,162,39,.4); align-items:center; justify-content:center; text-decoration:none; transition:transform 0.2s;" 
+     style="display:none; position:fixed; bottom:80px; right:20px; z-index:800; background:#14532D; color:#fff; padding:0 20px; height:50px; border-radius:99px; box-shadow:0 6px 20px rgba(20,83,45,.4); align-items:center; gap:8px; justify-content:center; text-decoration:none; font-weight:700; font-size:14px; transition:transform 0.2s;" 
      title="Download Aplikasi Maktabah">
-     <i data-lucide="smartphone" style="width:28px; height:28px;"></i>
+     <i data-lucide="download" style="width:20px; height:20px;"></i>
+     <span style="letter-spacing:0.3px;">Instal di HP-mu</span>
   </a>
 
   <!-- ===================== FOOTER ===================== -->
