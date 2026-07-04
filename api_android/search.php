@@ -14,10 +14,9 @@ $page     = max(1, (int)($_GET['page'] ?? 1));
 $limit    = 5;
 
 $empty = [
-    'query'      => $q,
-    'books'      => [],
-    'contents'   => [],
-    'next_page'  => null
+    'query'   => $q,
+    'books'   => ['data' => []],
+    'content' => ['data' => [], 'next_page' => null]
 ];
 
 if (strlen($q) < 2) {
@@ -112,8 +111,12 @@ if (!empty($topRows)) {
 }
 
 echo json_encode([
-    'query'      => $q,
-    'books'      => $books,
-    'contents'   => $contents,
-    'next_page'  => $nextPage
+    'query'   => $q,
+    'books'   => [
+        'data' => $books
+    ],
+    'content' => [
+        'data' => $contents,
+        'next_page' => $nextPage
+    ]
 ]);
