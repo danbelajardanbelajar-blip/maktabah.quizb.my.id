@@ -118,9 +118,20 @@ export const mobileFeedbackBanner = `
     </a>
   </div>
 `;
-export async function apiFetch(params) {
+export async function apiFetch(params, options = {}) {
   const url = API + '?' + new URLSearchParams(params).toString();
-  const res = await fetch(url);
+
+  // Inject CSRF token untuk semua request yang mutate data (POST/PUT/DELETE)
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD') {
+    options.headers = options.headers || {};
+    const token = window.CSRF_TOKEN
+      || document.querySelector('meta[name="csrf-token"]')?.content
+      || '';
+    if (token) options.headers['X-CSRF-Token'] = token;
+  }
+
+  const res = await fetch(url, options);
   if (!res.ok) {
     const text = await res.text();
     const error = new Error('API error ' + res.status + ': ' + text);
@@ -272,11 +283,47 @@ export function showUpdateNoticeIfNeeded() {
 
 window.closeUpdateNotice = closeUpdateNotice;
 
+/**
+ * Helper: POST ke /api.php dengan CSRF token otomatis.
+ * Mendukung body JSON maupun FormData.
+ *
+ * @param {string} action - action param untuk api.php
+ * @param {Object|FormData} body - data yang dikirim
+ * @param {Object} extraOpts - opsi fetch tambahan (optional)
+ * @returns {Promise<Response>}
+ */
+export function postWithCsrf(action, body = null, extraOpts = {}) {
+  const token = window.CSRF_TOKEN
+    || document.querySelector('meta[name="csrf-token"]')?.content
+    || '';
+
+  const headers = { 'X-CSRF-Token': token, ...(extraOpts.headers || {}) };
+
+  // Jika body adalah plain object → kirim sebagai JSON
+  // Jika body adalah FormData → biarkan browser set Content-Type (multipart)
+  let fetchBody = body;
+  if (body !== null && !(body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+    fetchBody = JSON.stringify(body);
+  }
+
+  return fetch(`${API}?action=${encodeURIComponent(action)}`, {
+    method: 'POST',
+    headers,
+    body: fetchBody,
+    ...extraOpts,
+  });
+}
+window.postWithCsrf = postWithCsrf;
+
 export function logVisitorActivity(event, data = {}) {
   try {
+    const token = window.CSRF_TOKEN
+      || document.querySelector('meta[name="csrf-token"]')?.content
+      || '';
     fetch(API + '?action=log_activity', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
       body: JSON.stringify({ event, data }),
       keepalive: true,
     });

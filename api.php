@@ -3,13 +3,93 @@
 //  Al-Maktabah As-Sunniyyah — API Entry Point (Front Controller)
 // =============================================================
 
-header('Access-Control-Allow-Origin: *');
-header('Cache-Control: public, max-age=60');
 require_once __DIR__ . '/app/bootstrap.php';
 
 use App\Core\Router;
+use App\Helpers\CsrfHelper;
+use App\Helpers\RateLimiter;
 
-// Initialize Router
+// ── CORS ──────────────────────────────────────────────────────────────────────
+// GET read-only: boleh diakses dari semua origin (dibutuhkan oleh APK Android
+// yang dapat berjalan di domain yang berbeda dari webview).
+// POST / mutating: hanya izinkan same-origin — tidak perlu header CORS sama sekali
+// karena browser akan block cross-origin POST tanpa header dari server.
+$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+if ($requestMethod === 'GET' || $requestMethod === 'HEAD') {
+    header('Access-Control-Allow-Origin: *');
+    header('Cache-Control: public, max-age=60');
+} else {
+    // Untuk POST/PUT/DELETE: header Cache-Control no-store, tanpa CORS wildcard
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+}
+
+// Handle preflight OPTIONS request (CORS)
+if ($requestMethod === 'OPTIONS') {
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, X-CSRF-Token');
+    header('Access-Control-Max-Age: 86400');
+    http_response_code(204);
+    exit;
+}
+
+// Set JSON content type default
+header('Content-Type: application/json; charset=utf-8');
+
+// ── Action ────────────────────────────────────────────────────────────────────
+$action = $_GET['action'] ?? '';
+
+// ── CSRF Validation untuk semua POST ─────────────────────────────────────────
+//
+// Endpoint GET tidak perlu CSRF (read-only, tidak mengubah state).
+// Endpoint POST berikut dikecualikan dari CSRF karena dipanggil dari
+// konteks khusus (form upload multipart atau inisiasi dari server):
+//   - submit_file  → form multipart, token tetap dikirim via POST field _csrf
+//   - setup_*      → endpoint internal (sudah diblokir via .htaccess)
+//
+// Semua POST lain wajib menyertakan header X-CSRF-Token yang valid.
+//
+$csrfExemptActions = [
+    // Endpoint ini hanya boleh GET
+];
+
+if ($requestMethod === 'POST' && !in_array($action, $csrfExemptActions, true)) {
+    CsrfHelper::requireValid();
+}
+
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+//
+// Diterapkan per IP address. Batasan cukup longgar agar tidak mengganggu
+// penggunaan normal dari mobile/Android maupun desktop.
+//
+switch ($action) {
+    // Pencarian teks — 80 request per menit (cukup untuk real-time search)
+    case 'search_books':
+    case 'search_categories':
+    case 'search_content':
+    case 'search':
+    case 'search_advanced':
+    case 'search_books_with_content':
+    case 'search_content_in_book':
+    case 'search_scholarium_pdfs':
+        RateLimiter::check('search', 80, 60);
+        break;
+
+    // Pengiriman konten — 5 request per 5 menit (mencegah spam submission)
+    case 'submit_file':
+    case 'submit_request':
+    case 'submit_feedback':
+    case 'user_reply_activity':
+        RateLimiter::check('submit', 5, 300);
+        break;
+
+    // Log aktivitas — 60 request per menit
+    case 'log_activity':
+        RateLimiter::check('log_activity', 60, 60);
+        break;
+}
+
+// ── Router ────────────────────────────────────────────────────────────────────
 $router = new Router();
 
 // Books
@@ -92,7 +172,7 @@ $router->add('admin_reply_submission', 'AdminController', 'handleAdminReplySubmi
 // Stats
 $router->add('stats', 'StatsController', 'handleStats');
 
-// Global Composer autoloader handling
+// ── Global Composer autoloader handling ───────────────────────────────────────
 function getComposerAutoloadPath(): ?string {
     $candidates = [
         __DIR__ . '/vendor/autoload.php',
@@ -118,7 +198,6 @@ function loadComposerAutoloader(): bool {
 }
 
 // Dispatch
-$action = $_GET['action'] ?? '';
 try {
     $router->handleRequest($action);
 } catch (Exception $e) {

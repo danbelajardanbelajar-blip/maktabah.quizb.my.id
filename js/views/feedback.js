@@ -65,8 +65,13 @@ async function submitFeedbackForm() {
   reicons();
 
   const fd = new FormData(form);
+  const _csrfToken = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
   try {
-    const res = await fetch('/api.php?action=submit_feedback', { method: 'POST', body: fd });
+    const res = await fetch('/api.php?action=submit_feedback', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': _csrfToken },
+      body: fd,
+    });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Gagal mengirim feedback.');
     
@@ -240,7 +245,12 @@ export async function submitFileForm(e) {
   fd.append('file',        fileEl.files[0]);
 
   try {
-    const res = await fetch('/api.php?action=submit_file', { method: 'POST', body: fd });
+    const _csrfToken2 = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const res = await fetch('/api.php?action=submit_file', {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': _csrfToken2 },
+    body: fd,
+  });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Gagal mengirim.');
     okEl.textContent = data.message || 'Kiriman berhasil dikirim!';
@@ -383,7 +393,12 @@ export async function submitRequestForm(e) {
   fd.append('description', desc);
 
   try {
-    const res = await fetch('/api.php?action=submit_request', { method: 'POST', body: fd });
+    const _csrfToken3 = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const res = await fetch('/api.php?action=submit_request', {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': _csrfToken3 },
+    body: fd,
+  });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Gagal mengirim.');
     okEl.textContent = data.message || 'Request berhasil dikirim!';

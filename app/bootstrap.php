@@ -30,3 +30,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Auto-login check (Remember Me)
 \App\Helpers\AuthHelper::checkRememberMe();
+
+// Pastikan CSRF token selalu ada di session setelah login/session start
+// Token dipakai oleh SPA (dikirim via header X-CSRF-Token) dan divalidasi di api.php
+\App\Helpers\CsrfHelper::getToken();

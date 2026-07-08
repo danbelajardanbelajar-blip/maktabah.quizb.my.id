@@ -1504,9 +1504,12 @@ window._bokImpConfirm = async function() {
   try {
     // 1. INIT
     updateProgress(5, 'Menginisialisasi kitab...');
+    const _impCsrf = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const _impHdr  = { 'Content-Type': 'application/json', 'X-CSRF-Token': _impCsrf };
+
     const initRes = await fetch('/api.php?action=admin_import_json_init', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token'), 'Content-Type': 'application/json' },
+      headers: _impHdr,
       body: JSON.stringify({
         title: _bokImp.title,
         author: _bokImp.author,
@@ -1529,7 +1532,7 @@ window._bokImpConfirm = async function() {
       
       const chunkRes = await fetch('/api.php?action=admin_import_json_chunk', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token'), 'Content-Type': 'application/json' },
+        headers: _impHdr,
         body: JSON.stringify({ bkid: bkid, contents: chunk })
       });
       const chunkData = await chunkRes.json();
@@ -1549,7 +1552,7 @@ window._bokImpConfirm = async function() {
         
         const tocRes = await fetch('/api.php?action=admin_import_json_toc_chunk', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token'), 'Content-Type': 'application/json' },
+          headers: _impHdr,
           body: JSON.stringify({ bkid: bkid, tocs: chunk })
         });
         const tocData = await tocRes.json();
@@ -1561,7 +1564,7 @@ window._bokImpConfirm = async function() {
     updateProgress(98, 'Menyelesaikan proses...');
     const finishRes = await fetch('/api.php?action=admin_import_json_finish', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token'), 'Content-Type': 'application/json' },
+      headers: _impHdr,
       body: JSON.stringify({ bkid: bkid })
     });
     const finishData = await finishRes.json();

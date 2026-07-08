@@ -373,7 +373,12 @@ async function submitFileForm(e) {
   fd.append('file',        fileEl.files[0]);
 
   try {
-    const res = await fetch('/api.php?action=submit_file', { method: 'POST', body: fd });
+    const _csrfKp1 = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res = await fetch('/api.php?action=submit_file', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': _csrfKp1 },
+      body: fd,
+    });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Gagal mengirim.');
     okEl.textContent = data.message || 'Kiriman berhasil dikirim!';
@@ -514,7 +519,12 @@ async function submitRequestForm(e) {
   fd.append('description', desc);
 
   try {
-    const res = await fetch('/api.php?action=submit_request', { method: 'POST', body: fd });
+    const _csrfKp2 = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res = await fetch('/api.php?action=submit_request', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': _csrfKp2 },
+      body: fd,
+    });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Gagal mengirim.');
     okEl.textContent = data.message || 'Request berhasil dikirim!';

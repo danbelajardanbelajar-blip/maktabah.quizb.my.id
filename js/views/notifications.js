@@ -90,7 +90,12 @@ window.handleNotifClick = async function(id, isUnread) {
         try {
             const fd = new FormData();
             fd.append('id', id);
-            await fetch('/api.php?action=mark_notification_read', { method: 'POST', body: fd });
+            const csrfToken = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+            await fetch('/api.php?action=mark_notification_read', {
+              method: 'POST',
+              headers: { 'X-CSRF-Token': csrfToken },
+              body: fd,
+            });
         } catch (e) {
             console.error(e);
         }

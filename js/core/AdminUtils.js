@@ -27,10 +27,16 @@ export function adminGuard() {
   return true;
 }
 export async function adminPost(action, body) {
+  const token = window.CSRF_TOKEN
+    || document.querySelector('meta[name="csrf-token"]')?.content
+    || '';
   const res = await fetch(`/api.php?action=${action}`, {
     method: 'POST',
     credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': token,
+    },
     body: JSON.stringify(body),
   });
   const data = await res.json();

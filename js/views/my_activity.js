@@ -110,11 +110,9 @@ window.renderMyActivity = renderMyActivity;
 window.replyActivity = function(apiType, id) {
   showPromptModal('Balas Pesan', 'Masukkan balasan Anda ke Admin di bawah ini:', async (replyText) => {
     try {
-      const res = await apiFetch('/api.php?action=user_reply_activity', {
-        method: 'POST',
-        body: JSON.stringify({ type: apiType, id: id, reply: replyText })
-      });
-      if (res.success) {
+      const res = await window.postWithCsrf('user_reply_activity', { type: apiType, id: id, reply: replyText });
+      const data = await res.json();
+      if (data.success) {
         alert('Balasan berhasil dikirim.');
         renderMyActivity();
       } else {
