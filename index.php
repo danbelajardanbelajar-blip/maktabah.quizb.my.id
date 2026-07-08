@@ -19,6 +19,13 @@ if ($maintenanceMode) :
 ?><!DOCTYPE html>
 <html lang="id">
 <head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-TTMPGH6R');</script>
+<!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="robots" content="noindex, nofollow">
@@ -266,6 +273,10 @@ if ($maintenanceMode) :
   </style>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TTMPGH6R"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
   <div class="bg-radial"></div>
   <div class="stars"></div>
 
@@ -386,9 +397,17 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
 <!DOCTYPE html>
 <html lang="id" dir="ltr">
 <head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-TTMPGH6R');</script>
+<!-- End Google Tag Manager -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="<?= htmlspecialchars($seoDesc) ?>" />
+  <meta name="csrf-token" content="<?= htmlspecialchars(\App\Helpers\CsrfHelper::getToken()) ?>" />
   <meta name="google-site-verification" content="Mf1jf_wj_XAyYcuKEMWcKVjPTy8hWToL3lUYzQA6_Kc" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
@@ -943,6 +962,10 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
 </head>
 
 <body class="min-h-screen flex flex-col">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TTMPGH6R"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
   <!-- ===================== NAVBAR ===================== -->
   <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 bg-cream">
@@ -1276,6 +1299,10 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
     // Inject session user dari PHP ke JS global
     window.SESSION_USER = <?= $sessionUser ? json_encode($sessionUser) : 'null' ?>;
 
+    // CSRF token untuk semua AJAX POST request
+    // Dibaca dari meta tag dan di-inject ke header X-CSRF-Token oleh core.js
+    window.CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
     // Init Lucide icons after DOM ready — re-called after each SPA render
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
@@ -1547,9 +1574,15 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
     }); // end DOMContentLoaded
   </script>
 
-  <script type="module" src="/js/main.js?v=<?= time() ?>"></script>
+  <?php
+  // Versi berdasarkan file mtime — cache browser bekerja normal,
+  // hanya invaliding saat file sungguh berubah.
+  $jsMainVer  = @filemtime(__DIR__ . '/js/main.js')      ?: '1';
+  $jsAdminVer = @filemtime(__DIR__ . '/js/admin_main.js') ?: '1';
+  ?>
+  <script type="module" src="/js/main.js?v=<?= $jsMainVer ?>"></script>
   <?php if (($sessionUser['role'] ?? '') === 'admin'): ?>
-    <script type="module" src="/js/admin_main.js?v=<?= time() ?>"></script>
+    <script type="module" src="/js/admin_main.js?v=<?= $jsAdminVer ?>"></script>
   <?php endif; ?>
 </body>
 </html>
