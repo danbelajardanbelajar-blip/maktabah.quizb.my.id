@@ -3,6 +3,22 @@
 //  Al-Maktabah As-Sunniyyah — System Bootstrap & Loader
 // =============================================================
 
+// Load environment variables from .env file
+$envFile = __DIR__ . '/../.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '=') === false || strpos($line, '#') === 0) continue;
+        list($key, $value) = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value);
+        if (!isset($_ENV[$key])) {
+            $_ENV[$key] = $value;
+            putenv("$key=$value");
+        }
+    }
+}
+
 // Simple PSR-4 Autoloader
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
