@@ -50,8 +50,12 @@ function sendJson(array $data): void
     exit;
 }
 
-// ── Require Database ─────────────────────────────────────────────────────────
-require_once __DIR__ . '/app/Config/Database.php';
+// ── Require Bootstrap & Authenticate ───────────────────────────────────────────
+require_once __DIR__ . '/app/bootstrap.php';
+
+if (!\App\Helpers\AuthHelper::isAdmin()) {
+    sendJson(['status' => 'error', 'message' => 'Akses ditolak (Unauthorized)']);
+}
 
 // ── Validasi Method ───────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
