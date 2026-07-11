@@ -7,6 +7,8 @@ koneksi.php
 .env
 .env.*
 config.local.php
+app/Config/Database.php
+auth.php
 
 # -- Dependensi / vendor --
 /vendor/
