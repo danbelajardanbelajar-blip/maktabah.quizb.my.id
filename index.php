@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/seo/seo_master.php';
 require_once __DIR__ . '/app/bootstrap.php';
 
 $sessionUser = $_SESSION['user'] ?? null;

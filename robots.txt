@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /api.php
 
 Sitemap: https://maktabah.quizb.my.id/sitemap.xml
+Sitemap: https://maktabah.quizb.my.id/sitemap-kitab.xml
+Sitemap: https://maktabah.quizb.my.id/sitemap-kategori.xml
+Sitemap: https://maktabah.quizb.my.id/sitemap-image.xml
