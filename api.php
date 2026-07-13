@@ -85,6 +85,7 @@ switch ($action) {
 
     // Log aktivitas — 60 request per menit
     case 'log_activity':
+    case 'log_download_scholarium':
         RateLimiter::check('log_activity', 60, 60);
         break;
 }
@@ -96,6 +97,7 @@ $router = new Router();
 $router->add('books', 'BookController', 'handleBooks');
 $router->add('book', 'BookController', 'handleBook');
 $router->add('download_book', 'BookController', 'handleDownloadBook');
+$router->add('log_download_scholarium', 'BookController', 'handleLogDownloadScholarium');
 $router->add('content', 'BookController', 'handleContent');
 $router->add('latest', 'BookController', 'handleLatest');
 $router->add('popular_books', 'BookController', 'handlePopularBooks');
