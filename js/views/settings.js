@@ -840,15 +840,30 @@ function bookCardStagger(b, i, q = '') {
     </div>`;
 }
 
+// ── PDF tracking function ───────────────────────────────────
+window.trackScholariumDownload = function(e, id, name, link) {
+  e.preventDefault();
+  e.stopPropagation();
+  fetch(API + '?action=log_download_scholarium', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ id, name })
+  }).catch(()=>{});
+  window.open(link, '_blank');
+};
+
 // ── PDF card with stagger animation ─────────────────────────
 function pdfCardStagger(b, i, q = '') {
   const name  = b.name || 'بدون عنوان';
   const path  = b.path_visual || '';
   const nameHtml  = hlText(name, q);
   const link  = b.link || ('https://drive.google.com/uc?id=' + b.drive_id + '&export=download');
+  const safeName = name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  const safeLink = link.replace(/'/g, "\\'");
+  const onclickStr = `window.trackScholariumDownload(event, ${b.id}, '${safeName}', '${safeLink}')`;
   return `
     <div class="book-card search-card-stagger bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         style="animation-delay:${i*40}ms" onclick="window.open('${link}', '_blank')">
+         style="animation-delay:${i*40}ms" onclick="${onclickStr}">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${nameHtml}</div>
       <div class="text-primary/55 text-[10px] line-clamp-2 leading-tight">${escHtml(path)}</div>
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
@@ -858,7 +873,7 @@ function pdfCardStagger(b, i, q = '') {
         <div class="flex items-center gap-2">
           <a href="${link}" target="_blank"
              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gold/20 text-gold hover:bg-gold/10 transition"
-             onclick="event.stopPropagation();"
+             onclick="${onclickStr}"
              title="Unduh PDF"
              aria-label="Unduh PDF">
             <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
