@@ -106,7 +106,7 @@ async function renderAdminDownloadLogs() {
                 <button onclick="document.getElementById('dlf-bkid').value=${JSON.stringify(q.bkid)};dlLoad(1)"
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cream hover:bg-cream-dark text-xs text-primary/70 font-medium transition-colors border border-gold/15">
                   <i data-lucide="download" class="w-3 h-3 text-gold/60"></i>
-                  ${escHtml(q.book_title)}
+                  ${q.source === 'scholarium' ? '<span class="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Scholarium</span> ' : ''}${escHtml(q.book_title)}
                   <span class="text-primary/35">${q.cnt}×</span>
                 </button>`).join('')}
             </div>
@@ -139,7 +139,10 @@ async function renderAdminDownloadLogs() {
               ${d.rows.map(r => `
                 <tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-primary/50 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
-                  <td class="px-4 py-3 text-xs text-primary/70 max-w-[240px] truncate" title="${escHtml(r.book_title)}">#${escHtml(String(r.bkid))} — ${escHtml(r.book_title)}</td>
+                  <td class="px-4 py-3 text-xs text-primary/70 max-w-[240px] truncate" title="${escHtml(r.book_title)}">
+                    ${r.source === 'scholarium' ? '<span class="inline-block text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider mr-1">Scholarium</span>' : ''}
+                    #${escHtml(String(r.bkid))} — ${escHtml(r.book_title)}
+                  </td>
                   <td class="px-4 py-3 text-xs text-primary/60">
                     ${escHtml(r.user_name || 'Guest')}<br>
                     <span class="text-primary/40">${escHtml(r.user_email || '—')} · ${escHtml(r.user_role || 'user')}</span>
