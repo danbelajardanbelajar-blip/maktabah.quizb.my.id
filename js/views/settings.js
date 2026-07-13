@@ -844,7 +844,7 @@ function bookCardStagger(b, i, q = '') {
 window.trackScholariumDownload = function(e, id, name, link) {
   e.preventDefault();
   e.stopPropagation();
-  fetch(API + '?action=log_download_scholarium', {
+  apiFetch({ action: 'log_download_scholarium' }, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ id, name })
