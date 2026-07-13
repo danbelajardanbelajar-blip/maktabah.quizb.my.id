@@ -791,13 +791,13 @@ class AdminController {
     
         // Top Downloads
         $topDownloads = $pdo->query(
-            "SELECT bkid, book_title, COUNT(*) AS cnt FROM download_logs
-             GROUP BY bkid, book_title ORDER BY cnt DESC LIMIT 10"
+            "SELECT bkid, book_title, source, COUNT(*) AS cnt FROM download_logs
+             GROUP BY bkid, book_title, source ORDER BY cnt DESC LIMIT 10"
         )->fetchAll();
     
         $offset = ($page - 1) * $limit;
         $stmt = $pdo->prepare(
-            "SELECT id, bkid, book_title, user_id, user_name, user_email, user_role,
+            "SELECT id, bkid, book_title, source, user_id, user_name, user_email, user_role,
                     ip_address, user_agent,
                     DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at
              FROM download_logs
