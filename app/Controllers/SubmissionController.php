@@ -32,7 +32,6 @@ class SubmissionController {
         }
     
         $allowedMime = [
-            'application/pdf',
             'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ];
@@ -41,7 +40,7 @@ class SubmissionController {
         finfo_close($finfo);
     
         if (!in_array($mimeType, $allowedMime, true)) {
-            http_response_code(400); echo json_encode(['error' => 'Format tidak didukung. Gunakan PDF atau Word.']); return;
+            http_response_code(400); echo json_encode(['error' => 'Format tidak didukung. Gunakan Word (.doc / .docx).']); return;
         }
         if ($_FILES['file']['size'] > 20 * 1024 * 1024) {
             http_response_code(400); echo json_encode(['error' => 'Ukuran file maksimal 20 MB.']); return;
