@@ -561,7 +561,7 @@ class BookController {
         return $phpWord;
     }
 
-    public function logDownloadBook(int $bkid, string $title): void {
+    public function logDownloadBook(int $bkid, string $title, string $source = 'maktabah'): void {
         try {
             $this->ensureDownloadLogsTable();
             $pdo = Database::getConnection();
@@ -575,12 +575,13 @@ class BookController {
     
             $stmt = $pdo->prepare(
                 "INSERT INTO download_logs
-                 (bkid, book_title, user_id, user_name, user_email, user_role, ip_address, user_agent)
-                 VALUES (:bkid, :title, :uid, :uname, :uemail, :urole, :ip, :ua)"
+                 (bkid, book_title, source, user_id, user_name, user_email, user_role, ip_address, user_agent)
+                 VALUES (:bkid, :title, :src, :uid, :uname, :uemail, :urole, :ip, :ua)"
             );
             $stmt->execute([
                 ':bkid'   => $bkid,
                 ':title'  => mb_substr($title, 0, 255),
+                ':src'    => $source,
                 ':uid'    => $user['id']    ?? null,
                 ':uname'  => $user['name']  ?? '',
                 ':uemail' => $user['email'] ?? '',
@@ -601,6 +602,7 @@ class BookController {
                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                    bkid INT UNSIGNED NOT NULL,
                    book_title VARCHAR(255) NOT NULL DEFAULT '',
+                   source ENUM('maktabah', 'scholarium') NOT NULL DEFAULT 'maktabah',
                    user_id INT UNSIGNED NULL,
                    user_name VARCHAR(255) NOT NULL DEFAULT '',
                    user_email VARCHAR(255) NOT NULL DEFAULT '',
@@ -613,9 +615,26 @@ class BookController {
                    INDEX idx_created_at (created_at)
                  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
             );
+            
+            try {
+                // Auto-migrate to add source if it doesn't exist yet
+                $pdo->exec("ALTER TABLE download_logs ADD COLUMN source ENUM('maktabah', 'scholarium') NOT NULL DEFAULT 'maktabah' AFTER book_title");
+            } catch (\Exception $e) {
+                // ignore if column already exists
+            }
         } catch (\Exception $e) {
             // ignore creation failures
         }
+    }
+
+    public function handleLogDownloadScholarium(): void {
+        $id = (int)($_POST['id'] ?? 0);
+        $title = trim($_POST['name'] ?? '');
+        if ($id > 0 && $title !== '') {
+            $this->logDownloadBook($id, $title, 'scholarium');
+        }
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'ok']);
     }
 
 
