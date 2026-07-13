@@ -185,12 +185,12 @@ export async function renderSubmitFile() {
             <div class="mb-6">
               <label class="block text-xs font-semibold text-primary/55 mb-1.5">
                 File <span class="text-red-400">*</span>
-                <span class="text-primary/30 font-normal ml-1">Word (.doc / .docx) · maks. 20 MB</span>
+                <span class="text-primary/30 font-normal ml-1">PDF / Word · maks. 20 MB</span>
               </label>
               <label class="flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed border-gold/40 rounded-xl py-7 px-4 bg-cream cursor-pointer hover:border-gold hover:bg-gold/5 transition-all" id="file-drop-zone">
                 <i data-lucide="upload-cloud" class="w-8 h-8 text-gold/60"></i>
                 <span class="text-sm text-primary/50" id="file-label">Klik untuk pilih file atau seret ke sini</span>
-                <input type="file" id="sf-file" name="file" accept=".doc,.docx" required class="hidden"
+                <input type="file" id="sf-file" name="file" accept=".pdf,.doc,.docx" required class="hidden"
                   onchange="document.getElementById('file-label').textContent = this.files[0]?.name || 'Pilih file'" />
               </label>
             </div>
