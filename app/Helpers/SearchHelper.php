@@ -36,7 +36,7 @@ class SearchHelper {
             ]);
             
             $ch = curl_init($notifyUrl);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 3);
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
