@@ -60,7 +60,10 @@ class SearchController {
             $cs->execute([':h' => $hash]);
             if ($row = $cs->fetch()) {
                 $all = json_decode($row['results_json'], true) ?? [];
-                // Logging moved to explicit handleLogSearch endpoint
+                $skipLog = !empty($_GET['skip_log']) || !empty($_POST['skip_log']);
+                if ($isFirstPage && !$skipLog) {
+                    SearchHelper::logSearchQuery('basic', $qRaw, (int)$row['result_count']);
+                }
                 echo json_encode([
                     'data'        => array_slice($all, 0, $limit),
                     'total'       => (int)$row['result_count'],
@@ -105,8 +108,10 @@ class SearchController {
             )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($books), ':rc' => $total]);
         }
     
-        // --- Log pencarian dihapus (sekarang lewat explicit logSearch) ---
-        // if ($isFirstPage) SearchHelper::logSearchQuery('basic', $qRaw, $total);
+        $skipLog = !empty($_GET['skip_log']) || !empty($_POST['skip_log']);
+        if ($isFirstPage && !$skipLog) {
+            SearchHelper::logSearchQuery('basic', $qRaw, $total);
+        }
     
         echo json_encode([
             'data'        => $books,
@@ -509,8 +514,13 @@ class SearchController {
         } catch (\Exception $e) { /* ignore */ }
     
         // --- Log pencarian lanjutan (hanya halaman pertama) ---
-        if ($isFirstPage) {
-            // Logging moved to explicit handleLogSearch endpoint
+        $skipLog = !empty($_GET['skip_log']) || !empty($_POST['skip_log']);
+        if ($isFirstPage && !$skipLog) {
+            SearchHelper::logSearchQuery('advanced', implode(' | ', $fields), $total, json_encode([
+                'fields'   => $fields,
+                'cats'     => $cats,
+                'all_cats' => $allCats,
+            ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE));
         }
     
         // Cek didYouMean untuk memberikan saran kata (selalu cek)

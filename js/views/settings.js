@@ -1172,7 +1172,7 @@ async function execSearch() {
 
   // 1. Kategori (parallel, cepat)
   _abortCat = new AbortController();
-  fetch(API + '?' + new URLSearchParams({action:'search_categories', q}), {signal:_abortCat.signal})
+  fetch(API + '?' + new URLSearchParams({action:'search_categories', q, skip_log: '1'}), {signal:_abortCat.signal})
     .then(r=>r.json()).then(res => {
       if ($('#search-input')?.value.trim() !== q) return;
       const catCount = res.data ? res.data.length : 0;
@@ -1192,7 +1192,7 @@ async function execSearch() {
 
   // 2. Judul Kitab (parallel, cepat)
   _abortBooks = new AbortController();
-  fetch(API + '?' + new URLSearchParams({action:'search_books', q, page:searchState.bookPage}), {signal:_abortBooks.signal})
+  fetch(API + '?' + new URLSearchParams({action:'search_books', q, page:searchState.bookPage, skip_log: '1'}), {signal:_abortBooks.signal})
     .then(r=>r.json()).then(res => {
       if ($('#search-input')?.value.trim() !== q) return;
       const bookCount = res.total || 0;
@@ -1211,7 +1211,7 @@ async function execSearch() {
   // 3. Isi Kitab (parallel) menggunakan search_advanced untuk pencarian konten instan
   _abortCont = new AbortController();
   searchAdvancedState.terms = [q, '', '', '', ''];
-  const params = { action: 'search_advanced', page: searchState.contPage || 1, all_cats: '1', q1: q };
+  const params = { action: 'search_advanced', page: searchState.contPage || 1, all_cats: '1', q1: q, skip_log: '1' };
   fetch(API + '?' + new URLSearchParams(params), {signal:_abortCont.signal})
     .then(r=>r.json()).then(res => {
       if ($('#search-input')?.value.trim() !== q) return;
@@ -1249,7 +1249,7 @@ async function execSearch() {
   if (qWords.length > 1) {
     $('#sec-content-and')?.classList.remove('hidden');
     _abortContAnd = new AbortController();
-    const paramsAnd = { action: 'search_advanced', page: searchState.contAndPage || 1, all_cats: '1' };
+    const paramsAnd = { action: 'search_advanced', page: searchState.contAndPage || 1, all_cats: '1', skip_log: '1' };
     qWords.slice(0, 5).forEach((w, i) => paramsAnd['q' + (i+1)] = w);
     
     fetch(API + '?' + new URLSearchParams(paramsAnd), {signal:_abortContAnd.signal})
@@ -1271,7 +1271,7 @@ async function execSearch() {
 
   // 4. Download file pdf (parallel)
   let _abortPdf = new AbortController();
-  fetch(API + '?' + new URLSearchParams({action:'search_scholarium_pdfs', q, page:searchState.pdfPage || 1}), {signal:_abortPdf.signal})
+  fetch(API + '?' + new URLSearchParams({action:'search_scholarium_pdfs', q, page:searchState.pdfPage || 1, skip_log: '1'}), {signal:_abortPdf.signal})
     .then(r=>r.json()).then(res => {
       if ($('#search-input')?.value.trim() !== q) return;
       const pdfCount = res.total || 0;
@@ -1293,7 +1293,7 @@ window.goSearchBookPage = function(p) {
   const q = searchState.q, body = $('#sec-books-body');
   if (body) body.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${skeletonCards(4)}</div>`;
   _abortBooks = new AbortController();
-  fetch(API + '?' + new URLSearchParams({action:'search_books', q, page:p}), {signal:_abortBooks.signal})
+  fetch(API + '?' + new URLSearchParams({action:'search_books', q, page:p, skip_log: '1'}), {signal:_abortBooks.signal})
     .then(r=>r.json()).then(res => {
       patchHeader('sec-books','book-open','Judul Kitab', res.total);
       if (!body) return;
@@ -1310,7 +1310,7 @@ window.goSearchContPage = function(p) {
   if (body) body.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div>`;
   _abortCont = new AbortController();
   searchAdvancedState.terms = [q, '', '', '', ''];
-  const params = { action: 'search_advanced', page: p, all_cats: '1', q1: q };
+  const params = { action: 'search_advanced', page: p, all_cats: '1', q1: q, skip_log: '1' };
   fetch(API + '?' + new URLSearchParams(params), {signal:_abortCont.signal})
     .then(r=>r.json()).then(res => {
       patchHeader('sec-content','file-text','Isi Kitab', res.total || 0);
@@ -1329,7 +1329,7 @@ window.goSearchContAndPage = function(p) {
   _abortContAnd = new AbortController();
   
   const qWords = q.trim().split(/\s+/);
-  const paramsAnd = { action: 'search_advanced', page: p, all_cats: '1' };
+  const paramsAnd = { action: 'search_advanced', page: p, all_cats: '1', skip_log: '1' };
   qWords.slice(0, 5).forEach((w, i) => paramsAnd['q' + (i+1)] = w);
 
   fetch(API + '?' + new URLSearchParams(paramsAnd), {signal:_abortContAnd.signal})
