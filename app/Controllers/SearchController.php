@@ -60,7 +60,7 @@ class SearchController {
             $cs->execute([':h' => $hash]);
             if ($row = $cs->fetch()) {
                 $all = json_decode($row['results_json'], true) ?? [];
-                if ($isFirstPage) SearchHelper::logSearchQuery('basic', $qRaw, (int)$row['result_count']);
+                // Logging moved to explicit handleLogSearch endpoint
                 echo json_encode([
                     'data'        => array_slice($all, 0, $limit),
                     'total'       => (int)$row['result_count'],
@@ -105,8 +105,8 @@ class SearchController {
             )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($books), ':rc' => $total]);
         }
     
-        // --- Log pencarian (hanya halaman pertama) ---
-        if ($isFirstPage) SearchHelper::logSearchQuery('basic', $qRaw, $total);
+        // --- Log pencarian dihapus (sekarang lewat explicit logSearch) ---
+        // if ($isFirstPage) SearchHelper::logSearchQuery('basic', $qRaw, $total);
     
         echo json_encode([
             'data'        => $books,
@@ -509,12 +509,8 @@ class SearchController {
         } catch (\Exception $e) { /* ignore */ }
     
         // --- Log pencarian lanjutan (hanya halaman pertama) ---
-        if ($page === 1) {
-            SearchHelper::logSearchQuery('advanced', implode(' | ', $fields), $total, json_encode([
-                'fields'   => $fields,
-                'cats'     => $cats,
-                'all_cats' => $allCats,
-            ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE));
+        if ($isFirstPage) {
+            // Logging moved to explicit handleLogSearch endpoint
         }
     
         // Cek didYouMean untuk memberikan saran kata (selalu cek)
@@ -907,6 +903,22 @@ class SearchController {
             ]);
         } catch (\Exception $e) {
             echo json_encode(['error' => 'Database connection failed.', 'details' => $e->getMessage()]);
+        }
+    }
+
+    public function handleLogSearch(): void {
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $q = trim($_POST['q'] ?? '');
+            if ($q === '') {
+                echo json_encode(['status' => 'ignored']);
+                return;
+            }
+            // Basic log for now. Advanced details could be added if needed via frontend params.
+            \App\Helpers\SearchHelper::logSearchQuery('basic', $q, 0);
+            echo json_encode(['status' => 'logged']);
+        } catch (\Exception $e) {
+            echo json_encode(['error' => 'Failed to log search']);
         }
     }
 
