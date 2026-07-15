@@ -27,6 +27,22 @@ class SearchHelper {
                 ':uid'   => $user['id']   ?? null,
                 ':uname' => $user['name'] ?? '',
             ]);
+
+            // [REALTIME NOTIFIKASI] Tembak sinyal ke Tahajjud API secara asinkron
+            $notifyUrl = 'https://tahajjud.quizb.my.id/api_notify.php';
+            $postData = http_build_query([
+                'secret' => 'QUIZB_NOTIFY_SECRET_99',
+                'message' => 'Ada pencarian baru di Maktabah: ' . mb_substr($query, 0, 50)
+            ]);
+            
+            $ch = curl_init($notifyUrl);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_exec($ch);
+            curl_close($ch);
+
         } catch (\Exception $e) {}
     }
 
