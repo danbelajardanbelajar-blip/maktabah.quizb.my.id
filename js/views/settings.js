@@ -1113,7 +1113,7 @@ async function execSearch() {
   history.replaceState({}, '', '/search?q=' + encodeURIComponent(q));
 
   // Catat history pencarian secara eksplisit (hanya 1x per pencarian)
-  fetch(API + '?action=log_search', { method: 'POST', body: new URLSearchParams({q}) }).catch(()=>{});
+  apiFetch({ action: 'log_search' }, { method: 'POST', body: new URLSearchParams({q}) }).catch(()=>{});
 
   // Render instant skeleton shells for 3 sections
   wrap.innerHTML = `
