@@ -15,6 +15,7 @@ import * as View_favorit from './views/favorit.js';
 import * as View_my_activity from './views/my_activity.js';
 import * as View_notifications from './views/notifications.js';
 import * as View_agreement from './views/agreement.js';
+import * as View_ask from './views/ask.js';
 
 // Expose to window for admin.js and index.php
 Core.setNavigate(localNavigate);
@@ -53,6 +54,7 @@ const routes = {
   '/my-activity': View_my_activity.renderMyActivity,
   '/notifications': View_notifications.renderNotifications,
   '/agreement': View_agreement.renderAgreement,
+  '/ask': View_ask.renderAsk,
 };
 window.routes = routes;
 

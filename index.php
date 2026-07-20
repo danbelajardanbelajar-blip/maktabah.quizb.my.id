@@ -995,6 +995,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <a href="/katalog" data-route="/katalog" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Katalog</a>
           <a href="/favorit" data-route="/favorit" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Favorit</a>
           <a href="/search-advanced" data-route="/search-advanced" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Cari Lanjutan</a>
+          <a href="/ask" data-route="/ask" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1 flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold"></i> Tanya AI</a>
           <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Tentang</a>
           <a href="/feedback" data-route="/feedback" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Feedback</a>
         </div>
@@ -1174,8 +1175,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </a>
 
       <a href="/favorit" data-route="/favorit" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
-        <i data-lucide="star" class="w-5 h-5"></i>
-        <span class="text-[10px] font-medium tracking-wide">Favorit</span>
+        <i data-lucide="bookmark" class="w-5 h-5 mb-0.5"></i>
+        <span class="text-[10px] font-semibold">Favorit</span>
+      </a>
+      
+      <a href="/ask" data-route="/ask" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="bot" class="w-5 h-5 mb-0.5"></i>
+        <span class="text-[10px] font-semibold text-gold">AI</span>
       </a>
 
       <a href="/settings" data-route="/settings" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
