@@ -43,13 +43,15 @@ class AIService {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Bypass SSL issues in shared hosting
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
 
         if ($httpCode !== 200 || !$response) {
-            return "Error: Gagal menghubungi server AI (Code: $httpCode).";
+            return "Error: Gagal menghubungi server AI (Code: $httpCode). Detail: $curlError";
         }
 
         $data = json_decode($response, true);
