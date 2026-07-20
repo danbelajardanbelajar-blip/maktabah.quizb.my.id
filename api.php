@@ -119,6 +119,7 @@ $router->add('popular_searches', 'SearchController', 'handlePopularSearches');
 $router->add('search_recommendations', 'SearchController', 'handleSearchRecommendations');
 $router->add('search_scholarium_pdfs', 'SearchController', 'handleSearchScholarium');
 $router->add('log_search', 'SearchController', 'handleLogSearch');
+$router->add('ask_ai', 'AskController', 'handleAsk');
 
 // Auth
 $router->add('auth_me', 'AuthController', 'handleAuthMe');
