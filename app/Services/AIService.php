@@ -42,7 +42,8 @@ class AIService {
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 45); // Tambah timeout agar tidak mudah putus
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Bypass SSL issues in shared hosting
 
         $response = curl_exec($ch);
