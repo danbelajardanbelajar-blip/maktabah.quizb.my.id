@@ -58,8 +58,8 @@ class AIService {
             $curlError = curl_error($ch);
             curl_close($ch);
 
-            if ($httpCode === 429) {
-                $lastError = "Semua API Key sedang sibuk atau kehabisan kuota (Error 429).";
+            if ($httpCode === 429 || $httpCode >= 500) {
+                $lastError = "Server AI sedang sibuk atau mengalami gangguan (Error $httpCode). Silakan coba beberapa saat lagi.";
                 continue; // Coba API Key berikutnya
             }
 
@@ -71,7 +71,7 @@ class AIService {
             break;
         }
 
-        if (isset($httpCode) && $httpCode === 429) {
+        if (isset($httpCode) && ($httpCode === 429 || $httpCode >= 500)) {
             return "Error: " . $lastError;
         }
 
