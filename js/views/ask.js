@@ -112,7 +112,37 @@ export function renderAsk() {
       responseBox.classList.remove('hidden');
 
       if (data.status === 'success') {
-        answerText.innerHTML = window.escHtml(data.answer).replace(/\n/g, '<br>');
+        let html = window.escHtml(data.answer);
+        
+        // Parse basic markdown: bold
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-primary dark:text-cream">$1</strong>');
+        
+        // Parse list items and paragraphs
+        let lines = html.split('\n');
+        let parsed = [];
+        let inUl = false;
+        let inOl = false;
+        
+        for (let line of lines) {
+            let ulMatch = line.match(/^(\s*)[\*\-]\s+(.*)/);
+            let olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)/);
+            
+            if (ulMatch) {
+                if (!inUl) { parsed.push('<ul class="list-disc ml-5 my-2 space-y-1">'); inUl = true; }
+                parsed.push('<li>' + ulMatch[2] + '</li>');
+            } else if (olMatch) {
+                if (!inOl) { parsed.push('<ol class="list-decimal ml-5 my-2 space-y-1" start="' + olMatch[2] + '">'); inOl = true; }
+                parsed.push('<li>' + olMatch[3] + '</li>');
+            } else {
+                if (inUl) { parsed.push('</ul>'); inUl = false; }
+                if (inOl) { parsed.push('</ol>'); inOl = false; }
+                parsed.push(line + (line.trim() === '' ? '' : '<br>'));
+            }
+        }
+        if (inUl) parsed.push('</ul>');
+        if (inOl) parsed.push('</ol>');
+        
+        answerText.innerHTML = parsed.join('\n');
         
         if (data.references && data.references.length > 0) {
           refContainer.classList.remove('hidden');
