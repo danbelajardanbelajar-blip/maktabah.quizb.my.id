@@ -1,3 +1,5 @@
+let askState = { query: '', answerHTML: '', referencesHTML: '' };
+
 export function renderAsk() {
   const { app, $, reicons } = window;
   
@@ -67,6 +69,24 @@ export function renderAsk() {
   const answerText = $('#ask-answer-text');
   const refContainer = $('#ask-references-container');
   const refList = $('#ask-references-list');
+
+  // Restore state if exists
+  if (askState.query) {
+    input.value = askState.query;
+    setTimeout(() => {
+      input.style.height = 'auto';
+      input.style.height = (input.scrollHeight) + 'px';
+    }, 10);
+  }
+  if (askState.answerHTML) {
+    resultContainer.classList.remove('hidden');
+    responseBox.classList.remove('hidden');
+    answerText.innerHTML = askState.answerHTML;
+    if (askState.referencesHTML) {
+      refContainer.classList.remove('hidden');
+      refList.innerHTML = askState.referencesHTML;
+    }
+  }
 
   // Textarea auto-resize
   input.addEventListener('input', function() {
@@ -151,6 +171,9 @@ export function renderAsk() {
         if (inOl) parsed.push('</ol>');
         
         answerText.innerHTML = parsed.join('\n');
+        askState.answerHTML = answerText.innerHTML;
+        askState.query = query;
+        askState.referencesHTML = '';
         
         if (data.references && data.references.length > 0) {
           refContainer.classList.remove('hidden');
@@ -162,10 +185,14 @@ export function renderAsk() {
               <span>Juz ${r.juz}, Hlm ${r.page}</span>
             </a>
           `).join('');
+          askState.referencesHTML = refList.innerHTML;
           reicons();
+        } else {
+          refContainer.classList.add('hidden');
         }
       } else {
         answerText.innerHTML = `<span class="text-red-500">${window.escHtml(data.message || 'Terjadi kesalahan')}</span>`;
+        askState.answerHTML = answerText.innerHTML;
       }
     } catch (err) {
       loading.classList.add('hidden');
