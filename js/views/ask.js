@@ -147,12 +147,12 @@ export function renderAsk() {
         if (data.references && data.references.length > 0) {
           refContainer.classList.remove('hidden');
           refList.innerHTML = data.references.map(r => `
-            <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg border border-gray-100 dark:border-gray-700">
+            <a href="/kitab?id=${r.bkid}&juz=${r.juz}&page=${r.page}" onclick="window.navigate('/kitab?id=${r.bkid}&juz=${r.juz}&page=${r.page}'); return false;" class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition cursor-pointer no-underline">
               <i data-lucide="book" class="w-3.5 h-3.5 text-primary"></i>
               <span class="font-bold font-arabic text-sm">${window.escHtml(r.title)}</span>
               <span class="mx-1">•</span>
               <span>Juz ${r.juz}, Hlm ${r.page}</span>
-            </div>
+            </a>
           `).join('');
           reicons();
         }

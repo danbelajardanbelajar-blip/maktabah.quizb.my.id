@@ -89,6 +89,7 @@ class AskController {
             $references = [];
             foreach ($contextData as $ctx) {
                 $references[] = [
+                    'bkid'  => $ctx['bkid'],
                     'title' => $ctx['title'],
                     'juz'   => $ctx['match_juz'],
                     'page'  => $ctx['match_page']
