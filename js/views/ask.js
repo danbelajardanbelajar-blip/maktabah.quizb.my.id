@@ -74,6 +74,14 @@ export function renderAsk() {
     this.style.height = (this.scrollHeight) + 'px';
   });
 
+  // Submit on Enter (Shift+Enter for new line)
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+  });
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const query = input.value.trim();
