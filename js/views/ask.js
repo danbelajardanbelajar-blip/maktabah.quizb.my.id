@@ -19,7 +19,7 @@ export function renderAsk() {
             </div>
             <h2 class="text-xl md:text-2xl font-bold text-primary dark:text-cream arabic">اسأل الذكاء الاصطناعي</h2>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 font-semibold">Tanya Maktabah Bot (AI)</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 font-semibold">Tanya Maktabah Bot</p>
 
           <form id="ask-form" class="relative mb-6">
             <textarea id="ask-input" rows="3" class="w-full bg-gray-50 dark:bg-[#1a231f] border border-gray-200 dark:border-[rgba(201,162,39,0.15)] rounded-2xl py-4 pl-4 pr-14 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none transition-shadow text-primary dark:text-cream placeholder-gray-400" placeholder="Ketik pertanyaan Anda tentang hukum, fatwa, atau materi kitab di sini..."></textarea>

@@ -1181,7 +1181,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       
       <a href="/ask" data-route="/ask" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
         <i data-lucide="bot" class="w-5 h-5 mb-0.5"></i>
-        <span class="text-[10px] font-semibold text-gold">AI</span>
+        <span class="text-[10px] font-semibold text-gold">Tanya</span>
       </a>
 
       <a href="/settings" data-route="/settings" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
