@@ -96,6 +96,19 @@ class AskController {
                 ];
             }
 
+            // Catat Log ke database
+            try {
+                $user = \App\Services\AuthService::getCurrentUser();
+                $userId = $user ? $user['id'] : null;
+                $userName = $user ? $user['name'] : '';
+                $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+
+                $logStmt = $pdo->prepare("INSERT INTO ask_logs (question, response, visitor_ip, user_id, user_name) VALUES (?, ?, ?, ?, ?)");
+                $logStmt->execute([$qRaw, $aiResponse, $ip, $userId, $userName]);
+            } catch (Exception $logEx) {
+                // Abaikan error logging agar tidak merusak response ke user
+            }
+
             ResponseHelper::json([
                 'status' => 'success',
                 'answer' => $aiResponse,

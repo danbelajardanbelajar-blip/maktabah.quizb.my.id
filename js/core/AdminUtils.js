@@ -78,6 +78,7 @@ export function adminNavBar(active) {
     { r: '/admin/history',    icon: 'history',          label: 'CRUD History',    adminOnly: true,  desktopOnly: true },
     { r: '/admin/activity',   icon: 'activity',         label: 'Aktivitas',       adminOnly: true },
     { r: '/admin/search-logs', icon: 'search',          label: 'Pencarian',       adminOnly: true },
+    { r: '/admin/ask-logs',    icon: 'bot',             label: 'Tanya AI',        adminOnly: true },
     { r: '/admin/download-logs', icon: 'download',      label: 'Download',        adminOnly: true },
     { r: '/admin/submissions', icon: 'inbox',           label: 'Review Kiriman',  adminOnly: true },
     { r: '/admin/requests',    icon: 'help-circle',     label: 'Request Kitab',   adminOnly: true },

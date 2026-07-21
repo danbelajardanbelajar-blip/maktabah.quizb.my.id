@@ -722,6 +722,74 @@ class AdminController {
         ]);
     }
 
+    public function handleAdminGetAskLogs(): void {
+        AuthHelper::requireAdmin();
+        $pdo  = Database::getConnection();
+        $req  = ResponseHelper::getJsonRequest();
+        $page       = max(1, (int)($req['page']        ?? $_GET['page']        ?? 1));
+        $limit      = min(100, max(5, (int)($req['per_page']  ?? $_GET['per_page']  ?? 25)));
+        $query      = trim($req['query']       ?? $_GET['query']       ?? '');
+        $date       = trim($req['date']        ?? $_GET['date']        ?? '');
+    
+        $where  = [];
+        $params = [];
+    
+        if ($query)      { 
+            $where[] = '(question LIKE :query1 OR visitor_ip LIKE :query2)'; 
+            $params[':query1'] = "%{$query}%"; 
+            $params[':query2'] = "%{$query}%"; 
+        }
+        if ($date)       { $where[] = 'DATE(created_at) = :date'; $params[':date'] = $date; }
+    
+        $whereStr = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+    
+        // Total
+        $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM ask_logs {$whereStr}");
+        foreach ($params as $k => $v) $cntStmt->bindValue($k, $v);
+        $cntStmt->execute();
+        $totalCount = (int)$cntStmt->fetchColumn();
+    
+        // Stats
+        $todayCount = (int)$pdo->query(
+            "SELECT COUNT(*) FROM ask_logs WHERE DATE(created_at) = CURDATE()"
+        )->fetchColumn();
+        $weekCount = (int)$pdo->query(
+            "SELECT COUNT(*) FROM ask_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+        )->fetchColumn();
+        $uniqueCount = (int)$pdo->query(
+            "SELECT COUNT(DISTINCT question) FROM ask_logs"
+        )->fetchColumn();
+    
+        // Rows
+        $offset = ($page - 1) * $limit;
+        $stmt   = $pdo->prepare(
+            "SELECT id, question, response, visitor_ip, user_name, DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at
+             FROM ask_logs
+             {$whereStr}
+             ORDER BY id DESC
+             LIMIT :limit OFFSET :offset"
+        );
+        foreach ($params as $k => $v) $stmt->bindValue($k, $v);
+        $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+    
+        $rows = $stmt->fetchAll();
+        echo json_encode([
+            'success'     => true,
+            'rows'        => $rows,
+            'total'       => $totalCount,
+            'page'        => $page,
+            'limit'       => $limit,
+            'pages'       => (int)ceil($totalCount / $limit),
+            'stats'       => [
+                'today'  => $todayCount,
+                'week'   => $weekCount,
+                'unique' => $uniqueCount,
+            ]
+        ]);
+    }
+
     public function handleAdminDeleteSearchLog(): void {
         AuthHelper::requireAdmin();
         $pdo = Database::getConnection();
