@@ -56,8 +56,19 @@ class AIService {
         }
 
         $data = json_decode($response, true);
+        
+        // --- TEMPORARY LOGGING ---
+        file_put_contents(__DIR__ . '/../../gemini_debug.txt', "Time: " . date('Y-m-d H:i:s') . "\nResponse:\n" . $response . "\n\n", FILE_APPEND);
+        // -------------------------
+
         if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            return $data['candidates'][0]['content']['parts'][0]['text'];
+            $text = "";
+            foreach ($data['candidates'][0]['content']['parts'] as $part) {
+                if (isset($part['text'])) {
+                    $text .= $part['text'];
+                }
+            }
+            return $text;
         }
 
         return "Maaf, terjadi kesalahan saat memproses jawaban dari AI.";
