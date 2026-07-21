@@ -98,7 +98,7 @@ class AskController {
 
             // Catat Log ke database
             try {
-                $user = \App\Services\AuthService::getCurrentUser();
+                $user = $_SESSION['user'] ?? null;
                 $userId = $user ? $user['id'] : null;
                 $userName = $user ? $user['name'] : '';
                 $ip = $_SERVER['REMOTE_ADDR'] ?? '';
