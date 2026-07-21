@@ -15,13 +15,12 @@ export function renderAsk() {
         </div>
 
         <div class="relative z-10">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold">
               <i data-lucide="bot" class="w-5 h-5"></i>
             </div>
-            <h2 class="text-xl md:text-2xl font-bold text-primary dark:text-cream arabic">اسأل الذكاء الاصطناعي</h2>
+            <h2 class="text-xl md:text-2xl font-bold text-primary dark:text-cream">Tanya Maktabah Bot <span class="text-sm md:text-base font-normal text-gray-500">(Masa Percobaan)</span></h2>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 font-semibold">Tanya Maktabah Bot</p>
 
           <form id="ask-form" class="relative mb-6">
             <textarea id="ask-input" rows="3" class="w-full bg-gray-50 dark:bg-[#1a231f] border border-gray-200 dark:border-[rgba(201,162,39,0.15)] rounded-2xl py-4 pl-4 pr-14 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none transition-shadow text-primary dark:text-cream placeholder-gray-400" placeholder="Ketik pertanyaan Anda tentang hukum, fatwa, atau materi kitab di sini..."></textarea>
