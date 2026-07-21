@@ -3,15 +3,16 @@
 namespace App\Services;
 
 class AIService {
-    private $apiKey;
+    private $apiKeys = [];
     private $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
     public function __construct() {
-        $this->apiKey = $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY');
+        $envKey = $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY');
+        $this->apiKeys = array_filter(array_map('trim', explode(',', $envKey)));
     }
 
     public function askGemini(string $question, array $contextData): ?string {
-        if (empty($this->apiKey)) {
+        if (empty($this->apiKeys)) {
             return "Error: API Key Gemini belum diatur.";
         }
 
@@ -37,22 +38,41 @@ class AIService {
             ]
         ];
 
-        $ch = curl_init($this->endpoint . '?key=' . $this->apiKey);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_TIMEOUT, 45); // Tambah timeout agar tidak mudah putus
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Bypass SSL issues in shared hosting
+        // Acak urutan API Key untuk mendistribusikan beban (Load Balancing sederhana)
+        $keysToTry = $this->apiKeys;
+        shuffle($keysToTry);
+        $lastError = "";
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
+        foreach ($keysToTry as $key) {
+            $ch = curl_init($this->endpoint . '?key=' . $key);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_TIMEOUT, 45); // Tambah timeout agar tidak mudah putus
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Bypass SSL issues in shared hosting
 
-        if ($httpCode !== 200 || !$response) {
-            return "Error: Gagal menghubungi server AI (Code: $httpCode). Detail: $curlError";
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode === 429) {
+                $lastError = "Semua API Key sedang sibuk atau kehabisan kuota (Error 429).";
+                continue; // Coba API Key berikutnya
+            }
+
+            if ($httpCode !== 200 || !$response) {
+                return "Error: Gagal menghubungi server AI (Code: $httpCode). Detail: $curlError";
+            }
+
+            // Jika sukses (tidak 429 dan tidak error lain), keluar dari loop dan proses response
+            break;
+        }
+
+        if (isset($httpCode) && $httpCode === 429) {
+            return "Error: " . $lastError;
         }
 
         $data = json_decode($response, true);
