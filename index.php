@@ -1168,6 +1168,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="text-[10px] font-medium">Cari</span>
       </a>
 
+      <a href="/ask" data-route="/ask" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="bot" class="w-5 h-5 mb-0.5"></i>
+        <span class="text-[10px] font-semibold text-gold">Tanya</span>
+      </a>
+
       <!-- Kategori tab (menggantikan Katalog di mobile) -->
       <a href="/kategori" data-route="/kategori" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
         <i data-lucide="layout-grid" class="w-5 h-5"></i>
@@ -1177,11 +1182,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a href="/favorit" data-route="/favorit" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
         <i data-lucide="bookmark" class="w-5 h-5 mb-0.5"></i>
         <span class="text-[10px] font-semibold">Favorit</span>
-      </a>
-      
-      <a href="/ask" data-route="/ask" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
-        <i data-lucide="bot" class="w-5 h-5 mb-0.5"></i>
-        <span class="text-[10px] font-semibold text-gold">Tanya</span>
       </a>
 
       <a href="/settings" data-route="/settings" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
