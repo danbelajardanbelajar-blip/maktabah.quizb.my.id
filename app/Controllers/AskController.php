@@ -105,6 +105,25 @@ class AskController {
 
                 $logStmt = $pdo->prepare("INSERT INTO ask_logs (question, response, visitor_ip, user_id, user_name) VALUES (?, ?, ?, ?, ?)");
                 $logStmt->execute([$qRaw, $aiResponse, $ip, $userId, $userName]);
+
+                // [REALTIME NOTIFIKASI]
+                $uNameStr = !empty($userName) ? $userName : 'Anonim';
+                $msgText = "Tanya AI Maktabah: '" . mb_substr($qRaw, 0, 50) . "' oleh {$uNameStr}";
+                
+                $notifyUrl = 'https://tahajjud.quizb.my.id/api_notify.php';
+                $postData = http_build_query([
+                    'secret' => 'QUIZB_NOTIFY_SECRET_99',
+                    'message' => $msgText
+                ]);
+                
+                $ch = curl_init($notifyUrl);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_exec($ch);
+                curl_close($ch);
+
             } catch (Exception $logEx) {
                 // Abaikan error logging agar tidak merusak response ke user
             }
