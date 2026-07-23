@@ -4,11 +4,11 @@ namespace SEO;
 class SitemapHandler {
     
     public static function handleRequest($path) {
+        require_once __DIR__ . '/../app/bootstrap.php';
+        
         $pdo = null;
         try {
-            if (class_exists('\App\Config\Database')) {
-                $pdo = \App\Config\Database::getConnection();
-            }
+            $pdo = \App\Config\Database::getConnection();
         } catch (\Exception $e) { }
 
         $host = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'maktabah.quizb.my.id');
