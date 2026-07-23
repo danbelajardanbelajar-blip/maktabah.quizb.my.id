@@ -22,13 +22,19 @@ class AskController {
             return;
         }
 
-        // Gunakan pencarian teks BOOLEAN MODE agar lebih ringan dan cepat di database besar
-        $qClean = SearchHelper::ftEscape($qRaw);
+        // Bersihkan tanda baca khusus agar tidak mengganggu sintaks BOOLEAN MySQL
+        $qClean = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $qRaw);
+        // Pecah kata dan ambil yang panjangnya > 2 (hapus kata hubung pendek)
         $qWords = array_filter(explode(' ', $qClean), function($w) { return mb_strlen($w) > 2; });
+        
         if (empty($qWords)) {
-            $qBool = $qClean; 
+            $qBool = SearchHelper::ftEscape($qRaw); 
         } else {
-            $qBool = implode('* ', $qWords) . '*';
+            // Ambil maksimal 4 kata pertama agar pencarian tidak terlalu ketat (hasil 0) jika kalimatnya sangat panjang
+            $qWords = array_slice(array_values($qWords), 0, 4);
+            // Tambahkan '+' di depan dan '*' di belakang agar MySQL melakukan AND search (wajib ada)
+            // Ini akan mencegah timeout (max_statement_time exceeded) pada kalimat panjang
+            $qBool = '+' . implode('* +', $qWords) . '*';
         }
         $limit = 5; // Ambil 5 snippet terbaik
 
