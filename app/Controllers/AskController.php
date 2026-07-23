@@ -25,7 +25,7 @@ class AskController {
         // Bersihkan tanda baca khusus agar tidak mengganggu sintaks BOOLEAN MySQL
         $qClean = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $qRaw);
         // Pecah kata dan ambil yang panjangnya > 2 (hapus kata hubung pendek)
-        $qWords = array_filter(explode(' ', $qClean), function($w) { return mb_strlen($w) > 2; });
+        $qWords = array_filter(explode(' ', $qClean), function($w) { return mb_strlen($w, 'UTF-8') > 2; });
         
         if (empty($qWords)) {
             $qBool = SearchHelper::ftEscape($qRaw); 
@@ -54,9 +54,21 @@ class AskController {
             $topRows = $step1->fetchAll();
 
             // Fallback: Jika pencarian AND (wajib ada semua kata) tidak menemukan hasil, 
-            // gunakan pencarian OR (salah satu kata ada) yang lebih longgar
-            if (empty($topRows) && strpos($qBool, '+') !== false) {
-                $qBoolFallback = str_replace('+', '', $qBool);
+            // gunakan pencarian OR bertingkat: WAJIBKAN kata terpanjang (paling spesifik), 
+            // sisanya opsional untuk menambah skor relevansi.
+            if (empty($topRows) && strpos($qBool, '+') !== false && count($qWords) > 1) {
+                // Urutkan kata berdasarkan panjangnya (terpanjang = paling spesifik)
+                $sortedWords = $qWords;
+                usort($sortedWords, function($a, $b) {
+                    return mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8');
+                });
+                
+                // Kata terpanjang WAJIB (+), sisanya opsional
+                $qBoolFallback = '+' . $sortedWords[0] . '*';
+                for ($i = 1; $i < count($sortedWords); $i++) {
+                    $qBoolFallback .= ' ' . $sortedWords[$i] . '*';
+                }
+                
                 $step1->bindValue(':q1',  $qBoolFallback, PDO::PARAM_STR);
                 $step1->bindValue(':q2',  $qBoolFallback, PDO::PARAM_STR);
                 $step1->execute();
