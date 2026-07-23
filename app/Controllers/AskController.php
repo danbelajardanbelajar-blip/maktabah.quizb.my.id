@@ -22,21 +22,27 @@ class AskController {
             return;
         }
 
-        // Gunakan pencarian teks natural karena pengguna mengetik kalimat panjang
+        // Gunakan pencarian teks BOOLEAN MODE agar lebih ringan dan cepat di database besar
         $qClean = SearchHelper::ftEscape($qRaw);
+        $qWords = array_filter(explode(' ', $qClean), function($w) { return mb_strlen($w) > 2; });
+        if (empty($qWords)) {
+            $qBool = $qClean; 
+        } else {
+            $qBool = implode('* ', $qWords) . '*';
+        }
         $limit = 5; // Ambil 5 snippet terbaik
 
         try {
             // Langkah 1: Cari snippet paling relevan di database
             $step1 = $pdo->prepare(
-                "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN NATURAL LANGUAGE MODE) AS rel
+                "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
                  FROM book_content
-                 WHERE MATCH(content) AGAINST (:q2 IN NATURAL LANGUAGE MODE)
+                 WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
                  ORDER BY rel DESC, bkid ASC, page ASC
                  LIMIT :lim"
             );
-            $step1->bindValue(':q1',  $qClean, PDO::PARAM_STR);
-            $step1->bindValue(':q2',  $qClean, PDO::PARAM_STR);
+            $step1->bindValue(':q1',  $qBool, PDO::PARAM_STR);
+            $step1->bindValue(':q2',  $qBool, PDO::PARAM_STR);
             $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
             $step1->execute();
             $topRows = $step1->fetchAll();
