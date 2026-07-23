@@ -113,4 +113,58 @@ class AIService {
         }
         return $text;
     }
+
+    public function translateToSearchKeywords(string $question): ?string {
+        if (empty($this->apiKeys)) {
+            return null;
+        }
+
+        $prompt = "Terjemahkan pertanyaan berikut ke dalam bahasa Arab jika pertanyaan dalam bahasa Indonesia, atau ke bahasa Indonesia jika pertanyaan dalam bahasa Arab. Hasilkan HANYA kata kunci pencariannya saja (tanpa tanda baca, tanpa kata hubung), pisahkan dengan spasi, tanpa penjelasan apapun, tanpa tanda kutip. Jika tidak bisa diterjemahkan, kembalikan teks kosong.\n\n"
+                . "Pertanyaan: " . $question;
+
+        $payload = [
+            "contents" => [
+                [
+                    "parts" => [
+                        ["text" => $prompt]
+                    ]
+                ]
+            ],
+            "generationConfig" => [
+                "temperature" => 0.1, // Sangat rendah agar konsisten dan tidak halusinasi
+                "maxOutputTokens" => 150
+            ]
+        ];
+
+        $keysToTry = $this->apiKeys;
+        shuffle($keysToTry);
+
+        foreach ($keysToTry as $key) {
+            $ch = curl_init($this->endpoint . '?key=' . $key);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15); 
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200 && $response) {
+                $data = json_decode($response, true);
+                if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                    $text = trim($data['candidates'][0]['content']['parts'][0]['text']);
+                    // Bersihkan dari kutipan atau format yang tidak perlu
+                    $text = preg_replace('/```.*?```/s', '', $text);
+                    $text = str_replace(["\n", "\r", '"', "'", "`"], ' ', $text);
+                    return trim($text);
+                }
+            }
+        }
+
+        return null;
+    }
 }
