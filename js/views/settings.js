@@ -788,6 +788,23 @@ function noResultBlock(msg) {
   </p>`;
 }
 
+// ── Load More HTML (pengganti pagination) ─────────────────────
+function loadMoreHtml(current, hasMore, onClickFn) {
+  if (current <= 1 && !hasMore) return '';
+  const btnBase = 'px-4 py-2 flex items-center justify-center rounded-lg text-sm font-medium transition-colors border border-gold/20';
+  return `
+    <div class="flex items-center justify-center gap-4 mt-8">
+      <button onclick="${onClickFn}(${current - 1})" class="${btnBase} ${current <= 1 ? 'opacity-50 cursor-not-allowed bg-cream-dark text-primary/50' : 'bg-white text-primary hover:bg-cream-dark'}" ${current <= 1 ? 'disabled' : ''}>
+        <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Sebelumnya
+      </button>
+      <span class="text-sm font-medium text-primary/60">Hal. ${current}</span>
+      <button onclick="${onClickFn}(${current + 1})" class="${btnBase} ${!hasMore ? 'opacity-50 cursor-not-allowed bg-cream-dark text-primary/50' : 'bg-white text-primary hover:bg-cream-dark'}" ${!hasMore ? 'disabled' : ''}>
+        Selanjutnya <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+      </button>
+    </div>
+  `;
+}
+
 // ── Keyword highlight helper ──────────────────────────────────
 function hlText(text, q) {
   if (!q || !text) return escHtml(text || '');
@@ -1016,7 +1033,7 @@ function _restoreSearchFromCache(q) {
       body.innerHTML = res.data.length
         ? `<div class="search-section-enter">
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>
-            ${paginationHtml(res.page, res.total_pages, 'goSearchBookPage')}</div>`
+            ${loadMoreHtml(res.page, res.has_more, 'goSearchBookPage')}</div>`
         : noResultBlock('Tidak ada kitab yang cocok pada judul atau pengarang.');
       reicons();
     }).catch(()=>{ const b=$('#sec-books-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
@@ -1203,7 +1220,7 @@ async function execSearch() {
       body.innerHTML = res.data && res.data.length
         ? `<div class="search-section-enter">
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>
-            ${paginationHtml(res.page, res.total_pages, 'goSearchBookPage')}</div>`
+            ${loadMoreHtml(res.page, res.has_more, 'goSearchBookPage')}</div>`
         : noResultBlock('Tidak ada kitab yang cocok pada judul atau pengarang.');
       reicons();
     }).catch(()=>{ const b=$('#sec-books-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
@@ -1239,7 +1256,7 @@ async function execSearch() {
       body.innerHTML = res.data && res.data.length
         ? `<div class="search-section-enter">
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>
-            ${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContPage')}</div>`
+            ${loadMoreHtml(res.page || 1, res.has_more, 'goSearchContPage')}</div>`
         : noResultBlock(emptyMsg);
       reicons();
     }).catch(()=>{ const b=$('#sec-content-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
@@ -1261,7 +1278,7 @@ async function execSearch() {
         bodyAnd.innerHTML = res.data && res.data.length
           ? `<div class="search-section-enter">
               <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, qWords)).join('')}</div>
-              ${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContAndPage')}</div>`
+              ${loadMoreHtml(res.page || 1, res.has_more, 'goSearchContAndPage')}</div>`
           : noResultBlock('Maaf, tidak ditemukan halaman yang cocok dengan kata kunci tersebut.');
         reicons();
       }).catch(()=>{ const b=$('#sec-content-and-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); });
@@ -1282,7 +1299,7 @@ async function execSearch() {
       body.innerHTML = res.data && res.data.length
         ? `<div class="search-section-enter">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${res.data.map((b,i)=>pdfCardStagger(b,i,q)).join('')}</div>
-            ${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchPdfPage')}</div>`
+            ${loadMoreHtml(res.page || 1, res.has_more, 'goSearchPdfPage')}</div>`
         : noResultBlock('Tidak ada file PDF yang cocok.');
       reicons();
     }).catch(()=>{ const b=$('#sec-pdf-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
@@ -1298,7 +1315,7 @@ window.goSearchBookPage = function(p) {
       patchHeader('sec-books','book-open','Judul Kitab', res.total);
       if (!body) return;
       body.innerHTML = res.data && res.data.length
-        ? `<div class="search-section-enter"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>${paginationHtml(res.page,res.total_pages,'goSearchBookPage')}</div>`
+        ? `<div class="search-section-enter"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${res.data.map((b,i)=>bookCardStagger(b,i,q)).join('')}</div>${loadMoreHtml(res.page,res.has_more,'goSearchBookPage')}</div>`
         : noResultBlock('Tidak ada hasil.');
       reicons(); $('#sec-books')?.scrollIntoView({behavior:'smooth',block:'start'});
     }).catch(()=>{});
@@ -1316,7 +1333,7 @@ window.goSearchContPage = function(p) {
       patchHeader('sec-content','file-text','Isi Kitab', res.total || 0);
       if (!body) return;
       body.innerHTML = res.data && res.data.length
-        ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContPage')}</div>`
+        ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>${loadMoreHtml(res.page || 1, res.has_more, 'goSearchContPage')}</div>`
         : noResultBlock('Tidak ada hasil.');
       reicons(); $('#sec-content')?.scrollIntoView({behavior:'smooth',block:'start'});
     }).catch(()=>{});
@@ -1337,7 +1354,7 @@ window.goSearchContAndPage = function(p) {
       patchHeader('sec-content-and','layers','Isi Kitab (Kata Tersebar)', res.total || 0);
       if (!bodyAnd) return;
       bodyAnd.innerHTML = res.data && res.data.length
-        ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, qWords)).join('')}</div>${paginationHtml(res.page || 1, res.total_pages || 1, 'goSearchContAndPage')}</div>`
+        ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, qWords)).join('')}</div>${loadMoreHtml(res.page || 1, res.has_more, 'goSearchContAndPage')}</div>`
         : noResultBlock('Tidak ada hasil.');
       reicons(); $('#sec-content-and')?.scrollIntoView({behavior:'smooth',block:'start'});
     }).catch(()=>{});

@@ -77,47 +77,37 @@ class SearchController {
     
         // --- Query ---
         $stmt = $pdo->prepare(
-            "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
-                    MATCH(b.title) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+            "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name
              FROM books b
              WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
-             ORDER BY rel DESC, b.title ASC
              LIMIT :lim OFFSET :off"
         );
-        $stmt->bindValue(':q1',  $qStar, PDO::PARAM_STR);
         $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
         $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
         $stmt->execute();
         $books = $stmt->fetchAll();
-    
-        $countStmt = $pdo->prepare(
-            "SELECT COUNT(*) FROM books
-             WHERE MATCH(title) AGAINST (:q IN BOOLEAN MODE)"
-        );
-        $countStmt->execute([':q' => $qStar]);
-        $total = (int)$countStmt->fetchColumn();
+        $has_more = (count($books) === $limit);
     
         // --- Cache store ---
-        if ($page === 1 && $total > 0) {
+        if ($page === 1 && !empty($books)) {
             $pdo->prepare(
                 "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
-                 VALUES (:h, :qt, :rj, :rc, DATE_ADD(NOW(), INTERVAL 1 HOUR))
+                 VALUES (:h, :qt, :rj, 0, DATE_ADD(NOW(), INTERVAL 1 HOUR))
                  ON DUPLICATE KEY UPDATE results_json=VALUES(results_json),
-                 result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
-            )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($books), ':rc' => $total]);
+                 result_count=0, expires_at=VALUES(expires_at)"
+            )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($books)]);
         }
     
         $skipLog = !empty($_GET['skip_log']) || !empty($_POST['skip_log']);
         if ($isFirstPage && !$skipLog) {
-            SearchHelper::logSearchQuery('basic', $qRaw, $total);
+            SearchHelper::logSearchQuery('basic', $qRaw, 0);
         }
     
         echo json_encode([
             'data'        => $books,
-            'total'       => $total,
             'page'        => $page,
-            'total_pages' => (int)ceil($total / $limit),
+            'has_more'    => $has_more,
         ]);
     }
 
@@ -160,13 +150,11 @@ class SearchController {
     
         // --- Step 1: Scan FULLTEXT pada book_content saja (tidak JOIN) ---
         $step1 = $pdo->prepare(
-            "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+            "SELECT bkid, page
              FROM book_content
              WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
-             ORDER BY rel DESC, bkid ASC, page ASC
              LIMIT :lim OFFSET :off"
         );
-        $step1->bindValue(':q1',  $qStar, PDO::PARAM_STR);
         $step1->bindValue(':q2',  $qStar, PDO::PARAM_STR);
         $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
         $step1->bindValue(':off', $offset, PDO::PARAM_INT);
@@ -215,44 +203,22 @@ class SearchController {
             $rows[] = $row;
         }
     
-        // --- Count total (cached separately, expensive on huge tables) ---
-        $countHash = 'cnt_content:' . hash('sha256', strtolower($q));
-        $ccRow = $pdo->prepare(
-            "SELECT result_count FROM search_cache WHERE query_hash = :h AND expires_at > NOW() LIMIT 1"
-        );
-        $ccRow->execute([':h' => $countHash]);
-        if ($countCached = $ccRow->fetchColumn()) {
-            $total = (int)$countCached;
-        } else {
-            $countStmt = $pdo->prepare(
-            "SELECT COUNT(*) FROM book_content
-             WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)"
-        );
-        $countStmt->execute([':q' => $qStar]);
-            $total = (int)$countStmt->fetchColumn();
-            // Cache the count for 2 hours
-            $pdo->prepare(
-                "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
-                 VALUES (:h, :qt, '[]', :rc, DATE_ADD(NOW(), INTERVAL 2 HOUR))
-                 ON DUPLICATE KEY UPDATE result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
-            )->execute([':h' => $countHash, ':qt' => 'cnt:' . $q, ':rc' => $total]);
-        }
+        $has_more = (count($topRows) === $limit);
     
         // Cache page-1 results
         if ($page === 1 && !empty($rows)) {
             $pdo->prepare(
                 "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
-                 VALUES (:h, :qt, :rj, :rc, DATE_ADD(NOW(), INTERVAL 1 HOUR))
+                 VALUES (:h, :qt, :rj, 0, DATE_ADD(NOW(), INTERVAL 1 HOUR))
                  ON DUPLICATE KEY UPDATE results_json=VALUES(results_json),
-                 result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
-            )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($rows), ':rc' => $total]);
+                 result_count=0, expires_at=VALUES(expires_at)"
+            )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($rows)]);
         }
     
         echo json_encode([
             'data'        => $rows,
-            'total'       => $total,
             'page'        => $page,
-            'total_pages' => (int)ceil($total / $limit),
+            'has_more'    => $has_more,
         ]);
     }
 
@@ -349,13 +315,10 @@ class SearchController {
                 // Step 1: Scan FULLTEXT pada book_content saja (tidak JOIN)
                 //         → hanya menggunakan FULLTEXT index, sangat cepat
                 $s1Params          = $ftParams;
-                $s1Params[':rel']  = $allFtRel;
     
-                $step1Sql = "SELECT id,
-                                    MATCH(content) AGAINST (:rel IN BOOLEAN MODE) AS relevance
+                $step1Sql = "SELECT id
                              FROM book_content
                              WHERE $ftWhere
-                             ORDER BY relevance DESC, id ASC
                              LIMIT :lim OFFSET :off";
     
                 $s1 = $pdo->prepare($step1Sql);
@@ -395,27 +358,7 @@ class SearchController {
                     }
                 }
     
-                // COUNT — tanpa JOIN (hanya book_content + FULLTEXT index)
-                $countKey = 'advcnt6:' . hash('sha256', json_encode([
-                    'f' => $fields, 'c' => [], 's' => $samePage,
-                ]));
-                $cc = $pdo->prepare(
-                    "SELECT result_count FROM search_cache WHERE query_hash = :h AND expires_at > NOW() LIMIT 1"
-                );
-                $cc->execute([':h' => $countKey]);
-                if ($cnt = $cc->fetchColumn()) {
-                    $total = (int)$cnt;
-                } else {
-                    $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM book_content WHERE $ftWhere");
-                    foreach ($ftParams as $k => $v) $cntStmt->bindValue($k, $v, PDO::PARAM_STR);
-                    $cntStmt->execute();
-                    $total = (int)$cntStmt->fetchColumn();
-                    $pdo->prepare(
-                        "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
-                         VALUES (:h, :qt, '[]', :rc, DATE_ADD(NOW(), INTERVAL 30 MINUTE))
-                         ON DUPLICATE KEY UPDATE result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
-                    )->execute([':h' => $countKey, ':qt' => 'cnt:adv3', ':rc' => $total]);
-                }
+                $has_more = (count($topRows) === $limit);
     
             } else {
                 // ══════════════════════════════════════════════════════
@@ -439,18 +382,15 @@ class SearchController {
                 $fullWhere = $ftWhereAlias . ' AND b.category_id IN (' . implode(',', $catPlaceholders) . ')';
     
                 $params          = array_merge($ftParams, $catParams);
-                $params[':rel']  = $allFtRel;
                 $params[':lim']  = $limit;
                 $params[':off']  = $offset;
     
                 $sql = "SELECT bc.id AS match_id, bc.bkid, b.title, b.author, b.category_name,
                                bc.juz AS match_juz, bc.page AS match_page,
-                               bc.content AS content,
-                               MATCH(bc.content) AGAINST (:rel IN BOOLEAN MODE) AS relevance
+                               bc.content AS content
                         FROM book_content bc
                         JOIN books b ON b.bkid = bc.bkid
                         WHERE $fullWhere
-                        ORDER BY relevance DESC, bc.id ASC
                         LIMIT :lim OFFSET :off";
     
                 $stmt = $pdo->prepare($sql);
@@ -462,36 +402,11 @@ class SearchController {
     
                 $rows = array_map(function ($row) use ($fields) {
                     $row['snippet'] = SearchHelper::extractSmartSnippet((string)($row['content'] ?? ''), $fields);
-                    unset($row['content'], $row['relevance']);
+                    unset($row['content']);
                     return $row;
                 }, $rawRows);
     
-                // COUNT dengan JOIN + filter kategori
-                $countKey = 'advcnt3:' . hash('sha256', json_encode([
-                    'f' => $fields, 'c' => $cats, 's' => $samePage,
-                ]));
-                $cc = $pdo->prepare(
-                    "SELECT result_count FROM search_cache WHERE query_hash = :h AND expires_at > NOW() LIMIT 1"
-                );
-                $cc->execute([':h' => $countKey]);
-                if ($cnt = $cc->fetchColumn()) {
-                    $total = (int)$cnt;
-                } else {
-                    $cntParams = array_merge($ftParams, $catParams);
-                    $cntStmt   = $pdo->prepare(
-                        "SELECT COUNT(*) FROM book_content bc JOIN books b ON b.bkid = bc.bkid WHERE $fullWhere"
-                    );
-                    foreach ($cntParams as $k => $v) {
-                        $cntStmt->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
-                    }
-                    $cntStmt->execute();
-                    $total = (int)$cntStmt->fetchColumn();
-                    $pdo->prepare(
-                        "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
-                         VALUES (:h, :qt, '[]', :rc, DATE_ADD(NOW(), INTERVAL 30 MINUTE))
-                         ON DUPLICATE KEY UPDATE result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
-                    )->execute([':h' => $countKey, ':qt' => 'cnt:adv3', ':rc' => $total]);
-                }
+                $has_more = (count($rawRows) === $limit);
             }
         } catch (Exception $e) {
             ResponseHelper::json(['error' => 'Query error: ' . $e->getMessage()], 500);
@@ -502,13 +417,12 @@ class SearchController {
         try {
             $pdo->prepare(
                 "INSERT INTO search_cache (query_hash, query_text, results_json, result_count, expires_at)
-                 VALUES (:h, :qt, :rj, :rc, DATE_ADD(NOW(), INTERVAL 30 MINUTE))
+                 VALUES (:h, :qt, :rj, 0, DATE_ADD(NOW(), INTERVAL 30 MINUTE))
                  ON DUPLICATE KEY UPDATE results_json=VALUES(results_json),
-                 result_count=VALUES(result_count), expires_at=VALUES(expires_at)"
+                 result_count=0, expires_at=VALUES(expires_at)"
             )->execute([
                 ':h'  => $cacheKey,
                 ':qt' => implode(' | ', $fields),
-                ':rj' => json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
                 ':rc' => $total,
             ]);
         } catch (\Exception $e) { /* ignore */ }
@@ -531,9 +445,8 @@ class SearchController {
 
         ResponseHelper::json([
             'data'         => $rows,
-            'total'        => $total,
             'page'         => $page,
-            'total_pages'  => (int)ceil($total / $limit),
+            'has_more'     => $has_more,
             'did_you_mean' => $didYouMean
         ]);
     }
