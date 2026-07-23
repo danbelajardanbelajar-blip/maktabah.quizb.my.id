@@ -36,10 +36,10 @@ class AskController {
             // Ini akan mencegah timeout (max_statement_time exceeded) pada kalimat panjang
             $qBool = '+' . implode('* +', $qWords) . '*';
         }
-        $limit = 5; // Ambil 5 snippet terbaik
+        $limit = 25; // Ambil 25 halaman terbaik agar konteks lebih luas dan akurat
 
         try {
-            // Langkah 1: Cari snippet paling relevan di database
+            // Langkah 1: Cari snippet paling relevan di database (AND search)
             $step1 = $pdo->prepare(
                 "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
                  FROM book_content
@@ -52,6 +52,16 @@ class AskController {
             $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
             $step1->execute();
             $topRows = $step1->fetchAll();
+
+            // Fallback: Jika pencarian AND (wajib ada semua kata) tidak menemukan hasil, 
+            // gunakan pencarian OR (salah satu kata ada) yang lebih longgar
+            if (empty($topRows) && strpos($qBool, '+') !== false) {
+                $qBoolFallback = str_replace('+', '', $qBool);
+                $step1->bindValue(':q1',  $qBoolFallback, PDO::PARAM_STR);
+                $step1->bindValue(':q2',  $qBoolFallback, PDO::PARAM_STR);
+                $step1->execute();
+                $topRows = $step1->fetchAll();
+            }
 
             $contextData = [];
             
