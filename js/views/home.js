@@ -24,11 +24,11 @@ export async function renderHome() {
         <div class="max-w-2xl mx-auto relative group">
           <div class="absolute -inset-1 bg-gradient-to-r from-gold/30 via-primary-light/30 to-gold/30 rounded-3xl blur opacity-40 group-hover:opacity-70 transition duration-1000 group-hover:duration-300"></div>
           <div class="relative flex items-center">
-            <i data-lucide="search" class="absolute left-6 w-5 h-5 text-primary/60"></i>
-            <input id="hero-search" type="text" placeholder="Cari teks, judul, atau pengarang kitab…"
-              class="w-full pl-14 pr-32 py-5 rounded-2xl text-ink text-base bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus:outline-none focus:ring-2 focus:ring-gold transition-all placeholder:text-gray-400" />
-            <button id="hero-search-btn" class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] hover:from-[#15803D] hover:to-[#166534] text-gold px-6 py-3 rounded-xl text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)] hover:shadow-[0_6px_20px_rgba(201,162,39,0.3)]">
-              Cari Kitab
+            <i data-lucide="search" class="absolute left-4 md:left-6 w-5 h-5 text-primary/60"></i>
+            <input id="hero-search" type="text" placeholder="Cari teks, judul, atau pengarang..."
+              class="w-full pl-12 md:pl-14 pr-28 md:pr-36 py-4 md:py-5 rounded-2xl text-ink text-sm md:text-base bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus:outline-none focus:ring-2 focus:ring-gold transition-all placeholder:text-gray-400" />
+            <button id="hero-search-btn" class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] hover:from-[#15803D] hover:to-[#166534] text-gold px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs md:text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)] hover:shadow-[0_6px_20px_rgba(201,162,39,0.3)]">
+              Cari <span class="hidden md:inline">Kitab</span>
             </button>
           </div>
         </div>
