@@ -62,20 +62,76 @@ class SearchHelper {
         return $q;
     }
 
+    /**
+     * Menghasilkan variasi kata untuk huruf Alif (ا, أ, إ, آ)
+     * Ini memastikan pencarian "احياء" juga cocok dengan "إحياء"
+     */
+    public static function getAlefVariants(string $text): array {
+        $alefs = ['ا', 'أ', 'إ', 'آ'];
+        $chars = mb_str_split($text, 1, 'UTF-8');
+        $results = [''];
+        $alefCount = 0;
+        
+        foreach ($chars as $char) {
+            if (in_array($char, $alefs)) {
+                $alefCount++;
+                // Batasi kombinasi agar tidak terlalu berat memori (maks 3 alif / 64 variasi)
+                if ($alefCount <= 3) {
+                    $newResults = [];
+                    foreach ($results as $res) {
+                        foreach ($alefs as $a) {
+                            $newResults[] = $res . $a;
+                        }
+                    }
+                    $results = $newResults;
+                } else {
+                    foreach ($results as &$res) {
+                        $res .= $char;
+                    }
+                }
+            } else {
+                foreach ($results as &$res) {
+                    $res .= $char;
+                }
+            }
+        }
+        
+        return array_unique($results);
+    }
+
     public static function booleanSearchTerm(string $q): string {
         $q = trim($q);
         if ($q === '') return '';
         
         if (self::isPhraseQuery($q)) {
-            return '"' . self::ftEscape(self::searchPhraseText($q)) . '"';
+            $phrase = self::ftEscape(self::searchPhraseText($q));
+            $variants = self::getAlefVariants($phrase);
+            if (count($variants) > 1) {
+                $parts = array_map(function($v) { return '"' . $v . '"'; }, $variants);
+                return '+(' . implode(' ', $parts) . ')';
+            }
+            return '+"' . $phrase . '"';
         }
 
         if (strpos($q, ' ') !== false) {
-            return '"' . self::ftEscape($q) . '"';
+            $escaped = self::ftEscape($q);
+            $variants = self::getAlefVariants($escaped);
+            if (count($variants) > 1) {
+                $parts = array_map(function($v) { return '"' . $v . '"'; }, $variants);
+                return '+(' . implode(' ', $parts) . ')';
+            }
+            return '+"' . $escaped . '"';
         }
 
         $clean = self::ftEscape($q);
         if ($clean === '') return '';
+        
+        $variants = self::getAlefVariants($clean);
+        if (count($variants) > 1) {
+            $parts = array_map(function($v) { return $v . '*'; }, $variants);
+            $group = '(' . implode(' ', $parts) . ')';
+            return mb_strlen($clean) <= 2 ? $group : '+' . $group;
+        }
         
         if (mb_strlen($clean) <= 2) {
             return $clean . '*';
@@ -91,18 +147,29 @@ class SearchHelper {
             if ($field === '') continue;
             
             if (self::isPhraseQuery($field)) {
-                $parts[] = '"' . self::ftEscape(self::searchPhraseText($field)) . '"';
+                $phrase = self::ftEscape(self::searchPhraseText($field));
+                $variants = self::getAlefVariants($phrase);
+                foreach ($variants as $v) {
+                    $parts[] = '"' . $v . '"';
+                }
                 continue;
             }
 
             if (strpos($field, ' ') !== false) {
-                $parts[] = '"' . self::ftEscape($field) . '"';
+                $escaped = self::ftEscape($field);
+                $variants = self::getAlefVariants($escaped);
+                foreach ($variants as $v) {
+                    $parts[] = '"' . $v . '"';
+                }
                 continue;
             }
 
             $clean = self::ftEscape($field);
             if ($clean !== '') {
-                $parts[] = $clean . '*';
+                $variants = self::getAlefVariants($clean);
+                foreach ($variants as $v) {
+                    $parts[] = $v . '*';
+                }
             }
         }
         return implode(' ', $parts);
@@ -148,6 +215,9 @@ class SearchHelper {
             foreach ($chars as $char) {
                 if (preg_match('/\s/u', $char)) {
                     $patternChars[] = '\s+';
+                } else if (in_array($char, ['ا', 'أ', 'إ', 'آ'])) {
+                    // Jadikan setiap bentuk alif fleksibel mendeteksi variasi lainnya
+                    $patternChars[] = '[اأإآ]' . $diacritics;
                 } else {
                     $patternChars[] = preg_quote($char, '/') . $diacritics;
                 }
