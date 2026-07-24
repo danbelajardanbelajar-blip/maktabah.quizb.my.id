@@ -41,10 +41,10 @@ export async function renderHome() {
       <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"></div>
     </section>
 
-    <!-- Pencarian Terpopuler & Terbaru -->
+    <!-- Pencarian Terpopuler, Terbaru & Pertanyaan Terbaru -->
     <div class="w-full bg-cream py-8">
       <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           
           <!-- Pencarian Terpopuler -->
           <div id="popular-search-section" style="display:none">
@@ -68,6 +68,19 @@ export async function renderHome() {
               <h2 class="text-base font-bold text-primary">Pencarian Terbaru</h2>
             </div>
             <div id="recent-search-chips" class="flex flex-wrap gap-2">
+              ${Array.from({length:5}, () => `<div class="skeleton h-8 w-24 rounded-full"></div>`).join('')}
+            </div>
+          </div>
+
+          <!-- Pertanyaan Terbaru -->
+          <div id="recent-questions-section" style="display:none">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
+                <i data-lucide="message-square" class="w-3.5 h-3.5 text-gold"></i>
+              </div>
+              <h2 class="text-base font-bold text-primary">Pertanyaan Terbaru</h2>
+            </div>
+            <div id="recent-questions-chips" class="flex flex-wrap gap-2">
               ${Array.from({length:5}, () => `<div class="skeleton h-8 w-24 rounded-full"></div>`).join('')}
             </div>
           </div>
@@ -243,6 +256,33 @@ export async function renderHome() {
                  border border-gold/25 bg-white hover:bg-primary hover:text-white hover:border-primary
                  text-sm text-primary/75 transition-all duration-150 shadow-sm cursor-pointer">
           <i data-lucide="search" class="w-3 h-3 opacity-50 shrink-0"></i>
+          ${safe}
+        </button>`;
+      }).join('');
+      reicons();
+    } catch { /* abaikan jika gagal */ }
+  })();
+
+  // Load Pertanyaan Terbaru
+  (async () => {
+    try {
+      const res     = await apiFetch({ action: 'recent_questions', limit: 5 });
+      const queries = res.data || [];
+      const section = document.getElementById('recent-questions-section');
+      const chips   = document.getElementById('recent-questions-chips');
+      if (!chips || !section) return;
+      if (!queries.length) { section.style.display = 'none'; return; }
+      section.style.display = '';
+      chips.innerHTML = queries.map(qObj => {
+        const q = typeof qObj === 'string' ? qObj : qObj.query;
+        const safe = escHtml(q);
+        const route = '/ask?q=' + encodeURIComponent(q).replace(/'/g, "%27");
+        return `<button
+          onclick="navigate('${route}')"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
+                 border border-gold/25 bg-white hover:bg-primary hover:text-white hover:border-primary
+                 text-sm text-primary/75 transition-all duration-150 shadow-sm cursor-pointer">
+          <i data-lucide="message-square" class="w-3 h-3 opacity-50 shrink-0"></i>
           ${safe}
         </button>`;
       }).join('');

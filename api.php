@@ -120,6 +120,7 @@ $router->add('search_recommendations', 'SearchController', 'handleSearchRecommen
 $router->add('search_scholarium_pdfs', 'SearchController', 'handleSearchScholarium');
 $router->add('log_search', 'SearchController', 'handleLogSearch');
 $router->add('ask_ai', 'AskController', 'handleAsk');
+$router->add('recent_questions', 'AskController', 'handleRecentQuestions');
 
 // Auth
 $router->add('auth_me', 'AuthController', 'handleAuthMe');
