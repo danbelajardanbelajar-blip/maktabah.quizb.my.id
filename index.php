@@ -1270,7 +1270,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </a>
 
   <!-- ===================== FOOTER ===================== -->
-  <footer class="bg-primary text-white mt-16 hidden md:block">
+  <footer id="app-footer" class="bg-primary text-white mt-16 hidden md:block" style="display:none;">
     <div class="gold-line"></div>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">

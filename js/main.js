@@ -86,6 +86,10 @@ function localNavigate(path, push = true) {
   Core.app().innerHTML = '';
   if (typeof window.closeCatDropdown === 'function') window.closeCatDropdown();
   handler(new URLSearchParams(path.includes('?') ? path.split('?')[1] : ''));
+  
+  const footer = document.getElementById('app-footer');
+  if (footer) footer.style.display = '';
+
   Core.setActiveNav(base);
   Core.updateReaderMenus(base);
   window.scrollTo({ top: 0, behavior: 'smooth' });
