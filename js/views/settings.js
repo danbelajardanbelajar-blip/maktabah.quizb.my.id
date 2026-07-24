@@ -605,11 +605,24 @@ export function renderSearch(params) {
   // Deteksi apakah ini navigasi kembali ke query yang sama
   const sameQuery = false; // caching is now handled by the browser/API
 
-  searchState.q        = newQ;
-  searchState.bookPage = 1;
-  searchState.contPage = 1;
-  searchState.pdfPage = 1;
-  searchState.contAndPage = 1;
+  let savedState = null;
+  if (newQ) {
+    try { savedState = JSON.parse(sessionStorage.getItem('searchState_' + newQ)); } catch(e){}
+  }
+
+  if (savedState && savedState.q === newQ) {
+    searchState.q = savedState.q;
+    searchState.bookPage = savedState.bookPage || 1;
+    searchState.contPage = savedState.contPage || 1;
+    searchState.pdfPage = savedState.pdfPage || 1;
+    searchState.contAndPage = savedState.contAndPage || 1;
+  } else {
+    searchState.q        = newQ;
+    searchState.bookPage = 1;
+    searchState.contPage = 1;
+    searchState.pdfPage = 1;
+    searchState.contAndPage = 1;
+  }
 
   // Jika kembali ke query yang sama dengan hasil tersimpan:
   const showSkeleton = newQ.length >= 2;
@@ -1305,8 +1318,12 @@ async function execSearch() {
     }).catch(()=>{ const b=$('#sec-pdf-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
 }
 
+function saveSearchState() {
+  if (searchState.q) sessionStorage.setItem('searchState_' + searchState.q, JSON.stringify(searchState));
+}
+
 window.goSearchBookPage = function(p) {
-  searchState.bookPage = p;
+  searchState.bookPage = p; saveSearchState();
   const q = searchState.q, body = $('#sec-books-body');
   if (body) body.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${skeletonCards(4)}</div>`;
   _abortBooks = new AbortController();
@@ -1322,7 +1339,7 @@ window.goSearchBookPage = function(p) {
 };
 
 window.goSearchContPage = function(p) {
-  searchState.contPage = p;
+  searchState.contPage = p; saveSearchState();
   const q = searchState.q, body = $('#sec-content-body');
   if (body) body.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div>`;
   _abortCont = new AbortController();
@@ -1340,7 +1357,7 @@ window.goSearchContPage = function(p) {
 };
 
 window.goSearchContAndPage = function(p) {
-  searchState.contAndPage = p;
+  searchState.contAndPage = p; saveSearchState();
   const q = searchState.q, bodyAnd = $('#sec-content-and-body');
   if (bodyAnd) bodyAnd.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div>`;
   _abortContAnd = new AbortController();
@@ -1357,6 +1374,22 @@ window.goSearchContAndPage = function(p) {
         ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, qWords)).join('')}</div>${loadMoreHtml(res.page || 1, res.has_more, 'goSearchContAndPage')}</div>`
         : noResultBlock('Tidak ada hasil.');
       reicons(); $('#sec-content-and')?.scrollIntoView({behavior:'smooth',block:'start'});
+    }).catch(()=>{});
+};
+
+window.goSearchPdfPage = function(p) {
+  searchState.pdfPage = p; saveSearchState();
+  const q = searchState.q, body = $('#sec-pdf-body');
+  if (body) body.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(2)}</div>`;
+  let _abortPdfLocal = new AbortController();
+  fetch(API + '?' + new URLSearchParams({action:'search_scholarium_pdfs', q, page:p, skip_log: '1'}), {signal:_abortPdfLocal.signal})
+    .then(r=>r.json()).then(res => {
+      patchHeader('sec-pdf','download','Download File PDF', res.total || 0);
+      if (!body) return;
+      body.innerHTML = res.data && res.data.length
+        ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${res.data.map((b,i)=>pdfCardStagger(b,i,q)).join('')}</div>${loadMoreHtml(res.page || 1, res.has_more, 'goSearchPdfPage')}</div>`
+        : noResultBlock('Tidak ada hasil.');
+      reicons(); $('#sec-pdf')?.scrollIntoView({behavior:'smooth',block:'start'});
     }).catch(()=>{});
 };
 
