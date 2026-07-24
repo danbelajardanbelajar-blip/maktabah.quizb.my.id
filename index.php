@@ -445,31 +445,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="modulepreload" href="/js/core/core.js" />
   <link rel="modulepreload" href="/js/views/home.js" />
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            primary:  { DEFAULT: '#166534', light: '#15803D', dark: '#14532D' },
-            gold:     { DEFAULT: '#C9A227', light: '#F4E7B2', dark: '#A1821F' },
-            cream:    { DEFAULT: '#F8FAF9', dark: '#F0FDF4' },
-            ink:      { DEFAULT: '#1F2937' },
-          },
-          fontFamily: {
-            latin:  ['Lato', 'sans-serif'],
-            arabic: ['"Amiri"', '"Noto Naskh Arabic"', 'serif'],
-          },
-          boxShadow: {
-            card: '0 2px 16px 0 rgba(22,101,52,.08)',
-            'card-hover': '0 8px 32px 0 rgba(22,101,52,.16)',
-          },
-        }
-      }
-    }
-  </script>
+  <?php $cssTailwindVer = @filemtime(__DIR__ . '/css/tailwind.css') ?: '1'; ?>
+  <!-- Compiled Tailwind CSS -->
+  <link rel="stylesheet" href="/css/tailwind.css?v=<?= $cssTailwindVer ?>" />
 
   <!-- Google Fonts (Optimized Async Loading) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
