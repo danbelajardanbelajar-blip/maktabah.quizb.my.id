@@ -1,0 +1,19 @@
+# Al-Maktabah As-Sunniyyah
+
+> Perpustakaan digital Islam memuat ribuan kitab salaf dan karya ulama Ahlussunnah wal Jama'ah.
+
+Situs ini adalah aplikasi perpustakaan digital (Single Page Application) yang menyediakan koleksi kitab kuning, terjemahan, dan fitur pencarian lanjutan untuk memudahkan pelajar, santri, dan masyarakat umum dalam mengakses literatur Islam.
+
+## Sitemaps & Data
+- [Sitemap](/sitemap.php)
+- [Robots.txt](/robots.txt)
+
+## Main Sections
+- [Beranda](/)
+- [Dashboard Pengguna](/dashboard)
+- [Katalog Kitab](/catalog)
+- [Kebijakan Privasi](/privacy)
+- [Ketentuan Layanan](/agreement)
+
+## Notes for AI Agents
+Untuk mencari data kitab, Anda dapat menavigasi ke `/catalog` atau berinteraksi dengan API pencarian internal yang tersedia pada sistem kami. Seluruh konten kitab dirender secara dinamis melalui JavaScript (SPA).
