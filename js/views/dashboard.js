@@ -13,7 +13,7 @@ function renderDashboard() {
       <!-- Profile card -->
       <div class="bg-white rounded-2xl shadow-card p-6 mb-8 flex items-center gap-5">
         ${u.picture
-          ? `<img src="${escHtml(u.picture)}" class="w-16 h-16 rounded-full object-cover border-4 border-gold/30 shadow"/>`
+          ? `<img src="${escHtml(u.picture)}" class="w-16 h-16 rounded-full object-cover border-4 border-gold/30 shadow" width="64" height="64" />`
           : `<div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold shadow">${escHtml(u.name.charAt(0).toUpperCase())}</div>`}
         <div class="flex-1 min-w-0">
           <div class="text-xs text-primary/40 font-semibold uppercase tracking-wider mb-1">Selamat datang</div>

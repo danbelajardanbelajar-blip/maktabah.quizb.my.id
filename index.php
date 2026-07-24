@@ -392,6 +392,10 @@ if ($reqPath === '/kitab' && isset($_GET['id'])) {
     ];
     $schemaJson = json_encode($schemaArr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
+
+// Versi file JS untuk cache busting
+$jsMainVer  = @filemtime(__DIR__ . '/js/main.js')      ?: '1';
+$jsAdminVer = @filemtime(__DIR__ . '/js/admin_main.js') ?: '1';
 // ────────────────────────────────────────────────────────────
 ?>
 
@@ -436,6 +440,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <?= $schemaJson ?>
   </script>
   <?php endif; ?>
+
+  <link rel="modulepreload" href="/js/main.js?v=<?= $jsMainVer ?>" />
+  <link rel="modulepreload" href="/js/core/core.js" />
+  <link rel="modulepreload" href="/js/views/home.js" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -980,7 +988,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Logo -->
         <a href="/" data-route="/" class="flex items-center gap-3 group">
-          <img src="/favicon.png" alt="Al-Maktabah As-Sunniyyah Logo" class="w-9 h-9 rounded-lg shadow-md group-hover:shadow-lg transition-shadow" />
+          <img src="/favicon.png" alt="Al-Maktabah As-Sunniyyah Logo" class="w-9 h-9 rounded-lg shadow-md group-hover:shadow-lg transition-shadow" width="36" height="36" />
           <div class="leading-tight">
             <div class="arabic text-primary font-bold text-base leading-none">المكتبة السنية</div>
             <div class="text-xs text-primary/60 font-light tracking-wide">Al-Maktabah As-Sunniyyah</div>
@@ -1021,7 +1029,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <button id="user-menu-btn" aria-label="Menu Pengguna" class="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-cream-dark transition-colors">
                 <?php if (!empty($sessionUser['picture'])): ?>
                   <img src="<?= htmlspecialchars($sessionUser['picture']) ?>" alt="Avatar"
-                       class="w-7 h-7 rounded-full object-cover border-2 border-gold/40" />
+                       class="w-7 h-7 rounded-full object-cover border-2 border-gold/40" width="28" height="28" />
                 <?php else: ?>
                   <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
                     <?= htmlspecialchars(mb_strtoupper(mb_substr($sessionUser['name'], 0, 1))) ?>
@@ -1198,7 +1206,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a href="/dashboard" data-route="/dashboard" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
         <?php if (!empty($sessionUser['picture'])): ?>
           <img src="<?= htmlspecialchars($sessionUser['picture']) ?>" alt="Avatar"
-               class="w-5 h-5 rounded-full object-cover border border-gold/40" />
+               class="w-5 h-5 rounded-full object-cover border border-gold/40" width="20" height="20" />
         <?php else: ?>
           <i data-lucide="user-circle" class="w-5 h-5"></i>
         <?php endif; ?>
@@ -1586,12 +1594,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }); // end DOMContentLoaded
   </script>
 
-  <?php
-  // Versi berdasarkan file mtime — cache browser bekerja normal,
-  // hanya invaliding saat file sungguh berubah.
-  $jsMainVer  = @filemtime(__DIR__ . '/js/main.js')      ?: '1';
-  $jsAdminVer = @filemtime(__DIR__ . '/js/admin_main.js') ?: '1';
-  ?>
   <script type="module" src="/js/main.js?v=<?= $jsMainVer ?>"></script>
   <?php if (($sessionUser['role'] ?? '') === 'admin'): ?>
     <script type="module" src="/js/admin_main.js?v=<?= $jsAdminVer ?>"></script>
