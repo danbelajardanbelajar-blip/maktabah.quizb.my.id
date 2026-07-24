@@ -114,13 +114,15 @@ class SearchHelper {
         }
 
         if (strpos($q, ' ') !== false) {
-            $escaped = self::ftEscape($q);
-            $variants = self::getAlefVariants($escaped);
-            if (count($variants) > 1) {
-                $parts = array_map(function($v) { return '"' . $v . '"'; }, $variants);
-                return '+(' . implode(' ', $parts) . ')';
+            $words = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
+            $parts = [];
+            foreach ($words as $w) {
+                $term = self::booleanSearchTerm($w);
+                if ($term !== '') {
+                    $parts[] = $term;
+                }
             }
-            return '+"' . $escaped . '"';
+            return implode(' ', $parts);
         }
 
         $clean = self::ftEscape($q);
