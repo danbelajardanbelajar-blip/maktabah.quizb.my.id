@@ -1003,18 +1003,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Search + Settings + Auth (desktop) -->
         <div class="flex items-center gap-2">
-          <button id="nav-search-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Cari Kitab">
+          <button id="nav-search-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Cari Kitab" aria-label="Cari Kitab">
             <i data-lucide="search" class="w-5 h-5 text-primary"></i>
           </button>
           <button id="nav-theme-btn" onclick="window.setTheme(document.documentElement.classList.contains('dark')?'light':'dark')"
-            class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Ganti Tema">
+            class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Ganti Tema" aria-label="Ganti Tema">
             <i id="nav-theme-icon" data-lucide="sun" class="w-5 h-5 text-primary"></i>
           </button>
 
           <?php if ($sessionUser): ?>
             <!-- User menu (logged in) -->
             <div class="relative" id="user-menu-wrap">
-              <button id="user-menu-btn" class="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-cream-dark transition-colors">
+              <button id="user-menu-btn" aria-label="Menu Pengguna" class="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-cream-dark transition-colors">
                 <?php if (!empty($sessionUser['picture'])): ?>
                   <img src="<?= htmlspecialchars($sessionUser['picture']) ?>" alt="Avatar"
                        class="w-7 h-7 rounded-full object-cover border-2 border-gold/40" />
@@ -1111,7 +1111,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40"></i>
         <input id="global-search-input" type="text" placeholder="Cari judul kitab atau pengarang…"
           class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gold/30 bg-white focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
-        <button id="search-bar-close" class="absolute right-3 top-1/2 -translate-y-1/2">
+        <button id="search-bar-close" class="absolute right-3 top-1/2 -translate-y-1/2" aria-label="Tutup pencarian">
           <i data-lucide="x" class="w-4 h-4 text-primary/40 hover:text-primary"></i>
         </button>
       </div>
@@ -1119,7 +1119,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </nav>
 
   <!-- ===================== KATEGORI MEGA-DROPDOWN ===================== -->
-  <div id="cat-mega-dropdown" role="menu" aria-label="Pilih Kategori">
+  <div id="cat-mega-dropdown" aria-label="Pilih Kategori">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <!-- Header row -->
       <div class="flex items-center justify-between mb-3">
@@ -1127,7 +1127,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           Pilih Kategori
         </span>
         <a href="/kategori" data-route="/kategori"
-           style="font-size:12px;color:#C9A227;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px;"
+           style="font-size:12px;color:#806315;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px;"
            onclick="closeCatDropdown()">
           Lihat semua <i data-lucide="arrow-right" style="width:12px;height:12px;"></i>
         </a>
@@ -1473,7 +1473,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <button class="cat-mega-item"
                   onclick="window.closeCatDropdown(); window.navigate && window.navigate('/kategori?cat=${c.id}')">
                   <span>${c.name}</span>
-                  <span style="font-size:11px;color:#C9A227;font-weight:700;">${c.book_count}</span>
+                  <span style="font-size:11px;color:#806315;font-weight:700;">${c.book_count}</span>
                 </button>`).join('');
               if (window.lucide) lucide.createIcons();
             })
