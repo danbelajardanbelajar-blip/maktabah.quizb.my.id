@@ -92,7 +92,7 @@ function localNavigate(path, push = true) {
 
   Core.setActiveNav(base);
   Core.updateReaderMenus(base);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (push && window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
   Core.reicons();
   Core.logVisitorActivity('visit', { route: base });
 };
