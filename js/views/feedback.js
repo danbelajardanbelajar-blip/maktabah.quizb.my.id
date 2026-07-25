@@ -347,7 +347,7 @@ export async function renderRequestKitab() {
             </div>
 
             <button type="submit" id="rq-submit-btn"
-              class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gold text-primary font-semibold text-sm hover:bg-gold-light transition-colors shadow-sm">
+              class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-700 text-white font-semibold text-sm hover:bg-gold-light transition-colors shadow-sm">
               <i data-lucide="help-circle" class="w-4 h-4"></i>
               <span id="rq-btn-label">Kirim Request</span>
             </button>

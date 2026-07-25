@@ -104,7 +104,7 @@ export async function renderHome() {
               <h2 class="text-xl font-bold text-primary">Kitab Terpopuler</h2>
             </div>
             <a href="/katalog" data-route="/katalog" class="text-sm text-amber-700 hover:text-amber-800 font-medium flex items-center gap-1">
-              Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              Semua Kitab <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
           </div>
           <div id="popular-books-grid">
@@ -147,7 +147,7 @@ export async function renderHome() {
             <p class="text-white/65 text-xs leading-relaxed mb-4">Bagikan karya Anda atau ajukan permohonan kitab/hasil kajian untuk koleksi perpustakaan digital ini.</p>
             <div class="flex flex-wrap gap-3">
               <button onclick="handleSubmitCTA()"
-                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-primary font-semibold text-sm shadow hover:bg-gold-light transition-colors">
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-700 text-white font-semibold text-sm shadow hover:bg-gold-light transition-colors">
                 <i data-lucide="send" class="w-4 h-4"></i>
                 Kirimkan File
               </button>

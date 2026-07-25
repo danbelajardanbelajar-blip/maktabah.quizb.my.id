@@ -639,7 +639,7 @@ export function renderSearch(params) {
             <button id="search-clear" class="p-2 text-slate-600 hover:text-primary transition-colors ${searchState.q ? '' : 'hidden'}" title="Hapus pencarian">
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
-            <button id="search-btn" class="p-2 bg-gold text-primary rounded-xl hover:bg-gold-light transition-colors shadow-sm" title="Mulai pencarian">
+            <button id="search-btn" class="p-2 bg-amber-700 text-white rounded-xl hover:bg-gold-light transition-colors shadow-sm" title="Mulai pencarian">
               <i data-lucide="search" class="w-4 h-4"></i>
             </button>
           </div>

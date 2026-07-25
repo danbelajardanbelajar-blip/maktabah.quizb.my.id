@@ -1121,7 +1121,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <a href="/kategori" data-route="/kategori"
            style="font-size:12px;color:#806315;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px;"
            onclick="closeCatDropdown()">
-          Lihat semua <i data-lucide="arrow-right" style="width:12px;height:12px;"></i>
+          Semua Kategori <i data-lucide="arrow-right" style="width:12px;height:12px;"></i>
         </a>
       </div>
       <!-- Grid populated by JS -->
