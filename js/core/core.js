@@ -407,8 +407,8 @@ export function bookCard(b) {
     ? `<span class="dl-fmt-badge dl-fmt-zip">ZIP · ${totalJuz} juz</span>`
     : `<span class="dl-fmt-badge dl-fmt-docx">DOCX</span>`;
   const dlTitle    = totalJuz > 1
-    ? `Unduh ${totalJuz} file DOCX dalam ZIP`
-    : 'Unduh sebagai DOCX';
+    ? `Unduh kitab ${title} (${totalJuz} file DOCX dalam ZIP)`
+    : `Unduh kitab ${title} sebagai DOCX`;
   return `
     <div class="book-card bg-white rounded-2xl shadow-card p-5 flex flex-col gap-3 cursor-pointer"
          onclick="navigate('/kitab?id=${b.bkid}')">
