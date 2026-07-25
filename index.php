@@ -1165,8 +1165,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="relative flex items-center">
             <i data-lucide="search" class="absolute left-4 md:left-6 w-5 h-5 text-slate-600"></i>
             <input id="hero-search-ssr" type="text" placeholder="Cari teks, judul, atau pengarang..."
+              onkeydown="if(event.key==='Enter' && this.value.trim()){ window.location.href='/search?q=' + encodeURIComponent(this.value.trim()); }"
               class="w-full pl-12 md:pl-14 pr-28 md:pr-36 py-4 md:py-5 rounded-2xl text-ink text-sm md:text-base bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus:outline-none focus:ring-2 focus:ring-gold transition-all placeholder:text-gray-400" />
-            <button class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] text-gold px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs md:text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)]">
+            <button onclick="var q=document.getElementById('hero-search-ssr').value.trim(); if(q) window.location.href='/search?q='+encodeURIComponent(q);" 
+              class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] text-gold px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs md:text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)]">
               Cari <span class="hidden md:inline">Kitab</span>
             </button>
           </div>
