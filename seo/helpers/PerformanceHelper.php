@@ -21,18 +21,13 @@ class PerformanceHelper {
         
         // DNS Prefetch & Preconnect
         $domains = [
-            'https://fonts.googleapis.com',
-            'https://fonts.gstatic.com',
-            'https://cdn.tailwindcss.com'
+            'https://fonts.gstatic.com'
         ];
         
         foreach ($domains as $domain) {
             $html .= "<link rel=\"dns-prefetch\" href=\"{$domain}\" />\n";
             $html .= "<link rel=\"preconnect\" href=\"{$domain}\" crossorigin />\n";
         }
-        
-        // Preload Fonts (from original index.php)
-        $html .= "<link rel=\"preload\" href=\"https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lato:wght@300;400;700&display=swap\" as=\"style\" />\n";
 
         // Web App Manifest
         $html .= "<link rel=\"manifest\" href=\"/manifest.json\" />\n";
