@@ -445,16 +445,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="modulepreload" href="/js/core/core.js" />
   <link rel="modulepreload" href="/js/views/home.js" />
 
-  <?php $cssTailwindVer = @filemtime(__DIR__ . '/css/tailwind.css') ?: '1'; ?>
-  <!-- Compiled Tailwind CSS -->
-  <link rel="stylesheet" href="/css/tailwind.css?v=<?= $cssTailwindVer ?>" />
-
-  <!-- Google Fonts (Optimized for LCP) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  
-  <!-- Critical Fonts (Amiri, Lato) loaded synchronously -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700;900&display=swap" />
+  <!-- INLINED CRITICAL CSS (Tailwind & Google Fonts) to eliminate render blocking -->
+  <style>
+    <?php
+      echo file_get_contents(__DIR__ . '/css/fonts.css');
+      echo file_get_contents(__DIR__ . '/css/tailwind.css');
+    ?>
+  </style>
 
   <!-- Non-critical Reader Fonts loaded asynchronously -->
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700&family=Cairo:wght@400;600;700&family=Tajawal:wght@400;500;700&family=Scheherazade+New:wght@400;700&family=Reem+Kufi:wght@400;600&family=Lateef:wght@400;700&family=Aref+Ruqaa&family=El+Messiri:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;600&family=Inter:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Raleway:wght@300;400;600;700&family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;600;700&display=swap" />
