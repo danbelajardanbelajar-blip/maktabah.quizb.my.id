@@ -27,22 +27,22 @@ async function renderAdminDownloadLogs() {
       <!-- Filter bar -->
       <div class="bg-white rounded-2xl shadow-card p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div class="flex-1 min-w-[130px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">ID Kitab</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">ID Kitab</label>
           <input id="dlf-bkid" type="text" placeholder="Masukkan ID kitab"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <div class="flex-1 min-w-[180px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Cari Judul / User / IP</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Cari Judul / User / IP</label>
           <input id="dlf-query" type="text" placeholder="Masukkan kata kunci…" oninput="dlFilterDebounce()"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <div class="flex-1 min-w-[150px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Tanggal</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Tanggal</label>
           <input id="dlf-date" type="date" onchange="dlLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <button onclick="dlReset()"
-          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
+          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
         </button>
       </div>
@@ -100,7 +100,7 @@ async function renderAdminDownloadLogs() {
       if (topdEl && d.top_downloads?.length && !_dl.bkid && !_dl.query && !_dl.date) {
         topdEl.innerHTML = `
           <div class="bg-white rounded-2xl shadow-card p-5">
-            <div class="text-xs font-semibold text-primary/50 uppercase tracking-wider mb-3">Top Download</div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Top Download</div>
             <div class="flex flex-wrap gap-2">
               ${d.top_downloads.map(q => `
                 <button onclick="document.getElementById('dlf-bkid').value=${JSON.stringify(q.bkid)};dlLoad(1)"
@@ -128,27 +128,27 @@ async function renderAdminDownloadLogs() {
           <table class="w-full text-sm">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Waktu</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Kitab</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">User / Role</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">IP</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Perangkat / Browser</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Kitab</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">User / Role</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">IP</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Perangkat / Browser</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
               ${d.rows.map(r => `
                 <tr class="hover:bg-cream/30 transition-colors">
-                  <td class="px-4 py-3 text-primary/50 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
+                  <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3 text-xs text-primary/70 max-w-[240px] truncate" title="${escHtml(r.book_title)}">
                     ${r.source === 'scholarium' ? '<span class="inline-block text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider mr-1">Scholarium</span>' : ''}
                     #${escHtml(String(r.bkid))} — ${escHtml(r.book_title)}
                   </td>
-                  <td class="px-4 py-3 text-xs text-primary/60">
+                  <td class="px-4 py-3 text-xs text-slate-600">
                     ${escHtml(r.user_name || 'Guest')}<br>
                     <span class="text-primary/40">${escHtml(r.user_email || '—')} · ${escHtml(r.user_role || 'user')}</span>
                   </td>
-                  <td class="px-4 py-3 font-mono text-xs text-primary/50 truncate max-w-[140px]">${escHtml(r.ip_address)}</td>
-                  <td class="px-4 py-3 text-xs text-primary/60 max-w-[320px] truncate" title="${escHtml(r.user_agent)}">${escHtml(r.user_agent)}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500 truncate max-w-[140px]">${escHtml(r.ip_address)}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 max-w-[320px] truncate" title="${escHtml(r.user_agent)}">${escHtml(r.user_agent)}</td>
                 </tr>`).join('')}
             </tbody>
           </table>

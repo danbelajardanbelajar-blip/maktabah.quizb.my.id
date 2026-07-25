@@ -14,7 +14,7 @@ export async function renderMyActivity() {
         </button>
         <div>
           <h1 class="text-2xl font-bold text-primary">Aktivitas Saya</h1>
-          <p class="text-sm text-primary/60">Pantau status kiriman, request, dan masukan Anda.</p>
+          <p class="text-sm text-slate-600">Pantau status kiriman, request, dan masukan Anda.</p>
         </div>
       </div>
 
@@ -57,7 +57,7 @@ export async function renderMyActivity() {
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
                         <div>
                             <h3 class="font-semibold text-primary text-sm">${escHtml(item.title)}</h3>
-                            <p class="text-xs text-primary/50 mt-1">${date} • ${typeLabel}</p>
+                            <p class="text-xs text-slate-500 mt-1">${date} • ${typeLabel}</p>
                         </div>
                         <div class="shrink-0">
                             ${renderStatusBadge(item.status)}
@@ -90,7 +90,7 @@ export async function renderMyActivity() {
             <div class="bg-white rounded-2xl border border-gold/10 p-10 text-center">
                 <i data-lucide="inbox" class="w-12 h-12 text-primary/20 mx-auto mb-3"></i>
                 <h3 class="text-lg font-semibold text-primary">Belum ada aktivitas</h3>
-                <p class="text-sm text-primary/50 mt-1">Anda belum pernah mengirim file, request, atau feedback.</p>
+                <p class="text-sm text-slate-500 mt-1">Anda belum pernah mengirim file, request, atau feedback.</p>
             </div>
         `;
     }

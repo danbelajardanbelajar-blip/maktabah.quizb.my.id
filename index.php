@@ -971,7 +971,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <img src="/favicon.png" alt="Al-Maktabah As-Sunniyyah Logo" class="w-9 h-9 rounded-lg shadow-md group-hover:shadow-lg transition-shadow" width="36" height="36" />
           <div class="leading-tight">
             <div class="arabic text-primary font-bold text-base leading-none">المكتبة السنية</div>
-            <div class="text-xs text-primary/60 font-light tracking-wide">Al-Maktabah As-Sunniyyah</div>
+            <div class="text-xs text-slate-600 font-light tracking-wide">Al-Maktabah As-Sunniyyah</div>
           </div>
         </a>
 
@@ -1027,7 +1027,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                   <div class="text-sm font-semibold text-primary truncate"><?= htmlspecialchars($sessionUser['name']) ?></div>
                   <div class="text-xs text-primary/50 truncate"><?= htmlspecialchars($sessionUser['email']) ?></div>
                   <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
-                    <?= $sessionUser['role'] === 'admin' ? 'bg-gold/20 text-gold-dark' : 'bg-primary/8 text-primary/60' ?>">
+                    <?= $sessionUser['role'] === 'admin' ? 'bg-gold/20 text-gold-dark' : 'bg-primary/8 text-slate-600' ?>">
                     <?= $sessionUser['role'] === 'admin' ? '👑 Admin' : 'User' ?>
                   </span>
                 </div>
@@ -1042,39 +1042,39 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
                 <a href="/admin/books" data-route="/admin/books"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="book" class="w-4 h-4 text-gold/60"></i> Kitab
+                  <i data-lucide="book" class="w-4 h-4 text-amber-700/80"></i> Kitab
                 </a>
                 <a href="/admin/categories" data-route="/admin/categories"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="folder" class="w-4 h-4 text-gold/60"></i> Kategori
+                  <i data-lucide="folder" class="w-4 h-4 text-amber-700/80"></i> Kategori
                 </a>
                 <a href="/admin/history" data-route="/admin/history"
                    class="hidden md:flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="history" class="w-4 h-4 text-gold/60"></i> CRUD History
+                  <i data-lucide="history" class="w-4 h-4 text-amber-700/80"></i> CRUD History
                 </a>
                 <a href="/admin/activity" data-route="/admin/activity"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="activity" class="w-4 h-4 text-gold/60"></i> Aktivitas
+                  <i data-lucide="activity" class="w-4 h-4 text-amber-700/80"></i> Aktivitas
                 </a>
                 <a href="/admin/search-logs" data-route="/admin/search-logs"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="search" class="w-4 h-4 text-gold/60"></i> Pencarian
+                  <i data-lucide="search" class="w-4 h-4 text-amber-700/80"></i> Pencarian
                 </a>
                 <a href="/admin/download-logs" data-route="/admin/download-logs"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="download" class="w-4 h-4 text-gold/60"></i> Download
+                  <i data-lucide="download" class="w-4 h-4 text-amber-700/80"></i> Download
                 </a>
                 <a href="/admin/submissions" data-route="/admin/submissions"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="inbox" class="w-4 h-4 text-gold/60"></i> Review Kiriman
+                  <i data-lucide="inbox" class="w-4 h-4 text-amber-700/80"></i> Review Kiriman
                 </a>
                 <a href="/admin/requests" data-route="/admin/requests"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="help-circle" class="w-4 h-4 text-gold/60"></i> Request Kitab
+                  <i data-lucide="help-circle" class="w-4 h-4 text-amber-700/80"></i> Request Kitab
                 </a>
                 <a href="/admin/feedback" data-route="/admin/feedback"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="message-square" class="w-4 h-4 text-gold/60"></i> Review Feedback
+                  <i data-lucide="message-square" class="w-4 h-4 text-amber-700/80"></i> Review Feedback
                 </a>
                 <?php endif; ?>
                 <div class="border-t border-cream-dark mt-1"></div>
@@ -1163,7 +1163,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="max-w-2xl mx-auto relative group">
           <div class="absolute -inset-1 bg-gradient-to-r from-gold/30 via-primary-light/30 to-gold/30 rounded-3xl blur opacity-40 group-hover:opacity-70 transition duration-1000 group-hover:duration-300"></div>
           <div class="relative flex items-center">
-            <i data-lucide="search" class="absolute left-4 md:left-6 w-5 h-5 text-primary/60"></i>
+            <i data-lucide="search" class="absolute left-4 md:left-6 w-5 h-5 text-slate-600"></i>
             <input id="hero-search-ssr" type="text" placeholder="Cari teks, judul, atau pengarang..."
               class="w-full pl-12 md:pl-14 pr-28 md:pr-36 py-4 md:py-5 rounded-2xl text-ink text-sm md:text-base bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus:outline-none focus:ring-2 focus:ring-gold transition-all placeholder:text-gray-400" />
             <button class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] text-gold px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs md:text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)]">
@@ -1320,8 +1320,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div>
           <h4 class="text-gold text-sm font-semibold uppercase tracking-wider mb-4">Info</h4>
           <ul class="space-y-2 text-sm text-white/70">
-            <li class="flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-gold/60"></i> maktabah.quizb.my.id</li>
-            <li class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> Ribuan Kitab Tersedia</li>
+            <li class="flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-amber-700/80"></i> maktabah.quizb.my.id</li>
+            <li class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-amber-700/80"></i> Ribuan Kitab Tersedia</li>
           </ul>
         </div>
 

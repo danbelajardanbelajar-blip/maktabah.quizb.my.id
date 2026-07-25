@@ -12,7 +12,7 @@ export async function renderKatalog(params) {
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold text-primary">Katalog Kitab</h1>
-          <p class="text-primary/50 text-sm mt-1">Seluruh koleksi kitab perpustakaan</p>
+          <p class="text-slate-500 text-sm mt-1">Seluruh koleksi kitab perpustakaan</p>
         </div>
         <div id="cat-filter-wrap" class="w-full sm:w-auto">
           <select id="cat-filter" class="w-full sm:w-56 px-3 py-2 rounded-xl border border-gold/30 bg-white text-sm text-primary focus:outline-none focus:border-gold">

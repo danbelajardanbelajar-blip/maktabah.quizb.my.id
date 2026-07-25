@@ -18,9 +18,9 @@ function renderDashboard() {
         <div class="flex-1 min-w-0">
           <div class="text-xs text-primary/40 font-semibold uppercase tracking-wider mb-1">Selamat datang</div>
           <div class="text-xl font-bold text-primary truncate">${escHtml(u.name)}</div>
-          <div class="text-sm text-primary/50 truncate">${escHtml(u.email)}</div>
+          <div class="text-sm text-slate-500 truncate">${escHtml(u.email)}</div>
           <span class="inline-block mt-2 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider
-            ${isAdmin ? 'bg-yellow-100 text-yellow-700' : 'bg-primary/8 text-primary/60'}">
+            ${isAdmin ? 'bg-yellow-100 text-yellow-700' : 'bg-primary/8 text-slate-600'}">
             ${isAdmin ? '👑 Admin' : '👤 User'}
           </span>
         </div>
@@ -66,7 +66,7 @@ function dashCard(route, icon, title, sub, admin) {
       </div>
       <div class="min-w-0">
         <div class="font-semibold text-sm ${admin ? 'text-yellow-800' : 'text-primary'} truncate">${title}</div>
-        <div class="text-xs mt-0.5 ${admin ? 'text-yellow-600/70' : 'text-primary/50'}">${sub}</div>
+        <div class="text-xs mt-0.5 ${admin ? 'text-yellow-600/70' : 'text-slate-500'}">${sub}</div>
       </div>
     </a>`;
 }

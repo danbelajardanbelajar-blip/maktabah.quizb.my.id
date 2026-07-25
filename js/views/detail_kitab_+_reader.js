@@ -26,7 +26,7 @@ async function renderDetail(params) {
 
   app().innerHTML = `
     <div class="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 py-10">
-      <button onclick="history.back()" class="flex items-center gap-2 text-primary/60 hover:text-primary text-sm mb-6 transition-colors">
+      <button onclick="history.back()" class="flex items-center gap-2 text-slate-600 hover:text-primary text-sm mb-6 transition-colors">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali
       </button>
       <div id="detail-content">
@@ -92,12 +92,12 @@ async function renderDetail(params) {
           ${description ? `
             <div>
               <h3 class="text-xs font-semibold text-primary/40 uppercase tracking-wider mb-2">Deskripsi</h3>
-              <p class="text-primary/75 text-sm leading-relaxed arabic">${escHtml(description)}</p>
+              <p class="text-primary text-sm leading-relaxed arabic">${escHtml(description)}</p>
             </div>` : ''}
           ${authorInfo ? `
             <div>
               <h3 class="text-xs font-semibold text-primary/40 uppercase tracking-wider mb-2">Tentang Pengarang</h3>
-              <p class="text-primary/75 text-sm leading-relaxed arabic">${escHtml(authorInfo)}</p>
+              <p class="text-primary text-sm leading-relaxed arabic">${escHtml(authorInfo)}</p>
             </div>` : ''}
         </div>
 
@@ -126,7 +126,7 @@ async function renderDetail(params) {
                 <span id="reader-total-label" class="text-primary/40 text-xs whitespace-nowrap">dari ${contentPgs}</span>
                 <!-- Font Settings Gear Button -->
                 <button id="font-settings-btn" title="Pengaturan Font"
-                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2">
+                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-slate-500 hover:text-primary shrink-0 ml-1 sm:ml-2">
                   <i data-lucide="settings-2" class="w-4 h-4"></i>
                 </button>
               </div>
@@ -347,7 +347,7 @@ function renderFontPanel() {
           <div>
             <div class="flex items-center gap-2 mb-3">
               <i data-lucide="type" class="w-3.5 h-3.5 text-gold shrink-0"></i>
-              <span class="text-xs font-bold text-primary/50 uppercase tracking-wider">Font Latin (LTR)</span>
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Font Latin (LTR)</span>
             </div>
             <div class="grid grid-cols-2 gap-1.5">${latinChips}</div>
           </div>
@@ -355,7 +355,7 @@ function renderFontPanel() {
           <div>
             <div class="flex items-center gap-2 mb-3">
               <i data-lucide="type" class="w-3.5 h-3.5 text-gold shrink-0"></i>
-              <span class="text-xs font-bold text-primary/50 uppercase tracking-wider">فونت عربي (RTL)</span>
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">فونت عربي (RTL)</span>
             </div>
             <div class="grid grid-cols-2 gap-1.5">${arabicChips}</div>
           </div>
@@ -364,7 +364,7 @@ function renderFontPanel() {
         <!-- Size slider -->
         <div class="border-t border-cream-dark pt-4">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold text-primary/50 uppercase tracking-wider flex items-center gap-1">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
               <i data-lucide="a-large-small" class="w-3.5 h-3.5 text-gold"></i> Ukuran Teks
             </span>
             <span id="font-size-label" class="text-xs font-bold text-gold">${readerFontState.size}px</span>

@@ -14,7 +14,7 @@ export async function renderNotifications() {
         </button>
         <div>
           <h1 class="text-2xl font-bold text-primary">Notifikasi</h1>
-          <p class="text-sm text-primary/60">Pembaruan terbaru untuk Anda.</p>
+          <p class="text-sm text-slate-600">Pembaruan terbaru untuk Anda.</p>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ async function loadNotifications() {
                 </div>
                 <div class="pr-6">
                     <h3 class="font-semibold text-primary text-sm">${escHtml(n.title)}</h3>
-                    <p class="text-xs text-primary/50 mt-0.5 mb-2">${date}</p>
+                    <p class="text-xs text-slate-500 mt-0.5 mb-2">${date}</p>
                     <p class="text-sm text-primary/80 whitespace-pre-wrap">${escHtml(n.message)}</p>
                 </div>
             </div>

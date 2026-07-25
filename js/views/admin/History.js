@@ -10,7 +10,7 @@ async function renderAdminHistory() {
     app().innerHTML = adminNavBar('/admin/history') + `
       <div class="max-w-2xl mx-auto px-4 py-16 text-center">
         <i data-lucide="monitor" class="w-12 h-12 text-gold/40 mx-auto mb-4"></i>
-        <p class="text-primary/50 text-sm">Halaman ini hanya tersedia di tampilan desktop.</p>
+        <p class="text-slate-500 text-sm">Halaman ini hanya tersedia di tampilan desktop.</p>
       </div>`;
     reicons(); return;
   }
@@ -32,7 +32,7 @@ async function renderAdminHistory() {
       <!-- Filter bar -->
       <div class="bg-white rounded-2xl shadow-card p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div class="flex-1 min-w-[140px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Jenis Aksi</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Jenis Aksi</label>
           <select id="hf-action" onchange="histLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/30">
             <option value="">Semua</option>
@@ -43,7 +43,7 @@ async function renderAdminHistory() {
           </select>
         </div>
         <div class="flex-1 min-w-[140px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Tabel</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Tabel</label>
           <select id="hf-table" onchange="histLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/30">
             <option value="">Semua</option>
@@ -54,12 +54,12 @@ async function renderAdminHistory() {
           </select>
         </div>
         <div class="flex-1 min-w-[160px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Nama Admin</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Nama Admin</label>
           <input id="hf-admin" type="text" placeholder="Cari nama admin…" oninput="histFilterDebounce()"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <button onclick="histReset()"
-          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
+          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
         </button>
       </div>
@@ -103,22 +103,22 @@ async function renderAdminHistory() {
           <table class="w-full text-sm">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50 whitespace-nowrap">Waktu</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Aksi</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Tabel</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">ID Record</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Detail</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Admin</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Aksi</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Tabel</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">ID Record</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Detail</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Admin</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
               ${d.rows.map(r => `
                 <tr class="hover:bg-cream/30 transition-colors">
-                  <td class="px-4 py-3 text-primary/50 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
+                  <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3">${actionBadge(r.action)}</td>
                   <td class="px-4 py-3 font-mono text-xs text-primary/70">${escHtml(r.table_name)}</td>
-                  <td class="px-4 py-3 font-mono text-xs text-primary/60">${escHtml(r.record_id)}</td>
-                  <td class="px-4 py-3 text-xs text-primary/60 max-w-xs truncate" title="${escHtml(r.detail||'')}">${escHtml(r.detail||'—')}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-600">${escHtml(r.record_id)}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 max-w-xs truncate" title="${escHtml(r.detail||'')}">${escHtml(r.detail||'—')}</td>
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-2">
                       <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -140,7 +140,7 @@ async function renderAdminHistory() {
       }
       pager.innerHTML = `
         <div class="flex flex-col items-center gap-2">
-          <div class="text-xs text-primary/50">Menampilkan halaman ${_hist.page} dari ${totalPages} — total ${d.total} catatan</div>
+          <div class="text-xs text-slate-500">Menampilkan halaman ${_hist.page} dari ${totalPages} — total ${d.total} catatan</div>
           ${paginationHtml(_hist.page, totalPages, 'histGotoPage')}
         </div>`;
       reicons();

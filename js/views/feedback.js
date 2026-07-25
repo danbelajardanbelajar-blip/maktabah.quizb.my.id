@@ -6,7 +6,7 @@ export function renderFeedback() {
     <div class="max-w-2xl mx-auto px-4 sm:px-6 py-12">
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-primary mb-3">Feedback & Masukan</h1>
-        <p class="text-sm text-primary/60">Punya saran, kritik, atau menemukan kendala? Beritahu kami agar kami bisa menjadi lebih baik.</p>
+        <p class="text-sm text-slate-600">Punya saran, kritik, atau menemukan kendala? Beritahu kami agar kami bisa menjadi lebih baik.</p>
         <div class="gold-line mt-6 max-w-xs mx-auto"></div>
       </div>
       <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gold/10">
@@ -118,7 +118,7 @@ export async function renderSubmitFile() {
           </button>
           <div>
             <h1 class="text-lg font-bold text-primary">Kirimkan File</h1>
-            <p class="text-xs text-primary/50">Hasil Bahsul Masail atau Kitab</p>
+            <p class="text-xs text-slate-500">Hasil Bahsul Masail atau Kitab</p>
           </div>
         </div>
 
@@ -189,7 +189,7 @@ export async function renderSubmitFile() {
               </label>
               <label class="flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed border-gold/40 rounded-xl py-7 px-4 bg-cream cursor-pointer hover:border-gold hover:bg-gold/5 transition-all" id="file-drop-zone">
                 <i data-lucide="upload-cloud" class="w-8 h-8 text-gold/60"></i>
-                <span class="text-sm text-primary/50" id="file-label">Klik untuk pilih file atau seret ke sini</span>
+                <span class="text-sm text-slate-500" id="file-label">Klik untuk pilih file atau seret ke sini</span>
                 <input type="file" id="sf-file" name="file" accept=".pdf,.doc,.docx" required class="hidden"
                   onchange="document.getElementById('file-label').textContent = this.files[0]?.name || 'Pilih file'" />
               </label>
@@ -282,7 +282,7 @@ export async function renderRequestKitab() {
           </button>
           <div>
             <h1 class="text-lg font-bold text-primary">Request Kitab</h1>
-            <p class="text-xs text-primary/50">Ajukan kitab atau hasil bahsul masail</p>
+            <p class="text-xs text-slate-500">Ajukan kitab atau hasil bahsul masail</p>
           </div>
         </div>
 

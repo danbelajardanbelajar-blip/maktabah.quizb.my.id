@@ -22,7 +22,7 @@ async function renderAdminActivity() {
 
       <div class="bg-white rounded-2xl shadow-card p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div class="flex-1 min-w-[140px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Jenis Event</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Jenis Event</label>
           <select id="actf-event" onchange="actLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/30">
             <option value="">Semua</option>
@@ -34,17 +34,17 @@ async function renderAdminActivity() {
           </select>
         </div>
         <div class="flex-1 min-w-[180px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Cari</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Cari</label>
           <input id="actf-query" type="text" placeholder="Cari user, email, IP, atau detail…" oninput="actFilterDebounce()" onkeydown="if (event.key === 'Enter') actLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <div class="flex-1 min-w-[150px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Tanggal</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Tanggal</label>
           <input id="actf-date" type="date" onchange="actLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <button type="button" onclick="actReset()"
-          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
+          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
         </button>
       </div>
@@ -114,23 +114,23 @@ async function renderAdminActivity() {
           <table class="w-full text-sm">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50 whitespace-nowrap">Waktu</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Event</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">User</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Role</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">IP</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Detail</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Event</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">User</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Role</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">IP</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Detail</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
               ${d.rows.map(r => `
                 <tr class="hover:bg-cream/30 transition-colors">
-                  <td class="px-4 py-3 text-primary/50 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
+                  <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3">${eventBadge(r.event)}</td>
                   <td class="px-4 py-3 text-xs text-primary/70">${escHtml(r.user_name || 'Guest')}</td>
-                  <td class="px-4 py-3 text-xs text-primary/60">${escHtml(r.user_role || 'user')}</td>
-                  <td class="px-4 py-3 text-xs text-primary/60 font-mono truncate max-w-[120px]">${escHtml(r.ip_address)}</td>
-                  <td class="px-4 py-3 text-xs text-primary/60 max-w-[220px] truncate" title="${escHtml(r.event_data||'')}">${escHtml(r.event_data || '—')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600">${escHtml(r.user_role || 'user')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 font-mono truncate max-w-[120px]">${escHtml(r.ip_address)}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 max-w-[220px] truncate" title="${escHtml(r.event_data||'')}">${escHtml(r.event_data || '—')}</td>
                 </tr>`).join('')}
             </tbody>
           </table>
@@ -144,7 +144,7 @@ async function renderAdminActivity() {
       }
       pager.innerHTML = `
         <div class="flex flex-col items-center gap-2 text-center">
-          <div class="text-xs text-primary/50">Menampilkan halaman ${_act.page} dari ${totalPages} — total ${d.total.toLocaleString()} aktivitas</div>
+          <div class="text-xs text-slate-500">Menampilkan halaman ${_act.page} dari ${totalPages} — total ${d.total.toLocaleString()} aktivitas</div>
           ${paginationHtml(_act.page, totalPages, 'actGotoPage')}
         </div>`;
       reicons();

@@ -27,17 +27,17 @@ async function renderAdminAskLogs() {
       <!-- Filter bar -->
       <div class="bg-white rounded-2xl shadow-card p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div class="flex-1 min-w-[180px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Pencarian</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Pencarian</label>
           <input id="alf-query" type="text" placeholder="Cari pertanyaan atau IP…" oninput="alFilterDebounce()"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <div class="flex-1 min-w-[150px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Tanggal</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Tanggal</label>
           <input id="alf-date" type="date" onchange="alLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <button onclick="alReset()"
-          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
+          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
         </button>
       </div>
@@ -99,22 +99,22 @@ async function renderAdminAskLogs() {
           <table class="w-full text-sm">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50 whitespace-nowrap">Waktu</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Pertanyaan & Jawaban AI</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">IP</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">User</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Pertanyaan & Jawaban AI</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">IP</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">User</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
               ${d.rows.map(r => {
                 return `<tr class="hover:bg-cream/30 transition-colors">
-                  <td class="px-4 py-3 text-primary/50 whitespace-nowrap text-xs align-top">${escHtml(r.created_at)}</td>
+                  <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs align-top">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3 max-w-lg align-top">
-                    <div class="font-bold text-primary text-sm mb-2"><span class="text-xs text-primary/50 uppercase mr-1">Q:</span> ${escHtml(r.question)}</div>
+                    <div class="font-bold text-primary text-sm mb-2"><span class="text-xs text-slate-500 uppercase mr-1">Q:</span> ${escHtml(r.question)}</div>
                     <div class="text-primary/70 text-xs mt-1 whitespace-pre-wrap max-h-32 overflow-y-auto pr-2 bg-gray-50 p-2 rounded-lg border border-gray-100">${escHtml(r.response || '')}</div>
                   </td>
-                  <td class="px-4 py-3 font-mono text-xs text-primary/50 align-top">${escHtml(r.visitor_ip||'—')}</td>
-                  <td class="px-4 py-3 text-xs text-primary/60 align-top">${escHtml(r.user_name||'Tamu')}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500 align-top">${escHtml(r.visitor_ip||'—')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 align-top">${escHtml(r.user_name||'Tamu')}</td>
                 </tr>`;
               }).join('')}
             </tbody>
@@ -126,14 +126,14 @@ async function renderAdminAskLogs() {
       const pager = document.getElementById('al-pager');
       if (totalPages <= 1) { pager.innerHTML = ''; reicons(); return; }
       let btns = '';
-      if (_al.page > 1) btns += `<button onclick="alLoad(${_al.page-1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">‹</button>`;
+      if (_al.page > 1) btns += `<button onclick="alLoad(${_al.page-1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">‹</button>`;
       const start = Math.max(1, _al.page-2), end = Math.min(totalPages, _al.page+2);
       for (let i = start; i <= end; i++) {
         btns += `<button onclick="alLoad(${i})"
           class="w-8 h-8 rounded-lg text-sm font-semibold transition-colors
-          ${i === _al.page ? 'bg-primary text-white' : 'bg-white border border-gold/25 text-primary/60 hover:bg-cream-dark'}">${i}</button>`;
+          ${i === _al.page ? 'bg-primary text-white' : 'bg-white border border-gold/25 text-slate-600 hover:bg-cream-dark'}">${i}</button>`;
       }
-      if (_al.page < totalPages) btns += `<button onclick="alLoad(${_al.page+1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">›</button>`;
+      if (_al.page < totalPages) btns += `<button onclick="alLoad(${_al.page+1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">›</button>`;
       pager.innerHTML = `<div class="flex gap-1.5 flex-wrap justify-center">${btns}</div>`;
       reicons();
     } catch(e) {

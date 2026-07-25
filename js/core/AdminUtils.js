@@ -19,7 +19,7 @@ export function adminGuard() {
       <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 gap-4">
         <i data-lucide="shield-alert" class="w-16 h-16 text-red-300"></i>
         <h1 class="text-xl font-bold text-primary">Akses Ditolak</h1>
-        <p class="text-primary/50 text-sm">Halaman ini hanya untuk admin.</p>
+        <p class="text-slate-500 text-sm">Halaman ini hanya untuk admin.</p>
         <a href="/" data-route="/" class="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium">Kembali</a>
       </div>`;
     reicons(); return false;

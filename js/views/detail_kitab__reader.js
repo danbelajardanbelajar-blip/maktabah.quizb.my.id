@@ -26,7 +26,7 @@ export async function renderDetail(params) {
 
   app().innerHTML = `
     <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-5 sm:py-10">
-      <button onclick="history.back()" class="flex items-center gap-2 text-primary/60 hover:text-primary text-sm mb-4 sm:mb-6 transition-colors">
+      <button onclick="history.back()" class="flex items-center gap-2 text-slate-600 hover:text-primary text-sm mb-4 sm:mb-6 transition-colors">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali
       </button>
       <div id="detail-content">
@@ -101,12 +101,12 @@ export async function renderDetail(params) {
           ${description ? `
             <div>
               <h3 class="text-xs font-semibold text-primary/40 uppercase tracking-wider mb-2">Deskripsi</h3>
-              <p class="text-primary/75 text-sm leading-relaxed arabic">${escHtml(description)}</p>
+              <p class="text-primary text-sm leading-relaxed arabic">${escHtml(description)}</p>
             </div>` : ''}
           ${authorInfo ? `
             <div>
               <h3 class="text-xs font-semibold text-primary/40 uppercase tracking-wider mb-2">Tentang Pengarang</h3>
-              <p class="text-primary/75 text-sm leading-relaxed arabic">${escHtml(authorInfo)}</p>
+              <p class="text-primary text-sm leading-relaxed arabic">${escHtml(authorInfo)}</p>
             </div>` : ''}
         </div>
         ` : ''}
@@ -136,17 +136,17 @@ export async function renderDetail(params) {
                 <span id="reader-total-label" class="text-primary/40 text-xs whitespace-nowrap">dari ${contentPgs}</span>
                 <!-- Font Settings Gear Button -->
                 <button id="font-settings-btn" title="Pengaturan Font"
-                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2">
+                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-slate-500 hover:text-primary shrink-0 ml-1 sm:ml-2">
                   <i data-lucide="settings-2" class="w-4 h-4"></i>
                 </button>
                 <!-- In-book Search Button -->
                 <button id="in-book-search-btn" title="Cari di Kitab ini"
-                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2">
+                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-slate-500 hover:text-primary shrink-0 ml-1 sm:ml-2">
                   <i data-lucide="search" class="w-4 h-4"></i>
                 </button>
                 <!-- TOC Button -->
                 <button id="reader-toc-btn" title="Daftar Isi"
-                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-primary/50 hover:text-primary shrink-0 ml-1 sm:ml-2 hidden">
+                  class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-slate-500 hover:text-primary shrink-0 ml-1 sm:ml-2 hidden">
                   <i data-lucide="list" class="w-4 h-4"></i>
                 </button>
               </div>
@@ -194,7 +194,7 @@ export async function renderDetail(params) {
                 class="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl border border-gold/30 text-xs sm:text-sm font-medium text-primary hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 <i data-lucide="chevron-left" class="w-4 h-4 shrink-0"></i> <span class="hidden sm:inline">Sebelumnya</span>
               </button>
-              <span id="reader-label" class="text-xs sm:text-sm text-primary/50 font-medium whitespace-nowrap text-center flex-1 overflow-hidden text-ellipsis px-1"></span>
+              <span id="reader-label" class="text-xs sm:text-sm text-slate-500 font-medium whitespace-nowrap text-center flex-1 overflow-hidden text-ellipsis px-1"></span>
               <button id="reader-next"
                 class="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-medium hover:bg-primary-light disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 <span class="hidden sm:inline">Berikutnya</span> <i data-lucide="chevron-right" class="w-4 h-4 shrink-0"></i>
@@ -340,7 +340,7 @@ export async function renderDetail(params) {
               onclick="window.loadReaderPage(${readerState.bkid}, ${item.page}, '', ${item.juz}); $('#reader-toc-panel').classList.add('hidden');">
             <div class="flex justify-between items-start gap-3" dir="${dir}">
               <span class="${titleClass}">${title}</span>
-              <span class="text-[10px] text-primary/50 whitespace-nowrap mt-1" dir="ltr">${totalJuzLabel}Hal. ${item.page}</span>
+              <span class="text-[10px] text-slate-500 whitespace-nowrap mt-1" dir="ltr">${totalJuzLabel}Hal. ${item.page}</span>
             </div>
           </div>`;
         });
@@ -383,7 +383,7 @@ export async function renderDetail(params) {
             });
             if (resDiv) resDiv.innerHTML = html;
           } else {
-            if (resDiv) resDiv.innerHTML = '<div class="text-center text-sm text-primary/50 py-4">Kata kunci tidak ditemukan dalam kitab ini.</div>';
+            if (resDiv) resDiv.innerHTML = '<div class="text-center text-sm text-slate-500 py-4">Kata kunci tidak ditemukan dalam kitab ini.</div>';
           }
         } catch(e) {
           if (resDiv) resDiv.innerHTML = '<div class="text-center text-sm text-red-500 py-4">Gagal melakukan pencarian.</div>';
@@ -673,7 +673,7 @@ export function renderFontPanel() {
           <div>
             <div class="flex items-center gap-2 mb-3">
               <i data-lucide="type" class="w-3.5 h-3.5 text-gold shrink-0"></i>
-              <span class="text-xs font-bold text-primary/50 uppercase tracking-wider">Font Latin (LTR)</span>
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Font Latin (LTR)</span>
             </div>
             <div class="grid grid-cols-2 gap-1.5">${latinChips}</div>
           </div>
@@ -681,7 +681,7 @@ export function renderFontPanel() {
           <div>
             <div class="flex items-center gap-2 mb-3">
               <i data-lucide="type" class="w-3.5 h-3.5 text-gold shrink-0"></i>
-              <span class="text-xs font-bold text-primary/50 uppercase tracking-wider">فونت عربي (RTL)</span>
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">فونت عربي (RTL)</span>
             </div>
             <div class="grid grid-cols-2 gap-1.5">${arabicChips}</div>
           </div>
@@ -690,7 +690,7 @@ export function renderFontPanel() {
         <!-- Size slider -->
         <div class="border-t border-cream-dark pt-4">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold text-primary/50 uppercase tracking-wider flex items-center gap-1">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
               <i data-lucide="a-large-small" class="w-3.5 h-3.5 text-gold"></i> Ukuran Teks
             </span>
             <span id="font-size-label" class="text-xs font-bold text-gold">${readerFontState.size}px</span>

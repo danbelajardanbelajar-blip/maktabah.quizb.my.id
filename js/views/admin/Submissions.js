@@ -37,7 +37,7 @@ async function renderAdminSubmissions() {
           <button onclick="subReview('reject')" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-1.5">
             <i data-lucide="x-circle" class="w-4 h-4"></i> Tolak
           </button>
-          <button onclick="closeSubModal()" class="px-4 py-2.5 rounded-xl border border-gold/30 text-sm text-primary/60 hover:bg-cream-dark transition-colors">Batal</button>
+          <button onclick="closeSubModal()" class="px-4 py-2.5 rounded-xl border border-gold/30 text-sm text-slate-600 hover:bg-cream-dark transition-colors">Batal</button>
         </div>
       </div>
     </div>
@@ -82,7 +82,7 @@ async function renderAdminSubmissions() {
   tabsEl.innerHTML = tabDefs.map(t =>
     `<button data-sub-tab="${t.s}" onclick="window.subSetStatus('${t.s}')"
       class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors
-      ${t.s === '' ? 'bg-primary text-white border-primary' : 'bg-white text-primary/60 border-gold/30 hover:border-primary/30'}">
+      ${t.s === '' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-gold/30 hover:border-primary/30'}">
       ${t.label}</button>`
   ).join('');
 
@@ -92,7 +92,7 @@ async function renderAdminSubmissions() {
     tabsEl.querySelectorAll('[data-sub-tab]').forEach(btn => {
       const active = btn.dataset.subTab === s;
       btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors '
-        + (active ? 'bg-primary text-white border-primary' : 'bg-white text-primary/60 border-gold/30 hover:border-primary/30');
+        + (active ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-gold/30 hover:border-primary/30');
     });
     subLoad();
   };
@@ -178,7 +178,7 @@ async function renderAdminSubmissions() {
     
     _subRev = { id, title: name, pages: [], currentPage: 0 };
     
-    body.innerHTML = '<div class="text-center py-10"><div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3"></div><p class="text-sm text-primary/50">Mengekstrak file...</p></div>';
+    body.innerHTML = '<div class="text-center py-10"><div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3"></div><p class="text-sm text-slate-500">Mengekstrak file...</p></div>';
     modal.classList.remove('hidden');
     reicons();
 
@@ -186,7 +186,7 @@ async function renderAdminSubmissions() {
       const res = await apiFetch({ action: 'admin_get_submission_content', id: id });
       if (res.error) throw new Error(res.error);
       if (!res.pages || res.pages.length === 0) {
-        body.innerHTML = '<div class="text-center py-10 text-sm text-primary/50">Tidak ada teks yang dapat diekstrak atau file kosong/terenkripsi.</div>';
+        body.innerHTML = '<div class="text-center py-10 text-sm text-slate-500">Tidak ada teks yang dapat diekstrak atau file kosong/terenkripsi.</div>';
       } else {
         _subRev.pages = res.pages;
         _renderSubReviewBody();
@@ -211,7 +211,7 @@ async function renderAdminSubmissions() {
             ${Array.from({length:total},(_,i)=>`
               <button onclick="window._subRevGoPage(${i})"
                 class="w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-1.5
-                  ${i===pg ? 'bg-primary text-white font-bold' : 'hover:bg-cream/60 text-primary/60'}">
+                  ${i===pg ? 'bg-primary text-white font-bold' : 'hover:bg-cream/60 text-slate-600'}">
                 <span class="font-mono ${i===pg?'text-white/60':'text-primary/25'}">${String(i+1).padStart(3,'0')}</span>
                 Hal ${i+1}
               </button>`).join('')}
@@ -221,7 +221,7 @@ async function renderAdminSubmissions() {
         <!-- Editor halaman -->
         <div class="flex-1 flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-primary/50">
+            <span class="text-xs font-semibold text-slate-500">
               Halaman <span class="text-primary font-bold">${pg+1}</span> dari ${total}
               <span class="text-primary/30 ml-2">(${wordCount} kata)</span>
             </span>
@@ -306,7 +306,7 @@ async function renderAdminSubmissions() {
           + '</tr>';
       }).join('');
       wrap.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm">'
-        + '<thead class="bg-cream border-b border-cream-dark text-primary/50 text-xs"><tr>'
+        + '<thead class="bg-cream border-b border-cream-dark text-slate-500 text-xs"><tr>'
         + '<th class="px-4 py-3 text-left font-semibold">Nama File</th>'
         + '<th class="px-4 py-3 text-left font-semibold hidden sm:table-cell">Pengirim</th>'
         + '<th class="px-4 py-3 text-left font-semibold hidden md:table-cell">Tipe</th>'
@@ -316,9 +316,9 @@ async function renderAdminSubmissions() {
         + '</tr></thead><tbody class="divide-y divide-cream-dark">' + rowsHtml + '</tbody></table></div>';
       pag.innerHTML = res.pages > 1
         ? '<span>' + res.total + ' kiriman</span><div class="flex gap-1">'
-          + (_subPage > 1 ? '<button onclick="window._subPageG=' + (_subPage-1) + ';window.subLoadG&&window.subLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-primary/60">‹</button>' : '')
-          + '<span class="px-2 py-1 text-primary/50">' + _subPage + '/' + res.pages + '</span>'
-          + (_subPage < res.pages ? '<button onclick="window._subPageG=' + (_subPage+1) + ';window.subLoadG&&window.subLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-primary/60">›</button>' : '')
+          + (_subPage > 1 ? '<button onclick="window._subPageG=' + (_subPage-1) + ';window.subLoadG&&window.subLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-slate-600">‹</button>' : '')
+          + '<span class="px-2 py-1 text-slate-500">' + _subPage + '/' + res.pages + '</span>'
+          + (_subPage < res.pages ? '<button onclick="window._subPageG=' + (_subPage+1) + ';window.subLoadG&&window.subLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-slate-600">›</button>' : '')
           + '</div>'
         : '<span>' + res.total + ' kiriman</span>';
       reicons();

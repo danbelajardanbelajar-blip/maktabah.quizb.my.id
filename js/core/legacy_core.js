@@ -379,12 +379,12 @@ function bookCard(b) {
          onclick="navigate('/kitab?id=${b.bkid}')">
       <div class="flex-1">
         <div class="arabic text-primary font-semibold text-base leading-snug line-clamp-2 mb-1">${escHtml(title)}</div>
-        <div class="text-primary/60 text-xs font-medium line-clamp-1">${escHtml(author)}</div>
+        <div class="text-slate-600 text-xs font-medium line-clamp-1">${escHtml(author)}</div>
       </div>
       <div class="flex items-center gap-2 mt-auto pt-2 border-t border-cream-dark">
-        ${pages ? `<span class="text-xs text-gold font-medium">${escHtml(pages)}</span>` : ''}
+        ${pages ? `<span class="text-xs text-amber-700 font-medium">${escHtml(pages)}</span>` : ''}
         <a href="/api.php?action=download_book&id=${b.bkid}"
-           class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-gold/20 text-gold hover:bg-gold/10 transition ml-auto"
+           class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-amber-700/30 text-amber-700 hover:bg-amber-700/10 transition ml-auto"
            onclick="event.stopPropagation();"
            title="${dlTitle}"
            aria-label="${dlTitle}">

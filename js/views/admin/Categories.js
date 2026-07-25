@@ -45,7 +45,7 @@ async function loadCatGrid() {
     grid.innerHTML = `
       <div class="bg-white rounded-2xl shadow-card overflow-hidden">
         <div class="px-5 py-3.5 bg-cream/40 border-b border-cream-dark flex items-center justify-between">
-          <span class="text-xs font-medium text-primary/50">${cats.length} kategori</span>
+          <span class="text-xs font-medium text-slate-500">${cats.length} kategori</span>
           <span class="text-xs text-primary/30">Urut berdasarkan catord ASC</span>
         </div>
         <div class="divide-y divide-cream-dark">
@@ -119,7 +119,7 @@ function catModalHtml() {
                 <i data-lucide="save" class="w-4 h-4"></i> Simpan
               </button>
               <button type="button" onclick="closeCatModal()"
-                class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">
+                class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">
                 Batal
               </button>
             </div>

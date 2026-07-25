@@ -8,7 +8,7 @@ export async function renderFavorit() {
           <h1 class="text-3xl font-bold text-primary mb-2 flex items-center gap-3">
             <i data-lucide="star" class="w-8 h-8 text-gold"></i> Kitab Favorit
           </h1>
-          <p class="text-primary/60 text-sm">Daftar kitab yang Anda simpan sebagai favorit.</p>
+          <p class="text-slate-600 text-sm">Daftar kitab yang Anda simpan sebagai favorit.</p>
         </div>
       </div>
       
@@ -38,7 +38,7 @@ export async function renderFavorit() {
             <i data-lucide="star" class="w-8 h-8 text-gold"></i>
           </div>
           <h3 class="text-xl font-bold text-primary mb-2">Belum ada favorit</h3>
-          <p class="text-primary/60 text-sm max-w-md mx-auto mb-6">Anda belum menambahkan kitab apapun ke daftar favorit.</p>
+          <p class="text-slate-600 text-sm max-w-md mx-auto mb-6">Anda belum menambahkan kitab apapun ke daftar favorit.</p>
           <button onclick="window.navigate('/katalog')" class="px-6 py-2.5 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary-light transition-colors">
             Jelajahi Katalog
           </button>
@@ -56,7 +56,7 @@ export async function renderFavorit() {
     const validBooks = results.filter(res => res && res.data).map(res => res.data);
     
     if (validBooks.length === 0) {
-      container.innerHTML = '<p class="col-span-full text-center text-primary/60 py-10">Gagal memuat data kitab favorit.</p>';
+      container.innerHTML = '<p class="col-span-full text-center text-slate-600 py-10">Gagal memuat data kitab favorit.</p>';
       return;
     }
 

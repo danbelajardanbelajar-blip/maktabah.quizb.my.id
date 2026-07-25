@@ -40,7 +40,7 @@ async function renderAdminRequests() {
   tabsEl.innerHTML = tabDefs.map(t =>
     `<button data-req-tab="${t.s}" onclick="window.reqSetStatus('${t.s}')"
       class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors
-      ${t.s === '' ? 'bg-primary text-white border-primary' : 'bg-white text-primary/60 border-gold/30 hover:border-primary/30'}">
+      ${t.s === '' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-gold/30 hover:border-primary/30'}">
       ${t.label}</button>`
   ).join('');
 
@@ -50,7 +50,7 @@ async function renderAdminRequests() {
     tabsEl.querySelectorAll('[data-req-tab]').forEach(btn => {
       const active = btn.dataset.reqTab === s;
       btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors '
-        + (active ? 'bg-primary text-white border-primary' : 'bg-white text-primary/60 border-gold/30 hover:border-primary/30');
+        + (active ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-gold/30 hover:border-primary/30');
     });
     reqLoad();
   };
@@ -144,7 +144,7 @@ async function renderAdminRequests() {
           + '</tr>';
       }).join('');
       wrap.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm">'
-        + '<thead class="bg-cream border-b border-cream-dark text-primary/50 text-xs"><tr>'
+        + '<thead class="bg-cream border-b border-cream-dark text-slate-500 text-xs"><tr>'
         + '<th class="px-4 py-3 text-left font-semibold">Judul Request</th>'
         + '<th class="px-4 py-3 text-left font-semibold">Email</th>'
         + '<th class="px-4 py-3 text-left font-semibold hidden md:table-cell">Tipe</th>'
@@ -153,9 +153,9 @@ async function renderAdminRequests() {
         + '</tr></thead><tbody class="divide-y divide-cream-dark">' + rowsHtml + '</tbody></table></div>';
       pag.innerHTML = res.pages > 1
         ? '<span>' + res.total + ' request</span><div class="flex gap-1">'
-          + (_reqPage > 1 ? '<button onclick="window._reqPageG=' + (_reqPage-1) + ';window.reqLoadG&&window.reqLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-primary/60">‹</button>' : '')
-          + '<span class="px-2 py-1 text-primary/50">' + _reqPage + '/' + res.pages + '</span>'
-          + (_reqPage < res.pages ? '<button onclick="window._reqPageG=' + (_reqPage+1) + ';window.reqLoadG&&window.reqLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-primary/60">›</button>' : '')
+          + (_reqPage > 1 ? '<button onclick="window._reqPageG=' + (_reqPage-1) + ';window.reqLoadG&&window.reqLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-slate-600">‹</button>' : '')
+          + '<span class="px-2 py-1 text-slate-500">' + _reqPage + '/' + res.pages + '</span>'
+          + (_reqPage < res.pages ? '<button onclick="window._reqPageG=' + (_reqPage+1) + ';window.reqLoadG&&window.reqLoadG()" class="px-2 py-1 rounded bg-cream hover:bg-cream-dark text-slate-600">›</button>' : '')
           + '</div>'
         : '<span>' + res.total + ' request</span>';
       reicons();

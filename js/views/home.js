@@ -24,7 +24,7 @@ export async function renderHome() {
         <div class="max-w-2xl mx-auto relative group">
           <div class="absolute -inset-1 bg-gradient-to-r from-gold/30 via-primary-light/30 to-gold/30 rounded-3xl blur opacity-40 group-hover:opacity-70 transition duration-1000 group-hover:duration-300"></div>
           <div class="relative flex items-center">
-            <i data-lucide="search" class="absolute left-4 md:left-6 w-5 h-5 text-primary/60"></i>
+            <i data-lucide="search" class="absolute left-4 md:left-6 w-5 h-5 text-slate-600"></i>
             <input id="hero-search" type="text" placeholder="Cari teks, judul, atau pengarang..."
               class="w-full pl-12 md:pl-14 pr-28 md:pr-36 py-4 md:py-5 rounded-2xl text-ink text-sm md:text-base bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus:outline-none focus:ring-2 focus:ring-gold transition-all placeholder:text-gray-400" />
             <button id="hero-search-btn" class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] hover:from-[#15803D] hover:to-[#166534] text-gold px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs md:text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)] hover:shadow-[0_6px_20px_rgba(201,162,39,0.3)]">
@@ -103,7 +103,7 @@ export async function renderHome() {
               </div>
               <h2 class="text-xl font-bold text-primary">Kitab Terpopuler</h2>
             </div>
-            <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
+            <a href="/katalog" data-route="/katalog" class="text-sm text-amber-700 hover:text-amber-800 font-medium flex items-center gap-1">
               Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
           </div>
@@ -121,7 +121,7 @@ export async function renderHome() {
               </div>
               <h2 class="text-xl font-bold text-primary">Baru Saja Dibuka</h2>
             </div>
-            <a href="/katalog" data-route="/katalog" class="text-sm text-gold hover:text-gold-dark font-medium flex items-center gap-1">
+            <a href="/katalog" data-route="/katalog" class="text-sm text-amber-700 hover:text-amber-800 font-medium flex items-center gap-1">
               Jelajahi Katalog <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
           </div>
@@ -181,7 +181,7 @@ export async function renderHome() {
       const section = document.getElementById('popular-search-section');
       const chips   = document.getElementById('popular-search-chips');
       if (!chips || !section) return;
-      if (!queries.length) { chips.innerHTML = '<span class="text-sm text-primary/50 italic">Belum ada data.</span>'; return; }
+      if (!queries.length) { chips.innerHTML = '<span class="text-sm text-slate-500 italic">Belum ada data.</span>'; return; }
       chips.innerHTML = queries.map(qObj => {
         const q = typeof qObj === 'string' ? qObj : qObj.query;
         const detail = typeof qObj === 'object' && qObj.detail ? JSON.parse(qObj.detail) : null;
@@ -208,7 +208,7 @@ export async function renderHome() {
           onclick="navigate('${route}')"
           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
                  border border-gold/25 bg-white hover:bg-primary hover:text-white hover:border-primary
-                 text-sm text-primary/75 transition-all duration-150 shadow-sm cursor-pointer">
+                 text-sm text-primary transition-all duration-150 shadow-sm cursor-pointer">
           <i data-lucide="trending-up" class="w-3 h-3 opacity-50 shrink-0"></i>
           ${safe}
         </button>`;
@@ -225,7 +225,7 @@ export async function renderHome() {
       const section = document.getElementById('recent-search-section');
       const chips   = document.getElementById('recent-search-chips');
       if (!chips || !section) return;
-      if (!queries.length) { chips.innerHTML = '<span class="text-sm text-primary/50 italic">Belum ada data.</span>'; return; }
+      if (!queries.length) { chips.innerHTML = '<span class="text-sm text-slate-500 italic">Belum ada data.</span>'; return; }
       chips.innerHTML = queries.map(qObj => {
         const q = typeof qObj === 'string' ? qObj : qObj.query;
         const detail = typeof qObj === 'object' && qObj.detail ? JSON.parse(qObj.detail) : null;
@@ -252,7 +252,7 @@ export async function renderHome() {
           onclick="navigate('${route}')"
           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
                  border border-gold/25 bg-white hover:bg-primary hover:text-white hover:border-primary
-                 text-sm text-primary/75 transition-all duration-150 shadow-sm cursor-pointer">
+                 text-sm text-primary transition-all duration-150 shadow-sm cursor-pointer">
           <i data-lucide="search" class="w-3 h-3 opacity-50 shrink-0"></i>
           ${safe}
         </button>`;
@@ -269,7 +269,7 @@ export async function renderHome() {
       const section = document.getElementById('recent-questions-section');
       const chips   = document.getElementById('recent-questions-chips');
       if (!chips || !section) return;
-      if (!queries.length) { chips.innerHTML = '<span class="text-sm text-primary/50 italic">Belum ada data.</span>'; return; }
+      if (!queries.length) { chips.innerHTML = '<span class="text-sm text-slate-500 italic">Belum ada data.</span>'; return; }
       chips.innerHTML = queries.map(qObj => {
         const q = typeof qObj === 'string' ? qObj : qObj.query;
         const safe = escHtml(q);
@@ -278,7 +278,7 @@ export async function renderHome() {
           onclick="navigate('${route}')"
           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
                  border border-gold/25 bg-white hover:bg-primary hover:text-white hover:border-primary
-                 text-sm text-primary/75 transition-all duration-150 shadow-sm cursor-pointer">
+                 text-sm text-primary transition-all duration-150 shadow-sm cursor-pointer">
           <i data-lucide="message-square" class="w-3 h-3 opacity-50 shrink-0"></i>
           ${safe}
         </button>`;

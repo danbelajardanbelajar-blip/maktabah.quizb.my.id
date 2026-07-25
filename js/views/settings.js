@@ -92,10 +92,10 @@ export function renderSettings() {
       <!-- Ukuran Teks -->
       ${card('a-large-small', 'Ukuran Teks Pembaca', 'Berlaku pada halaman baca kitab', `
         <div class="flex items-center gap-3 mb-3">
-          <span class="text-sm text-primary/50" style="font-size:13px">A</span>
+          <span class="text-sm text-slate-500" style="font-size:13px">A</span>
           <input type="range" id="pg-size-slider" min="14" max="28" step="1" value="${cur.size}"
             class="font-range flex-1" oninput="pgSizeChange(this.value)">
-          <span class="text-sm text-primary/50" style="font-size:20px">A</span>
+          <span class="text-sm text-slate-500" style="font-size:20px">A</span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-xs text-primary/40">14px — 28px</span>
@@ -262,8 +262,8 @@ function advancedContentCard(book) {
       ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${snippetHtml ? `<div class="snippet-bar reader-text line-clamp-4">${snippetHtml}…</div>` : ''}
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
-        <span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(book.category_name || '')}</span>
-        ${pageLabel ? `<span class="text-xs text-gold font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${escHtml(pageLabel)}</span>` : ''}
+        <span class="text-xs text-slate-500 truncate max-w-[65%]">${escHtml(book.category_name || '')}</span>
+        ${pageLabel ? `<span class="text-xs text-amber-700 font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${escHtml(pageLabel)}</span>` : ''}
       </div>
     </div>`;
 }
@@ -401,7 +401,7 @@ async function execAdvancedSearch() {
         didYouMeanHtml = `<div class="mt-2 text-primary font-medium">Maksud Anda: <a href="/search-advanced?q1=${encodeURIComponent(res.did_you_mean)}" class="text-gold hover:underline cursor-pointer" onclick="event.preventDefault(); navigate(this.getAttribute('href'))">${escHtml(res.did_you_mean)}</a> ?</div>`;
       }
       stats.innerHTML = `<div class="flex flex-col">
-        <div class="flex flex-wrap items-center gap-2 text-sm text-primary/60">
+        <div class="flex flex-wrap items-center gap-2 text-sm text-slate-600">
           <span>Menemukan <strong>${total.toLocaleString('id-ID')}</strong> halaman untuk <strong>${escHtml(queryLabel)}</strong>.</span>
           ${catLabel}
           ${perfBadge}
@@ -458,7 +458,7 @@ export function renderSearchAdvanced(params) {
         <div class="flex flex-col gap-3">
           <div class="text-sm uppercase tracking-[.2em] text-gold font-bold">Pencarian Lanjutan</div>
           <h1 class="text-3xl md:text-4xl font-bold text-primary">Cari halaman kitab dengan kata kunci dan kategori</h1>
-          <p class="text-sm text-primary/60 max-w-3xl">Masukkan hingga 5 kolom. Jika sebuah kolom berisi beberapa kata, sistem akan mencocokkan frasa persis pada satu halaman. Gunakan kotak di bawah untuk mengontrol apakah semua kata harus ditemukan dalam satu halaman.</p>
+          <p class="text-sm text-slate-600 max-w-3xl">Masukkan hingga 5 kolom. Jika sebuah kolom berisi beberapa kata, sistem akan mencocokkan frasa persis pada satu halaman. Gunakan kotak di bawah untuk mengontrol apakah semua kata harus ditemukan dalam satu halaman.</p>
         </div>
       </div>
 
@@ -489,21 +489,21 @@ export function renderSearchAdvanced(params) {
             <div class="flex items-center justify-between gap-3">
               <div>
                 <h2 class="text-lg font-semibold text-primary">Kontrol Pencarian</h2>
-                <p class="text-sm text-primary/60">Tekan cari untuk memulai.</p>
+                <p class="text-sm text-slate-600">Tekan cari untuk memulai.</p>
               </div>
             </div>
             <div class="grid gap-3">
               <button id="adv-search-btn" class="w-full rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-light transition">Cari</button>
               <button id="adv-reset-btn" class="w-full rounded-2xl border border-primary/20 bg-white px-5 py-3 text-sm font-semibold text-primary hover:bg-cream-dark transition">Reset Form</button>
             </div>
-            <div class="flex items-start gap-3 text-sm text-primary/60">
+            <div class="flex items-start gap-3 text-sm text-slate-600">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input id="adv-same-page" type="checkbox" class="form-checkbox h-4 w-4 rounded border-gold/25 text-gold focus:ring-gold" ${searchAdvancedState.samePage ? 'checked' : ''} />
                 <span>Semua harus ditemukan dalam satu halaman</span>
               </label>
             </div>
-            <div class="text-xs text-primary/50">Jika dicentang, semua kolom yang diisi harus ditemukan di halaman yang sama. Jika tidak dicentang, hasil akan mencakup halaman yang cocok dengan salah satu kolom.</div>
-            <div id="adv-search-stats" class="text-sm text-primary/60"></div>
+            <div class="text-xs text-slate-500">Jika dicentang, semua kolom yang diisi harus ditemukan di halaman yang sama. Jika tidak dicentang, hasil akan mencakup halaman yang cocok dengan salah satu kolom.</div>
+            <div id="adv-search-stats" class="text-sm text-slate-600"></div>
           </div>
         </div>
       </div>
@@ -644,9 +644,9 @@ export function renderSearch(params) {
             </button>
           </div>
         </div>
-        <p class="mt-3 text-xs text-primary/50">Sistem pencarian modern: mencari isi halaman seluruh kitab secara instan dan menyeluruh.</p>
+        <p class="mt-3 text-xs text-slate-500">Sistem pencarian modern: mencari isi halaman seluruh kitab secara instan dan menyeluruh.</p>
         <div class="mt-3 text-right">
-          <a href="/search-advanced" data-route="/search-advanced" class="inline-flex items-center gap-2 text-sm font-semibold text-gold hover:text-gold-dark transition">
+          <a href="/search-advanced" data-route="/search-advanced" class="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 hover:text-amber-800 transition">
             <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
             Pencarian Lanjutan
           </a>
@@ -807,11 +807,11 @@ function loadMoreHtml(current, hasMore, onClickFn) {
   const btnBase = 'px-4 py-2 flex items-center justify-center rounded-lg text-sm font-medium transition-colors border border-gold/20';
   return `
     <div class="flex items-center justify-center gap-4 mt-8">
-      <button onclick="${onClickFn}(${current - 1})" class="${btnBase} ${current <= 1 ? 'opacity-50 cursor-not-allowed bg-cream-dark text-primary/50' : 'bg-white text-primary hover:bg-cream-dark'}" ${current <= 1 ? 'disabled' : ''}>
+      <button onclick="${onClickFn}(${current - 1})" class="${btnBase} ${current <= 1 ? 'opacity-50 cursor-not-allowed bg-cream-dark text-slate-500' : 'bg-white text-primary hover:bg-cream-dark'}" ${current <= 1 ? 'disabled' : ''}>
         <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Sebelumnya
       </button>
-      <span class="text-sm font-medium text-primary/60">Hal. ${current}</span>
-      <button onclick="${onClickFn}(${current + 1})" class="${btnBase} ${!hasMore ? 'opacity-50 cursor-not-allowed bg-cream-dark text-primary/50' : 'bg-white text-primary hover:bg-cream-dark'}" ${!hasMore ? 'disabled' : ''}>
+      <span class="text-sm font-medium text-slate-600">Hal. ${current}</span>
+      <button onclick="${onClickFn}(${current + 1})" class="${btnBase} ${!hasMore ? 'opacity-50 cursor-not-allowed bg-cream-dark text-slate-500' : 'bg-white text-primary hover:bg-cream-dark'}" ${!hasMore ? 'disabled' : ''}>
         Selanjutnya <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
       </button>
     </div>
@@ -853,12 +853,12 @@ function bookCardStagger(b, i, q = '') {
       <div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         <div class="flex items-center gap-2">
-          ${cat   ? `<span class="text-xs bg-primary/8 text-primary/60 px-2 py-0.5 rounded-full truncate max-w-[60%]">${escHtml(cat)}</span>` : '<span></span>'}
+          ${cat   ? `<span class="text-xs bg-primary/8 text-slate-600 px-2 py-0.5 rounded-full truncate max-w-[60%]">${escHtml(cat)}</span>` : '<span></span>'}
         </div>
         <div class="flex items-center gap-2">
-          ${pages ? `<span class="text-xs text-gold font-medium">${pages}</span>` : ''}
+          ${pages ? `<span class="text-xs text-amber-700 font-medium">${pages}</span>` : ''}
           <a href="/api.php?action=download_book&id=${b.bkid}"
-             class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gold/20 text-gold hover:bg-gold/10 transition"
+             class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-amber-700/30 text-amber-700 hover:bg-amber-700/10 transition"
              onclick="event.stopPropagation();"
              title="${dlTitle}"
              aria-label="${dlTitle}">
@@ -902,7 +902,7 @@ function pdfCardStagger(b, i, q = '') {
         </div>
         <div class="flex items-center gap-2">
           <a href="${link}" target="_blank"
-             class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gold/20 text-gold hover:bg-gold/10 transition"
+             class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-amber-700/30 text-amber-700 hover:bg-amber-700/10 transition"
              onclick="${onclickStr}"
              title="Unduh PDF"
              aria-label="Unduh PDF">
@@ -935,12 +935,12 @@ function contentCard(b, q) {
       ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}…</div>` : ''}
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         <div class="flex items-center gap-2">
-          ${cat  ? `<span class="text-xs text-primary/50 truncate max-w-[65%]">${escHtml(cat)}</span>` : '<span></span>'}
+          ${cat  ? `<span class="text-xs text-slate-500 truncate max-w-[65%]">${escHtml(cat)}</span>` : '<span></span>'}
         </div>
         <div class="flex items-center gap-2">
-          ${page ? `<span class="text-xs text-gold font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${page}</span>` : ''}
+          ${page ? `<span class="text-xs text-amber-700 font-medium flex items-center gap-1"><i data-lucide="bookmark" class="w-3 h-3"></i>${page}</span>` : ''}
           <a href="/api.php?action=download_book&id=${b.bkid}"
-             class="inline-flex items-center justify-center p-2 rounded-full border border-gold/20 text-gold hover:bg-gold/10 transition"
+             class="inline-flex items-center justify-center p-2 rounded-full border border-amber-700/30 text-amber-700 hover:bg-amber-700/10 transition"
              onclick="event.stopPropagation();"
              aria-label="Unduh kitab"
              title="Unduh kitab">

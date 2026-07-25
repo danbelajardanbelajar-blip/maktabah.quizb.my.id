@@ -27,7 +27,7 @@ async function renderAdminSearchLogs() {
       <!-- Filter bar -->
       <div class="bg-white rounded-2xl shadow-card p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div class="flex-1 min-w-[130px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Jenis Pencarian</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Jenis Pencarian</label>
           <select id="slf-type" onchange="slLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold bg-cream/30">
             <option value="">Semua</option>
@@ -36,17 +36,17 @@ async function renderAdminSearchLogs() {
           </select>
         </div>
         <div class="flex-1 min-w-[180px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Kata Kunci</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Kata Kunci</label>
           <input id="slf-query" type="text" placeholder="Cari query…" oninput="slFilterDebounce()"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <div class="flex-1 min-w-[150px]">
-          <label class="block text-xs font-semibold text-primary/50 mb-1">Tanggal</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Tanggal</label>
           <input id="slf-date" type="date" onchange="slLoad(1)"
             class="w-full px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold" />
         </div>
         <button onclick="slReset()"
-          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
+          class="px-4 py-2 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors flex items-center gap-1.5">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
         </button>
       </div>
@@ -105,7 +105,7 @@ async function renderAdminSearchLogs() {
       if (topqEl && d.top_queries?.length && !_sl.query && !_sl.type && !_sl.date) {
         topqEl.innerHTML = `
           <div class="bg-white rounded-2xl shadow-card p-5">
-            <div class="text-xs font-semibold text-primary/50 uppercase tracking-wider mb-3">Top Pencarian</div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Top Pencarian</div>
             <div class="flex flex-wrap gap-2">
               ${d.top_queries.map(q => `
                 <div class="inline-flex items-center rounded-full bg-cream hover:bg-cream-dark border border-gold/15 transition-colors overflow-hidden">
@@ -142,14 +142,14 @@ async function renderAdminSearchLogs() {
           <table class="w-full text-sm">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50 whitespace-nowrap">Waktu</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Jenis</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Query</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50 text-right">Hasil</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">IP</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">User</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-primary/50">Browser</th>
-                <th class="text-right px-4 py-3 text-xs font-semibold text-primary/50">Aksi</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Jenis</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Query</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 text-right">Hasil</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">IP</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">User</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Browser</th>
+                <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
@@ -174,7 +174,7 @@ async function renderAdminSearchLogs() {
                   browserShort = ua.slice(0, 18);
                 }
                 return `<tr class="hover:bg-cream/30 transition-colors">
-                  <td class="px-4 py-3 text-primary/50 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
+                  <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3">${typeBadge(r.search_type)}</td>
                   <td class="px-4 py-3 max-w-xs">
                     <div class="font-medium text-primary text-xs truncate" title="${escHtml(r.query)}">${escHtml(r.query)}</div>
@@ -186,8 +186,8 @@ async function renderAdminSearchLogs() {
                       ${escHtml(String(r.result_count))}
                     </span>
                   </td>
-                  <td class="px-4 py-3 font-mono text-xs text-primary/50">${escHtml(r.visitor_ip||'—')}</td>
-                  <td class="px-4 py-3 text-xs text-primary/60">${escHtml(r.user_name||'Tamu')}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500">${escHtml(r.visitor_ip||'—')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600">${escHtml(r.user_name||'Tamu')}</td>
                   <td class="px-4 py-3 text-xs text-primary/40">${escHtml(browserShort)}</td>
                   <td class="px-4 py-3 text-right">
                     <button onclick="slDelete(${r.id})" class="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus">
@@ -205,14 +205,14 @@ async function renderAdminSearchLogs() {
       const pager = document.getElementById('sl-pager');
       if (totalPages <= 1) { pager.innerHTML = ''; reicons(); return; }
       let btns = '';
-      if (_sl.page > 1) btns += `<button onclick="slLoad(${_sl.page-1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">‹</button>`;
+      if (_sl.page > 1) btns += `<button onclick="slLoad(${_sl.page-1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">‹</button>`;
       const start = Math.max(1, _sl.page-2), end = Math.min(totalPages, _sl.page+2);
       for (let i = start; i <= end; i++) {
         btns += `<button onclick="slLoad(${i})"
           class="w-8 h-8 rounded-lg text-sm font-semibold transition-colors
-          ${i === _sl.page ? 'bg-primary text-white' : 'bg-white border border-gold/25 text-primary/60 hover:bg-cream-dark'}">${i}</button>`;
+          ${i === _sl.page ? 'bg-primary text-white' : 'bg-white border border-gold/25 text-slate-600 hover:bg-cream-dark'}">${i}</button>`;
       }
-      if (_sl.page < totalPages) btns += `<button onclick="slLoad(${_sl.page+1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">›</button>`;
+      if (_sl.page < totalPages) btns += `<button onclick="slLoad(${_sl.page+1})" class="px-3 py-1.5 rounded-lg bg-white border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">›</button>`;
       pager.innerHTML = `<div class="flex gap-1.5 flex-wrap justify-center">${btns}</div>`;
       reicons();
     } catch(e) {

@@ -95,7 +95,7 @@ export function renderAbout() {
 
         <div class="bg-cream rounded-2xl p-6 text-center mt-6">
           <div class="arabic text-primary text-lg font-bold mb-1">طلب العلم فريضة على كل مسلم</div>
-          <div class="text-primary/50 text-xs">HR. Ibnu Mājah — Menuntut ilmu adalah kewajiban setiap Muslim</div>
+          <div class="text-slate-500 text-xs">HR. Ibnu Mājah — Menuntut ilmu adalah kewajiban setiap Muslim</div>
         </div>
 
         <div>

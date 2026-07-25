@@ -164,7 +164,7 @@ async function bksLoad() {
 
     wrap.innerHTML = `
       <div class="px-5 py-3 border-b border-cream-dark bg-cream/40 flex items-center justify-between">
-        <span class="text-xs text-primary/50 font-medium">${booksAS.total.toLocaleString('id')} kitab${booksAS.q ? ` — hasil: "${escHtml(booksAS.q)}"` : ''}</span>
+        <span class="text-xs text-slate-500 font-medium">${booksAS.total.toLocaleString('id')} kitab${booksAS.q ? ` — hasil: "${escHtml(booksAS.q)}"` : ''}</span>
       </div>
       ${books.length === 0
         ? `<div class="py-16 text-center"><i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 text-primary/15"></i><p class="text-primary/30 text-sm">Tidak ada kitab ditemukan.</p></div>`
@@ -187,7 +187,7 @@ async function bksLoad() {
                     <td class="px-4 py-3 max-w-[200px]">
                       <div class="arabic font-semibold text-primary text-sm leading-snug line-clamp-2">${escHtml(b.title)}</div>
                     </td>
-                    <td class="px-4 py-3 text-primary/50 text-xs hidden sm:table-cell max-w-[140px]">
+                    <td class="px-4 py-3 text-slate-500 text-xs hidden sm:table-cell max-w-[140px]">
                       <div class="truncate">${escHtml(b.author||'—')}</div>
                     </td>
                     <td class="px-4 py-3 hidden md:table-cell">
@@ -276,7 +276,7 @@ function bookModalHtml() {
                 <i data-lucide="save" class="w-4 h-4"></i> Simpan
               </button>
               <button type="button" onclick="closeBookModal()"
-                class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">
+                class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">
                 Batal
               </button>
             </div>
@@ -394,8 +394,8 @@ function bookModalHtml() {
               <div class="mb-6">
                 <label class="block text-sm font-semibold text-primary mb-2">File Kitab (.json)</label>
                 <input type="file" id="bok-multiple-file" accept="application/json,.json" multiple="multiple"
-                  class="w-full text-sm text-primary/60 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors cursor-pointer border border-cream-dark rounded-xl p-2">
-                <p class="text-xs text-primary/50 mt-2">Gunakan CTRL+A atau Shift+Klik untuk memilih banyak file JSON sekaligus.</p>
+                  class="w-full text-sm text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors cursor-pointer border border-cream-dark rounded-xl p-2">
+                <p class="text-xs text-slate-500 mt-2">Gunakan CTRL+A atau Shift+Klik untuk memilih banyak file JSON sekaligus.</p>
               </div>
 
               <!-- Progress Bar -->
@@ -403,7 +403,7 @@ function bookModalHtml() {
                 <div class="w-full h-4 bg-cream-dark rounded-full overflow-hidden">
                   <div id="bok-multiple-progress-bar" class="h-full bg-gold transition-all duration-300 w-0"></div>
                 </div>
-                <div id="bok-multiple-progress-text" class="text-xs text-primary/60 font-semibold mt-2 text-center">0 / 0 terselesaikan</div>
+                <div id="bok-multiple-progress-text" class="text-xs text-slate-600 font-semibold mt-2 text-center">0 / 0 terselesaikan</div>
               </div>
 
               <!-- Log Area -->
@@ -411,7 +411,7 @@ function bookModalHtml() {
               </div>
 
               <div class="flex justify-end gap-3" id="bok-multiple-actions">
-                <button type="button" onclick="closeImportMultipleBokModal()" class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">Tutup</button>
+                <button type="button" onclick="closeImportMultipleBokModal()" class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">Tutup</button>
                 <button type="submit" id="bok-multiple-submit-btn" class="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm flex items-center gap-2">
                   <i data-lucide="upload-cloud" class="w-4 h-4"></i> Mulai Proses Massal
                 </button>
@@ -583,7 +583,7 @@ async function _renderImportStep1() {
           class="flex items-center justify-center gap-3 w-full px-4 py-8 rounded-xl border-2 border-dashed border-gold/30 cursor-pointer hover:border-gold/60 hover:bg-cream/40 transition-all">
           <i data-lucide="file-up" class="w-8 h-8 text-gold/50"></i>
           <div class="text-center">
-            <div class="text-sm font-medium text-primary/60">Klik untuk pilih file .docx</div>
+            <div class="text-sm font-medium text-slate-600">Klik untuk pilih file .docx</div>
             <div class="text-xs text-primary/30 mt-1">atau seret & lepas di sini</div>
           </div>
           <input id="imp-file" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -731,7 +731,7 @@ function _renderImportStep2() {
           </div>
           <div>
             <div class="text-sm font-bold text-primary">${escHtml(_imp.title)}</div>
-            <div class="text-xs text-primary/50">${total} halaman terdeteksi · ${_imp.iso.toUpperCase()}</div>
+            <div class="text-xs text-slate-500">${total} halaman terdeteksi · ${_imp.iso.toUpperCase()}</div>
           </div>
         </div>
         <button onclick="window._impBack()" class="text-xs text-primary/40 hover:text-primary transition-colors flex items-center gap-1">
@@ -749,7 +749,7 @@ function _renderImportStep2() {
             ${Array.from({length:total},(_,i)=>`
               <button onclick="window._impGoPage(${i})"
                 class="w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-1.5
-                  ${i===pg ? 'bg-primary text-white font-bold' : 'hover:bg-cream/60 text-primary/60'}">
+                  ${i===pg ? 'bg-primary text-white font-bold' : 'hover:bg-cream/60 text-slate-600'}">
                 <span class="font-mono ${i===pg?'text-white/60':'text-primary/25'}">${String(i+1).padStart(3,'0')}</span>
                 Hal ${i+1}
               </button>`).join('')}
@@ -760,12 +760,12 @@ function _renderImportStep2() {
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-              <span class="text-xs font-semibold text-primary/50">
+              <span class="text-xs font-semibold text-slate-500">
                 Halaman <span class="text-primary font-bold">${pg+1}</span> dari ${total}
                 <span class="text-primary/30 ml-2">(${wordCount} kata)</span>
               </span>
               <div class="flex items-center gap-2">
-                <label for="imp-page-juz" class="text-xs font-semibold text-primary/50">Juz:</label>
+                <label for="imp-page-juz" class="text-xs font-semibold text-slate-500">Juz:</label>
                 <input type="number" id="imp-page-juz" value="${_imp.juzs[pg] || 1}" min="1" class="w-16 px-2 py-1 bg-cream/50 rounded-lg border border-gold/30 text-sm text-center focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/50">
               </div>
             </div>
@@ -783,7 +783,7 @@ function _renderImportStep2() {
             style="min-height:260px;">${escHtml(_imp.pages[pg]||'')}</textarea>
           <div class="flex justify-end">
             <button onclick="window._impSavePage()"
-              class="px-4 py-1.5 rounded-xl border border-gold/30 text-xs text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1">
+              class="px-4 py-1.5 rounded-xl border border-gold/30 text-xs text-slate-600 hover:bg-cream-dark transition-colors flex items-center gap-1">
               <i data-lucide="check" class="w-3 h-3 text-gold"></i> Simpan edit halaman ini
             </button>
           </div>
@@ -792,7 +792,7 @@ function _renderImportStep2() {
 
       <!-- Progress import -->
       <div id="imp-progress-wrap" class="hidden">
-        <div class="flex items-center justify-between text-xs text-primary/50 mb-1.5">
+        <div class="flex items-center justify-between text-xs text-slate-500 mb-1.5">
           <span>Mengimpor…</span>
           <span id="imp-progress-lbl">0 / ${total}</span>
         </div>
@@ -810,7 +810,7 @@ function _renderImportStep2() {
           <i data-lucide="upload-cloud" class="w-4 h-4"></i> Konfirmasi & Import (${total} halaman)
         </button>
         <button onclick="window._impBack()"
-          class="px-5 py-3 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">
+          class="px-5 py-3 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">
           ← Kembali
         </button>
       </div>
@@ -1014,7 +1014,7 @@ async function contLoadEditor() {
         <!-- Sidebar: page list -->
         <div class="bg-white rounded-2xl shadow-card overflow-hidden hidden lg:flex flex-col">
           <div class="px-4 py-3 bg-cream/40 border-b border-cream-dark flex items-center justify-between">
-            <span class="text-xs font-semibold text-primary/50">Halaman</span>
+            <span class="text-xs font-semibold text-slate-500">Halaman</span>
             <span class="text-xs text-primary/30">${total}</span>
           </div>
           <div id="cont-page-nav" class="overflow-y-auto flex-1" style="max-height:600px;">
@@ -1044,7 +1044,7 @@ async function contLoadEditor() {
 
             <div class="flex items-center gap-4 mb-4">
               <div>
-                <label class="block text-xs font-semibold text-primary/50 mb-1.5">No. Halaman DB</label>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">No. Halaman DB</label>
                 <input id="cont-pgnum" type="number" min="1" value="${pageNum}"
                   class="w-28 px-3 py-2 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15" />
               </div>
@@ -1052,7 +1052,7 @@ async function contLoadEditor() {
             </div>
 
             <div class="mb-5">
-              <label class="block text-xs font-semibold text-primary/50 mb-1.5">Isi Konten</label>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Isi Konten</label>
               <textarea id="cont-text" rows="18" dir="auto"
                 placeholder="Ketik atau tempel isi halaman kitab di sini…"
                 class="w-full px-4 py-3 rounded-xl border border-gold/25 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15 resize-y leading-relaxed font-arabic"
@@ -1235,7 +1235,7 @@ function _setBokImportStep(step) {
     l2.className = 'text-primary/30';
   } else {
     d1.className = 'w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs shrink-0';
-    l1.className = 'text-primary/60';
+    l1.className = 'text-slate-600';
     d2.className = 'w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0';
     l2.className = 'font-semibold text-primary';
   }
@@ -1246,7 +1246,7 @@ function _renderBokImportStep1() {
   if (!body) return;
   body.innerHTML = `
     <div class="py-4">
-      <p class="text-sm text-primary/60 text-center mb-6 leading-relaxed">
+      <p class="text-sm text-slate-600 text-center mb-6 leading-relaxed">
         Unggah file JSON hasil konversi Bok Converter. Sistem akan memproses data dalam potongan (chunk) agar stabil.
       </p>
       
@@ -1266,7 +1266,7 @@ function _renderBokImportStep1() {
         <div class="mb-6">
           <label class="block text-sm font-semibold text-primary mb-2">File Kitab (.json)</label>
           <input type="file" id="bok-file" accept=".json" required
-            class="w-full text-sm text-primary/60 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors">
+            class="w-full text-sm text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors">
         </div>
 
         <div id="bok-import-loading" class="hidden flex-col justify-center my-4 space-y-2 w-full">
@@ -1274,7 +1274,7 @@ function _renderBokImportStep1() {
         </div>
 
         <div class="flex justify-end gap-3" id="bok-import-actions">
-          <button type="button" onclick="closeImportBokModal()" class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">Batal</button>
+          <button type="button" onclick="closeImportBokModal()" class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">Batal</button>
           <button type="submit" id="bok-submit-btn" class="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm flex items-center gap-2">
             <i data-lucide="scan-text" class="w-4 h-4"></i> Proses & Pratinjau
           </button>
@@ -1367,7 +1367,7 @@ function _renderBokImportStep2() {
           </div>
           <div>
             <div class="text-sm font-bold text-primary">${escHtml(_bokImp.title)}</div>
-            <div class="text-xs text-primary/50">${total} halaman terdeteksi · JSON</div>
+            <div class="text-xs text-slate-500">${total} halaman terdeteksi · JSON</div>
           </div>
         </div>
         <button onclick="window._bokImpBack()" class="text-xs text-primary/40 hover:text-primary transition-colors flex items-center gap-1">
@@ -1389,7 +1389,7 @@ function _renderBokImportStep2() {
               return `
                 <button onclick="window._bokImpGoPage(${absIdx})"
                   class="w-full px-2 md:px-3 py-2 text-left text-[11px] transition-colors flex flex-col
-                    ${absIdx === pg ? 'bg-primary text-white' : 'hover:bg-cream/60 text-primary/60'}">
+                    ${absIdx === pg ? 'bg-primary text-white' : 'hover:bg-cream/60 text-slate-600'}">
                   <div class="${absIdx === pg ? 'font-bold' : ''}">ID: ${absIdx + 1}</div>
                   <div class="${absIdx === pg ? 'text-white/70' : 'text-primary/40'}">Juz ${juz}, Hal ${hal}</div>
                 </button>`;
@@ -1397,16 +1397,16 @@ function _renderBokImportStep2() {
           </div>
           ${totalSidebarPages > 1 ? `
           <div class="flex justify-between items-center p-1 border-t border-cream-dark bg-gray-50 shrink-0">
-            <button onclick="window._bokImpGoSidebar(${currentSidebarPage - 1})" ${currentSidebarPage === 0 ? 'disabled' : ''} class="p-1 rounded bg-cream text-primary/50 disabled:opacity-30 hover:bg-cream-dark"><i data-lucide="chevron-left" class="w-3 h-3"></i></button>
-            <span class="text-[10px] text-primary/50 font-medium">${currentSidebarPage + 1}/${totalSidebarPages}</span>
-            <button onclick="window._bokImpGoSidebar(${currentSidebarPage + 1})" ${currentSidebarPage >= totalSidebarPages - 1 ? 'disabled' : ''} class="p-1 rounded bg-cream text-primary/50 disabled:opacity-30 hover:bg-cream-dark"><i data-lucide="chevron-right" class="w-3 h-3"></i></button>
+            <button onclick="window._bokImpGoSidebar(${currentSidebarPage - 1})" ${currentSidebarPage === 0 ? 'disabled' : ''} class="p-1 rounded bg-cream text-slate-500 disabled:opacity-30 hover:bg-cream-dark"><i data-lucide="chevron-left" class="w-3 h-3"></i></button>
+            <span class="text-[10px] text-slate-500 font-medium">${currentSidebarPage + 1}/${totalSidebarPages}</span>
+            <button onclick="window._bokImpGoSidebar(${currentSidebarPage + 1})" ${currentSidebarPage >= totalSidebarPages - 1 ? 'disabled' : ''} class="p-1 rounded bg-cream text-slate-500 disabled:opacity-30 hover:bg-cream-dark"><i data-lucide="chevron-right" class="w-3 h-3"></i></button>
           </div>` : ''}
         </div>
 
         <!-- Editor halaman -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] md:text-xs font-semibold text-primary/50">
+            <span class="text-[11px] md:text-xs font-semibold text-slate-500">
               Halaman <span class="text-primary font-bold">${pg+1}</span> dari ${total}
               <span class="text-primary/30 ml-1">(${wordCount} kata) · Juz ${_bokImp.pages[pg]?.juz}, Hal ${_bokImp.pages[pg]?.page}</span>
             </span>
@@ -1424,7 +1424,7 @@ function _renderBokImportStep2() {
             style="min-height:260px;">${escHtml(_bokImp.pages[pg]?.text||'')}</textarea>
           <div class="flex justify-end">
             <button onclick="window._bokImpSavePage()"
-              class="px-4 py-1.5 rounded-xl border border-gold/30 text-xs text-primary/60 hover:bg-cream-dark transition-colors flex items-center gap-1">
+              class="px-4 py-1.5 rounded-xl border border-gold/30 text-xs text-slate-600 hover:bg-cream-dark transition-colors flex items-center gap-1">
               <i data-lucide="check" class="w-3 h-3 text-gold"></i> Simpan edit halaman ini
             </button>
           </div>
@@ -1433,7 +1433,7 @@ function _renderBokImportStep2() {
 
       <!-- Progress import -->
       <div id="bok-imp-progress-wrap" class="hidden mt-4">
-        <div class="flex items-center justify-between text-xs text-primary/50 mb-1.5">
+        <div class="flex items-center justify-between text-xs text-slate-500 mb-1.5">
           <span id="bok-imp-progress-status">Menginisialisasi...</span>
           <span id="bok-imp-progress-lbl" class="font-bold">0%</span>
         </div>
@@ -1443,7 +1443,7 @@ function _renderBokImportStep2() {
       </div>
 
       <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-cream-dark">
-        <button id="bok-imp-cancel-btn" onclick="window.closeImportBokModal()" class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-primary/60 hover:bg-cream-dark transition-colors">
+        <button id="bok-imp-cancel-btn" onclick="window.closeImportBokModal()" class="px-5 py-2.5 rounded-xl border border-gold/25 text-sm text-slate-600 hover:bg-cream-dark transition-colors">
           Batal
         </button>
         <button onclick="window._bokImpConfirm()" id="bok-imp-confirm-btn" class="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm flex items-center gap-2">
@@ -1736,7 +1736,7 @@ window.tocRemoveItem = function(idx) {
 window.tocAutoGenerate = async function() {
   if (!confirm("Auto Generate akan menimpa/menghapus Daftar Isi yang sedang Anda edit (jika belum disimpan). Lanjutkan?")) return;
   const body = document.getElementById('toc-modal-body');
-  body.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-primary/50 text-sm gap-3"><div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>Memindai isi kitab... Ini mungkin memakan waktu beberapa detik.</div>`;
+  body.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-slate-500 text-sm gap-3"><div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>Memindai isi kitab... Ini mungkin memakan waktu beberapa detik.</div>`;
   
   try {
     const data = await adminPost('admin_generate_toc', { bkid: tocAS.bkid });

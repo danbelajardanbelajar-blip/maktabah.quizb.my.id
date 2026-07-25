@@ -9,7 +9,7 @@ export function render404() {
         <i data-lucide="file-question" class="w-10 h-10 text-primary/30"></i>
       </div>
       <h1 class="text-4xl font-bold text-primary mb-2">404</h1>
-      <p class="text-primary/50 text-base mb-2">Halaman <code class="text-gold font-mono text-sm">${escHtml(path)}</code> tidak ditemukan</p>
+      <p class="text-slate-500 text-base mb-2">Halaman <code class="text-gold font-mono text-sm">${escHtml(path)}</code> tidak ditemukan</p>
       <p class="text-primary/35 text-sm mb-8">Mengarahkan ke Beranda dalam <span id="_r404-cnt">3</span> detik…</p>
       <div class="flex flex-wrap gap-3 justify-center">
         <button onclick="navigate('/')"

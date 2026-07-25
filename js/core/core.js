@@ -72,7 +72,7 @@ export function showPromptModal(title, message, callback) {
       <p class="text-sm text-primary/70 mb-4">${message}</p>
       <textarea id="promptModalText" rows="4" class="w-full bg-cream-light/50 border border-gold/30 text-primary text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold placeholder-primary/30 transition-all resize-none mb-4" placeholder="Ketik pesan Anda di sini..."></textarea>
       <div class="flex justify-end gap-3">
-        <button id="promptModalCancel" class="px-4 py-2 text-sm font-semibold text-primary/60 hover:text-primary transition-colors">Batal</button>
+        <button id="promptModalCancel" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-primary transition-colors">Batal</button>
         <button id="promptModalSubmit" class="px-5 py-2 text-sm font-bold text-white bg-gold hover:bg-gold-dark rounded-xl shadow-sm hover:shadow-gold/30 transition-all">Kirim</button>
       </div>
     </div>
@@ -414,12 +414,12 @@ export function bookCard(b) {
          onclick="navigate('/kitab?id=${b.bkid}')">
       <div class="flex-1">
         <div class="arabic text-primary font-semibold text-base leading-snug line-clamp-2 mb-1">${escHtml(title)}</div>
-        <div class="text-primary/60 text-xs font-medium line-clamp-1">${escHtml(author)}</div>
+        <div class="text-slate-600 text-xs font-medium line-clamp-1">${escHtml(author)}</div>
       </div>
       <div class="flex items-center gap-2 mt-auto pt-2 border-t border-cream-dark">
-        ${pages ? `<span class="text-xs text-gold font-medium">${escHtml(pages)}</span>` : ''}
+        ${pages ? `<span class="text-xs text-amber-700 font-medium">${escHtml(pages)}</span>` : ''}
         <a href="/api.php?action=download_book&id=${b.bkid}"
-           class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-gold/20 text-gold hover:bg-gold/10 transition ml-auto"
+           class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-amber-700/30 text-amber-700 hover:bg-amber-700/10 transition ml-auto"
            onclick="event.stopPropagation();"
            title="${dlTitle}"
            aria-label="${dlTitle}">

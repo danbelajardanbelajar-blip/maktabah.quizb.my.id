@@ -25,7 +25,7 @@ async function renderKategori(params) {
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-2xl font-bold text-primary">Kategori</h1>
-        <p class="text-primary/50 text-sm mt-1">Pilih kategori untuk melihat kitab-kitab di dalamnya</p>
+        <p class="text-slate-500 text-sm mt-1">Pilih kategori untuk melihat kitab-kitab di dalamnya</p>
       </div>
       <!-- Grid kategori -->
       <div id="kat-cat-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -93,7 +93,7 @@ async function renderKategoriBuku() {
       <!-- Breadcrumb -->
       <div class="flex items-center gap-2 mb-6">
         <button onclick="navigate('/kategori')"
-          class="flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
+          class="flex items-center gap-1.5 text-sm text-slate-600 hover:text-primary transition-colors">
           <i data-lucide="grid" class="w-4 h-4"></i>
           Kategori
         </button>
@@ -104,7 +104,7 @@ async function renderKategoriBuku() {
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 id="kat-buku-h1" class="text-2xl font-bold text-primary">Memuat…</h1>
-          <p class="text-primary/50 text-sm mt-1">Kitab-kitab dalam kategori ini</p>
+          <p class="text-slate-500 text-sm mt-1">Kitab-kitab dalam kategori ini</p>
         </div>
       </div>
       <!-- Grid buku -->
