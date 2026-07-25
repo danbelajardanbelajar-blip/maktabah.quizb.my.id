@@ -25,6 +25,11 @@ class AskController {
         $limit = 25; // Ambil 25 halaman terbaik agar konteks lebih luas dan akurat
 
         try {
+            // [CACHING] Cek history jika pertanyaan sudah pernah ditanyakan sebelumnya
+            $logCheck = $pdo->prepare("SELECT response FROM ask_logs WHERE question = ? ORDER BY id DESC LIMIT 1");
+            $logCheck->execute([$qRaw]);
+            $cachedLog = $logCheck->fetch(PDO::FETCH_ASSOC);
+
             $contextData = $this->fetchContextData($pdo, $qRaw, $limit);
             
             // [NEW LOGIC] Jika pencarian awal kosong, coba terjemahkan ke bahasa berlawanan dan cari lagi
@@ -36,8 +41,15 @@ class AskController {
                 }
             }
 
-            // Langkah 2: Kirim ke AI (Gemini)
-            $aiResponse = $aiService->askGemini($qRaw, $contextData);
+            // Gunakan jawaban dari log jika ada, agar instan dan tanpa loading panjang
+            $isCached = false;
+            if ($cachedLog && !empty($cachedLog['response'])) {
+                $aiResponse = $cachedLog['response'];
+                $isCached = true;
+            } else {
+                // Langkah 2: Kirim ke AI (Gemini)
+                $aiResponse = $aiService->askGemini($qRaw, $contextData);
+            }
             
             // Format referensi untuk dikirim ke frontend
             $references = [];
@@ -50,36 +62,38 @@ class AskController {
                 ];
             }
 
-            // Catat Log ke database
-            try {
-                $user = $_SESSION['user'] ?? null;
-                $userId = $user ? $user['id'] : null;
-                $userName = $user ? $user['name'] : '';
-                $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+            // Catat Log ke database HANYA jika bukan dari cache
+            if (!$isCached) {
+                try {
+                    $user = $_SESSION['user'] ?? null;
+                    $userId = $user ? $user['id'] : null;
+                    $userName = $user ? $user['name'] : '';
+                    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
 
-                $logStmt = $pdo->prepare("INSERT INTO ask_logs (question, response, visitor_ip, user_id, user_name) VALUES (?, ?, ?, ?, ?)");
-                $logStmt->execute([$qRaw, $aiResponse, $ip, $userId, $userName]);
+                    $logStmt = $pdo->prepare("INSERT INTO ask_logs (question, response, visitor_ip, user_id, user_name) VALUES (?, ?, ?, ?, ?)");
+                    $logStmt->execute([$qRaw, $aiResponse, $ip, $userId, $userName]);
 
-                // [REALTIME NOTIFIKASI]
-                $uNameStr = !empty($userName) ? $userName : 'Anonim';
-                $msgText = "Tanya AI Maktabah: '" . mb_substr($qRaw, 0, 50) . "' oleh {$uNameStr}";
-                
-                $notifyUrl = 'https://tahajjud.quizb.my.id/api_notify.php';
-                $postData = http_build_query([
-                    'secret' => 'QUIZB_NOTIFY_SECRET_99',
-                    'message' => $msgText
-                ]);
-                
-                $ch = curl_init($notifyUrl);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-                curl_setopt($ch, CURLOPT_POST, 1);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_exec($ch);
-                curl_close($ch);
+                    // [REALTIME NOTIFIKASI]
+                    $uNameStr = !empty($userName) ? $userName : 'Anonim';
+                    $msgText = "Tanya AI Maktabah: '" . mb_substr($qRaw, 0, 50) . "' oleh {$uNameStr}";
+                    
+                    $notifyUrl = 'https://tahajjud.quizb.my.id/api_notify.php';
+                    $postData = http_build_query([
+                        'secret' => 'QUIZB_NOTIFY_SECRET_99',
+                        'message' => $msgText
+                    ]);
+                    
+                    $ch = curl_init($notifyUrl);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                    curl_setopt($ch, CURLOPT_POST, 1);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_exec($ch);
+                    curl_close($ch);
 
-            } catch (Exception $logEx) {
-                // Abaikan error logging agar tidak merusak response ke user
+                } catch (Exception $logEx) {
+                    // Abaikan error logging agar tidak merusak response ke user
+                }
             }
 
             ResponseHelper::json([

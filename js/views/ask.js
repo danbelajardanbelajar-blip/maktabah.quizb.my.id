@@ -1,6 +1,6 @@
 let askState = { query: '', answerHTML: '', referencesHTML: '' };
 
-export function renderAsk() {
+export function renderAsk(params) {
   const { app, $, reicons } = window;
   
   app().innerHTML = `
@@ -16,7 +16,7 @@ export function renderAsk() {
 
         <div class="relative z-10">
           <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold">
+            <div class="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-amber-700">
               <i data-lucide="bot" class="w-5 h-5"></i>
             </div>
             <h2 class="text-xl md:text-2xl font-bold text-primary dark:text-cream">Tanya Maktabah Bot <span class="text-sm md:text-base font-normal text-gray-500">(Masa Percobaan)</span></h2>
@@ -39,7 +39,7 @@ export function renderAsk() {
             <div id="ask-response" class="hidden">
               <div class="p-5 bg-islamic-soft dark:bg-[#122319] rounded-2xl border border-primary/10 dark:border-primary/20 mb-4">
                 <div class="flex items-center gap-2 mb-3">
-                  <i data-lucide="sparkles" class="w-4 h-4 text-gold"></i>
+                  <i data-lucide="sparkles" class="w-4 h-4 text-amber-700"></i>
                   <span class="text-xs font-bold text-primary uppercase tracking-widest">Jawaban AI</span>
                 </div>
                 <div id="ask-answer-text" class="text-sm md:text-base leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap"></div>
@@ -68,6 +68,14 @@ export function renderAsk() {
   const answerText = $('#ask-answer-text');
   const refContainer = $('#ask-references-container');
   const refList = $('#ask-references-list');
+
+  let autoSubmit = false;
+  if (params && params.get('q')) {
+    askState.query = params.get('q');
+    askState.answerHTML = '';
+    askState.referencesHTML = '';
+    autoSubmit = true;
+  }
 
   // Restore state if exists
   if (askState.query) {
@@ -203,4 +211,8 @@ export function renderAsk() {
       reicons();
     }
   });
+
+  if (autoSubmit && input.value.trim().length >= 5) {
+    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+  }
 }
