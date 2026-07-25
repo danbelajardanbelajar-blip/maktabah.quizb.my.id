@@ -47,7 +47,7 @@ export async function renderHome() {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           
           <!-- Pencarian Terpopuler -->
-          <div id="popular-search-section" style="display:none">
+          <div id="popular-search-section">
             <div class="flex items-center gap-2 mb-4">
               <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
                 <i data-lucide="trending-up" class="w-3.5 h-3.5 text-gold"></i>
@@ -60,7 +60,7 @@ export async function renderHome() {
           </div>
 
           <!-- Pencarian Terbaru -->
-          <div id="recent-search-section" style="display:none">
+          <div id="recent-search-section">
             <div class="flex items-center gap-2 mb-4">
               <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
                 <i data-lucide="clock" class="w-3.5 h-3.5 text-gold"></i>
@@ -73,7 +73,7 @@ export async function renderHome() {
           </div>
 
           <!-- Pertanyaan Terbaru -->
-          <div id="recent-questions-section" style="display:none">
+          <div id="recent-questions-section">
             <div class="flex items-center gap-2 mb-4">
               <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
                 <i data-lucide="message-square" class="w-3.5 h-3.5 text-gold"></i>
@@ -181,8 +181,7 @@ export async function renderHome() {
       const section = document.getElementById('popular-search-section');
       const chips   = document.getElementById('popular-search-chips');
       if (!chips || !section) return;
-      if (!queries.length) { section.style.display = 'none'; return; }
-      section.style.display = '';
+      if (!queries.length) { chips.innerHTML = '<span class="text-sm text-primary/50 italic">Belum ada data.</span>'; return; }
       chips.innerHTML = queries.map(qObj => {
         const q = typeof qObj === 'string' ? qObj : qObj.query;
         const detail = typeof qObj === 'object' && qObj.detail ? JSON.parse(qObj.detail) : null;
@@ -226,8 +225,7 @@ export async function renderHome() {
       const section = document.getElementById('recent-search-section');
       const chips   = document.getElementById('recent-search-chips');
       if (!chips || !section) return;
-      if (!queries.length) { section.style.display = 'none'; return; }
-      section.style.display = '';
+      if (!queries.length) { chips.innerHTML = '<span class="text-sm text-primary/50 italic">Belum ada data.</span>'; return; }
       chips.innerHTML = queries.map(qObj => {
         const q = typeof qObj === 'string' ? qObj : qObj.query;
         const detail = typeof qObj === 'object' && qObj.detail ? JSON.parse(qObj.detail) : null;
@@ -271,8 +269,7 @@ export async function renderHome() {
       const section = document.getElementById('recent-questions-section');
       const chips   = document.getElementById('recent-questions-chips');
       if (!chips || !section) return;
-      if (!queries.length) { section.style.display = 'none'; return; }
-      section.style.display = '';
+      if (!queries.length) { chips.innerHTML = '<span class="text-sm text-primary/50 italic">Belum ada data.</span>'; return; }
       chips.innerHTML = queries.map(qObj => {
         const q = typeof qObj === 'string' ? qObj : qObj.query;
         const safe = escHtml(q);
