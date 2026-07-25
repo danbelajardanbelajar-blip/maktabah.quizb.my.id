@@ -112,13 +112,13 @@ class AdminController {
         if (!$name) { http_response_code(400); echo json_encode(['error' => 'Nama kategori wajib diisi.']); return; }
     
         if ($id) {
-            $pdo->prepare("UPDATE categories SET name=:name, catord=:ord, level=:lvl WHERE id=:id")
+            $pdo->prepare("UPDATE categories SET name=:name, catord=:ord, lvl=:lvl WHERE id=:id")
                 ->execute([':name' => $name, ':ord' => $ord, ':lvl' => $level, ':id' => $id]);
             AuthHelper::logCrudHistory('UPDATE', 'categories', (string)$id,
                 "Nama: {$name} | Urutan: {$ord} | Level: {$level}");
             echo json_encode(['success' => true, 'id' => $id]);
         } else {
-            $pdo->prepare("INSERT INTO categories (name, catord, level) VALUES (:name, :ord, :lvl)")
+            $pdo->prepare("INSERT INTO categories (name, catord, lvl) VALUES (:name, :ord, :lvl)")
                 ->execute([':name' => $name, ':ord' => $ord, ':lvl' => $level]);
             $newCatId = (int)$pdo->lastInsertId();
             AuthHelper::logCrudHistory('CREATE', 'categories', (string)$newCatId,

@@ -179,4 +179,26 @@ async function catSubmit() {
 }
 window.catSubmit = catSubmit;
 
+async function catDelete(id, name, count) {
+  if (count > 0) {
+    adminToast(`Kategori "${name}" tidak bisa dihapus karena masih berisi ${count} kitab. Pindahkan kitab terlebih dahulu.`, true);
+    return;
+  }
+  if (!confirm(`Hapus kategori "${name}" secara permanen?`)) return;
+  
+  try {
+    const data = await adminPost('admin_delete_category', { id });
+    if (data.success) {
+      adminToast(`Kategori "${name}" dihapus ✓`);
+      await loadCatGrid();
+    } else {
+      adminToast(data.error || 'Gagal menghapus kategori', true);
+    }
+  } catch(e) {
+    if (handleAuthError(e)) return;
+    adminToast('Error: ' + e.message, true);
+  }
+}
+window.catDelete = catDelete;
+
 export { renderAdminCategories };
