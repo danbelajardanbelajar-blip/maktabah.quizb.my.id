@@ -91,12 +91,12 @@ async function renderDetail(params) {
         <div class="px-3 sm:px-8 md:px-10 pt-6 sm:pt-8 space-y-5">
           ${description ? `
             <div>
-              <h3 class="text-xs font-semibold text-primary/40 uppercase tracking-wider mb-2">Deskripsi</h3>
+              <h3 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Deskripsi</h3>
               <p class="text-primary text-sm leading-relaxed arabic">${escHtml(description)}</p>
             </div>` : ''}
           ${authorInfo ? `
             <div>
-              <h3 class="text-xs font-semibold text-primary/40 uppercase tracking-wider mb-2">Tentang Pengarang</h3>
+              <h3 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Tentang Pengarang</h3>
               <p class="text-primary text-sm leading-relaxed arabic">${escHtml(authorInfo)}</p>
             </div>` : ''}
         </div>
@@ -119,11 +119,11 @@ async function renderDetail(params) {
                     `<option value="${j.juz}">Juz ${j.juz} (${j.pages} hal.)</option>`
                   ).join('')}
                 </select>
-                <span class="text-primary/30 text-xs hidden sm:inline">|</span>` : ''}
-                <span class="text-primary/40 text-xs whitespace-nowrap">Halaman</span>
+                <span class="text-slate-600 text-xs hidden sm:inline">|</span>` : ''}
+                <span class="text-slate-600 text-xs whitespace-nowrap">Halaman</span>
                 <input id="reader-page-input" type="number" min="1" max="${contentPgs}" value="1"
                   class="w-12 sm:w-14 text-center border border-gold/30 rounded-lg px-1 sm:px-2 py-1 text-xs sm:text-sm text-primary focus:outline-none focus:border-gold" />
-                <span id="reader-total-label" class="text-primary/40 text-xs whitespace-nowrap">dari ${contentPgs}</span>
+                <span id="reader-total-label" class="text-slate-600 text-xs whitespace-nowrap">dari ${contentPgs}</span>
                 <!-- Font Settings Gear Button -->
                 <button id="font-settings-btn" title="Pengaturan Font"
                   class="p-1.5 rounded-lg border border-gold/20 hover:bg-gold/10 hover:border-gold/40 transition-all text-slate-500 hover:text-primary shrink-0 ml-1 sm:ml-2">
@@ -149,7 +149,7 @@ async function renderDetail(params) {
                 class="flex items-center justify-center gap-1 sm:gap-2 flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl border border-gold/30 text-xs sm:text-sm font-medium text-primary hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 <i data-lucide="chevron-left" class="w-4 h-4 shrink-0"></i> <span class="hidden sm:inline">Sebelumnya</span>
               </button>
-              <span id="reader-label" class="text-xs text-primary/40 whitespace-nowrap"></span>
+              <span id="reader-label" class="text-xs text-slate-600 whitespace-nowrap"></span>
               <button id="reader-next"
                 class="flex items-center justify-center gap-1 sm:gap-2 flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-medium hover:bg-primary-light disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 <span class="hidden sm:inline">Berikutnya</span> <i data-lucide="chevron-right" class="w-4 h-4 shrink-0"></i>
@@ -159,7 +159,7 @@ async function renderDetail(params) {
           </div>
         </div>` : `
         <div class="px-3 sm:px-8 md:px-10 pb-10 mt-6">
-          <div class="border-t border-cream-dark pt-6 flex items-center gap-3 text-primary/40 text-sm">
+          <div class="border-t border-cream-dark pt-6 flex items-center gap-3 text-slate-600 text-sm">
             <i data-lucide="info" class="w-4 h-4"></i>
             <span>Konten kitab ini belum tersedia.</span>
           </div>
@@ -204,10 +204,10 @@ async function renderDetail(params) {
           if (readerWrap) {
             const banner = document.createElement('div');
             banner.id = 'search-jump-banner';
-            banner.className = 'flex items-center gap-2 mb-4 px-3 py-2 rounded-xl bg-gold/10 border border-gold/20 text-xs text-primary/70';
+            banner.className = 'flex items-center gap-2 mb-4 px-3 py-2 rounded-xl bg-gold/10 border border-gold/20 text-xs text-slate-600';
             banner.innerHTML = `<i data-lucide="search" class="w-3.5 h-3.5 text-gold shrink-0"></i>
               Ditemukan di hal. <strong class="text-primary mx-1">${jumpPage}</strong> &mdash; kata kunci: <mark class="hl mx-1">${escHtml(searchQ)}</mark>
-              <button onclick="document.getElementById('search-jump-banner').remove()" class="ml-auto text-primary/30 hover:text-primary transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+              <button onclick="document.getElementById('search-jump-banner').remove()" class="ml-auto text-slate-600 hover:text-primary transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
             readerWrap.prepend(banner);
             reicons();
           }
@@ -299,7 +299,7 @@ async function loadReaderPage(bkid, page, highlightQ = '', juz = 0, contentId = 
       }
 
     } else {
-      area.innerHTML = `<p class="text-center text-primary/30 py-6 text-sm">Halaman ini kosong.</p>`;
+      area.innerHTML = `<p class="text-center text-slate-600 py-6 text-sm">Halaman ini kosong.</p>`;
     }
 
     area.style.opacity = '1';
@@ -371,7 +371,7 @@ function renderFontPanel() {
           </div>
           <input type="range" class="font-range" id="font-size-slider"
             min="14" max="28" step="1" value="${readerFontState.size}">
-          <div class="flex justify-between text-[10px] text-primary/25 mt-1">
+          <div class="flex justify-between text-[10px] text-slate-600 mt-1">
             <span>A</span><span style="font-size:14px">A</span>
           </div>
         </div>

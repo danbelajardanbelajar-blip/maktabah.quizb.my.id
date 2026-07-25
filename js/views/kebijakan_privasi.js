@@ -261,7 +261,7 @@ export async function renderSubmitFile() {
 
             <!-- Nama File -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                 Nama File <span class="text-red-400">*</span>
               </label>
               <input type="text" id="sf-name" name="file_name" required
@@ -271,7 +271,7 @@ export async function renderSubmitFile() {
 
             <!-- Tipe File -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                 Tipe File <span class="text-red-400">*</span>
               </label>
               <select id="sf-type" name="file_type" required
@@ -284,7 +284,7 @@ export async function renderSubmitFile() {
 
             <!-- Kategori -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Kategori</label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Kategori</label>
               <select id="sf-cat" name="category_id"
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all appearance-none">
                 <option value="">— Pilih Kategori (opsional) —</option>
@@ -294,7 +294,7 @@ export async function renderSubmitFile() {
 
             <!-- Deskripsi -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Deskripsi <span class="text-primary/30 font-normal">(opsional)</span></label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Deskripsi <span class="text-slate-600 font-normal">(opsional)</span></label>
               <textarea id="sf-desc" name="description" rows="3"
                 placeholder="Keterangan singkat tentang isi file…"
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all resize-none"></textarea>
@@ -302,7 +302,7 @@ export async function renderSubmitFile() {
 
             <!-- Email pengirim (jika tidak login) -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Email Anda <span class="text-red-400">*</span></label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Email Anda <span class="text-red-400">*</span></label>
               <input type="email" id="sf-email" name="submitter_email" required
                 placeholder="email@contoh.com"
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
@@ -310,9 +310,9 @@ export async function renderSubmitFile() {
 
             <!-- Upload File -->
             <div class="mb-6">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                 File <span class="text-red-400">*</span>
-                <span class="text-primary/30 font-normal ml-1">PDF / Word · maks. 20 MB</span>
+                <span class="text-slate-600 font-normal ml-1">PDF / Word · maks. 20 MB</span>
               </label>
               <label class="flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed border-gold/40 rounded-xl py-7 px-4 bg-cream cursor-pointer hover:border-gold hover:bg-gold/5 transition-all" id="file-drop-zone">
                 <i data-lucide="upload-cloud" class="w-8 h-8 text-gold/60"></i>
@@ -331,7 +331,7 @@ export async function renderSubmitFile() {
           </form>
         </div>
 
-        <p class="text-xs text-center text-primary/35 mt-5">File akan direview oleh admin sebelum ditampilkan di perpustakaan.</p>
+        <p class="text-xs text-center text-slate-600 mt-5">File akan direview oleh admin sebelum ditampilkan di perpustakaan.</p>
       </div>
     </div>`;
 
@@ -421,7 +421,7 @@ export async function renderRequestKitab() {
 
             <!-- Email -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                 Email Anda <span class="text-red-400">*</span>
               </label>
               <input type="email" id="rq-email" name="user_email" required
@@ -429,12 +429,12 @@ export async function renderRequestKitab() {
                 value="${window.SESSION_USER ? window.SESSION_USER.email : ''}"
                 ${window.SESSION_USER ? 'readonly' : ''}
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream text-sm transition-all ${window.SESSION_USER ? 'opacity-60 cursor-not-allowed' : 'focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20'}" />
-              <p class="text-[10px] text-primary/40 mt-1">Kami akan menghubungi Anda jika kitab sudah tersedia.</p>
+              <p class="text-[10px] text-slate-600 mt-1">Kami akan menghubungi Anda jika kitab sudah tersedia.</p>
             </div>
 
             <!-- Tipe Request -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                 Tipe Request <span class="text-red-400">*</span>
               </label>
               <select id="rq-type" name="request_type" required
@@ -447,7 +447,7 @@ export async function renderRequestKitab() {
 
             <!-- Judul -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                 Judul <span class="text-red-400">*</span>
               </label>
               <input type="text" id="rq-title" name="title" required
@@ -457,7 +457,7 @@ export async function renderRequestKitab() {
 
             <!-- Pengarang / Kategori -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Pengarang / Penerbit <span class="text-primary/30 font-normal">(opsional)</span></label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Pengarang / Penerbit <span class="text-slate-600 font-normal">(opsional)</span></label>
               <input type="text" id="rq-author" name="author_or_category"
                 placeholder="Contoh: Imam Al-Bukhari"
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
@@ -465,7 +465,7 @@ export async function renderRequestKitab() {
 
             <!-- Deskripsi -->
             <div class="mb-6">
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Alasan / Keterangan <span class="text-primary/30 font-normal">(opsional)</span></label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Alasan / Keterangan <span class="text-slate-600 font-normal">(opsional)</span></label>
               <textarea id="rq-desc" name="description" rows="3"
                 placeholder="Berikan keterangan tambahan jika ada..."
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-cream focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all resize-none"></textarea>
@@ -480,7 +480,7 @@ export async function renderRequestKitab() {
           </form>
         </div>
 
-        <p class="text-xs text-center text-primary/35 mt-5">Semua permohonan akan ditinjau. Tidak semua permohonan dapat segera dipenuhi bergantung ketersediaan.</p>
+        <p class="text-xs text-center text-slate-600 mt-5">Semua permohonan akan ditinjau. Tidak semua permohonan dapat segera dipenuhi bergantung ketersediaan.</p>
       </div>
     </div>`;
 

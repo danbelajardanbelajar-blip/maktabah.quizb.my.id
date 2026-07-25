@@ -25,7 +25,7 @@ async function renderAdminHistory() {
         </div>
         <div>
           <h1 class="text-xl font-bold text-primary">CRUD History</h1>
-          <p class="text-xs text-primary/40">Rekam jejak perubahan data oleh admin</p>
+          <p class="text-xs text-slate-600">Rekam jejak perubahan data oleh admin</p>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ async function renderAdminHistory() {
 
       <!-- Table area -->
       <div id="hist-grid" class="bg-white rounded-2xl shadow-card overflow-hidden">
-        <div class="p-10 text-center text-primary/30 text-sm">Memuat data…</div>
+        <div class="p-10 text-center text-slate-600 text-sm">Memuat data…</div>
       </div>
 
       <!-- Pagination -->
@@ -81,7 +81,7 @@ async function renderAdminHistory() {
     _hist.table  = document.getElementById('hf-table')?.value  || '';
     _hist.admin  = document.getElementById('hf-admin')?.value  || '';
     const grid = document.getElementById('hist-grid');
-    grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
+    grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
     reicons();
     try {
       const d = await adminPost('admin_get_history', {
@@ -89,7 +89,7 @@ async function renderAdminHistory() {
         table_name: _hist.table, admin_name: _hist.admin, per_page: 20
       });
       if (!d.rows?.length) {
-        grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm">Tidak ada data.</div>';
+        grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm">Tidak ada data.</div>';
         document.getElementById('hist-pager').innerHTML = '';
         return;
       }
@@ -116,7 +116,7 @@ async function renderAdminHistory() {
                 <tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3">${actionBadge(r.action)}</td>
-                  <td class="px-4 py-3 font-mono text-xs text-primary/70">${escHtml(r.table_name)}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-600">${escHtml(r.table_name)}</td>
                   <td class="px-4 py-3 font-mono text-xs text-slate-600">${escHtml(r.record_id)}</td>
                   <td class="px-4 py-3 text-xs text-slate-600 max-w-xs truncate" title="${escHtml(r.detail||'')}">${escHtml(r.detail||'—')}</td>
                   <td class="px-4 py-3">
@@ -124,7 +124,7 @@ async function renderAdminHistory() {
                       <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
                         ${escHtml((r.admin_name||'?').charAt(0).toUpperCase())}
                       </div>
-                      <span class="text-xs text-primary/70 truncate max-w-[120px]">${escHtml(r.admin_name||'—')}</span>
+                      <span class="text-xs text-slate-600 truncate max-w-[120px]">${escHtml(r.admin_name||'—')}</span>
                     </div>
                   </td>
                 </tr>`).join('')}

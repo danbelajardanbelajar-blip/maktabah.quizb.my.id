@@ -11,7 +11,7 @@ export function renderAbout() {
         <div class="gold-line mt-6 max-w-xs mx-auto"></div>
       </div>
 
-      <div class="bg-white rounded-3xl shadow-card p-8 md:p-10 space-y-8 text-sm leading-relaxed text-primary/80">
+      <div class="bg-white rounded-3xl shadow-card p-8 md:p-10 space-y-8 text-sm leading-relaxed text-slate-600">
 
         <div>
           <h2 class="text-primary font-bold text-base mb-3 flex items-center gap-2">
@@ -187,7 +187,7 @@ export function renderAbout() {
           <h2 class="text-primary font-bold text-base mb-4 flex items-center gap-2">
             <i data-lucide="bar-chart-2" class="w-4 h-4 text-gold"></i> Statistik Maktabah
           </h2>
-          <div id="about-stats-container" class="flex flex-wrap items-center justify-center gap-4 text-sm text-primary/70">
+          <div id="about-stats-container" class="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-600">
             <span class="text-gold/50 text-xs">Memuat statistik...</span>
           </div>
         </div>
@@ -243,7 +243,7 @@ export function renderAbout() {
       const cats = res.data || [];
       const catsContainer = document.getElementById('about-cats-container');
       if (catsContainer && cats.length > 0) {
-        catsContainer.className = "text-sm text-primary/80 leading-relaxed bg-surface border border-border rounded-xl p-5 shadow-sm";
+        catsContainer.className = "text-sm text-slate-600 leading-relaxed bg-surface border border-border rounded-xl p-5 shadow-sm";
         catsContainer.innerHTML = "Disiplin ilmu yang saat ini tersedia mencakup: " + cats.map(c => `<strong class="text-primary">${escHtml(c.name)}</strong>`).join(', ') + ".";
       }
       reicons();

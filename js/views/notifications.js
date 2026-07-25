@@ -38,7 +38,7 @@ async function loadNotifications() {
     if (notifs.length === 0) {
       document.getElementById('notif-content').innerHTML = `
         <div class="bg-white rounded-2xl border border-gold/10 p-10 text-center">
-            <i data-lucide="bell-off" class="w-12 h-12 text-primary/20 mx-auto mb-3"></i>
+            <i data-lucide="bell-off" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
             <h3 class="text-lg font-semibold text-primary">Belum ada notifikasi</h3>
         </div>
       `;
@@ -67,7 +67,7 @@ async function loadNotifications() {
                 <div class="pr-6">
                     <h3 class="font-semibold text-primary text-sm">${escHtml(n.title)}</h3>
                     <p class="text-xs text-slate-500 mt-0.5 mb-2">${date}</p>
-                    <p class="text-sm text-primary/80 whitespace-pre-wrap">${escHtml(n.message)}</p>
+                    <p class="text-sm text-slate-600 whitespace-pre-wrap">${escHtml(n.message)}</p>
                 </div>
             </div>
         </div>

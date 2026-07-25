@@ -16,7 +16,7 @@ function renderDashboard() {
           ? `<img src="${escHtml(u.picture)}" class="w-16 h-16 rounded-full object-cover border-4 border-gold/30 shadow" width="64" height="64" />`
           : `<div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold shadow">${escHtml(u.name.charAt(0).toUpperCase())}</div>`}
         <div class="flex-1 min-w-0">
-          <div class="text-xs text-primary/40 font-semibold uppercase tracking-wider mb-1">Selamat datang</div>
+          <div class="text-xs text-slate-600 font-semibold uppercase tracking-wider mb-1">Selamat datang</div>
           <div class="text-xl font-bold text-primary truncate">${escHtml(u.name)}</div>
           <div class="text-sm text-slate-500 truncate">${escHtml(u.email)}</div>
           <span class="inline-block mt-2 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider

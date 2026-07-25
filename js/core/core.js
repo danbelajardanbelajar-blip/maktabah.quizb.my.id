@@ -69,7 +69,7 @@ export function showPromptModal(title, message, callback) {
   modal.innerHTML = `
     <div class="p-5 sm:p-6">
       <h3 class="text-lg font-bold text-primary mb-2">${title}</h3>
-      <p class="text-sm text-primary/70 mb-4">${message}</p>
+      <p class="text-sm text-slate-600 mb-4">${message}</p>
       <textarea id="promptModalText" rows="4" class="w-full bg-cream-light/50 border border-gold/30 text-primary text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold placeholder-primary/30 transition-all resize-none mb-4" placeholder="Ketik pesan Anda di sini..."></textarea>
       <div class="flex justify-end gap-3">
         <button id="promptModalCancel" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-primary transition-colors">Batal</button>
@@ -112,7 +112,7 @@ export const mobileFeedbackBanner = `
         </div>
         <div>
           <h4 class="text-sm font-bold text-primary mb-1">Menemukan Masalah?</h4>
-          <p class="text-xs text-primary/70 leading-relaxed">Beritahu kami jika ada error di web ini atau ingin memberikan saran.</p>
+          <p class="text-xs text-slate-600 leading-relaxed">Beritahu kami jika ada error di web ini atau ingin memberikan saran.</p>
         </div>
       </div>
     </a>
@@ -449,7 +449,7 @@ export function paginationHtml(current, total, onClickFn) {
   }
   const btnBase = 'w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors';
   const btns = pages.map(p => p === '...'
-    ? `<span class="${btnBase} text-primary/40">…</span>`
+    ? `<span class="${btnBase} text-slate-600">…</span>`
     : `<button onclick="${onClickFn}(${p})"
          class="${btnBase} ${p === current ? 'bg-primary text-white' : 'bg-white text-primary hover:bg-cream-dark border border-gold/20'}">${p}</button>`
   ).join('');
@@ -500,7 +500,7 @@ export function recentBookCard(item) {
         <div class="arabic text-white text-center font-bold leading-snug text-lg line-clamp-3">${escHtml(item.title)}</div>
       </div>
       <div class="p-3">
-        <div class="text-xs text-primary/55 truncate">${escHtml(item.author || '')}</div>
+        <div class="text-xs text-slate-600 truncate">${escHtml(item.author || '')}</div>
         ${item.cat ? `<span class="mt-1 inline-block text-[10px] px-2 py-0.5 rounded-full bg-gold/10 text-gold-dark font-medium">${escHtml(item.cat)}</span>` : ''}
       </div>
     </div>`;

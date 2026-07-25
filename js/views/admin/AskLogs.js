@@ -17,7 +17,7 @@ async function renderAdminAskLogs() {
         </div>
         <div>
           <h1 class="text-xl font-bold text-primary">Log Tanya AI</h1>
-          <p class="text-xs text-primary/40">Riwayat pertanyaan kepada AI</p>
+          <p class="text-xs text-slate-600">Riwayat pertanyaan kepada AI</p>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ async function renderAdminAskLogs() {
 
       <!-- Table -->
       <div id="al-grid" class="bg-white rounded-2xl shadow-card overflow-hidden">
-        <div class="p-10 text-center text-primary/30 text-sm">Memuat data…</div>
+        <div class="p-10 text-center text-slate-600 text-sm">Memuat data…</div>
       </div>
 
       <!-- Pagination -->
@@ -58,7 +58,7 @@ async function renderAdminAskLogs() {
     _al.query = document.getElementById('alf-query')?.value || '';
     _al.date  = document.getElementById('alf-date')?.value  || '';
     const grid = document.getElementById('al-grid');
-    grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
+    grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
     reicons();
     try {
       const d = await adminPost('admin_get_ask_logs', {
@@ -81,7 +81,7 @@ async function renderAdminAskLogs() {
               <i data-lucide="${s.icon}" class="w-5 h-5 ${s.color}"></i>
             </div>
             <div>
-              <div class="text-xs text-primary/40 font-medium">${s.label}</div>
+              <div class="text-xs text-slate-600 font-medium">${s.label}</div>
               <div class="text-xl font-bold text-primary">${s.val.toLocaleString()}</div>
             </div>
           </div>`).join('');
@@ -89,7 +89,7 @@ async function renderAdminAskLogs() {
 
       // Table
       if (!d.rows?.length) {
-        grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm">Tidak ada data log AI.</div>';
+        grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm">Tidak ada data log AI.</div>';
         document.getElementById('al-pager').innerHTML = '';
         return;
       }
@@ -111,7 +111,7 @@ async function renderAdminAskLogs() {
                   <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs align-top">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3 max-w-lg align-top">
                     <div class="font-bold text-primary text-sm mb-2"><span class="text-xs text-slate-500 uppercase mr-1">Q:</span> ${escHtml(r.question)}</div>
-                    <div class="text-primary/70 text-xs mt-1 whitespace-pre-wrap max-h-32 overflow-y-auto pr-2 bg-gray-50 p-2 rounded-lg border border-gray-100">${escHtml(r.response || '')}</div>
+                    <div class="text-slate-600 text-xs mt-1 whitespace-pre-wrap max-h-32 overflow-y-auto pr-2 bg-gray-50 p-2 rounded-lg border border-gray-100">${escHtml(r.response || '')}</div>
                   </td>
                   <td class="px-4 py-3 font-mono text-xs text-slate-500 align-top">${escHtml(r.visitor_ip||'—')}</td>
                   <td class="px-4 py-3 text-xs text-slate-600 align-top">${escHtml(r.user_name||'Tamu')}</td>

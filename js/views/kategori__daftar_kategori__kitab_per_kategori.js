@@ -44,7 +44,7 @@ export async function renderKategori(params) {
     if (!grid) return;
 
     if (!cats.length) {
-      grid.innerHTML = `<p class="col-span-full text-center py-16 text-primary/40">Belum ada kategori tersedia.</p>`;
+      grid.innerHTML = `<p class="col-span-full text-center py-16 text-slate-600">Belum ada kategori tersedia.</p>`;
       return;
     }
 
@@ -97,7 +97,7 @@ export async function renderKategoriBuku() {
           <i data-lucide="grid" class="w-4 h-4"></i>
           Kategori
         </button>
-        <i data-lucide="chevron-right" class="w-4 h-4 text-primary/30"></i>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600"></i>
         <span id="kat-buku-title" class="text-sm font-semibold text-primary">Memuat…</span>
       </div>
       <!-- Header -->
@@ -144,7 +144,7 @@ async function loadKategoriBuku() {
     const res = await apiFetch(params);
     grid.innerHTML = res.data.length
       ? res.data.map(bookCard).join('')
-      : `<p class="col-span-full text-center py-12 text-primary/40">Tidak ada kitab di kategori ini.</p>`;
+      : `<p class="col-span-full text-center py-12 text-slate-600">Tidak ada kitab di kategori ini.</p>`;
     if (pag) pag.innerHTML = paginationHtml(res.page, res.total_pages, 'goKategoriBukuPage');
   } catch(e) {
     if (handleAuthError(e)) return;

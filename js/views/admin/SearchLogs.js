@@ -17,7 +17,7 @@ async function renderAdminSearchLogs() {
         </div>
         <div>
           <h1 class="text-xl font-bold text-primary">Log Pencarian</h1>
-          <p class="text-xs text-primary/40">Riwayat pencarian seluruh pengunjung</p>
+          <p class="text-xs text-slate-600">Riwayat pencarian seluruh pengunjung</p>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ async function renderAdminSearchLogs() {
 
       <!-- Table -->
       <div id="sl-grid" class="bg-white rounded-2xl shadow-card overflow-hidden">
-        <div class="p-10 text-center text-primary/30 text-sm">Memuat data…</div>
+        <div class="p-10 text-center text-slate-600 text-sm">Memuat data…</div>
       </div>
 
       <!-- Pagination -->
@@ -71,7 +71,7 @@ async function renderAdminSearchLogs() {
     _sl.query = document.getElementById('slf-query')?.value || '';
     _sl.date  = document.getElementById('slf-date')?.value  || '';
     const grid = document.getElementById('sl-grid');
-    grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
+    grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
     reicons();
     try {
       const d = await adminPost('admin_get_search_logs', {
@@ -94,7 +94,7 @@ async function renderAdminSearchLogs() {
               <i data-lucide="${s.icon}" class="w-5 h-5 ${s.color}"></i>
             </div>
             <div>
-              <div class="text-xs text-primary/40 font-medium">${s.label}</div>
+              <div class="text-xs text-slate-600 font-medium">${s.label}</div>
               <div class="text-xl font-bold text-primary">${s.val.toLocaleString()}</div>
             </div>
           </div>`).join('');
@@ -110,10 +110,10 @@ async function renderAdminSearchLogs() {
               ${d.top_queries.map(q => `
                 <div class="inline-flex items-center rounded-full bg-cream hover:bg-cream-dark border border-gold/15 transition-colors overflow-hidden">
                   <button onclick="document.getElementById('slf-query').value=${JSON.stringify(q.query).replace(/"/g, '&quot;')};slLoad(1)"
-                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-primary/70 font-medium border-r border-gold/15">
+                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-600 font-medium border-r border-gold/15">
                     <i data-lucide="search" class="w-3 h-3 text-gold/60"></i>
                     ${escHtml(q.query)}
-                    <span class="text-primary/35">${q.cnt}×</span>
+                    <span class="text-slate-600">${q.cnt}×</span>
                   </button>
                   <button onclick="slDeleteQuery(${JSON.stringify(q.query).replace(/"/g, '&quot;')}, event)" class="px-2 py-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Hapus query ini dari log">
                     <i data-lucide="x" class="w-3 h-3"></i>
@@ -128,7 +128,7 @@ async function renderAdminSearchLogs() {
 
       // Table
       if (!d.rows?.length) {
-        grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm">Tidak ada data pencarian.</div>';
+        grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm">Tidak ada data pencarian.</div>';
         document.getElementById('sl-pager').innerHTML = '';
         return;
       }
@@ -178,7 +178,7 @@ async function renderAdminSearchLogs() {
                   <td class="px-4 py-3">${typeBadge(r.search_type)}</td>
                   <td class="px-4 py-3 max-w-xs">
                     <div class="font-medium text-primary text-xs truncate" title="${escHtml(r.query)}">${escHtml(r.query)}</div>
-                    ${r.query_detail ? `<div class="text-primary/35 text-xs truncate mt-0.5">${escHtml(r.query_detail)}</div>` : ''}
+                    ${r.query_detail ? `<div class="text-slate-600 text-xs truncate mt-0.5">${escHtml(r.query_detail)}</div>` : ''}
                   </td>
                   <td class="px-4 py-3 text-right">
                     <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold
@@ -188,7 +188,7 @@ async function renderAdminSearchLogs() {
                   </td>
                   <td class="px-4 py-3 font-mono text-xs text-slate-500">${escHtml(r.visitor_ip||'—')}</td>
                   <td class="px-4 py-3 text-xs text-slate-600">${escHtml(r.user_name||'Tamu')}</td>
-                  <td class="px-4 py-3 text-xs text-primary/40">${escHtml(browserShort)}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600">${escHtml(browserShort)}</td>
                   <td class="px-4 py-3 text-right">
                     <button onclick="slDelete(${r.id})" class="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus">
                       <i data-lucide="trash-2" class="w-4 h-4"></i>

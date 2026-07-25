@@ -18,7 +18,7 @@ async function renderAdminFeedbacks() {
         </h1>
       </div>
       <div class="bg-white rounded-2xl shadow-sm border border-gold/15 p-4 sm:p-6">
-        <div id="fb-list" class="space-y-4 text-sm text-primary/70">Memuat...</div>
+        <div id="fb-list" class="space-y-4 text-sm text-slate-600">Memuat...</div>
       </div>
     </div>
   `;
@@ -30,7 +30,7 @@ async function renderAdminFeedbacks() {
     const items = res.data || [];
     
     if (!items.length) {
-      listEl.innerHTML = '<div class="text-center py-12 text-primary/40">Belum ada feedback.</div>';
+      listEl.innerHTML = '<div class="text-center py-12 text-slate-600">Belum ada feedback.</div>';
       return;
     }
 
@@ -49,9 +49,9 @@ async function renderAdminFeedbacks() {
             <div class="flex items-center gap-3 mb-1">
               <span class="font-bold text-primary">${escHtml(it.email)}</span>
               ${statCol[it.status] || ''}
-              <span class="text-xs text-primary/40">${new Date(it.created_at).toLocaleString()}</span>
+              <span class="text-xs text-slate-600">${new Date(it.created_at).toLocaleString()}</span>
             </div>
-            <p class="text-primary/80 whitespace-pre-wrap">${escHtml(it.content)}</p>
+            <p class="text-slate-600 whitespace-pre-wrap">${escHtml(it.content)}</p>
             ${it.admin_reply ? `<div class="mt-2 text-xs bg-gold/10 p-2 rounded border border-gold/20 text-gold-dark font-medium">Balasan: ${escHtml(it.admin_reply)}</div>` : ''}
           </div>
           <div class="flex items-center gap-2 shrink-0">

@@ -21,10 +21,10 @@ export function renderAgreement() {
             ${reicons.shield_check}
           </div>
           <h1 class="text-3xl sm:text-4xl font-bold text-primary mb-4">Persetujuan Layanan</h1>
-          <p class="text-primary/70 text-lg">Ahlan wa sahlan, ${escHtml(u.name)}. Mohon baca dan setujui persyaratan berikut untuk melanjutkan.</p>
+          <p class="text-slate-600 text-lg">Ahlan wa sahlan, ${escHtml(u.name)}. Mohon baca dan setujui persyaratan berikut untuk melanjutkan.</p>
         </div>
 
-        <div class="prose prose-gold max-w-none text-primary/80 bg-cream/50 p-6 sm:p-8 rounded-2xl border border-gold/20 shadow-inner max-h-96 overflow-y-auto mb-10 text-sm sm:text-base leading-relaxed relative z-10 custom-scrollbar">
+        <div class="prose prose-gold max-w-none text-slate-600 bg-cream/50 p-6 sm:p-8 rounded-2xl border border-gold/20 shadow-inner max-h-96 overflow-y-auto mb-10 text-sm sm:text-base leading-relaxed relative z-10 custom-scrollbar">
           <h3 class="text-primary font-bold mb-4 text-lg">1. Pendahuluan</h3>
           <p class="mb-4">Selamat datang di Maktabah As-Sunniyyah. Layanan perpustakaan digital ini disediakan untuk memfasilitasi pencarian dan pengkajian literatur keislaman. Dengan menekan tombol setuju, Anda memahami dan mengikatkan diri pada syarat dan ketentuan yang berlaku.</p>
           

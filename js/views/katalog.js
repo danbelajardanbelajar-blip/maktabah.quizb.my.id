@@ -63,7 +63,7 @@ async function loadKatalogBooks() {
     const res = await apiFetch(params);
     grid.innerHTML = res.data.length
       ? res.data.map(bookCard).join('')
-      : '<p class="col-span-full text-center py-12 text-primary/40">Tidak ada kitab di kategori ini.</p>';
+      : '<p class="col-span-full text-center py-12 text-slate-600">Tidak ada kitab di kategori ini.</p>';
     if (pag) pag.innerHTML = paginationHtml(res.page, res.total_pages, 'goKatalogPage');
   } catch(e) {
     if (handleAuthError(e)) return;

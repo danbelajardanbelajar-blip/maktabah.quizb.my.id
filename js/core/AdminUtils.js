@@ -92,7 +92,7 @@ export function adminNavBar(active) {
           const deskOnly = t.desktopOnly ? 'hidden md:flex' : 'flex';
           return `<a href="${t.r}" data-route="${t.r}"
             class="${deskOnly} items-center gap-1.5 px-3 sm:px-4 py-3.5 text-[13px] font-semibold whitespace-nowrap border-b-2 transition-colors no-underline shrink-0
-              ${on ? 'border-gold text-primary' : 'border-transparent text-primary/45 hover:text-primary hover:border-gold/30'}">
+              ${on ? 'border-gold text-primary' : 'border-transparent text-slate-600 hover:text-primary hover:border-gold/30'}">
             <i data-lucide="${t.icon}" class="w-4 h-4"></i>${t.label}
           </a>`;
         }).join('')}

@@ -49,7 +49,7 @@ export function renderSettings() {
         </div>
         <div>
           <div class="text-sm font-bold text-primary">${label}</div>
-          ${sub ? `<div class="text-xs text-primary/45 mt-0.5">${sub}</div>` : ''}
+          ${sub ? `<div class="text-xs text-slate-600 mt-0.5">${sub}</div>` : ''}
         </div>
       </div>
       ${body}
@@ -65,7 +65,7 @@ export function renderSettings() {
         </div>
         <div>
           <h1 class="text-xl font-bold text-primary">Pengaturan</h1>
-          <p class="text-xs text-primary/45 mt-0.5">Tampilan &amp; Aksesibilitas</p>
+          <p class="text-xs text-slate-600 mt-0.5">Tampilan &amp; Aksesibilitas</p>
         </div>
       </div>
 
@@ -75,14 +75,14 @@ export function renderSettings() {
           <button id="pg-theme-light"
             onclick="window.setTheme('light'); renderSettingsRefresh()"
             class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all
-              ${!isDark ? 'bg-white text-primary shadow-sm' : 'text-primary/40 bg-transparent'}"
+              ${!isDark ? 'bg-white text-primary shadow-sm' : 'text-slate-600 bg-transparent'}"
           >
             <i data-lucide="sun" class="w-4 h-4"></i> Terang
           </button>
           <button id="pg-theme-dark"
             onclick="window.setTheme('dark'); renderSettingsRefresh()"
             class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all
-              ${isDark ? 'bg-primary text-gold shadow-sm' : 'text-primary/40 bg-transparent'}"
+              ${isDark ? 'bg-primary text-gold shadow-sm' : 'text-slate-600 bg-transparent'}"
           >
             <i data-lucide="moon" class="w-4 h-4"></i> Gelap
           </button>
@@ -98,11 +98,11 @@ export function renderSettings() {
           <span class="text-sm text-slate-500" style="font-size:20px">A</span>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-xs text-primary/40">14px — 28px</span>
+          <span class="text-xs text-slate-600">14px — 28px</span>
           <span id="pg-size-lbl" class="text-sm font-bold text-gold">${cur.size}px</span>
         </div>
         <div class="mt-4 p-3 rounded-xl bg-cream border border-gold/15">
-          <p id="pg-preview" class="reader-text text-primary/70 leading-relaxed text-center arabic"
+          <p id="pg-preview" class="reader-text text-slate-600 leading-relaxed text-center arabic"
              style="font-size:${cur.size}px">
             بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
           </p>
@@ -259,7 +259,7 @@ function advancedContentCard(book) {
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-3 cursor-pointer hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
          onclick="navigate('/kitab?id=${book.bkid}&content_id=${book.match_id}&q=${encodeURIComponent(buildAdvancedSearchQuery()).replace(/'/g, "%27")}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
-      ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
+      ${authorHtml ? `<div class="text-slate-600 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${snippetHtml ? `<div class="snippet-bar reader-text line-clamp-4">${snippetHtml}…</div>` : ''}
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         <span class="text-xs text-slate-500 truncate max-w-[65%]">${escHtml(book.category_name || '')}</span>
@@ -272,7 +272,7 @@ export function renderAdvancedCategories(categories) {
   const wrapper = $('#adv-categories');
   if (!wrapper) return;
   if (!categories.length) {
-    wrapper.innerHTML = `<p class="text-sm text-primary/40 col-span-full">Tidak ada kategori untuk ditampilkan.</p>`;
+    wrapper.innerHTML = `<p class="text-sm text-slate-600 col-span-full">Tidak ada kategori untuk ditampilkan.</p>`;
     return;
   }
   wrapper.innerHTML = categories.map(cat => {
@@ -321,7 +321,7 @@ async function execAdvancedSearch() {
   updateAdvancedSearchStateFromInputs();
   const searchTerms = searchAdvancedState.terms.filter(term => term.trim());
   if (!searchTerms.length) {
-    wrap.innerHTML = `<div class="text-center py-20 text-primary/40">Isi minimal satu kolom pencarian untuk memulai.</div>`;
+    wrap.innerHTML = `<div class="text-center py-20 text-slate-600">Isi minimal satu kolom pencarian untuk memulai.</div>`;
     if (stats) stats.textContent = '';
     updateAdvancedPageUrl();
     return;
@@ -345,7 +345,7 @@ async function execAdvancedSearch() {
     if (stats) stats.textContent = '';
     updateAdvancedPageUrl();
     document.getElementById('adv-alert-close')?.addEventListener('click', () => {
-      wrap.innerHTML = `<div class="text-center py-20 text-primary/40">Isi minimal satu kolom pencarian untuk memulai.</div>`;
+      wrap.innerHTML = `<div class="text-center py-20 text-slate-600">Isi minimal satu kolom pencarian untuk memulai.</div>`;
       if (stats) stats.textContent = '';
     });
     return;
@@ -357,7 +357,7 @@ async function execAdvancedSearch() {
   searchAdvancedState.page = Math.max(1, searchAdvancedState.page || 1);
   // Tampilkan indikator loading di stats bar
   if (stats) {
-    stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencari…</span>`;
+    stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-slate-600"><span class="spin-ring"></span> Mencari…</span>`;
     reicons();
   }
 
@@ -388,12 +388,12 @@ async function execAdvancedSearch() {
     // Badge kategori
     const catLabel = searchAdvancedState.allCats
       ? `<span class="inline-flex items-center gap-1 text-xs bg-gold/10 text-gold font-semibold px-2 py-0.5 rounded-full"><i data-lucide="layers" class="w-3 h-3"></i>Semua Kategori</span>`
-      : `<span class="text-xs text-primary/40">${searchAdvancedState.cats.length} kategori dipilih</span>`;
+      : `<span class="text-xs text-slate-600">${searchAdvancedState.cats.length} kategori dipilih</span>`;
 
     // Badge performa / cache
     const perfBadge = res.cached
       ? `<span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-600 font-semibold px-2 py-0.5 rounded-full"><i data-lucide="database" class="w-3 h-3"></i>Cache</span>`
-      : `<span class="inline-flex items-center gap-1 text-xs text-primary/40"><i data-lucide="zap" class="w-3 h-3 text-gold"></i>${ms} ms</span>`;
+      : `<span class="inline-flex items-center gap-1 text-xs text-slate-600"><i data-lucide="zap" class="w-3 h-3 text-gold"></i>${ms} ms</span>`;
 
     if (stats) {
       let didYouMeanHtml = '';
@@ -418,8 +418,8 @@ async function execAdvancedSearch() {
          ${recs}`;
       wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      wrap.innerHTML = `<div class="text-center py-20 text-primary/40 flex flex-col items-center">
-        <i data-lucide="search-x" class="w-12 h-12 text-primary/20 mb-4"></i>
+      wrap.innerHTML = `<div class="text-center py-20 text-slate-600 flex flex-col items-center">
+        <i data-lucide="search-x" class="w-12 h-12 text-slate-600 mb-4"></i>
         <p>Maaf, tidak ditemukan halaman yang cocok dengan kata kunci dan kategori yang dipilih.</p>
         ${recs}
       </div>`;
@@ -475,7 +475,7 @@ export function renderSearchAdvanced(params) {
             `).join('')}
           </div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div class="text-sm text-primary/70">Pilih kategori pilihan untuk mempersempit pencarian.</div>
+            <div class="text-sm text-slate-600">Pilih kategori pilihan untuk mempersempit pencarian.</div>
             <div class="flex flex-wrap gap-2">
               <button id="adv-select-all" type="button" class="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-gold/5 transition">Tandai semua</button>
               <button id="adv-clear-all" type="button" class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5 transition">Hapus semua</button>
@@ -579,7 +579,7 @@ export function renderSearchAdvanced(params) {
     applyAdvancedCheckboxState();
     updateAdvSelectAllBtn();
     $('#adv-search-stats').textContent = '';
-    $('#adv-results').innerHTML = `<div class="text-center py-20 text-primary/40">Isi minimal satu kolom pencarian untuk memulai.</div>`;
+    $('#adv-results').innerHTML = `<div class="text-center py-20 text-slate-600">Isi minimal satu kolom pencarian untuk memulai.</div>`;
     updateAdvancedPageUrl();
   });
 
@@ -631,12 +631,12 @@ export function renderSearch(params) {
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div class="max-w-2xl mx-auto mb-8">
         <div class="relative group">
-          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/35 transition-colors group-focus-within:text-gold"></i>
+          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 transition-colors group-focus-within:text-gold"></i>
           <input id="search-input" type="text" value="${escHtml(searchState.q)}"
             placeholder="Cari kata kunci pada isi ribuan kitab…"
             class="search-input-premium w-full pl-12 pr-24 py-4 rounded-2xl border border-gold/30 bg-white text-sm focus:outline-none focus:border-gold shadow-card" />
           <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <button id="search-clear" class="p-2 text-primary/30 hover:text-primary transition-colors ${searchState.q ? '' : 'hidden'}" title="Hapus pencarian">
+            <button id="search-clear" class="p-2 text-slate-600 hover:text-primary transition-colors ${searchState.q ? '' : 'hidden'}" title="Hapus pencarian">
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
             <button id="search-btn" class="p-2 bg-gold text-primary rounded-xl hover:bg-gold-light transition-colors shadow-sm" title="Mulai pencarian">
@@ -725,7 +725,7 @@ async function getSearchRecommendationsHtml(q = '') {
   
   return `
     <div class="mt-8 pt-6 border-t border-cream-dark w-full max-w-2xl mx-auto text-center search-section-enter">
-      <div class="text-xs font-bold text-primary/40 uppercase tracking-wider mb-4">Mungkin Anda mencari</div>
+      <div class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-4">Mungkin Anda mencari</div>
       <div class="flex flex-wrap justify-center gap-2">
         ${recs.map(itemObj => {
           const item = typeof itemObj === 'string' ? itemObj : itemObj.query;
@@ -767,10 +767,10 @@ function emptySearchPrompt() {
   });
   return `<div class="flex flex-col items-center py-20 gap-4">
     <div class="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center">
-      <i data-lucide="search" class="w-9 h-9 text-primary/20"></i>
+      <i data-lucide="search" class="w-9 h-9 text-slate-600"></i>
     </div>
-    <p class="text-primary/35 text-sm font-medium">Masukkan kata kunci untuk mencari</p>
-    <p class="text-primary/20 text-xs">Minimal 2 karakter</p>
+    <p class="text-slate-600 text-sm font-medium">Masukkan kata kunci untuk mencari</p>
+    <p class="text-slate-600 text-xs">Minimal 2 karakter</p>
     <div id="search-empty-recs" class="w-full"></div>
   </div>`;
 }
@@ -796,7 +796,7 @@ function sectionHeader(icon, label, total, loading) {
 
 // ── No-result block ───────────────────────────────────────────
 function noResultBlock(msg) {
-  return `<p class="text-primary/35 text-sm py-3 flex items-center gap-2">
+  return `<p class="text-slate-600 text-sm py-3 flex items-center gap-2">
     <i data-lucide="minus-circle" class="w-4 h-4 shrink-0"></i>${msg}
   </p>`;
 }
@@ -850,7 +850,7 @@ function bookCardStagger(b, i, q = '') {
     <div class="book-card search-card-stagger bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
          style="animation-delay:${i*40}ms" onclick="navigate('/kitab?id=${b.bkid}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
-      <div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>
+      <div class="text-slate-600 text-xs line-clamp-1">${authorHtml}</div>
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         <div class="flex items-center gap-2">
           ${cat   ? `<span class="text-xs bg-primary/8 text-slate-600 px-2 py-0.5 rounded-full truncate max-w-[60%]">${escHtml(cat)}</span>` : '<span></span>'}
@@ -895,7 +895,7 @@ function pdfCardStagger(b, i, q = '') {
     <div class="book-card search-card-stagger bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
          style="animation-delay:${i*40}ms" onclick="${onclickStr}">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${nameHtml}</div>
-      <div class="text-primary/55 text-[10px] line-clamp-2 leading-tight">${escHtml(path)}</div>
+      <div class="text-slate-600 text-[10px] line-clamp-2 leading-tight">${escHtml(path)}</div>
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         <div class="flex items-center gap-2">
            <span class="dl-fmt-badge dl-fmt-zip" style="background:rgba(212,82,82,.14); color:#c53030; border-color:rgba(212,82,82,.35);">PDF</span>
@@ -931,7 +931,7 @@ function contentCard(b, q) {
     <div class="book-card bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
          onclick="navigate('/kitab?id=${b.bkid}&content_id=${b.match_id}&q=${encodeURIComponent(q).replace(/'/g, "%27")}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${titleHtml}</div>
-      ${authorHtml ? `<div class="text-primary/55 text-xs line-clamp-1">${authorHtml}</div>` : ''}
+      ${authorHtml ? `<div class="text-slate-600 text-xs line-clamp-1">${authorHtml}</div>` : ''}
       ${hlSnip ? `<div class="snippet-bar reader-text line-clamp-3">${hlSnip}…</div>` : ''}
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
         <div class="flex items-center gap-2">
@@ -1176,7 +1176,7 @@ async function execSearch() {
     </div>`;
 
   if (stats) {
-    stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-primary/40"><span class="spin-ring"></span> Mencari…</span>`;
+    stats.innerHTML = `<span class="inline-flex items-center gap-1.5 text-sm text-slate-600"><span class="spin-ring"></span> Mencari…</span>`;
   }
   reicons();
 

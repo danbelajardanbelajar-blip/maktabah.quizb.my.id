@@ -10,7 +10,7 @@ export const mobileFeedbackBanner = `
         </div>
         <div>
           <h4 class="text-sm font-bold text-primary mb-1">Menemukan Masalah?</h4>
-          <p class="text-xs text-primary/70 leading-relaxed">Beritahu kami jika ada error di web ini atau ingin memberikan saran.</p>
+          <p class="text-xs text-slate-600 leading-relaxed">Beritahu kami jika ada error di web ini atau ingin memberikan saran.</p>
         </div>
       </div>
     </a>
@@ -73,7 +73,7 @@ export function paginationHtml(current, total, onClickFn) {
   }
   const btnBase = 'w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors';
   const btns = pages.map(p => p === '...'
-    ? \`<span class="\${btnBase} text-primary/40">…</span>\`
+    ? \`<span class="\${btnBase} text-slate-600">…</span>\`
     : \`<button onclick="\${onClickFn}(\${p})"
          class="\${btnBase} \${p === current ? 'bg-primary text-white' : 'bg-white text-primary hover:bg-cream-dark border border-gold/20'}">\${p}</button>\`
   ).join('');

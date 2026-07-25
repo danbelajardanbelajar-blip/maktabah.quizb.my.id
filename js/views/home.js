@@ -297,7 +297,7 @@ export async function renderHome() {
       if (!books.length) {
         grid.innerHTML = `
           <div class="col-span-full flex flex-col items-center justify-center gap-3 py-10 text-center">
-            <p class="text-primary/45 text-sm">Belum ada data popularitas.</p>
+            <p class="text-slate-600 text-sm">Belum ada data popularitas.</p>
           </div>`;
         return;
       }
@@ -317,9 +317,9 @@ export async function renderHome() {
       grid.innerHTML = `
         <div class="col-span-full flex flex-col items-center justify-center gap-3 py-10 text-center">
           <div class="w-14 h-14 rounded-2xl bg-primary/6 flex items-center justify-center">
-            <i data-lucide="book-open" class="w-7 h-7 text-primary/30"></i>
+            <i data-lucide="book-open" class="w-7 h-7 text-slate-600"></i>
           </div>
-          <p class="text-primary/45 text-sm">Belum ada kitab yang dibuka.</p>
+          <p class="text-slate-600 text-sm">Belum ada kitab yang dibuka.</p>
           <a href="/katalog" data-route="/katalog"
              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-light transition">
             <i data-lucide="search" class="w-3.5 h-3.5"></i> Jelajahi Katalog

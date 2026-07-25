@@ -15,7 +15,7 @@ async function renderAdminCategories() {
           <h1 class="text-xl font-bold text-primary flex items-center gap-2">
             <i data-lucide="folder" class="w-5 h-5 text-gold"></i> Kelola Kategori
           </h1>
-          <p class="text-primary/40 text-xs mt-1">Tambah, edit, dan hapus kategori kitab</p>
+          <p class="text-slate-600 text-xs mt-1">Tambah, edit, dan hapus kategori kitab</p>
         </div>
         <button onclick="openCatModal(null)"
           class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors shadow-sm">
@@ -39,24 +39,24 @@ async function loadCatGrid() {
     const res = await apiFetch({ action: 'categories' });
     const cats = res.data || [];
     if (!cats.length) {
-      grid.innerHTML = `<div class="bg-white rounded-2xl shadow-card py-16 text-center text-primary/25 text-sm"><i data-lucide="folder-open" class="w-10 h-10 mx-auto mb-3 opacity-25"></i><p>Belum ada kategori.</p></div>`;
+      grid.innerHTML = `<div class="bg-white rounded-2xl shadow-card py-16 text-center text-slate-600 text-sm"><i data-lucide="folder-open" class="w-10 h-10 mx-auto mb-3 opacity-25"></i><p>Belum ada kategori.</p></div>`;
       reicons(); return;
     }
     grid.innerHTML = `
       <div class="bg-white rounded-2xl shadow-card overflow-hidden">
         <div class="px-5 py-3.5 bg-cream/40 border-b border-cream-dark flex items-center justify-between">
           <span class="text-xs font-medium text-slate-500">${cats.length} kategori</span>
-          <span class="text-xs text-primary/30">Urut berdasarkan catord ASC</span>
+          <span class="text-xs text-slate-600">Urut berdasarkan catord ASC</span>
         </div>
         <div class="divide-y divide-cream-dark">
           ${cats.map(c => `
             <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-cream/40 transition-colors">
               <div class="w-9 h-9 rounded-xl bg-primary/7 flex items-center justify-center shrink-0">
-                <i data-lucide="folder" class="w-4 h-4 text-primary/40"></i>
+                <i data-lucide="folder" class="w-4 h-4 text-slate-600"></i>
               </div>
               <div class="flex-1 min-w-0">
                 <div class="font-semibold text-primary text-sm">${escHtml(c.name)}</div>
-                <div class="text-xs text-primary/35 mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                <div class="text-xs text-slate-600 mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
                   <span class="flex items-center gap-1"><i data-lucide="book" class="w-3 h-3"></i>${c.book_count} kitab</span>
                   <span>Ord: ${c.catord}</span>
                   <span>Lvl: ${c.lvl}</span>
@@ -64,7 +64,7 @@ async function loadCatGrid() {
               </div>
               <div class="flex items-center gap-1 shrink-0">
                 <button onclick='openCatModal(${JSON.stringify(c).replace(/'/g,"\\'")})'
-                  class="p-2 rounded-lg hover:bg-primary/8 text-primary/40 hover:text-primary transition-colors" title="Edit">
+                  class="p-2 rounded-lg hover:bg-primary/8 text-slate-600 hover:text-primary transition-colors" title="Edit">
                   <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                 </button>
                 <button onclick="catDelete(${c.id},'${escHtml(c.name).replace(/'/g,"\\'")}',${c.book_count})"
@@ -89,25 +89,25 @@ function catModalHtml() {
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
           <div class="flex items-center justify-between px-6 py-4 border-b border-cream-dark">
             <h2 id="cat-modal-ttl" class="font-bold text-primary">Tambah Kategori</h2>
-            <button onclick="closeCatModal()" class="p-2 rounded-lg hover:bg-cream-dark text-primary/40 transition-colors">
+            <button onclick="closeCatModal()" class="p-2 rounded-lg hover:bg-cream-dark text-slate-600 transition-colors">
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
           <form id="cat-form" class="p-6 space-y-4">
             <input type="hidden" id="cm-id" />
             <div>
-              <label class="block text-xs font-semibold text-primary/55 mb-1.5">Nama Kategori <span class="text-red-400">*</span></label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama Kategori <span class="text-red-400">*</span></label>
               <input id="cm-name" type="text" placeholder="Nama kategori"
                 class="w-full px-4 py-2.5 rounded-xl border border-gold/30 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-semibold text-primary/55 mb-1.5">Urutan tampil</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Urutan tampil</label>
                 <input id="cm-catord" type="number" value="0" min="0"
                   class="w-full px-4 py-2.5 rounded-xl border border-gold/30 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15" />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-primary/55 mb-1.5">Level (1–5)</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Level (1–5)</label>
                 <input id="cm-lvl" type="number" value="1" min="1" max="5"
                   class="w-full px-4 py-2.5 rounded-xl border border-gold/30 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15" />
               </div>

@@ -17,7 +17,7 @@ async function renderAdminDownloadLogs() {
         </div>
         <div>
           <h1 class="text-xl font-bold text-primary">Log Download Kitab</h1>
-          <p class="text-xs text-primary/40">Rekam IP dan perangkat yang mengunduh kitab.</p>
+          <p class="text-xs text-slate-600">Rekam IP dan perangkat yang mengunduh kitab.</p>
         </div>
       </div>
 
@@ -52,7 +52,7 @@ async function renderAdminDownloadLogs() {
 
       <!-- Table -->
       <div id="dl-grid" class="bg-white rounded-2xl shadow-card overflow-hidden">
-        <div class="p-10 text-center text-primary/30 text-sm">Memuat data…</div>
+        <div class="p-10 text-center text-slate-600 text-sm">Memuat data…</div>
       </div>
 
       <div id="dl-pager" class="mt-4 flex items-center justify-center gap-2"></div>
@@ -66,7 +66,7 @@ async function renderAdminDownloadLogs() {
     _dl.query = document.getElementById('dlf-query')?.value.trim() || '';
     _dl.date  = document.getElementById('dlf-date')?.value  || '';
     const grid = document.getElementById('dl-grid');
-    grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
+    grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
     reicons();
     try {
       const d = await adminPost('admin_get_download_logs', {
@@ -89,7 +89,7 @@ async function renderAdminDownloadLogs() {
               <i data-lucide="${s.icon}" class="w-5 h-5 ${s.color}"></i>
             </div>
             <div>
-              <div class="text-xs text-primary/40 font-medium">${s.label}</div>
+              <div class="text-xs text-slate-600 font-medium">${s.label}</div>
               <div class="text-xl font-bold text-primary">${s.val.toLocaleString()}</div>
             </div>
           </div>`).join('');
@@ -104,10 +104,10 @@ async function renderAdminDownloadLogs() {
             <div class="flex flex-wrap gap-2">
               ${d.top_downloads.map(q => `
                 <button onclick="document.getElementById('dlf-bkid').value=${JSON.stringify(q.bkid)};dlLoad(1)"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cream hover:bg-cream-dark text-xs text-primary/70 font-medium transition-colors border border-gold/15">
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cream hover:bg-cream-dark text-xs text-slate-600 font-medium transition-colors border border-gold/15">
                   <i data-lucide="download" class="w-3 h-3 text-gold/60"></i>
                   ${q.source === 'scholarium' ? '<span class="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Scholarium</span> ' : ''}${escHtml(q.book_title)}
-                  <span class="text-primary/35">${q.cnt}×</span>
+                  <span class="text-slate-600">${q.cnt}×</span>
                 </button>`).join('')}
             </div>
           </div>`;
@@ -118,7 +118,7 @@ async function renderAdminDownloadLogs() {
 
       // Table
       if (!d.rows?.length) {
-        grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm">Tidak ada log download.</div>';
+        grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm">Tidak ada log download.</div>';
         document.getElementById('dl-pager').innerHTML = '';
         return;
       }
@@ -139,13 +139,13 @@ async function renderAdminDownloadLogs() {
               ${d.rows.map(r => `
                 <tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
-                  <td class="px-4 py-3 text-xs text-primary/70 max-w-[240px] truncate" title="${escHtml(r.book_title)}">
+                  <td class="px-4 py-3 text-xs text-slate-600 max-w-[240px] truncate" title="${escHtml(r.book_title)}">
                     ${r.source === 'scholarium' ? '<span class="inline-block text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider mr-1">Scholarium</span>' : ''}
                     #${escHtml(String(r.bkid))} — ${escHtml(r.book_title)}
                   </td>
                   <td class="px-4 py-3 text-xs text-slate-600">
                     ${escHtml(r.user_name || 'Guest')}<br>
-                    <span class="text-primary/40">${escHtml(r.user_email || '—')} · ${escHtml(r.user_role || 'user')}</span>
+                    <span class="text-slate-600">${escHtml(r.user_email || '—')} · ${escHtml(r.user_role || 'user')}</span>
                   </td>
                   <td class="px-4 py-3 font-mono text-xs text-slate-500 truncate max-w-[140px]">${escHtml(r.ip_address)}</td>
                   <td class="px-4 py-3 text-xs text-slate-600 max-w-[320px] truncate" title="${escHtml(r.user_agent)}">${escHtml(r.user_agent)}</td>

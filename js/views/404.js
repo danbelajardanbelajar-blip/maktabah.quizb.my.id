@@ -6,11 +6,11 @@ export function render404() {
   app().innerHTML = `
     <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-12">
       <div class="w-20 h-20 rounded-2xl bg-primary/8 border border-gold/20 flex items-center justify-center mb-6">
-        <i data-lucide="file-question" class="w-10 h-10 text-primary/30"></i>
+        <i data-lucide="file-question" class="w-10 h-10 text-slate-600"></i>
       </div>
       <h1 class="text-4xl font-bold text-primary mb-2">404</h1>
       <p class="text-slate-500 text-base mb-2">Halaman <code class="text-gold font-mono text-sm">${escHtml(path)}</code> tidak ditemukan</p>
-      <p class="text-primary/35 text-sm mb-8">Mengarahkan ke Beranda dalam <span id="_r404-cnt">3</span> detik…</p>
+      <p class="text-slate-600 text-sm mb-8">Mengarahkan ke Beranda dalam <span id="_r404-cnt">3</span> detik…</p>
       <div class="flex flex-wrap gap-3 justify-center">
         <button onclick="navigate('/')"
           class="px-5 py-2.5 bg-primary text-white rounded-xl font-medium text-sm hover:bg-primary-light transition-colors">

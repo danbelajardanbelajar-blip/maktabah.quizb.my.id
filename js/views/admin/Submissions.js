@@ -12,7 +12,7 @@ async function renderAdminSubmissions() {
           <h1 class="text-xl font-bold text-primary flex items-center gap-2">
             <i data-lucide="inbox" class="w-5 h-5 text-gold"></i> Review Kiriman
           </h1>
-          <p class="text-primary/45 text-xs mt-0.5">Approve atau tolak kiriman Hasil Bahsul Masail &amp; Kitab dari pengguna</p>
+          <p class="text-slate-600 text-xs mt-0.5">Approve atau tolak kiriman Hasil Bahsul Masail &amp; Kitab dari pengguna</p>
         </div>
         <div class="flex gap-2 flex-wrap" id="sub-tabs"></div>
       </div>
@@ -20,14 +20,14 @@ async function renderAdminSubmissions() {
         <div id="sub-table-wrap">
           <div class="py-16 text-center"><i data-lucide="loader-circle" class="w-8 h-8 mx-auto animate-spin text-gold/50"></i></div>
         </div>
-        <div id="sub-pagination" class="px-4 py-3 border-t border-cream-dark flex items-center justify-between text-xs text-primary/40"></div>
+        <div id="sub-pagination" class="px-4 py-3 border-t border-cream-dark flex items-center justify-between text-xs text-slate-600"></div>
       </div>
     </div>
     <div id="sub-modal-overlay" class="hidden fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
       <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
         <h3 id="sub-modal-title" class="font-bold text-primary mb-1 text-base"></h3>
-        <p  id="sub-modal-meta"  class="text-xs text-primary/45 mb-4"></p>
-        <label class="block text-xs font-semibold text-primary/55 mb-1.5">Catatan Review <span class="text-primary/30 font-normal">(opsional)</span></label>
+        <p  id="sub-modal-meta"  class="text-xs text-slate-600 mb-4"></p>
+        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Catatan Review <span class="text-slate-600 font-normal">(opsional)</span></label>
         <textarea id="sub-modal-note" rows="3" placeholder="Tulis catatan untuk pengirim…"
           class="w-full px-3 py-2 rounded-xl border border-gold/30 bg-cream text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 resize-none mb-5"></textarea>
         <div class="flex gap-3">
@@ -52,10 +52,10 @@ async function renderAdminSubmissions() {
             </div>
             <div>
               <h2 id="sub-rev-title" class="font-bold text-primary text-sm">Review Kiriman</h2>
-              <p class="text-xs text-primary/40">Pratinjau konten & persetujuan</p>
+              <p class="text-xs text-slate-600">Pratinjau konten & persetujuan</p>
             </div>
           </div>
-          <button onclick="closeSubReviewModal()" class="p-2 rounded-lg hover:bg-cream-dark text-primary/40 transition-colors">
+          <button onclick="closeSubReviewModal()" class="p-2 rounded-lg hover:bg-cream-dark text-slate-600 transition-colors">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
@@ -206,13 +206,13 @@ async function renderAdminSubmissions() {
       <div class="flex flex-col md:flex-row gap-4 h-full min-h-[400px]">
         <!-- Sidebar navigasi halaman -->
         <div class="w-full md:w-48 bg-white rounded-xl border border-cream-dark overflow-y-auto" style="max-height:450px;">
-          <div class="px-3 py-2 bg-cream/50 border-b border-cream-dark text-xs font-semibold text-primary/40 sticky top-0">Hal.</div>
+          <div class="px-3 py-2 bg-cream/50 border-b border-cream-dark text-xs font-semibold text-slate-600 sticky top-0">Hal.</div>
           <div class="flex flex-col">
             ${Array.from({length:total},(_,i)=>`
               <button onclick="window._subRevGoPage(${i})"
                 class="w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-1.5
                   ${i===pg ? 'bg-primary text-white font-bold' : 'hover:bg-cream/60 text-slate-600'}">
-                <span class="font-mono ${i===pg?'text-white/60':'text-primary/25'}">${String(i+1).padStart(3,'0')}</span>
+                <span class="font-mono ${i===pg?'text-white/60':'text-slate-600'}">${String(i+1).padStart(3,'0')}</span>
                 Hal ${i+1}
               </button>`).join('')}
           </div>
@@ -223,13 +223,13 @@ async function renderAdminSubmissions() {
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-slate-500">
               Halaman <span class="text-primary font-bold">${pg+1}</span> dari ${total}
-              <span class="text-primary/30 ml-2">(${wordCount} kata)</span>
+              <span class="text-slate-600 ml-2">(${wordCount} kata)</span>
             </span>
             <div class="flex items-center gap-1">
-              <button onclick="window._subRevGoPage(${pg-1})" ${pg===0?'disabled':''} class="p-1.5 rounded-lg text-primary/40 hover:bg-cream-dark disabled:opacity-25 transition-colors">
+              <button onclick="window._subRevGoPage(${pg-1})" ${pg===0?'disabled':''} class="p-1.5 rounded-lg text-slate-600 hover:bg-cream-dark disabled:opacity-25 transition-colors">
                 <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
               </button>
-              <button onclick="window._subRevGoPage(${pg+1})" ${pg>=total-1?'disabled':''} class="p-1.5 rounded-lg text-primary/40 hover:bg-cream-dark disabled:opacity-25 transition-colors">
+              <button onclick="window._subRevGoPage(${pg+1})" ${pg>=total-1?'disabled':''} class="p-1.5 rounded-lg text-slate-600 hover:bg-cream-dark disabled:opacity-25 transition-colors">
                 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
               </button>
             </div>
@@ -280,7 +280,7 @@ async function renderAdminSubmissions() {
       const res  = await apiFetch(params);
       const rows = res.data || [];
       if (!rows.length) {
-        wrap.innerHTML = '<div class="py-16 text-center"><i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 text-primary/15"></i><p class="text-primary/30 text-sm">Tidak ada kiriman ditemukan.</p></div>';
+        wrap.innerHTML = '<div class="py-16 text-center"><i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 text-slate-600"></i><p class="text-slate-600 text-sm">Tidak ada kiriman ditemukan.</p></div>';
         pag.innerHTML = '';
         reicons(); return;
       }
@@ -295,12 +295,12 @@ async function renderAdminSubmissions() {
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
           + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.file_name) + '</div>'
-          + '<div class="text-primary/40 text-xs mt-0.5">' + fmtSize(r.file_size) + ' · ' + (r.created_at||'').slice(0,10) + '</div>'
-          + (r.review_note ? '<div class="text-primary/40 text-xs italic mt-0.5 line-clamp-1">“' + escHtml(r.review_note) + '”</div>' : '')
+          + '<div class="text-slate-600 text-xs mt-0.5">' + fmtSize(r.file_size) + ' · ' + (r.created_at||'').slice(0,10) + '</div>'
+          + (r.review_note ? '<div class="text-slate-600 text-xs italic mt-0.5 line-clamp-1">“' + escHtml(r.review_note) + '”</div>' : '')
           + '</td>'
-          + '<td class="px-4 py-3 hidden sm:table-cell"><div class="text-primary/70 text-xs line-clamp-1">' + escHtml(r.user_name) + '</div><div class="text-primary/35 text-xs">' + escHtml(r.user_email) + '</div></td>'
-          + '<td class="px-4 py-3 hidden md:table-cell text-primary/55 text-xs">' + (r.file_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
-          + '<td class="px-4 py-3 hidden lg:table-cell text-primary/55 text-xs">' + escHtml(r.category_name || '—') + '</td>'
+          + '<td class="px-4 py-3 hidden sm:table-cell"><div class="text-slate-600 text-xs line-clamp-1">' + escHtml(r.user_name) + '</div><div class="text-slate-600 text-xs">' + escHtml(r.user_email) + '</div></td>'
+          + '<td class="px-4 py-3 hidden md:table-cell text-slate-600 text-xs">' + (r.file_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
+          + '<td class="px-4 py-3 hidden lg:table-cell text-slate-600 text-xs">' + escHtml(r.category_name || '—') + '</td>'
           + '<td class="px-4 py-3 text-center">' + statusBadge(r.status) + '</td>'
           + '<td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-1">' + actBtns + '</div></td>'
           + '</tr>';

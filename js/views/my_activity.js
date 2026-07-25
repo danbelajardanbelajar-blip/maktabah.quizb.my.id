@@ -66,7 +66,7 @@ export async function renderMyActivity() {
                     ${item.admin_reply ? `
                         <div class="mt-3 p-3 bg-white rounded-lg border border-gold/20 text-sm">
                             <p class="text-xs font-bold text-gold mb-1">Histori Pesan:</p>
-                            <p class="text-primary/80 whitespace-pre-wrap">${escHtml(item.admin_reply)}</p>
+                            <p class="text-slate-600 whitespace-pre-wrap">${escHtml(item.admin_reply)}</p>
                             <div class="mt-3 pt-3 border-t border-gold/10 flex justify-end">
                                 <button onclick="window.replyActivity('${apiType}', ${item.id})" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gold-dark hover:text-white bg-gold/10 hover:bg-gold border border-gold/20 rounded-lg transition-all shadow-sm hover:shadow-gold/30">
                                     <i data-lucide="reply" class="w-3 h-3"></i> Balas Pesan
@@ -88,7 +88,7 @@ export async function renderMyActivity() {
     if (!html) {
         html = `
             <div class="bg-white rounded-2xl border border-gold/10 p-10 text-center">
-                <i data-lucide="inbox" class="w-12 h-12 text-primary/20 mx-auto mb-3"></i>
+                <i data-lucide="inbox" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
                 <h3 class="text-lg font-semibold text-primary">Belum ada aktivitas</h3>
                 <p class="text-sm text-slate-500 mt-1">Anda belum pernah mengirim file, request, atau feedback.</p>
             </div>

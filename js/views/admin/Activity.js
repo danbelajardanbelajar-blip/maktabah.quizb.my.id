@@ -14,7 +14,7 @@ async function renderAdminActivity() {
         </div>
         <div>
           <h1 class="text-xl font-bold text-primary">Log Aktivitas</h1>
-          <p class="text-xs text-primary/40">Riwayat kunjungan, menu klik, login, logout, dan registrasi pengunjung.</p>
+          <p class="text-xs text-slate-600">Riwayat kunjungan, menu klik, login, logout, dan registrasi pengunjung.</p>
         </div>
       </div>
 
@@ -50,7 +50,7 @@ async function renderAdminActivity() {
       </div>
 
       <div id="act-grid" class="bg-white rounded-2xl shadow-card overflow-hidden">
-        <div class="p-10 text-center text-primary/30 text-sm">Memuat data…</div>
+        <div class="p-10 text-center text-slate-600 text-sm">Memuat data…</div>
       </div>
 
       <div id="act-pager" class="mt-4 flex items-center justify-center gap-2"></div>
@@ -64,7 +64,7 @@ async function renderAdminActivity() {
     _act.query = document.getElementById('actf-query')?.value || '';
     _act.date  = document.getElementById('actf-date')?.value || '';
     const grid = document.getElementById('act-grid');
-    grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
+    grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block mr-2"></i>Memuat…</div>';
     reicons();
     try {
       const d = await adminPost('admin_get_activity', {
@@ -86,14 +86,14 @@ async function renderAdminActivity() {
               <i data-lucide="${s.icon}" class="w-5 h-5 ${s.color}"></i>
             </div>
             <div>
-              <div class="text-xs text-primary/40 font-medium">${s.label}</div>
+              <div class="text-xs text-slate-600 font-medium">${s.label}</div>
               <div class="text-xl font-bold text-primary">${s.val.toLocaleString()}</div>
             </div>
           </div>`).join('');
       }
 
       if (!d.rows?.length) {
-        grid.innerHTML = '<div class="p-10 text-center text-primary/30 text-sm">Tidak ada data activity.</div>';
+        grid.innerHTML = '<div class="p-10 text-center text-slate-600 text-sm">Tidak ada data activity.</div>';
         document.getElementById('act-pager').innerHTML = '';
         return;
       }
@@ -127,7 +127,7 @@ async function renderAdminActivity() {
                 <tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3">${eventBadge(r.event)}</td>
-                  <td class="px-4 py-3 text-xs text-primary/70">${escHtml(r.user_name || 'Guest')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600">${escHtml(r.user_name || 'Guest')}</td>
                   <td class="px-4 py-3 text-xs text-slate-600">${escHtml(r.user_role || 'user')}</td>
                   <td class="px-4 py-3 text-xs text-slate-600 font-mono truncate max-w-[120px]">${escHtml(r.ip_address)}</td>
                   <td class="px-4 py-3 text-xs text-slate-600 max-w-[220px] truncate" title="${escHtml(r.event_data||'')}">${escHtml(r.event_data || '—')}</td>

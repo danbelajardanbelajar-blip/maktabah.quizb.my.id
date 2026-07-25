@@ -154,7 +154,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       font-family: 'Amiri', serif;
       font-size: clamp(1.6rem, 5vw, 2.4rem);
       font-weight: 700;
-      color: #C9A227;
+      color: #a16207;
       direction: rtl;
       line-height: 1.3;
       margin-bottom: 6px;
@@ -189,7 +189,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       border: 1px solid rgba(201,162,39,.3);
       font-size: .78rem;
       font-weight: 700;
-      color: #C9A227;
+      color: #a16207;
       letter-spacing: .08em;
       text-transform: uppercase;
       margin-bottom: 24px;
@@ -618,7 +618,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       color: #166534;
     }
     html.dark .cat-mega-item { color: rgba(212,197,160,.85); }
-    html.dark .cat-mega-item:hover { background: rgba(201,162,39,.12); color: #C9A227; }
+    html.dark .cat-mega-item:hover { background: rgba(201,162,39,.12); color: #a16207; }
 
     /* Bottom mobile nav */
     #bottom-nav {
@@ -661,7 +661,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     
     /* Modern Stylish Bottom Nav Items */
     .bnav-item {
-      color: #728c7c; /* Visible muted green */
+      color: #526b5d; /* Visible muted green */
       transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
       -webkit-tap-highlight-color: transparent;
       padding-top: 4px;
@@ -675,15 +675,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
     
     .bnav-item.active {
-      color: #C9A227;
+      color: #a16207;
     }
     html.dark .bnav-item.active {
-      color: #C9A227;
+      color: #a16207;
     }
 
     .bnav-item.active i {
       transform: translateY(-3px) scale(1.1);
-      color: #C9A227;
+      color: #a16207;
       filter: drop-shadow(0 2px 4px rgba(201,162,39,0.3));
     }
     
@@ -764,7 +764,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .spin-ring {
       width: 18px; height: 18px;
       border: 2px solid rgba(201,162,39,.25);
-      border-top-color: #C9A227;
+      border-top-color: #a16207;
       border-radius: 50%;
       animation: spin .7s linear infinite;
       display: inline-block;
@@ -862,11 +862,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       text-align: left;
     }
     .font-chip:hover { border-color: rgba(201,162,39,.5); background: rgba(201,162,39,.06); }
-    .font-chip.active { border-color: #C9A227; background: rgba(201,162,39,.14); color: #166534; font-weight: 700; }
+    .font-chip.active { border-color: #a16207; background: rgba(201,162,39,.14); color: #166534; font-weight: 700; }
     .font-chip.ar { text-align: right; direction: rtl; }
 
     /* Font size range */
-    input[type=range].font-range { accent-color: #C9A227; width: 100%; cursor: pointer; }
+    input[type=range].font-range { accent-color: #a16207; width: 100%; cursor: pointer; }
     /* ══════════════════════════════════════════════════════
        DARK MODE
     ══════════════════════════════════════════════════════ */
@@ -977,7 +977,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Desktop Nav -->
         <div class="hidden md:flex items-center gap-6">
-          <a href="/" data-route="/"          class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Beranda</a>
+          <a href="/" data-route="/"          class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Beranda</a>
           <!-- Kategori dropdown trigger -->
           <div class="relative" id="nav-cat-wrap">
             <button id="nav-cat-btn" class="nav-cat-btn" aria-haspopup="true" aria-expanded="false">
@@ -985,12 +985,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <i data-lucide="chevron-down" id="nav-cat-chevron" class="w-3.5 h-3.5 transition-transform duration-200"></i>
             </button>
           </div>
-          <a href="/katalog" data-route="/katalog" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Katalog</a>
-          <a href="/favorit" data-route="/favorit" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Favorit</a>
-          <a href="/search-advanced" data-route="/search-advanced" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Cari Lanjutan</a>
-          <a href="/ask" data-route="/ask" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1 flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold"></i> Tanya</a>
-          <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Tentang</a>
-          <a href="/feedback" data-route="/feedback" class="nav-link text-sm font-medium text-primary/80 hover:text-primary transition-colors pb-1">Feedback</a>
+          <a href="/katalog" data-route="/katalog" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Katalog</a>
+          <a href="/favorit" data-route="/favorit" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Favorit</a>
+          <a href="/search-advanced" data-route="/search-advanced" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Cari Lanjutan</a>
+          <a href="/ask" data-route="/ask" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1 flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold"></i> Tanya</a>
+          <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Tentang</a>
+          <a href="/feedback" data-route="/feedback" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Feedback</a>
         </div>
 
         <!-- Search + Settings + Auth (desktop) -->
@@ -1018,14 +1018,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <span class="text-sm font-medium text-primary max-w-[100px] truncate hidden sm:block">
                   <?= htmlspecialchars($sessionUser['name']) ?>
                 </span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-primary/50"></i>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-600"></i>
               </button>
 
               <!-- Dropdown -->
               <div id="user-dropdown" class="hidden absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gold/15 py-2 z-50">
                 <div class="px-4 py-2 border-b border-cream-dark">
                   <div class="text-sm font-semibold text-primary truncate"><?= htmlspecialchars($sessionUser['name']) ?></div>
-                  <div class="text-xs text-primary/50 truncate"><?= htmlspecialchars($sessionUser['email']) ?></div>
+                  <div class="text-xs text-slate-600 truncate"><?= htmlspecialchars($sessionUser['email']) ?></div>
                   <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
                     <?= $sessionUser['role'] === 'admin' ? 'bg-gold/20 text-gold-dark' : 'bg-primary/8 text-slate-600' ?>">
                     <?= $sessionUser['role'] === 'admin' ? '👑 Admin' : 'User' ?>
@@ -1033,7 +1033,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
                 <a href="/dashboard" data-route="/dashboard"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
-                  <i data-lucide="layout-dashboard" class="w-4 h-4 text-primary/50"></i> Dashboard
+                  <i data-lucide="layout-dashboard" class="w-4 h-4 text-slate-600"></i> Dashboard
                 </a>
                 <?php if ($sessionUser['role'] === 'admin'): ?>
                 <div class="border-t border-cream-dark/60 mx-3 my-1"></div>
@@ -1098,13 +1098,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
     <!-- Global Search Bar (slide-down) -->
-    <div id="search-bar" class="hidden bg-cream border-t border-gold/20 px-4 py-3">
+    <div id="search-bar" class="hidden bg-cream border-t border-amber-700/20 px-4 py-3">
       <div class="max-w-2xl mx-auto relative">
-        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40"></i>
+        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600"></i>
         <input id="global-search-input" type="text" placeholder="Cari judul kitab atau pengarang…"
           class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gold/30 bg-white focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 text-sm transition-all" />
         <button id="search-bar-close" class="absolute right-3 top-1/2 -translate-y-1/2" aria-label="Tutup pencarian">
-          <i data-lucide="x" class="w-4 h-4 text-primary/40 hover:text-primary"></i>
+          <i data-lucide="x" class="w-4 h-4 text-slate-600 hover:text-primary"></i>
         </button>
       </div>
     </div>
@@ -1184,14 +1184,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div id="page-loader" class="flex items-center justify-center min-h-[60vh]">
       <div class="flex flex-col items-center gap-3">
         <div class="w-10 h-10 border-3 border-gold/30 border-t-gold rounded-full animate-spin" style="border-width:3px"></div>
-        <span class="text-primary/50 text-sm arabic">جارٍ التحميل…</span>
+        <span class="text-slate-600 text-sm arabic">جارٍ التحميل…</span>
       </div>
     </div>
     <?php endif; ?>
   </main>
 
   <!-- ===================== BOTTOM NAV (mobile only) ===================== -->
-  <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gold/20">
+  <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-amber-700/20">
     <div class="flex items-stretch h-16">
 
       <a href="/" data-route="/" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
@@ -1206,7 +1206,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <a href="/ask" data-route="/ask" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
         <i data-lucide="bot" class="w-5 h-5 mb-0.5"></i>
-        <span class="text-[10px] font-semibold text-gold">Tanya</span>
+        <span class="text-[10px] font-semibold text-amber-700">Tanya</span>
       </a>
 
       <!-- Kategori tab (menggantikan Katalog di mobile) -->

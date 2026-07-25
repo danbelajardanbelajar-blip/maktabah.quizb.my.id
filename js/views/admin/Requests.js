@@ -12,7 +12,7 @@ async function renderAdminRequests() {
           <h1 class="text-xl font-bold text-primary flex items-center gap-2">
             <i data-lucide="help-circle" class="w-5 h-5 text-gold"></i> Request Kitab
           </h1>
-          <p class="text-primary/45 text-xs mt-0.5">Kelola permohonan kitab dari pengguna</p>
+          <p class="text-slate-600 text-xs mt-0.5">Kelola permohonan kitab dari pengguna</p>
         </div>
         <div class="flex gap-2 flex-wrap" id="req-tabs"></div>
       </div>
@@ -20,7 +20,7 @@ async function renderAdminRequests() {
         <div id="req-table-wrap">
           <div class="py-16 text-center"><i data-lucide="loader-circle" class="w-8 h-8 mx-auto animate-spin text-gold/50"></i></div>
         </div>
-        <div id="req-pagination" class="px-4 py-3 border-t border-cream-dark flex items-center justify-between text-xs text-primary/40"></div>
+        <div id="req-pagination" class="px-4 py-3 border-t border-cream-dark flex items-center justify-between text-xs text-slate-600"></div>
       </div>
     </div>`;
 
@@ -115,7 +115,7 @@ async function renderAdminRequests() {
       const res  = await apiFetch(params);
       const rows = res.data || [];
       if (!rows.length) {
-        wrap.innerHTML = '<div class="py-16 text-center"><i data-lucide="help-circle" class="w-10 h-10 mx-auto mb-3 text-primary/15"></i><p class="text-primary/30 text-sm">Tidak ada request ditemukan.</p></div>';
+        wrap.innerHTML = '<div class="py-16 text-center"><i data-lucide="help-circle" class="w-10 h-10 mx-auto mb-3 text-slate-600"></i><p class="text-slate-600 text-sm">Tidak ada request ditemukan.</p></div>';
         pag.innerHTML = '';
         reicons(); return;
       }
@@ -133,12 +133,12 @@ async function renderAdminRequests() {
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
           + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.title) + '</div>'
-          + '<div class="text-primary/40 text-xs mt-0.5">' + (r.author_or_category ? escHtml(r.author_or_category) + ' · ' : '') + (r.created_at||'').slice(0,10) + '</div>'
-          + (r.description ? '<div class="text-primary/40 text-xs mt-0.5 line-clamp-1">“' + escHtml(r.description) + '”</div>' : '')
+          + '<div class="text-slate-600 text-xs mt-0.5">' + (r.author_or_category ? escHtml(r.author_or_category) + ' · ' : '') + (r.created_at||'').slice(0,10) + '</div>'
+          + (r.description ? '<div class="text-slate-600 text-xs mt-0.5 line-clamp-1">“' + escHtml(r.description) + '”</div>' : '')
           + (r.admin_reply ? '<div class="text-gold text-[10px] mt-1 bg-gold/5 p-1 rounded border border-gold/20">Balasan: ' + escHtml(r.admin_reply) + '</div>' : '')
           + '</td>'
-          + '<td class="px-4 py-3"><div class="text-primary/70 text-xs">' + escHtml(r.user_email) + '</div></td>'
-          + '<td class="px-4 py-3 hidden md:table-cell text-primary/55 text-xs">' + (r.request_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
+          + '<td class="px-4 py-3"><div class="text-slate-600 text-xs">' + escHtml(r.user_email) + '</div></td>'
+          + '<td class="px-4 py-3 hidden md:table-cell text-slate-600 text-xs">' + (r.request_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
           + '<td class="px-4 py-3 text-center">' + statusBadge(r.status) + '</td>'
           + '<td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-1">' + actBtns + '</div></td>'
           + '</tr>';
