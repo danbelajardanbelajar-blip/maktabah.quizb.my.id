@@ -7,7 +7,7 @@ export function renderAbout() {
       <!-- Header -->
       <div class="text-center mb-10">
         <div class="arabic text-primary text-4xl font-bold mb-2">المكتبة السنية</div>
-        <div class="text-gold text-sm font-medium tracking-widest uppercase">Al-Maktabah As-Sunniyyah</div>
+        <div class="text-amber-700 text-sm font-medium tracking-widest uppercase">Al-Maktabah As-Sunniyyah</div>
         <div class="gold-line mt-6 max-w-xs mx-auto"></div>
       </div>
 
@@ -15,7 +15,7 @@ export function renderAbout() {
 
         <div>
           <h2 class="text-primary font-bold text-base mb-3 flex items-center gap-2">
-            <i data-lucide="info" class="w-4 h-4 text-gold"></i> Tentang Kami
+            <i data-lucide="info" class="w-4 h-4 text-amber-700"></i> Tentang Kami
           </h2>
           <p>
             <strong>المكتبة السنية</strong> adalah perpustakaan digital Islam yang hadir untuk memudahkan umat dalam mengakses khazanah ilmu Islam, khususnya kitab-kitab dari para ulama salaf. Kami mengumpulkan, menata, dan menyajikan ribuan kitab dalam format digital yang mudah diakses oleh siapa saja, di mana saja, kapan saja — secara <em>gratis</em>.
@@ -24,7 +24,7 @@ export function renderAbout() {
 
         <div>
           <h2 class="text-primary font-bold text-base mb-3 flex items-center gap-2">
-            <i data-lucide="eye" class="w-4 h-4 text-gold"></i> Visi
+            <i data-lucide="eye" class="w-4 h-4 text-amber-700"></i> Visi
           </h2>
           <p class="arabic text-base text-right text-primary mb-2">"نشر العلم الشرعي وتيسيره للأمة"</p>
           <p>Menjadi portal terdepan dalam menyebarkan ilmu syar'i dan mempermudah akses umat Islam terhadap warisan intelektual para ulama.</p>
@@ -32,27 +32,27 @@ export function renderAbout() {
 
         <div>
           <h2 class="text-primary font-bold text-base mb-3 flex items-center gap-2">
-            <i data-lucide="target" class="w-4 h-4 text-gold"></i> Misi
+            <i data-lucide="target" class="w-4 h-4 text-amber-700"></i> Misi
           </h2>
           <ul class="space-y-2 list-none">
             ${['Menghadirkan kitab-kitab salaf yang otentik dan terpercaya.',
                'Mempermudah pencarian dan akses kitab secara digital.',
                'Mendukung para penuntut ilmu dengan koleksi yang terus berkembang.',
                'Menjaga warisan keilmuan Islam agar tetap lestari dan mudah diakses generasi mendatang.']
-              .map(m => `<li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-4 h-4 text-gold mt-0.5 shrink-0"></i><span>${m}</span></li>`).join('')}
+              .map(m => `<li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-4 h-4 text-amber-700 mt-0.5 shrink-0"></i><span>${m}</span></li>`).join('')}
           </ul>
         </div>
 
         <!-- Fitur & Update Terbaru -->
         <div>
           <h2 class="text-primary font-bold text-base mb-4 flex items-center gap-2">
-            <i data-lucide="sparkles" class="w-4 h-4 text-gold"></i> Update & Fitur Terbaru
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-700"></i> Update & Fitur Terbaru
           </h2>
           <div class="grid sm:grid-cols-2 gap-4">
             
             <div class="bg-surface border border-border rounded-2xl p-5 flex items-start gap-4 hover:border-gold/40 transition-all shadow-sm group">
               <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
-                <i data-lucide="search" class="w-5 h-5 text-gold"></i>
+                <i data-lucide="search" class="w-5 h-5 text-amber-700"></i>
               </div>
               <div>
                 <h3 class="text-sm font-bold text-primary mb-1">Pencarian Cerdas (Smart Search)</h3>
@@ -62,7 +62,7 @@ export function renderAbout() {
 
             <div class="bg-surface border border-border rounded-2xl p-5 flex items-start gap-4 hover:border-gold/40 transition-all shadow-sm group">
               <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
-                <i data-lucide="send" class="w-5 h-5 text-gold"></i>
+                <i data-lucide="send" class="w-5 h-5 text-amber-700"></i>
               </div>
               <div>
                 <h3 class="text-sm font-bold text-primary mb-1">Pengajuan & Request Anonim</h3>
@@ -72,7 +72,7 @@ export function renderAbout() {
 
             <div class="bg-surface border border-border rounded-2xl p-5 flex items-start gap-4 hover:border-gold/40 transition-all shadow-sm group">
               <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
-                <i data-lucide="layout-dashboard" class="w-5 h-5 text-gold"></i>
+                <i data-lucide="layout-dashboard" class="w-5 h-5 text-amber-700"></i>
               </div>
               <div>
                 <h3 class="text-sm font-bold text-primary mb-1">Manajemen Panel Modern</h3>
@@ -82,7 +82,7 @@ export function renderAbout() {
 
             <div class="bg-surface border border-border rounded-2xl p-5 flex items-start gap-4 hover:border-gold/40 transition-all shadow-sm group">
               <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
-                <i data-lucide="zap" class="w-5 h-5 text-gold"></i>
+                <i data-lucide="zap" class="w-5 h-5 text-amber-700"></i>
               </div>
               <div>
                 <h3 class="text-sm font-bold text-primary mb-1">Arsitektur Super Cepat</h3>
@@ -100,9 +100,9 @@ export function renderAbout() {
 
         <div>
           <h2 class="text-primary font-bold text-base mb-3 flex items-center gap-2">
-            <i data-lucide="globe" class="w-4 h-4 text-gold"></i> Kontak & Akses
+            <i data-lucide="globe" class="w-4 h-4 text-amber-700"></i> Kontak & Akses
           </h2>
-          <p class="mb-4">Anda dapat mengakses perpustakaan ini di: <a href="https://maktabah.quizb.my.id" class="text-gold hover:underline font-medium">maktabah.quizb.my.id</a></p>
+          <p class="mb-4">Anda dapat mengakses perpustakaan ini di: <a href="https://maktabah.quizb.my.id" class="text-amber-700 hover:underline font-medium">maktabah.quizb.my.id</a></p>
 
           <!-- Founder & Developer cards -->
           <div class="grid sm:grid-cols-2 gap-4 mt-4">
@@ -111,9 +111,9 @@ export function renderAbout() {
             <div class="rounded-2xl border border-border bg-surface p-5">
               <div class="flex items-center gap-2 mb-4">
                 <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                  <i data-lucide="star" class="w-3.5 h-3.5 text-gold"></i>
+                  <i data-lucide="star" class="w-3.5 h-3.5 text-amber-700"></i>
                 </div>
-                <span class="text-xs font-bold tracking-widest uppercase text-gold">Founder</span>
+                <span class="text-xs font-bold tracking-widest uppercase text-amber-700">Founder</span>
               </div>
               <div class="space-y-2.5 text-sm">
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
@@ -122,11 +122,11 @@ export function renderAbout() {
                 </div>
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">Email</span>
-                  <a href="mailto:akhmadzaeni535@gmail.com" class="font-semibold text-primary hover:text-gold transition-colors">akhmadzaeni535@gmail.com</a>
+                  <a href="mailto:akhmadzaeni535@gmail.com" class="font-semibold text-primary hover:text-amber-700 transition-colors">akhmadzaeni535@gmail.com</a>
                 </div>
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">Facebook</span>
-                  <a href="https://facebook.com/akhnadzaeni" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">akhnadzaeni</a>
+                  <a href="https://facebook.com/akhnadzaeni" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-amber-700 transition-colors">akhnadzaeni</a>
                 </div>
               </div>
             </div>
@@ -135,22 +135,22 @@ export function renderAbout() {
             <div class="rounded-2xl border border-border bg-surface p-5">
               <div class="flex items-center gap-2 mb-4">
                 <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                  <i data-lucide="code-2" class="w-3.5 h-3.5 text-gold"></i>
+                  <i data-lucide="code-2" class="w-3.5 h-3.5 text-amber-700"></i>
                 </div>
-                <span class="text-xs font-bold tracking-widest uppercase text-gold">Developer</span>
+                <span class="text-xs font-bold tracking-widest uppercase text-amber-700">Developer</span>
               </div>
               <div class="space-y-2.5 text-sm">
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">No Hp</span>
-                  <a href="https://wa.me/6285743399595" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">085743399595</a>
+                  <a href="https://wa.me/6285743399595" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-amber-700 transition-colors">085743399595</a>
                 </div>
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">Website</span>
-                  <a href="https://hakimz.site" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">https://hakimz.site</a>
+                  <a href="https://hakimz.site" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-amber-700 transition-colors">https://hakimz.site</a>
                 </div>
                 <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border">
                   <span class="text-muted">Instagram</span>
-                  <a href="https://instagram.com/zainul.hakim" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-gold transition-colors">@zainul.hakim</a>
+                  <a href="https://instagram.com/zainul.hakim" target="_blank" rel="noopener" class="font-semibold text-primary hover:text-amber-700 transition-colors">@zainul.hakim</a>
                 </div>
               </div>
             </div>
@@ -166,9 +166,9 @@ export function renderAbout() {
                 <div class="mt-4 rounded-2xl border border-border bg-surface p-5">
                   <div class="flex items-center gap-2 mb-4">
                     <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                      <i data-lucide="smartphone" class="w-3.5 h-3.5 text-gold"></i>
+                      <i data-lucide="smartphone" class="w-3.5 h-3.5 text-amber-700"></i>
                     </div>
-                    <span class="text-xs font-bold tracking-widest uppercase text-gold">Aplikasi Maktabah Turats</span>
+                    <span class="text-xs font-bold tracking-widest uppercase text-amber-700">Aplikasi Maktabah Turats</span>
                   </div>
                   <div class="flex items-center justify-between bg-background rounded-xl px-3 py-2 border border-border text-sm">
                     <span class="text-muted">Versi Terinstal</span>
@@ -185,21 +185,21 @@ export function renderAbout() {
         <!-- Statistik Web -->
         <div class="mt-8">
           <h2 class="text-primary font-bold text-base mb-4 flex items-center gap-2">
-            <i data-lucide="bar-chart-2" class="w-4 h-4 text-gold"></i> Statistik Maktabah
+            <i data-lucide="bar-chart-2" class="w-4 h-4 text-amber-700"></i> Statistik Maktabah
           </h2>
           <div id="about-stats-container" class="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-600">
-            <span class="text-gold/50 text-xs">Memuat statistik...</span>
+            <span class="text-amber-700/50 text-xs">Memuat statistik...</span>
           </div>
         </div>
 
         <!-- Katalog Kategori -->
         <div class="mt-8">
           <h2 class="text-primary font-bold text-base mb-4 flex items-center gap-2">
-            <i data-lucide="library" class="w-4 h-4 text-gold"></i> Katalog & Kategori Kitab
+            <i data-lucide="library" class="w-4 h-4 text-amber-700"></i> Katalog & Kategori Kitab
           </h2>
           <p class="text-sm mb-4">Perpustakaan kami membagi ribuan kitab ke dalam beberapa klasifikasi disiplin ilmu (kategori) untuk mempermudah Anda dalam menelusurinya:</p>
           <div id="about-cats-container">
-            <span class="text-gold/50 text-xs">Memuat katalog...</span>
+            <span class="text-amber-700/50 text-xs">Memuat katalog...</span>
           </div>
         </div>
 
@@ -218,19 +218,19 @@ export function renderAbout() {
       if (statsContainer) {
         statsContainer.innerHTML = `
           <div class="bg-surface border border-border rounded-xl px-5 py-3 flex items-center gap-3">
-            <i data-lucide="book-open" class="w-4 h-4 text-gold"></i>
+            <i data-lucide="book-open" class="w-4 h-4 text-amber-700"></i>
             <div><div class="font-bold text-primary">${formatNum(stats.total_books)}</div><div class="text-[10px] uppercase tracking-wider text-muted">Kitab</div></div>
           </div>
           <div class="bg-surface border border-border rounded-xl px-5 py-3 flex items-center gap-3">
-            <i data-lucide="folder" class="w-4 h-4 text-gold"></i>
+            <i data-lucide="folder" class="w-4 h-4 text-amber-700"></i>
             <div><div class="font-bold text-primary">${formatNum(stats.total_categories)}</div><div class="text-[10px] uppercase tracking-wider text-muted">Kategori</div></div>
           </div>
           <div class="bg-surface border border-border rounded-xl px-5 py-3 flex items-center gap-3">
-            <i data-lucide="search" class="w-4 h-4 text-gold"></i>
+            <i data-lucide="search" class="w-4 h-4 text-amber-700"></i>
             <div><div class="font-bold text-primary">${formatNum(stats.total_searches)}</div><div class="text-[10px] uppercase tracking-wider text-muted">Pencarian</div></div>
           </div>
           <div class="bg-surface border border-border rounded-xl px-5 py-3 flex items-center gap-3">
-            <i data-lucide="eye" class="w-4 h-4 text-gold"></i>
+            <i data-lucide="eye" class="w-4 h-4 text-amber-700"></i>
             <div><div class="font-bold text-primary">${formatNum(stats.total_visits)}</div><div class="text-[10px] uppercase tracking-wider text-muted">Kunjungan</div></div>
           </div>
         `;

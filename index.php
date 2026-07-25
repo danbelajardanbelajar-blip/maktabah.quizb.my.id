@@ -561,9 +561,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .no-scrollbar::-webkit-scrollbar { display: none; }
 
     /* Active desktop nav link */
-    .nav-link.active { color: #C9A227 !important; }
+    .nav-link.active { color: #a16207 !important; }
     .nav-link.active::after { width: 100%; }
-    .nav-link::after { content:''; display:block; height:2px; background:#C9A227; border-radius:1px; width:0; transition:width .25s ease; }
+    .nav-link::after { content:''; display:block; height:2px; background:#a16207; border-radius:1px; width:0; transition:width .25s ease; }
     .nav-link:hover::after { width:100%; }
 
     /* Kategori dropdown button — same visual as nav-link */
@@ -574,10 +574,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       background: none; border: none; padding-bottom: 4px;
       position: relative; transition: color .2s;
     }
-    .nav-cat-btn::after { content:''; display:block; height:2px; background:#C9A227; border-radius:1px; width:0; transition:width .25s ease; position:absolute; bottom:0; left:0; right:0; }
+    .nav-cat-btn::after { content:''; display:block; height:2px; background:#a16207; border-radius:1px; width:0; transition:width .25s ease; position:absolute; bottom:0; left:0; right:0; }
     .nav-cat-btn:hover { color: #166534; }
     .nav-cat-btn:hover::after { width: 100%; }
-    .nav-cat-btn.active { color: #C9A227 !important; }
+    .nav-cat-btn.active { color: #a16207 !important; }
     .nav-cat-btn.active::after { width: 100%; }
 
     /* Mega dropdown */
@@ -918,7 +918,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     /* Font chip dark mode */
     html.dark .font-chip { background: #0e1a12 !important; color: #d4c5a0 !important; border-color: rgba(201,162,39,.2) !important; }
-    html.dark .font-chip.active { background: rgba(201,162,39,.18) !important; color: #C9A227 !important; }
+    html.dark .font-chip.active { background: rgba(201,162,39,.18) !important; color: #a16207 !important; }
 
     .sdw-card {
       background: #fff;
@@ -988,7 +988,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <a href="/katalog" data-route="/katalog" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Katalog</a>
           <a href="/favorit" data-route="/favorit" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Favorit</a>
           <a href="/search-advanced" data-route="/search-advanced" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Cari Lanjutan</a>
-          <a href="/ask" data-route="/ask" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1 flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold"></i> Tanya</a>
+          <a href="/ask" data-route="/ask" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1 flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-700"></i> Tanya</a>
           <a href="/about"   data-route="/about"   class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Tentang</a>
           <a href="/feedback" data-route="/feedback" class="nav-link text-sm font-medium text-slate-600 hover:text-primary transition-colors pb-1">Feedback</a>
         </div>
@@ -1038,7 +1038,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <?php if ($sessionUser['role'] === 'admin'): ?>
                 <div class="border-t border-cream-dark/60 mx-3 my-1"></div>
                 <div class="px-4 py-1.5">
-                  <span class="text-[10px] font-bold uppercase tracking-widest text-gold/70">Panel Admin</span>
+                  <span class="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Panel Admin</span>
                 </div>
                 <a href="/admin/books" data-route="/admin/books"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
@@ -1248,7 +1248,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- ===================== APK UPDATE MODAL ===================== -->
   <div id="apk-update-modal-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,34,24,.8);backdrop-filter:blur(4px);align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s ease;">
     <div id="apk-update-modal" style="background:#F8FAF9;border-radius:1.5rem;padding:2rem 1.5rem;width:90%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,.2);text-align:center;transform:translateY(20px);transition:transform 0.3s ease;">
-      <div style="background:#C9A227;color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+      <div style="background:#a16207;color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
         <i data-lucide="download" style="width:32px;height:32px;"></i>
       </div>
       <h3 style="font-family:'Amiri',serif;font-size:1.75rem;color:#14532D;margin-bottom:0.75rem;font-weight:700;">Update Tersedia!</h3>
@@ -1300,25 +1300,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Brand -->
         <div>
-          <div class="arabic text-gold text-2xl font-bold mb-2">المكتبة السنية</div>
+          <div class="arabic text-amber-400 text-2xl font-bold mb-2">المكتبة السنية</div>
           <p class="text-white/60 text-sm leading-relaxed">Perpustakaan digital Islam yang memuat ribuan kitab salaf untuk kemudahan umat dalam menuntut ilmu.</p>
         </div>
 
         <!-- Nav Links -->
         <div>
-          <h4 class="text-gold text-sm font-semibold uppercase tracking-wider mb-4">Navigasi</h4>
+          <h4 class="text-amber-400 text-sm font-semibold uppercase tracking-wider mb-4">Navigasi</h4>
           <ul class="space-y-2 text-sm text-white/70">
-            <li><a href="/" data-route="/" class="hover:text-gold transition-colors">Beranda</a></li>
-            <li><a href="/katalog" data-route="/katalog" class="hover:text-gold transition-colors">Katalog Kitab</a></li>
-            <li><a href="/about" data-route="/about" class="hover:text-gold transition-colors">Tentang Kami</a></li>
-            <li><a href="/feedback" data-route="/feedback" class="hover:text-gold transition-colors">Feedback</a></li>
-            <li><a href="/privacy" data-route="/privacy" class="hover:text-gold transition-colors">Kebijakan Privasi</a></li>
+            <li><a href="/" data-route="/" class="hover:text-amber-400 transition-colors">Beranda</a></li>
+            <li><a href="/katalog" data-route="/katalog" class="hover:text-amber-400 transition-colors">Katalog Kitab</a></li>
+            <li><a href="/about" data-route="/about" class="hover:text-amber-400 transition-colors">Tentang Kami</a></li>
+            <li><a href="/feedback" data-route="/feedback" class="hover:text-amber-400 transition-colors">Feedback</a></li>
+            <li><a href="/privacy" data-route="/privacy" class="hover:text-amber-400 transition-colors">Kebijakan Privasi</a></li>
           </ul>
         </div>
 
         <!-- Info -->
         <div>
-          <h4 class="text-gold text-sm font-semibold uppercase tracking-wider mb-4">Info</h4>
+          <h4 class="text-amber-400 text-sm font-semibold uppercase tracking-wider mb-4">Info</h4>
           <ul class="space-y-2 text-sm text-white/70">
             <li class="flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-amber-700/80"></i> maktabah.quizb.my.id</li>
             <li class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-amber-700/80"></i> Ribuan Kitab Tersedia</li>
