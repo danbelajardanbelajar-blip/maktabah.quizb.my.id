@@ -1141,6 +1141,48 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- ===================== MAIN SPA CONTAINER ===================== -->
   <main id="app-content" class="flex-1 pt-16 pb-20 md:pb-0">
+    <?php
+      $req_uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+      if ($req_uri === '/' || $req_uri === ''):
+    ?>
+    <!-- SSR Hero for instant LCP on Homepage -->
+    <section class="hero-bg text-white relative overflow-hidden">
+      <!-- Decorative background glow -->
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none"></div>
+      
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center relative z-10">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-gold text-xs font-semibold tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(201,162,39,0.15)] backdrop-blur-md">
+          <span class="w-1.5 h-1.5 rounded-full bg-gold animate-pulse"></span>
+          Perpustakaan Digital Islam
+        </div>
+        
+        <div class="arabic text-gold text-5xl md:text-7xl font-bold mb-4 leading-tight drop-shadow-[0_4px_24px_rgba(201,162,39,0.4)]">المكتبة السنية</div>
+        <p class="text-white/80 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-light tracking-wide leading-relaxed">
+          Eksplorasi ribuan literatur klasik dan khazanah keilmuan Islam dalam genggaman Anda.
+        </p>
+        
+        <!-- Search -->
+        <div class="max-w-2xl mx-auto relative group">
+          <div class="absolute -inset-1 bg-gradient-to-r from-gold/30 via-primary-light/30 to-gold/30 rounded-3xl blur opacity-40 group-hover:opacity-70 transition duration-1000 group-hover:duration-300"></div>
+          <div class="relative flex items-center">
+            <i data-lucide="search" class="absolute left-4 md:left-6 w-5 h-5 text-primary/60"></i>
+            <input id="hero-search-ssr" type="text" placeholder="Cari teks, judul, atau pengarang..."
+              class="w-full pl-12 md:pl-14 pr-28 md:pr-36 py-4 md:py-5 rounded-2xl text-ink text-sm md:text-base bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus:outline-none focus:ring-2 focus:ring-gold transition-all placeholder:text-gray-400" />
+            <button class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] text-gold px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs md:text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)]">
+              Cari <span class="hidden md:inline">Kitab</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- stats -->
+        <div class="mt-14 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm text-white/80 font-medium">
+          <span class="flex items-center gap-2 bg-white/5 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/10 shadow-lg"><i data-lucide="book-open" class="w-4 h-4 text-gold"></i> Memuat statistik…</span>
+        </div>
+      </div>
+      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"></div>
+    </section>
+    <?php else: ?>
     <!-- JS renders pages here -->
     <div id="page-loader" class="flex items-center justify-center min-h-[60vh]">
       <div class="flex flex-col items-center gap-3">
@@ -1148,6 +1190,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="text-primary/50 text-sm arabic">جارٍ التحميل…</span>
       </div>
     </div>
+    <?php endif; ?>
   </main>
 
   <!-- ===================== BOTTOM NAV (mobile only) ===================== -->
