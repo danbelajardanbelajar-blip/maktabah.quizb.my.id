@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/app/Config/Database.php';
+require_once __DIR__ . '/app/bootstrap.php';
 
 use App\Config\Database;
 
