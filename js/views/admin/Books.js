@@ -1805,6 +1805,7 @@ window.openImportMultipleBokModal = async function() {
 
 window.closeImportMultipleBokModal = function() {
   document.getElementById('import-multiple-bok-modal').classList.add('hidden');
+  window._isMultipleImporting = false; // Reset lock when closing
   if (window._multipleImportCompleted) {
     bksSearch();
     window._multipleImportCompleted = false;
@@ -1812,6 +1813,8 @@ window.closeImportMultipleBokModal = function() {
 };
 
 window.submitImportMultipleBok = async function() {
+  if (window._isMultipleImporting) return;
+  
   const fileInput = document.getElementById('bok-multiple-file');
   if (!fileInput.files || fileInput.files.length === 0) {
     alert("Pilih minimal 1 file .json terlebih dahulu.");
@@ -1878,6 +1881,7 @@ window.submitImportMultipleBok = async function() {
       btn.onclick = closeImportMultipleBokModal;
       reicons();
       window._multipleImportCompleted = true;
+      window._isMultipleImporting = false; // Release lock
       return;
     }
     

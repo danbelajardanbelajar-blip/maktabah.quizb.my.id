@@ -274,6 +274,14 @@ try {
     $mysql->prepare('UPDATE books SET pages = (SELECT COUNT(*) FROM book_content WHERE bkid=:b) WHERE bkid=:b2')
           ->execute([':b' => $bkid, ':b2' => $bkid]);
 
+    // Catat log ke history admin
+    \App\Helpers\AuthHelper::logCrudHistory(
+        'IMPORT', 
+        'books', 
+        (string)$bkid, 
+        "Impor massal JSON: {$title} | Halaman: {$pagesCount} | Juz: {$juzCount}"
+    );
+
     $mysql->commit();
 
     sendJson([
