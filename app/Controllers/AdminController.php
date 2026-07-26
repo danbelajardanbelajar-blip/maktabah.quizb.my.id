@@ -105,22 +105,25 @@ class AdminController {
     public function handleAdminSaveCategory(): void {
         $pdo  = Database::getConnection();
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
-        $id     = (int)($data['id']   ?? 0);
+        $id     = isset($data['id']) && $data['id'] !== '' && $data['id'] !== null ? (int)$data['id'] : null;
         $name   = trim($data['name']  ?? '');
         $ord    = (int)($data['catord'] ?? 0);
         $level  = (int)($data['lvl']  ?? 0);
         if (!$name) { http_response_code(400); echo json_encode(['error' => 'Nama kategori wajib diisi.']); return; }
     
-        if ($id) {
+        if ($id !== null) {
             $pdo->prepare("UPDATE categories SET name=:name, catord=:ord, lvl=:lvl WHERE id=:id")
                 ->execute([':name' => $name, ':ord' => $ord, ':lvl' => $level, ':id' => $id]);
             AuthHelper::logCrudHistory('UPDATE', 'categories', (string)$id,
                 "Nama: {$name} | Urutan: {$ord} | Level: {$level}");
             echo json_encode(['success' => true, 'id' => $id]);
         } else {
-            $pdo->prepare("INSERT INTO categories (name, catord, lvl) VALUES (:name, :ord, :lvl)")
-                ->execute([':name' => $name, ':ord' => $ord, ':lvl' => $level]);
-            $newCatId = (int)$pdo->lastInsertId();
+            $maxIdStmt = $pdo->query("SELECT MAX(id) FROM categories");
+            $nextId = (int)$maxIdStmt->fetchColumn() + 1;
+            
+            $pdo->prepare("INSERT INTO categories (id, name, catord, lvl) VALUES (:id, :name, :ord, :lvl)")
+                ->execute([':id' => $nextId, ':name' => $name, ':ord' => $ord, ':lvl' => $level]);
+            $newCatId = $nextId;
             AuthHelper::logCrudHistory('CREATE', 'categories', (string)$newCatId,
                 "Nama: {$name} | Urutan: {$ord} | Level: {$level}");
             echo json_encode(['success' => true, 'id' => $newCatId]);
@@ -130,8 +133,8 @@ class AdminController {
     public function handleAdminDeleteCategory(): void {
         $pdo  = Database::getConnection();
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
-        $id   = (int)($data['id'] ?? 0);
-        if (!$id) { http_response_code(400); echo json_encode(['error' => 'ID wajib diisi.']); return; }
+        $id   = isset($data['id']) && $data['id'] !== '' && $data['id'] !== null ? (int)$data['id'] : null;
+        if ($id === null) { http_response_code(400); echo json_encode(['error' => 'ID wajib diisi.']); return; }
         $nameRow = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
         $nameRow->execute([':id' => $id]);
         $catName = $nameRow->fetchColumn() ?: '';
@@ -388,16 +391,39 @@ class AdminController {
 
         $title = trim($input['title'] ?? 'Kitab Tanpa Judul');
         $author = trim($input['author'] ?? 'Anonim');
-        $catId = isset($input['category_id']) ? (int)$input['category_id'] : 0;
+        $catIdInput = $input['category_id'] ?? null;
+        $catId = null;
         $catName = '';
 
         $pdo = Database::getConnection();
 
         try {
-            if ($catId) {
-                $cs = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
-                $cs->execute([':id' => $catId]);
-                $catName = $cs->fetchColumn() ?: '';
+            if ($catIdInput !== null && $catIdInput !== '') {
+                if (is_numeric($catIdInput)) {
+                    $catId = (int)$catIdInput;
+                    $cs = $pdo->prepare("SELECT name FROM categories WHERE id = :id LIMIT 1");
+                    $cs->execute([':id' => $catId]);
+                    $catName = $cs->fetchColumn() ?: '';
+                } else {
+                    $catNameInput = trim($catIdInput);
+                    $cs = $pdo->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
+                    $cs->execute([':name' => $catNameInput]);
+                    $foundId = $cs->fetchColumn();
+                    
+                    if ($foundId) {
+                        $catId = (int)$foundId;
+                        $catName = $catNameInput;
+                    } else {
+                        $cordStmt = $pdo->query('SELECT MAX(catord) FROM categories');
+                        $maxCord = (int)$cordStmt->fetchColumn();
+                        $idStmt = $pdo->query('SELECT MAX(id) FROM categories');
+                        $nextId = (int)$idStmt->fetchColumn() + 1;
+                        $insCat = $pdo->prepare('INSERT INTO categories (id, name, catord, lvl) VALUES (:id, :name, :cord, 0)');
+                        $insCat->execute([':id' => $nextId, ':name' => $catNameInput, ':cord' => $maxCord + 1]);
+                        $catId = $nextId;
+                        $catName = $catNameInput;
+                    }
+                }
             }
 
             $stmt = $pdo->prepare("INSERT INTO books (title, author, category_id, category_name, pages, created_at) VALUES (?, ?, ?, ?, 0, NOW())");

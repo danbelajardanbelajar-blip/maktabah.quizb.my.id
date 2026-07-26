@@ -131,7 +131,7 @@ function catModalHtml() {
 
 window.openCatModal = function(cat) {
   document.getElementById('cat-modal-ttl').textContent = cat ? 'Edit Kategori' : 'Tambah Kategori Baru';
-  document.getElementById('cm-id').value     = cat?.id     || '';
+  document.getElementById('cm-id').value     = cat?.id ?? '';
   document.getElementById('cm-name').value   = cat?.name   || '';
   document.getElementById('cm-catord').value = cat?.catord ?? 0;
   document.getElementById('cm-lvl').value    = cat?.lvl    ?? 1;
@@ -159,7 +159,7 @@ async function catSubmit() {
   btn.disabled = true; btn.textContent = 'Menyimpan…';
 
   try {
-    const data = await adminPost('admin_save_category', { id: id ? +id : 0, name, catord, lvl });
+    const data = await adminPost('admin_save_category', { id: id !== '' ? +id : null, name, catord, lvl });
     if (data.success) {
       closeCatModal();
       adminToast(id ? 'Kategori diperbarui ✓' : 'Kategori ditambahkan ✓');

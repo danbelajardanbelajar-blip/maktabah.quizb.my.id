@@ -131,7 +131,7 @@ if (count($halaman) === 0) {
     sendJson(['status' => 'error', 'message' => "Array halaman kosong: $fileName"]);
 }
 
-$catId  = (isset($_POST['cat_id']) && $_POST['cat_id'] !== '') ? (int)$_POST['cat_id'] : null;
+$catIdInput = (isset($_POST['cat_id']) && $_POST['cat_id'] !== '') ? $_POST['cat_id'] : null;
 $title  = trim((string)($buku['title']  ?? 'Kitab Tanpa Judul'));
 $author = trim((string)($buku['author'] ?? 'Anonim'));
 $pages  = $halaman;
@@ -147,11 +147,43 @@ try {
     $mysql->beginTransaction();
 
     // Lookup category_name dari tabel categories (sesuai struktur tabel books)
+    $catId = null;
     $catName = '';
-    if ($catId) {
-        $cs = $mysql->prepare('SELECT name FROM categories WHERE id = :id LIMIT 1');
-        $cs->execute([':id' => $catId]);
-        $catName = (string)($cs->fetchColumn() ?: '');
+    
+    // Coba baca dari input JSON jika cat_id post kosong
+    $jsonCatName = trim((string)($buku['category'] ?? $buku['kategori'] ?? $buku['cat'] ?? ''));
+    if (empty($catIdInput) && $jsonCatName !== '') {
+        $catIdInput = $jsonCatName;
+    }
+
+    if ($catIdInput !== null && $catIdInput !== '') {
+        if (is_numeric($catIdInput)) {
+            $catId = (int)$catIdInput;
+            $cs = $mysql->prepare('SELECT name FROM categories WHERE id = :id LIMIT 1');
+            $cs->execute([':id' => $catId]);
+            $catName = (string)($cs->fetchColumn() ?: '');
+        } else {
+            // Input berupa string nama kategori
+            $catNameInput = trim($catIdInput);
+            $cs = $mysql->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
+            $cs->execute([':name' => $catNameInput]);
+            $foundId = $cs->fetchColumn();
+            
+            if ($foundId) {
+                $catId = (int)$foundId;
+                $catName = $catNameInput;
+            } else {
+                // Kategori belum ada, buat otomatis
+                $cordStmt = $mysql->query('SELECT MAX(catord) FROM categories');
+                $maxCord = (int)$cordStmt->fetchColumn();
+                $idStmt = $mysql->query('SELECT MAX(id) FROM categories');
+                $nextId = (int)$idStmt->fetchColumn() + 1;
+                $insCat = $mysql->prepare('INSERT INTO categories (id, name, catord, lvl) VALUES (:id, :name, :cord, 0)');
+                $insCat->execute([':id' => $nextId, ':name' => $catNameInput, ':cord' => $maxCord + 1]);
+                $catId = $nextId;
+                $catName = $catNameInput;
+            }
+        }
     }
 
     // Insert book — kolom sesuai schema: category_id, category_name, pages
