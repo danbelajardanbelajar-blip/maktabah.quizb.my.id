@@ -1793,6 +1793,7 @@ window.openImportMultipleBokModal = async function() {
   document.getElementById('bok-multiple-progress-container').classList.add('hidden');
   
   const btn = document.getElementById('bok-multiple-submit-btn');
+  btn.type = 'submit';
   btn.disabled = false;
   btn.innerHTML = '<i data-lucide="upload-cloud" class="w-4 h-4"></i> Mulai Proses Massal';
   btn.onclick = null; // reset if previously changed to close modal
@@ -1876,6 +1877,7 @@ window.submitImportMultipleBok = async function() {
   async function uploadNext() {
     if (filesQueue.length === 0) {
       addLog("SEMUA PROSES SELESAI.", "success");
+      btn.type = 'button'; // Prevent form submit when clicking "Selesai"
       btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Selesai (Tutup)';
       btn.disabled = false;
       btn.onclick = closeImportMultipleBokModal;
