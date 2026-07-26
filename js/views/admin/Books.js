@@ -152,9 +152,9 @@ async function bksLoad() {
   try {
     let res;
     if (booksAS.q) {
-      res = await apiFetch({ action: 'search_books', q: booksAS.q, page: booksAS.page });
+      res = await apiFetch({ action: 'search_books', q: booksAS.q, page: booksAS.page, _t: Date.now() });
     } else {
-      const p = { action: 'books', limit: 20, page: booksAS.page };
+      const p = { action: 'books', limit: 20, page: booksAS.page, _t: Date.now() };
       if (booksAS.cat) p.cat = booksAS.cat;
       res = await apiFetch(p);
     }
