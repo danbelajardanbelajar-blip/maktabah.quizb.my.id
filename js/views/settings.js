@@ -1247,7 +1247,7 @@ async function execSearch() {
       if ($('#search-input')?.value.trim() !== q) return;
       const total = res.total || 0;
       totalHits += total;
-      patchHeader('sec-content','file-text','Isi Kitab', total);
+      patchHeader('sec-content','file-text','Isi Kitab', null);
       const body = $('#sec-content-body');
       if (!body) return;
       let emptyMsg = 'Maaf, tidak ditemukan halaman yang cocok dengan kata kunci tersebut.';
@@ -1285,7 +1285,7 @@ async function execSearch() {
     fetch(API + '?' + new URLSearchParams(paramsAnd), {signal:_abortContAnd.signal})
       .then(r=>r.json()).then(res => {
         if ($('#search-input')?.value.trim() !== q) return;
-        patchHeader('sec-content-and','layers','Isi Kitab (Kata Tersebar)', res.total || 0);
+        patchHeader('sec-content-and','layers','Isi Kitab (Kata Tersebar)', null);
         const bodyAnd = $('#sec-content-and-body');
         if (!bodyAnd) return;
         bodyAnd.innerHTML = res.data && res.data.length
@@ -1347,7 +1347,7 @@ window.goSearchContPage = function(p) {
   const params = { action: 'search_advanced', page: p, all_cats: '1', q1: q, skip_log: '1' };
   fetch(API + '?' + new URLSearchParams(params), {signal:_abortCont.signal})
     .then(r=>r.json()).then(res => {
-      patchHeader('sec-content','file-text','Isi Kitab', res.total || 0);
+      patchHeader('sec-content','file-text','Isi Kitab', null);
       if (!body) return;
       body.innerHTML = res.data && res.data.length
         ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, [q])).join('')}</div>${loadMoreHtml(res.page || 1, res.has_more, 'goSearchContPage')}</div>`
@@ -1368,7 +1368,7 @@ window.goSearchContAndPage = function(p) {
 
   fetch(API + '?' + new URLSearchParams(paramsAnd), {signal:_abortContAnd.signal})
     .then(r=>r.json()).then(res => {
-      patchHeader('sec-content-and','layers','Isi Kitab (Kata Tersebar)', res.total || 0);
+      patchHeader('sec-content-and','layers','Isi Kitab (Kata Tersebar)', null);
       if (!bodyAnd) return;
       bodyAnd.innerHTML = res.data && res.data.length
         ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${res.data.map(book => advancedContentCard(book, qWords)).join('')}</div>${loadMoreHtml(res.page || 1, res.has_more, 'goSearchContAndPage')}</div>`
