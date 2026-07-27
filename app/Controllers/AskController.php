@@ -125,13 +125,14 @@ class AskController {
         if ($retry > 0) {
             // Mode luas: NATURAL LANGUAGE MODE, abaikan qBool, gunakan qClean utuh
             $step1 = $pdo->prepare(
-                "SELECT bkid, page, MATCH(content) AGAINST (:q IN NATURAL LANGUAGE MODE) AS rel
+                "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN NATURAL LANGUAGE MODE) AS rel
                  FROM book_content
-                 WHERE MATCH(content) AGAINST (:q IN NATURAL LANGUAGE MODE)
+                 WHERE MATCH(content) AGAINST (:q2 IN NATURAL LANGUAGE MODE)
                  ORDER BY rel DESC, bkid ASC, page ASC
                  LIMIT :lim"
             );
-            $step1->bindValue(':q', $qClean, PDO::PARAM_STR);
+            $step1->bindValue(':q1', $qClean, PDO::PARAM_STR);
+            $step1->bindValue(':q2', $qClean, PDO::PARAM_STR);
             $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
             $step1->execute();
             $topRows = $step1->fetchAll();
