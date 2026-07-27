@@ -1164,7 +1164,7 @@ async function execSearch() {
       <div id="sec-content-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
     </div>
     ${sectionDivider()}
-    <div id="sec-content-and" class="mb-2 hidden">
+    <div id="sec-content-and" class="mb-3 hidden p-4 bg-cream-dark rounded-xl border border-primary/20 shadow-sm">
       ${sectionHeader('layers','Isi Kitab (Kata Tersebar)', null, true)}
       <div id="sec-content-and-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
     </div>
