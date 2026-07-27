@@ -22,7 +22,8 @@ class AskController {
             return;
         }
 
-        $limit = 25; // Ambil 25 halaman terbaik agar konteks lebih luas dan akurat
+        $retry = (int)($_POST['retry'] ?? $_GET['retry'] ?? 0);
+        $limit = $retry > 0 ? 50 : 25; // Ambil 25 (atau 50 jika retry) halaman terbaik agar konteks lebih luas dan akurat
 
         try {
             // [CACHING] Cek history jika pertanyaan sudah pernah ditanyakan sebelumnya
@@ -30,14 +31,14 @@ class AskController {
             $logCheck->execute([$qRaw]);
             $cachedLog = $logCheck->fetch(PDO::FETCH_ASSOC);
 
-            $contextData = $this->fetchContextData($pdo, $qRaw, $limit);
+            $contextData = $this->fetchContextData($pdo, $qRaw, $limit, $retry);
             
             // [NEW LOGIC] Jika pencarian awal kosong, coba terjemahkan ke bahasa berlawanan dan cari lagi
             $aiService = new AIService();
             if (empty($contextData)) {
                 $translatedQuery = $aiService->translateToSearchKeywords($qRaw);
                 if (!empty($translatedQuery) && mb_strtolower(trim($translatedQuery), 'UTF-8') !== mb_strtolower(trim($qRaw), 'UTF-8')) {
-                    $contextData = $this->fetchContextData($pdo, $translatedQuery, $limit);
+                    $contextData = $this->fetchContextData($pdo, $translatedQuery, $limit, $retry);
                 }
             }
 
@@ -107,7 +108,7 @@ class AskController {
         }
     }
 
-    private function fetchContextData(PDO $pdo, string $qRaw, int $limit): array {
+    private function fetchContextData(PDO $pdo, string $qRaw, int $limit, int $retry = 0): array {
         // Bersihkan tanda baca khusus agar tidak mengganggu sintaks BOOLEAN MySQL
         $qClean = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $qRaw);
         // Pecah kata dan ambil yang panjangnya > 2 (hapus kata hubung pendek)
@@ -121,21 +122,37 @@ class AskController {
             $qBool = '+' . implode('* +', $qWords) . '*';
         }
 
-        $step1 = $pdo->prepare(
-            "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
-             FROM book_content
-             WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
-             ORDER BY rel DESC, bkid ASC, page ASC
-             LIMIT :lim"
-        );
-        $step1->bindValue(':q1',  $qBool, PDO::PARAM_STR);
-        $step1->bindValue(':q2',  $qBool, PDO::PARAM_STR);
-        $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
-        $step1->execute();
-        $topRows = $step1->fetchAll();
+        if ($retry > 0) {
+            // Mode luas: NATURAL LANGUAGE MODE, abaikan qBool, gunakan qClean utuh
+            $step1 = $pdo->prepare(
+                "SELECT bkid, page, MATCH(content) AGAINST (:q IN NATURAL LANGUAGE MODE) AS rel
+                 FROM book_content
+                 WHERE MATCH(content) AGAINST (:q IN NATURAL LANGUAGE MODE)
+                 ORDER BY rel DESC, bkid ASC, page ASC
+                 LIMIT :lim"
+            );
+            $step1->bindValue(':q', $qClean, PDO::PARAM_STR);
+            $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $step1->execute();
+            $topRows = $step1->fetchAll();
+        } else {
+            // Mode ketat: BOOLEAN MODE
+            $step1 = $pdo->prepare(
+                "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+                 FROM book_content
+                 WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
+                 ORDER BY rel DESC, bkid ASC, page ASC
+                 LIMIT :lim"
+            );
+            $step1->bindValue(':q1',  $qBool, PDO::PARAM_STR);
+            $step1->bindValue(':q2',  $qBool, PDO::PARAM_STR);
+            $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $step1->execute();
+            $topRows = $step1->fetchAll();
+        }
 
-        // Fallback pencarian
-        if (empty($topRows) && strpos($qBool, '+') !== false && count($qWords) > 1) {
+        // Fallback pencarian (hanya jika mode ketat/retry 0 dan kosong)
+        if ($retry === 0 && empty($topRows) && strpos($qBool, '+') !== false && count($qWords) > 1) {
             $sortedWords = $qWords;
             usort($sortedWords, function($a, $b) {
                 return mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8');

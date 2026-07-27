@@ -109,7 +109,16 @@ export function renderAsk(params) {
     }
   });
 
-  form.addEventListener('submit', async (e) => {
+  let loadingInterval = null;
+  const loadingMessages = [
+    "Membaca teks dari ribuan halaman kitab...",
+    "Menganalisis kecocokan hasil referensi...",
+    "Mengirim data ke AI untuk dirangkum...",
+    "Menyusun struktur jawaban akhir...",
+    "Membutuhkan waktu sedikit lebih lama, harap bersabar..."
+  ];
+
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     const query = input.value.trim();
     if (query.length < 5) {
@@ -117,99 +126,140 @@ export function renderAsk(params) {
       return;
     }
 
-    // UI Update
-    resultContainer.classList.remove('hidden');
-    responseBox.classList.add('hidden');
-    refContainer.classList.add('hidden');
-    loading.classList.remove('hidden');
-    btn.disabled = true;
-    btn.innerHTML = `<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>`;
+    let retryCount = 0;
+    const maxRetries = 1;
 
-    try {
-      const fd = new FormData();
-      fd.append('q', query);
-      // Asumsikan apiFetch mendukung FormData untuk POST / GET
-      // apiFetch di core.js biasanya: fetch(url, options)
-      // Kita panggil manual agar mudah POST
-      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const performFetch = async () => {
+      // UI Update
+      resultContainer.classList.remove('hidden');
+      responseBox.classList.add('hidden');
+      refContainer.classList.add('hidden');
+      loading.classList.remove('hidden');
+      btn.disabled = true;
+      btn.innerHTML = `<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>`;
       
-      const res = await fetch('/api.php?action=ask_ai', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-Token': csrf
-        },
-        body: fd
-      });
-      
-      const data = await res.json();
-      
-      loading.classList.add('hidden');
-      responseBox.classList.remove('hidden');
-
-      if (data.status === 'success') {
-        let html = window.escHtml(data.answer);
-        
-        // Parse basic markdown: bold
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-primary dark:text-cream">$1</strong>');
-        
-        // Parse list items and paragraphs
-        let lines = html.split('\n');
-        let parsed = [];
-        let inUl = false;
-        let inOl = false;
-        
-        for (let line of lines) {
-            let ulMatch = line.match(/^(\s*)[\*\-]\s+(.*)/);
-            let olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)/);
-            
-            if (ulMatch) {
-                if (!inUl) { parsed.push('<ul class="list-disc ml-5 my-2 space-y-1">'); inUl = true; }
-                parsed.push('<li>' + ulMatch[2] + '</li>');
-            } else if (olMatch) {
-                if (!inOl) { parsed.push('<ol class="list-decimal ml-5 my-2 space-y-1" start="' + olMatch[2] + '">'); inOl = true; }
-                parsed.push('<li>' + olMatch[3] + '</li>');
-            } else {
-                if (inUl) { parsed.push('</ul>'); inUl = false; }
-                if (inOl) { parsed.push('</ol>'); inOl = false; }
-                parsed.push(line + (line.trim() === '' ? '' : '<br>'));
-            }
+      const loadingTextEl = loading.querySelector('p');
+      let msgIndex = 0;
+      loadingTextEl.innerText = loadingMessages[0];
+      if (loadingInterval) clearInterval(loadingInterval);
+      loadingInterval = setInterval(() => {
+        msgIndex++;
+        if (msgIndex < loadingMessages.length) {
+          loadingTextEl.innerText = loadingMessages[msgIndex];
         }
-        if (inUl) parsed.push('</ul>');
-        if (inOl) parsed.push('</ol>');
+      }, 4000);
+
+      try {
+        const fd = new FormData();
+        fd.append('q', query);
+        if (retryCount > 0) fd.append('retry', retryCount);
         
-        answerText.innerHTML = parsed.join('\n');
-        askState.answerHTML = answerText.innerHTML;
-        askState.query = query;
-        askState.referencesHTML = '';
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const res = await fetch('/api.php?action=ask_ai', {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': csrf },
+          body: fd
+        });
         
-        if (data.references && data.references.length > 0) {
-          refContainer.classList.remove('hidden');
-          refList.innerHTML = data.references.map(r => `
-            <a href="/kitab?id=${r.bkid}&juz=${r.juz}&page=${r.page}" onclick="window.navigate('/kitab?id=${r.bkid}&juz=${r.juz}&page=${r.page}'); return false;" class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition cursor-pointer no-underline">
-              <i data-lucide="book" class="w-3.5 h-3.5 text-primary"></i>
-              <span class="font-bold font-arabic text-sm">${window.escHtml(r.title)}</span>
-              <span class="mx-1">•</span>
-              <span>Juz ${r.juz}, Hlm ${r.page}</span>
-            </a>
-          `).join('');
-          askState.referencesHTML = refList.innerHTML;
+        const data = await res.json();
+        if (loadingInterval) clearInterval(loadingInterval);
+
+        if (data.status === 'success') {
+          loading.classList.add('hidden');
+          responseBox.classList.remove('hidden');
+          
+          let html = window.escHtml(data.answer);
+          html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-primary dark:text-cream">$1</strong>');
+          
+          let lines = html.split('\\n');
+          let parsed = [];
+          let inUl = false;
+          let inOl = false;
+          
+          for (let line of lines) {
+              let ulMatch = line.match(/^(\s*)[\*\-]\s+(.*)/);
+              let olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)/);
+              
+              if (ulMatch) {
+                  if (!inUl) { parsed.push('<ul class="list-disc ml-5 my-2 space-y-1">'); inUl = true; }
+                  parsed.push('<li>' + ulMatch[2] + '</li>');
+              } else if (olMatch) {
+                  if (!inOl) { parsed.push('<ol class="list-decimal ml-5 my-2 space-y-1" start="' + olMatch[2] + '">'); inOl = true; }
+                  parsed.push('<li>' + olMatch[3] + '</li>');
+              } else {
+                  if (inUl) { parsed.push('</ul>'); inUl = false; }
+                  if (inOl) { parsed.push('</ol>'); inOl = false; }
+                  parsed.push(line + (line.trim() === '' ? '' : '<br>'));
+              }
+          }
+          if (inUl) parsed.push('</ul>');
+          if (inOl) parsed.push('</ol>');
+          
+          answerText.innerHTML = parsed.join('\\n');
+          askState.answerHTML = answerText.innerHTML;
+          askState.query = query;
+          askState.referencesHTML = '';
+          
+          if (data.references && data.references.length > 0) {
+            refContainer.classList.remove('hidden');
+            refList.innerHTML = data.references.map(r => `
+              <a href="/kitab?id=${r.bkid}&juz=${r.juz}&page=${r.page}" onclick="window.navigate('/kitab?id=${r.bkid}&juz=${r.juz}&page=${r.page}'); return false;" class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition cursor-pointer no-underline">
+                <i data-lucide="book" class="w-3.5 h-3.5 text-primary"></i>
+                <span class="font-bold font-arabic text-sm">${window.escHtml(r.title)}</span>
+                <span class="mx-1">•</span>
+                <span>Juz ${r.juz}, Hlm ${r.page}</span>
+              </a>
+            `).join('');
+            askState.referencesHTML = refList.innerHTML;
+            reicons();
+          } else {
+            refContainer.classList.add('hidden');
+          }
+
+          btn.disabled = false;
+          btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i>`;
           reicons();
+
         } else {
-          refContainer.classList.add('hidden');
+          handleError(data.message || 'Terjadi kesalahan');
         }
-      } else {
-        answerText.innerHTML = `<span class="text-red-500">${window.escHtml(data.message || 'Terjadi kesalahan')}</span>`;
-        askState.answerHTML = answerText.innerHTML;
+      } catch (err) {
+        if (loadingInterval) clearInterval(loadingInterval);
+        handleError('Koneksi terputus atau server bermasalah.');
       }
-    } catch (err) {
-      loading.classList.add('hidden');
-      responseBox.classList.remove('hidden');
-      answerText.innerHTML = `<span class="text-red-500">Koneksi terputus atau server bermasalah.</span>`;
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i>`;
-      reicons();
-    }
+    };
+
+    const handleError = (errorMsg) => {
+      if (retryCount < maxRetries) {
+        retryCount++;
+        loading.classList.remove('hidden');
+        responseBox.classList.add('hidden');
+        
+        const loadingTextEl = loading.querySelector('p');
+        let countdown = 3;
+        loadingTextEl.innerText = `Gagal terhubung ke AI. Mencoba ulang (mode pencarian luas) dalam ${countdown}...`;
+        
+        const countdownTimer = setInterval(() => {
+          countdown--;
+          if (countdown > 0) {
+            loadingTextEl.innerText = `Gagal terhubung ke AI. Mencoba ulang (mode pencarian luas) dalam ${countdown}...`;
+          } else {
+            clearInterval(countdownTimer);
+            performFetch();
+          }
+        }, 1000);
+      } else {
+        loading.classList.add('hidden');
+        responseBox.classList.remove('hidden');
+        answerText.innerHTML = `<span class="text-red-500">${window.escHtml(errorMsg)}</span>`;
+        askState.answerHTML = answerText.innerHTML;
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i>`;
+        reicons();
+      }
+    };
+
+    performFetch();
   });
 
   if (autoSubmit && input.value.trim().length >= 5) {
