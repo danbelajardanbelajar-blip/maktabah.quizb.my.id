@@ -1196,7 +1196,7 @@ async function execSearch() {
     </div>
     ${sectionDivider()}
     <div id="sec-archive" class="mb-2">
-      ${sectionHeader('globe','Hasil dari Archive.org', null, true)}
+      ${sectionHeader('globe','Archive.org', null, true)}
       <div id="sec-archive-body"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(4)}</div></div>
     </div>
     ${sectionDivider()}
@@ -1361,7 +1361,7 @@ async function execSearch() {
       if ($('#search-input')?.value.trim() !== q) return;
       const archiveCount = res?.response?.numFound || 0;
       totalHits += archiveCount;
-      patchHeader('sec-archive','globe','Hasil dari Archive.org', archiveCount);
+      patchHeader('sec-archive','globe','Archive.org', archiveCount);
       const body = $('#sec-archive-body');
       if (!body) return;
       const docs = res?.response?.docs || [];
@@ -1461,7 +1461,7 @@ window.goSearchArchivePage = function(p) {
   fetch(archiveUrl, { signal: _abortArchiveLocal.signal })
     .then(r => r.json()).then(res => {
       const archiveCount = res?.response?.numFound || 0;
-      patchHeader('sec-archive','globe','Hasil dari Archive.org', archiveCount);
+      patchHeader('sec-archive','globe','Archive.org', archiveCount);
       if (!body) return;
       const docs = res?.response?.docs || [];
       const hasMore = (archiveCount > p * 5);
