@@ -26,6 +26,8 @@ export async function renderKategori(params) {
       <div class="mb-8">
         <h1 class="text-2xl font-bold text-primary">Kategori</h1>
         <p class="text-slate-500 text-sm mt-1">Pilih kategori untuk melihat kitab-kitab di dalamnya</p>
+        <input id="kat-search" type="text" placeholder="Cari nama kategori..." 
+               class="w-full sm:w-64 mt-4 px-4 py-2.5 rounded-xl border border-gold/30 text-sm text-primary focus:border-gold focus:outline-none bg-white placeholder-slate-400">
       </div>
       <!-- Grid kategori -->
       <div id="kat-cat-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -77,6 +79,16 @@ export async function renderKategori(params) {
     }).join('');
 
     reicons();
+
+    const searchInp = $('#kat-search');
+    if (searchInp) {
+      searchInp.oninput = (e) => {
+        const q = e.target.value.toLowerCase();
+        $$('#kat-cat-grid > button').forEach(btn => {
+          btn.style.display = btn.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      };
+    }
   } catch(e) {
     if (handleAuthError(e)) return;
     const g = $('#kat-cat-grid');
@@ -105,6 +117,8 @@ export async function renderKategoriBuku() {
         <div>
           <h1 id="kat-buku-h1" class="text-2xl font-bold text-primary">Memuat…</h1>
           <p class="text-slate-500 text-sm mt-1">Kitab-kitab dalam kategori ini</p>
+          <input id="kat-book-search" type="text" placeholder="Cari judul kitab di halaman ini..." 
+                 class="w-full sm:w-64 mt-4 px-4 py-2.5 rounded-xl border border-gold/30 text-sm text-primary focus:border-gold focus:outline-none bg-white placeholder-slate-400">
         </div>
       </div>
       <!-- Grid buku -->
@@ -146,6 +160,18 @@ async function loadKategoriBuku() {
       ? res.data.map(bookCard).join('')
       : `<p class="col-span-full text-center py-12 text-slate-600">Tidak ada kitab di kategori ini.</p>`;
     if (pag) pag.innerHTML = paginationHtml(res.page, res.total_pages, 'goKategoriBukuPage');
+
+    const searchInp = $('#kat-book-search');
+    if (searchInp) {
+      const filterBooks = () => {
+        const q = searchInp.value.toLowerCase();
+        $$('#kat-buku-grid > .book-card').forEach(card => {
+          card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      };
+      filterBooks(); // Apply if there's existing text after pagination
+      searchInp.oninput = filterBooks;
+    }
   } catch(e) {
     if (handleAuthError(e)) return;
     if (grid) grid.innerHTML = `<p class="col-span-full text-center py-12 text-red-500 text-sm">Gagal memuat kitab.</p>`;
