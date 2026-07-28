@@ -25,14 +25,20 @@ export async function renderKategori(params) {
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-2xl font-bold text-primary">Kategori</h1>
-        <p class="text-slate-500 text-sm mt-1">Pilih kategori untuk melihat kitab-kitab di dalamnya</p>
-        <input id="kat-search" type="text" placeholder="Cari nama kategori..." 
+        <p class="text-slate-500 text-sm mt-1">Pilih kategori untuk melihat kitab-kitab di dalamnya, atau cari langsung judul kitab.</p>
+        <input id="kat-search" type="text" placeholder="Cari nama kategori atau judul kitab..." 
                class="w-full sm:w-64 mt-4 px-4 py-2.5 rounded-xl border border-gold/30 text-sm text-primary focus:border-gold focus:outline-none bg-white placeholder-slate-400">
       </div>
       <!-- Grid kategori -->
       <div id="kat-cat-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         ${Array.from({length:10},()=>`
           <div class="skeleton h-28 rounded-2xl"></div>`).join('')}
+      </div>
+
+      <!-- Container hasil pencarian kitab -->
+      <div id="kat-global-buku-section" class="mt-12 hidden">
+        <h2 class="text-xl font-bold text-primary mb-4 border-b border-gold/20 pb-2">Hasil Pencarian Kitab</h2>
+        <div id="kat-global-buku-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
       </div>
     </div>
     ${mobileFeedbackBanner}`;
@@ -80,13 +86,43 @@ export async function renderKategori(params) {
 
     reicons();
 
+    let searchTimeout;
     const searchInp = $('#kat-search');
     if (searchInp) {
       searchInp.oninput = (e) => {
-        const q = e.target.value.toLowerCase();
+        const q = e.target.value.trim();
+        const qLower = q.toLowerCase();
+        
+        // 1. Filter kategori lokal
         $$('#kat-cat-grid > button').forEach(btn => {
-          btn.style.display = btn.textContent.toLowerCase().includes(q) ? '' : 'none';
+          btn.style.display = btn.textContent.toLowerCase().includes(qLower) ? '' : 'none';
         });
+
+        // 2. Pencarian judul kitab global via API
+        const bookSec = $('#kat-global-buku-section');
+        const bookGrid = $('#kat-global-buku-grid');
+        
+        clearTimeout(searchTimeout);
+        if (q.length < 2) {
+          if (bookSec) bookSec.classList.add('hidden');
+          return;
+        }
+
+        searchTimeout = setTimeout(async () => {
+          if (bookSec) bookSec.classList.remove('hidden');
+          if (bookGrid) bookGrid.innerHTML = skeletonCards(4);
+          try {
+            const res = await apiFetch({ action: 'search_books', q: q, limit: 12 });
+            if (bookGrid) {
+              bookGrid.innerHTML = res.data && res.data.length 
+                ? res.data.map(bookCard).join('')
+                : '<p class="col-span-full text-center py-8 text-slate-500 text-sm">Tidak ada kitab yang cocok.</p>';
+              reicons();
+            }
+          } catch(e) {
+            if (bookGrid) bookGrid.innerHTML = '<p class="col-span-full text-center py-8 text-red-500 text-sm">Gagal mencari kitab.</p>';
+          }
+        }, 400); // 400ms debounce delay
       };
     }
   } catch(e) {
