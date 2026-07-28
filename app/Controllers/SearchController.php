@@ -818,11 +818,13 @@ class SearchController {
             $countStmt->execute();
             $total = (int)$countStmt->fetchColumn();
 
+            $has_more = (count($data) === $limit);
             echo json_encode([
                 'data'        => $data,
                 'total'       => $total,
                 'page'        => $page,
                 'total_pages' => (int)ceil($total / $limit),
+                'has_more'    => $has_more
             ]);
         } catch (\Exception $e) {
             echo json_encode(['error' => 'Database connection failed.', 'details' => $e->getMessage()]);
