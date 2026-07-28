@@ -123,16 +123,32 @@ class AskController {
         }
 
         if ($retry > 0) {
-            // Mode luas: NATURAL LANGUAGE MODE, abaikan qBool, gunakan qClean utuh
+            // Mode luas: BOOLEAN MODE yang dilonggarkan (menghindari timeout NATURAL LANGUAGE MODE)
+            // Hanya mewajibkan 1 kata terpanjang, sisanya opsional
+            $qBoolBroad = '';
+            if (!empty($qWords)) {
+                $sortedWords = $qWords;
+                usort($sortedWords, function($a, $b) {
+                    return mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8');
+                });
+                
+                $qBoolBroad = '+' . $sortedWords[0] . '*';
+                for ($i = 1; $i < count($sortedWords); $i++) {
+                    $qBoolBroad .= ' ' . $sortedWords[$i] . '*';
+                }
+            } else {
+                $qBoolBroad = SearchHelper::ftEscape($qRaw);
+            }
+
             $step1 = $pdo->prepare(
-                "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN NATURAL LANGUAGE MODE) AS rel
+                "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
                  FROM book_content
-                 WHERE MATCH(content) AGAINST (:q2 IN NATURAL LANGUAGE MODE)
+                 WHERE MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
                  ORDER BY rel DESC, bkid ASC, page ASC
                  LIMIT :lim"
             );
-            $step1->bindValue(':q1', $qClean, PDO::PARAM_STR);
-            $step1->bindValue(':q2', $qClean, PDO::PARAM_STR);
+            $step1->bindValue(':q1', $qBoolBroad, PDO::PARAM_STR);
+            $step1->bindValue(':q2', $qBoolBroad, PDO::PARAM_STR);
             $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
             $step1->execute();
             $topRows = $step1->fetchAll();
