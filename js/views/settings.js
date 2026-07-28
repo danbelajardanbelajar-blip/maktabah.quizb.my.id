@@ -192,7 +192,7 @@ function _srcClear() {
 }
 
 // searchState declared here (used by renderSearch, execSearch, pagination)
-export const searchState = { q: '', bookPage: 1, contPage: 1, pdfPage: 1, contAndPage: 1 };
+export const searchState = { q: '', bookPage: 1, contPage: 1, pdfPage: 1, contAndPage: 1, archivePage: 1 };
 export const searchAdvancedState = {
   terms: ['', '', '', '', ''],
   cats: [],
@@ -621,6 +621,7 @@ export function renderSearch(params) {
     searchState.bookPage = 1;
     searchState.contPage = 1;
     searchState.pdfPage = 1;
+    searchState.archivePage = 1;
     searchState.contAndPage = 1;
   }
 
@@ -674,7 +675,7 @@ export function renderSearch(params) {
 
   inp?.addEventListener('input', e => {
     searchState.q = e.target.value.trim();
-    searchState.bookPage = searchState.contPage = searchState.pdfPage = searchState.contAndPage = 1;
+    searchState.bookPage = searchState.contPage = searchState.pdfPage = searchState.contAndPage = searchState.archivePage = 1;
     clr?.classList.toggle('hidden', !searchState.q);
     if (!searchState.q) { abortAll(); $('#search-results').innerHTML = emptySearchPrompt(); $('#search-stats').innerHTML = ''; reicons(); }
   });
@@ -693,7 +694,37 @@ export function renderSearch(params) {
   }
 }
 
-// ── Skeleton shells ──────────────────────────────────────────
+// ── Archive.org card with stagger animation ───────────────────
+function archiveCardStagger(b, i, q = '') {
+  const name  = b.title || 'بدون عنوان';
+  const creator = b.creator ? (Array.isArray(b.creator) ? b.creator.join(', ') : b.creator) : 'Tidak diketahui';
+  const date = b.date ? new Date(b.date).getFullYear() : '';
+  const nameHtml  = hlText(name, q);
+  const link  = 'https://archive.org/details/' + b.identifier;
+  
+  return `
+    <div class="book-card search-card-stagger bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
+         style="animation-delay:${i*40}ms" onclick="window.open('${link}', '_blank')">
+      <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${nameHtml}</div>
+      <div class="text-slate-600 text-[10px] line-clamp-1 leading-tight">${escHtml(creator)} ${date ? '· ' + escHtml(date) : ''}</div>
+      <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
+        <div class="flex items-center gap-2">
+           <span class="dl-fmt-badge dl-fmt-zip" style="background:rgba(59,130,246,.14); color:#2563eb; border-color:rgba(59,130,246,.35);">Archive.org</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="${link}" target="_blank"
+             class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-blue-600/30 text-blue-600 hover:bg-blue-600/10 transition"
+             title="Kunjungi Archive.org"
+             aria-label="Kunjungi Archive.org" onclick="event.stopPropagation()">
+            <i data-lucide="external-link" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="text-[10px] font-bold">Kunjungi</span>
+          </a>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Search form submit ──────────────────────────────────────────
 function skeletonSearchSections() {
   const skel = n => `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${skeletonCards(n)}</div>`;
   const skelSec = (icon, label, bodyHtml) => `
@@ -1164,6 +1195,11 @@ async function execSearch() {
       <div id="sec-pdf-body"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(4)}</div></div>
     </div>
     ${sectionDivider()}
+    <div id="sec-archive" class="mb-2">
+      ${sectionHeader('globe','Hasil dari Archive.org', null, true)}
+      <div id="sec-archive-body"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(4)}</div></div>
+    </div>
+    ${sectionDivider()}
     <div id="sec-content" class="mb-2">
       ${sectionHeader('file-text','Isi Kitab', null, true)}
       <div id="sec-content-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
@@ -1184,7 +1220,7 @@ async function execSearch() {
   let fastDone = 0;
   let totalHits = 0;
   const onFastDone = async () => {
-    if (++fastDone === 4) {
+    if (++fastDone === 5) {
       const ms = Math.round(performance.now() - t0);
       if (stats) { stats.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-gold"></i> ${ms} ms`; reicons(); }
       const wrap = document.getElementById('search-results');
@@ -1316,6 +1352,28 @@ async function execSearch() {
         : noResultBlock('Tidak ada file PDF yang cocok.');
       reicons();
     }).catch(()=>{ const b=$('#sec-pdf-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
+
+  // 5. Internet Archive search (parallel)
+  let _abortArchive = new AbortController();
+  const archiveUrl = `https://archive.org/advancedsearch.php?q=title:(${encodeURIComponent(q)})+AND+mediatype:(texts)&fl[]=identifier,title,creator,date&rows=5&page=${searchState.archivePage || 1}&output=json`;
+  fetch(archiveUrl, { signal: _abortArchive.signal })
+    .then(r => r.json()).then(res => {
+      if ($('#search-input')?.value.trim() !== q) return;
+      const archiveCount = res?.response?.numFound || 0;
+      totalHits += archiveCount;
+      patchHeader('sec-archive','globe','Hasil dari Archive.org', archiveCount);
+      const body = $('#sec-archive-body');
+      if (!body) return;
+      const docs = res?.response?.docs || [];
+      const hasMore = (archiveCount > (searchState.archivePage || 1) * 5);
+      body.innerHTML = docs.length
+        ? `<div class="search-section-enter">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${docs.map((b,i)=>archiveCardStagger(b,i,q)).join('')}</div>
+            ${loadMoreHtml(searchState.archivePage || 1, hasMore, 'goSearchArchivePage')}</div>`
+        : noResultBlock('Tidak ada hasil dari Archive.org.');
+      reicons();
+    }).catch(()=>{ const b=$('#sec-archive-body'); if(b) b.innerHTML=noResultBlock('Gagal memuat.'); }).finally(onFastDone);
+
 }
 
 function saveSearchState() {
@@ -1392,4 +1450,26 @@ window.goSearchPdfPage = function(p) {
       reicons(); $('#sec-pdf')?.scrollIntoView({behavior:'smooth',block:'start'});
     }).catch(()=>{});
 };
+
+window.goSearchArchivePage = function(p) {
+  searchState.archivePage = p; saveSearchState();
+  const q = searchState.q, body = $('#sec-archive-body');
+  if (body) body.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(2)}</div>`;
+  let _abortArchiveLocal = new AbortController();
+  const archiveUrl = `https://archive.org/advancedsearch.php?q=title:(${encodeURIComponent(q)})+AND+mediatype:(texts)&fl[]=identifier,title,creator,date&rows=5&page=${p}&output=json`;
+  
+  fetch(archiveUrl, { signal: _abortArchiveLocal.signal })
+    .then(r => r.json()).then(res => {
+      const archiveCount = res?.response?.numFound || 0;
+      patchHeader('sec-archive','globe','Hasil dari Archive.org', archiveCount);
+      if (!body) return;
+      const docs = res?.response?.docs || [];
+      const hasMore = (archiveCount > p * 5);
+      body.innerHTML = docs.length
+        ? `<div class="search-section-enter"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${docs.map((b,i)=>archiveCardStagger(b,i,q)).join('')}</div>${loadMoreHtml(p, hasMore, 'goSearchArchivePage')}</div>`
+        : noResultBlock('Tidak ada hasil.');
+      reicons(); $('#sec-archive')?.scrollIntoView({behavior:'smooth',block:'start'});
+    }).catch(()=>{});
+};
+
 
