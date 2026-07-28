@@ -124,7 +124,7 @@ class AskController {
 
         if ($retry > 0) {
             // Mode luas: BOOLEAN MODE yang dilonggarkan (menghindari timeout NATURAL LANGUAGE MODE)
-            // Hanya mewajibkan 1 kata terpanjang, sisanya opsional
+            // Hanya mewajibkan 1 kata terpanjang, sisanya opsional (TANPA wildcard * agar query tidak timeout)
             $qBoolBroad = '';
             if (!empty($qWords)) {
                 $sortedWords = $qWords;
@@ -132,9 +132,9 @@ class AskController {
                     return mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8');
                 });
                 
-                $qBoolBroad = '+' . $sortedWords[0] . '*';
+                $qBoolBroad = '+' . $sortedWords[0];
                 for ($i = 1; $i < count($sortedWords); $i++) {
-                    $qBoolBroad .= ' ' . $sortedWords[$i] . '*';
+                    $qBoolBroad .= ' ' . $sortedWords[$i];
                 }
             } else {
                 $qBoolBroad = SearchHelper::ftEscape($qRaw);
@@ -175,9 +175,10 @@ class AskController {
                 return mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8');
             });
             
-            $qBoolFallback = '+' . $sortedWords[0] . '*';
+            // Hapus wildcard * agar pencarian fallback tidak menyebabkan max_statement_time exceeded
+            $qBoolFallback = '+' . $sortedWords[0];
             for ($i = 1; $i < count($sortedWords); $i++) {
-                $qBoolFallback .= ' ' . $sortedWords[$i] . '*';
+                $qBoolFallback .= ' ' . $sortedWords[$i];
             }
             
             $step1->bindValue(':q1',  $qBoolFallback, PDO::PARAM_STR);
