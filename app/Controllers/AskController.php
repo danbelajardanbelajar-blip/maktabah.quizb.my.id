@@ -119,7 +119,7 @@ class AskController {
         } else {
             // Ambil maksimal 4 kata pertama agar pencarian tidak terlalu ketat (hasil 0) jika kalimatnya sangat panjang
             $qWords = array_slice(array_values($qWords), 0, 4);
-            $qBool = '+' . implode('* +', $qWords) . '*';
+            $qBool = '+' . implode(' +', $qWords);
         }
 
         if ($retry > 0) {
