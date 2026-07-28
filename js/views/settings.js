@@ -1159,6 +1159,11 @@ async function execSearch() {
       <div id="sec-books-body"><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${skeletonCards(4)}</div></div>
     </div>
     ${sectionDivider()}
+    <div id="sec-pdf" class="mb-2">
+      ${sectionHeader('download','Download File PDF', null, true)}
+      <div id="sec-pdf-body"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(4)}</div></div>
+    </div>
+    ${sectionDivider()}
     <div id="sec-content" class="mb-2">
       ${sectionHeader('file-text','Isi Kitab', null, true)}
       <div id="sec-content-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
@@ -1167,11 +1172,6 @@ async function execSearch() {
     <div id="sec-content-and" class="mb-3 hidden p-4 bg-cream-dark rounded-xl border border-primary/20 shadow-sm">
       ${sectionHeader('layers','Isi Kitab (Kata Tersebar)', null, true)}
       <div id="sec-content-and-body"><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">${skeletonCards(6)}</div></div>
-    </div>
-    ${sectionDivider()}
-    <div id="sec-pdf">
-      ${sectionHeader('download','Download File PDF', null, true)}
-      <div id="sec-pdf-body"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(4)}</div></div>
     </div>
     </div>`;
 
