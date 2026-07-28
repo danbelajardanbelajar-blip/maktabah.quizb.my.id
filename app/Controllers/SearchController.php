@@ -37,7 +37,7 @@ class SearchController {
         $qRaw  = trim($_GET['q'] ?? '');
         $q     = SearchHelper::searchPhraseText($qRaw);
         $page  = max(1, (int)($_GET['page'] ?? 1));
-        $limit = 12;
+        $limit = 5;
         $offset = ($page - 1) * $limit;
         $isFirstPage = ($page === 1); // Log hanya halaman pertama
     
@@ -117,7 +117,7 @@ class SearchController {
         $qRaw  = trim($_GET['q'] ?? '');
         $q     = SearchHelper::searchPhraseText($qRaw);
         $page  = max(1, (int)($_GET['page'] ?? 1));
-        $limit = 12;
+        $limit = 5;
         $offset = ($page - 1) * $limit;
     
         if (strlen($q) < 2) {
@@ -226,7 +226,7 @@ class SearchController {
         header('Cache-Control: public, max-age=120');
         $pdo    = Database::getConnection();
         $page   = max(1, (int)($_GET['page'] ?? 1));
-        $limit  = 12;
+        $limit  = 5;
         $offset = ($page - 1) * $limit;
     
         $fields = [];
@@ -535,7 +535,7 @@ class SearchController {
         $q        = trim($_GET['q'] ?? '');
         $bookPage = max(1, (int)($_GET['book_page']    ?? 1));
         $contPage = max(1, (int)($_GET['content_page'] ?? 1));
-        $limit    = 12;
+        $limit    = 5;
     
         $empty = [
             'query'      => $q,
@@ -783,7 +783,7 @@ class SearchController {
         $qRaw  = trim($_GET['q'] ?? '');
         $q     = \App\Helpers\SearchHelper::searchPhraseText($qRaw);
         $page  = max(1, (int)($_GET['page'] ?? 1));
-        $limit = 12;
+        $limit = 5;
         $offset = ($page - 1) * $limit;
     
         if (strlen($q) < 2) {
