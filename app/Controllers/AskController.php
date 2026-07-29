@@ -111,8 +111,13 @@ class AskController {
     private function fetchContextData(PDO $pdo, string $qRaw, int $limit, int $retry = 0): array {
         // Bersihkan tanda baca khusus agar tidak mengganggu sintaks BOOLEAN MySQL
         $qClean = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $qRaw);
-        // Pecah kata dan ambil yang panjangnya > 2 (hapus kata hubung pendek)
-        $qWords = array_filter(explode(' ', $qClean), function($w) { return mb_strlen($w, 'UTF-8') > 2; });
+        // Filter stop-words (kata tanya) agar pencarian boolean tidak terlalu ketat mencari kata tanya
+        $stopWords = ['siapa', 'apa', 'kapan', 'dimana', 'bagaimana', 'kenapa', 'mengapa', 'apakah', 'berapa'];
+        
+        // Pecah kata dan ambil yang panjangnya > 2 (hapus kata hubung pendek) serta bukan stop-word
+        $qWords = array_filter(explode(' ', $qClean), function($w) use ($stopWords) { 
+            return mb_strlen($w, 'UTF-8') > 2 && !in_array(mb_strtolower($w, 'UTF-8'), $stopWords); 
+        });
         
         if (empty($qWords)) {
             $qBool = SearchHelper::ftEscape($qRaw); 
