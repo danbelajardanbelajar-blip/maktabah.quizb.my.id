@@ -28,32 +28,16 @@ $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $confirmedDuplicates = [];
 
-// 2. Hitung Ukuran (Size Byte) khusus untuk kandidat saja (Tidak membebani server)
+// 2. Format kandidat menjadi confirmed duplicates (Kriteria Size dihapus)
 foreach ($candidates as $cand) {
     $bkids = explode(',', $cand['bkids']);
-    
-    $inClause = implode(',', array_map('intval', $bkids));
-    // Hitung size berdasarkan total panjang karakter di book_content untuk masing-masing buku
-    $sizeStmt = $pdo->query("SELECT bkid, SUM(LENGTH(content)) as total_size FROM book_content WHERE bkid IN ($inClause) GROUP BY bkid");
-    $sizes = $sizeStmt->fetchAll(PDO::FETCH_KEY_PAIR);
-    
-    // Grouping ulang berdasarkan kesamaan ukuran (size)
-    $sizeGroups = [];
-    foreach ($bkids as $id) {
-        $size = $sizes[$id] ?? 0;
-        $sizeGroups[$size][] = $id;
-    }
-    
-    // Validasi 3 Kriteria (Judul Sama, Halaman Sama, Size Sama)
-    foreach ($sizeGroups as $size => $groupBkids) {
-        if (count($groupBkids) > 1) {
-            $confirmedDuplicates[] = [
-                'title' => $cand['title'],
-                'pages' => $cand['pages'],
-                'size'  => $size,
-                'bkids' => $groupBkids
-            ];
-        }
+    if (count($bkids) > 1) {
+        $confirmedDuplicates[] = [
+            'title' => $cand['title'],
+            'pages' => $cand['pages'],
+            'size'  => 0, // Tidak dihitung
+            'bkids' => $bkids
+        ];
     }
 }
 ?>
@@ -88,10 +72,9 @@ foreach ($candidates as $cand) {
 <div class="container">
     <h2>Scanner Duplikasi Kitab Maktabah</h2>
     <div class="criteria">
-        <strong>Mencari kitab dengan 3 kriteria kesamaan ketat:</strong><br>
+        <strong>Mencari kitab dengan 2 kriteria kesamaan ketat:</strong><br>
         1. Kesamaan Nama / Judul Buku<br>
-        2. Kesamaan Jumlah Halaman<br>
-        3. Kesamaan Ukuran / Size (Jumlah Byte Teks Konten)
+        2. Kesamaan Jumlah Halaman
     </div>
     
     <?= $msg ?? '' ?>
@@ -100,7 +83,7 @@ foreach ($candidates as $cand) {
         <div style="text-align: center; padding: 40px;">
             <svg style="width:64px;height:64px;color:#16a34a;margin:auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <h3 style="color: #16a34a;">Aman! Tidak ada kitab duplikat ditemukan.</h3>
-            <p>Database saat ini bersih dari duplikasi berdasarkan 3 kriteria tersebut (Limit periksa: 100 grup).</p>
+            <p>Database saat ini bersih dari duplikasi berdasarkan 2 kriteria tersebut (Limit periksa: 100 grup).</p>
             <a href="scan_duplicat.php" class="btn btn-refresh">Scan Ulang</a>
         </div>
     <?php else: ?>
@@ -112,7 +95,7 @@ foreach ($candidates as $cand) {
                         <th>ID Kitab</th>
                         <th>Judul Kitab</th>
                         <th>Halaman</th>
-                        <th>Size (Bytes)</th>
+                        <th>Size (Dihapus)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -133,7 +116,7 @@ foreach ($candidates as $cand) {
                             <td><label for="chk_<?= $id ?>"><strong><?= $id ?></strong> <?= $isKeep ?></label></td>
                             <td><label for="chk_<?= $id ?>"><?= htmlspecialchars($dup['title']) ?></label></td>
                             <td><label for="chk_<?= $id ?>"><?= $dup['pages'] ?></label></td>
-                            <td><label for="chk_<?= $id ?>"><?= number_format($dup['size']) ?> bytes</label></td>
+                            <td><label for="chk_<?= $id ?>">-</label></td>
                         </tr>
                         <?php endforeach; ?>
                     <?php endforeach; ?>
