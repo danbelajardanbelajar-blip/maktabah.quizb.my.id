@@ -1222,27 +1222,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="text-[10px] font-semibold">Favorit</span>
       </a>
 
-      <a href="/settings" data-route="/settings" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
-        <i data-lucide="settings-2" class="w-5 h-5"></i>
-        <span class="text-[10px] font-medium">Setting</span>
+      <!-- Tombol Lainnya -->
+      <a href="javascript:void(0)" onclick="openMoreModal()" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Lainnya</span>
       </a>
-
-      <?php if ($sessionUser): ?>
-      <a href="/dashboard" data-route="/dashboard" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
-        <?php if (!empty($sessionUser['picture'])): ?>
-          <img src="<?= htmlspecialchars($sessionUser['picture']) ?>" alt="Avatar"
-               class="w-5 h-5 rounded-full object-cover border border-gold/40" width="20" height="20" />
-        <?php else: ?>
-          <i data-lucide="user-circle" class="w-5 h-5"></i>
-        <?php endif; ?>
-        <span class="text-[10px] font-medium">Akun</span>
-      </a>
-      <?php else: ?>
-      <a href="/about" data-route="/about" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
-        <i data-lucide="info" class="w-5 h-5"></i>
-        <span class="text-[10px] font-medium">Tentang</span>
-      </a>
-      <?php endif; ?>
 
     </div>
   </nav>
@@ -1264,6 +1248,50 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button onclick="closeApkUpdateModal()" style="background:transparent;color:#14532D;border:1px solid rgba(20,83,45,.3);padding:0.75rem 2rem;border-radius:99px;font-weight:700;font-size:1rem;cursor:pointer;width:100%;box-sizing:border-box;">
           Nanti Saja
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MORE MENU MODAL ===================== -->
+  <div id="more-modal-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(15,34,24,.55);backdrop-filter:blur(4px);" onclick="if(event.target===this)closeMoreModal()">
+    <div id="more-modal" style="position:absolute;bottom:0;left:0;right:0;background:#F8FAF9;border-radius:1.5rem 1.5rem 0 0;padding:1.5rem 1.25rem 2rem;box-shadow:0 -8px 40px rgba(20,83,45,.18); transform: translateY(100%); transition: transform 0.3s ease;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <i data-lucide="grid" style="width:18px;height:18px;color:#C9A227;"></i>
+          <span style="font-weight:700;font-size:15px;color:#166534;">Menu Lainnya</span>
+        </div>
+        <button onclick="closeMoreModal()" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(20,83,45,.4);">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:0.75rem;">
+        <?php if ($sessionUser): ?>
+        <a href="/dashboard" data-route="/dashboard" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+          <?php if (!empty($sessionUser['picture'])): ?>
+            <img src="<?= htmlspecialchars($sessionUser['picture']) ?>" alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-gold/40" />
+          <?php else: ?>
+            <i data-lucide="user-circle" class="w-5 h-5 text-amber-600"></i>
+          <?php endif; ?>
+          Akun Saya
+        </a>
+        <?php endif; ?>
+        
+        <a href="/about" data-route="/about" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+          <i data-lucide="info" class="w-5 h-5 text-amber-600"></i>
+          Tentang
+        </a>
+        <a href="/settings" data-route="/settings" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+          <i data-lucide="settings-2" class="w-5 h-5 text-amber-600"></i>
+          Setting
+        </a>
+        <a href="/privacy" data-route="/privacy" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+          <i data-lucide="shield" class="w-5 h-5 text-amber-600"></i>
+          Kebijakan Privasi
+        </a>
+        <a href="/katalog" data-route="/katalog" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+          <i data-lucide="book" class="w-5 h-5 text-amber-600"></i>
+          Katalog
+        </a>
       </div>
     </div>
   </div>
@@ -1613,6 +1641,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             overlay.style.display = 'none';
             localStorage.setItem('apk_update_warned_v10_rev2', '1');
           }, 300);
+        }
+      };
+
+      window.openMoreModal = function() {
+        const overlay = document.getElementById('more-modal-overlay');
+        const modal = document.getElementById('more-modal');
+        if(overlay && modal) {
+            overlay.style.display = 'block';
+            void overlay.offsetWidth;
+            modal.style.transform = 'translateY(0)';
+        }
+      };
+      
+      window.closeMoreModal = function() {
+        const overlay = document.getElementById('more-modal-overlay');
+        const modal = document.getElementById('more-modal');
+        if(overlay && modal) {
+            modal.style.transform = 'translateY(100%)';
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
         }
       };
 
