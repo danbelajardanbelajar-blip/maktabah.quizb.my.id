@@ -14,8 +14,8 @@ class CacheHelper {
     public static function remember(string $key, int $ttlSeconds, callable $callback) {
         $cacheFile = self::getCacheDir() . '/' . md5($key) . '.json';
         
-        // Cek jika cache masih valid
-        if (file_exists($cacheFile)) {
+        // Cek jika cache masih valid dan tidak ada parameter refresh
+        if (file_exists($cacheFile) && empty($_GET['refresh'])) {
             $mtime = filemtime($cacheFile);
             if (time() - $mtime < $ttlSeconds) {
                 $content = file_get_contents($cacheFile);

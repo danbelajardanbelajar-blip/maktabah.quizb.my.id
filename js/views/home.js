@@ -1,10 +1,32 @@
 // PAGE: HOME
 import { API, FONTS_LATIN, FONTS_ARABIC, readerFontState, applyReaderFont, $, $$, el, app, reicons, mobileFeedbackBanner, apiFetch, handleAuthError, UPDATE_NOTICE_SESSION_KEY, isMobileViewport, hasDismissedUpdateNotice, setDismissedUpdateNotice, closeUpdateNotice, showUpdateNoticeIfNeeded, logVisitorActivity, navigate, setActiveNav, updateReaderMenus, skeletonCards, bookCard, escHtml, paginationHtml, recentBookCard, saveToRecentlyOpened, getRecentlyOpened } from '../core/core.js';
 
+if (!window.refreshHomeData) {
+  window.refreshHomeData = async function(btn) {
+      const icon = btn.querySelector('i');
+      if (icon) icon.classList.add('animate-spin');
+      window.forceRefreshApi = true;
+      await renderHome();
+      window.forceRefreshApi = false;
+  };
+}
+
 export async function renderHome() {
   app().innerHTML = `
     <!-- Hero -->
     <section class="hero-bg text-white relative overflow-hidden">
+      <!-- Tombol Mobile (Gelap/Terang & Refresh) khusus di halaman Home -->
+      <div class="absolute top-[80px] right-4 z-50 flex md:hidden items-center gap-2">
+        <button onclick="window.setTheme(document.documentElement.classList.contains('dark')?'light':'dark')"
+          class="p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all flex items-center justify-center" title="Gelap/Terang">
+          <i data-lucide="sun" class="w-5 h-5"></i>
+        </button>
+        <button onclick="window.refreshHomeData(this)"
+          class="p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all flex items-center justify-center" title="Refresh Data">
+          <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+        </button>
+      </div>
+
       <!-- Decorative background glow -->
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none"></div>
       
@@ -176,7 +198,8 @@ export async function renderHome() {
   // Load popular searches
   (async () => {
     try {
-      const res     = await apiFetch({ action: 'popular_searches', limit: 5 });
+      const reqFlags = window.forceRefreshApi ? { refresh: 1 } : {};
+      const res     = await apiFetch({ action: 'popular_searches', limit: 5, ...reqFlags });
       const queries = res.data || [];
       const section = document.getElementById('popular-search-section');
       const chips   = document.getElementById('popular-search-chips');
@@ -220,7 +243,8 @@ export async function renderHome() {
   // Load recent searches (non-blocking, section hidden jika kosong)
   (async () => {
     try {
-      const res     = await apiFetch({ action: 'recent_searches', limit: 5 });
+      const reqFlags = window.forceRefreshApi ? { refresh: 1 } : {};
+      const res     = await apiFetch({ action: 'recent_searches', limit: 5, ...reqFlags });
       const queries = res.data || [];
       const section = document.getElementById('recent-search-section');
       const chips   = document.getElementById('recent-search-chips');
@@ -264,7 +288,8 @@ export async function renderHome() {
   // Load Pertanyaan Terbaru
   (async () => {
     try {
-      const res     = await apiFetch({ action: 'recent_questions', limit: 5 });
+      const reqFlags = window.forceRefreshApi ? { refresh: 1 } : {};
+      const res     = await apiFetch({ action: 'recent_questions', limit: 5, ...reqFlags });
       const queries = res.data || [];
       const section = document.getElementById('recent-questions-section');
       const chips   = document.getElementById('recent-questions-chips');
@@ -292,7 +317,8 @@ export async function renderHome() {
     try {
       const grid = document.getElementById('popular-books-grid');
       if (!grid) return;
-      const res = await apiFetch({ action: 'popular_books' });
+      const reqFlags = window.forceRefreshApi ? { refresh: 1 } : {};
+      const res = await apiFetch({ action: 'popular_books', ...reqFlags });
       const books = res.data || [];
       if (!books.length) {
         grid.innerHTML = `
@@ -336,7 +362,8 @@ export async function renderHome() {
 
   // Load statistics
   try {
-    const stats = await apiFetch({ action: 'stats' });
+    const reqFlags = window.forceRefreshApi ? { refresh: 1 } : {};
+    const stats = await apiFetch({ action: 'stats', ...reqFlags });
     const formatNum = (n) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     $('#hero-stats').innerHTML = `
       <span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-gold/60"></i> <strong>${formatNum(stats.total_books)}</strong> Kitab</span>
