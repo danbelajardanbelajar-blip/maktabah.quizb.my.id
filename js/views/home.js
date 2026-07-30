@@ -23,8 +23,10 @@ if (!window.refreshHomeData) {
         localStorage.setItem(k, keepData[k]);
       });
       
-      // Reload ulang seluruh web secara total (tanpa memicu external browser di WebView)
-      window.location.href = window.location.pathname + window.location.search;
+      // Gunakan SPA reload agar WebView tidak melempar ke browser eksternal
+      window.forceRefreshApi = true;
+      await renderHome();
+      window.forceRefreshApi = false;
   };
 }
 
