@@ -1422,13 +1422,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Update navbar theme icon: sun = terang aktif, moon = gelap aktif
         const themeIcon = document.getElementById('nav-theme-icon');
         if (themeIcon) {
-          themeIcon.setAttribute('data-lucide', isDark ? 'moon' : 'sun');
+          themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
           lucide.createIcons({ nodes: [themeIcon] });
         }
         // Update mobile theme icon
         const mobileThemeIcon = document.getElementById('mobile-theme-icon');
         if (mobileThemeIcon) {
-          mobileThemeIcon.setAttribute('data-lucide', isDark ? 'moon' : 'sun');
+          mobileThemeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
           lucide.createIcons({ nodes: [mobileThemeIcon] });
         }
         // Sync with app.js readerFontState if available
