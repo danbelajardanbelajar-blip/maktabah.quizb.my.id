@@ -1355,37 +1355,37 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Brand -->
         <div>
-          <div class="arabic text-amber-400 text-2xl font-bold mb-2">المكتبة السنية</div>
-          <p class="text-white/80 text-sm leading-relaxed">Perpustakaan digital Islam yang memuat ribuan kitab salaf untuk kemudahan umat dalam menuntut ilmu.</p>
+          <div class="arabic text-amber-300 text-2xl font-bold mb-2">المكتبة السنية</div>
+          <p class="text-white/90 text-sm leading-relaxed">Perpustakaan digital Islam yang memuat ribuan kitab salaf untuk kemudahan umat dalam menuntut ilmu.</p>
         </div>
 
         <!-- Nav Links -->
         <div>
-          <h4 class="text-amber-400 text-sm font-semibold uppercase tracking-wider mb-4">Navigasi</h4>
+          <h4 class="text-amber-300 text-sm font-semibold uppercase tracking-wider mb-4">Navigasi</h4>
           <ul class="space-y-2 text-sm text-white/90">
-            <li><a href="/" data-route="/" class="hover:text-amber-400 transition-colors">Beranda</a></li>
-            <li><a href="/katalog" data-route="/katalog" class="hover:text-amber-400 transition-colors">Katalog Kitab</a></li>
-            <li><a href="/about" data-route="/about" class="hover:text-amber-400 transition-colors">Tentang Kami</a></li>
-            <li><a href="/feedback" data-route="/feedback" class="hover:text-amber-400 transition-colors">Feedback</a></li>
-            <li><a href="/privacy" data-route="/privacy" class="hover:text-amber-400 transition-colors">Kebijakan Privasi</a></li>
+            <li><a href="/" data-route="/" class="hover:text-amber-300 transition-colors">Beranda</a></li>
+            <li><a href="/katalog" data-route="/katalog" class="hover:text-amber-300 transition-colors">Katalog Kitab</a></li>
+            <li><a href="/about" data-route="/about" class="hover:text-amber-300 transition-colors">Tentang Kami</a></li>
+            <li><a href="/feedback" data-route="/feedback" class="hover:text-amber-300 transition-colors">Feedback</a></li>
+            <li><a href="/privacy" data-route="/privacy" class="hover:text-amber-300 transition-colors">Kebijakan Privasi</a></li>
           </ul>
         </div>
 
         <!-- Info -->
         <div>
-          <h4 class="text-amber-400 text-sm font-semibold uppercase tracking-wider mb-4">Info</h4>
+          <h4 class="text-amber-300 text-sm font-semibold uppercase tracking-wider mb-4">Info</h4>
           <ul class="space-y-2 text-sm text-white/90">
-            <li class="flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-amber-400"></i> maktabah.quizb.my.id</li>
-            <li class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-amber-400"></i> Ribuan Kitab Tersedia</li>
+            <li class="flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-amber-300"></i> maktabah.quizb.my.id</li>
+            <li class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-amber-300"></i> Ribuan Kitab Tersedia</li>
           </ul>
         </div>
 
       </div>
     </div>
-    <div class="border-t border-white/10 py-4 text-center text-xs text-white/60">
+    <div class="border-t border-white/10 py-4 text-center text-xs text-white/80">
       &copy; <?= date('Y') ?> المكتبة السنية &mdash; Semua hak dilindungi.
       &ensp;&middot;&ensp;
-      <a href="/privacy" data-route="/privacy" class="hover:text-white transition-colors">Kebijakan Privasi</a>
+      <a href="/privacy" data-route="/privacy" class="text-white/90 hover:text-white transition-colors">Kebijakan Privasi</a>
     </div>
   </footer>
 
