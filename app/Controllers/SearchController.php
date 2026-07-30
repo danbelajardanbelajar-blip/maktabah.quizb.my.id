@@ -632,29 +632,35 @@ class SearchController {
         header('Cache-Control: public, max-age=120');
         $limit = min(20, max(1, (int)($_GET['limit'] ?? 15)));
     
+        // Abaikan parameter refresh untuk ini karena query berat pada tabel besar
+        $refresh = $_GET['refresh'] ?? null;
+        unset($_GET['refresh']);
+
         $data = \App\Helpers\CacheHelper::remember('recent_searches_' . $limit, 600, function() use ($limit) {
             $pdo   = Database::getConnection();
+            // Optimasi: Ambil 500 pencarian terbaru tanpa GROUP BY untuk menghindari full table scan
             $stmt = $pdo->prepare(
-                "SELECT s1.query, s1.query_detail
-                 FROM search_logs s1
-                 INNER JOIN (
-                     SELECT LOWER(TRIM(query)) as lq, MAX(id) as max_id
-                     FROM search_logs
-                     WHERE LENGTH(TRIM(query)) >= 2
-                     GROUP BY LOWER(TRIM(query))
-                 ) s2 ON s1.id = s2.max_id
-                 ORDER BY s1.id DESC
-                 LIMIT :lim"
+                "SELECT query, query_detail FROM search_logs 
+                 WHERE LENGTH(TRIM(query)) >= 2 
+                 ORDER BY id DESC LIMIT 500"
             );
-            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
             $stmt->execute();
-        
             $rows = $stmt->fetchAll();
-            return array_map(fn($r) => [
-                'query' => $r['query'],
-                'detail' => $r['query_detail']
-            ], $rows);
+            
+            $unique = [];
+            $result = [];
+            foreach ($rows as $r) {
+                $lq = strtolower(trim($r['query']));
+                if (!isset($unique[$lq])) {
+                    $unique[$lq] = true;
+                    $result[] = ['query' => $r['query'], 'detail' => $r['query_detail']];
+                    if (count($result) == $limit) break;
+                }
+            }
+            return $result;
         });
+        
+        if ($refresh !== null) $_GET['refresh'] = $refresh;
 
         echo json_encode(['data' => $data]);
     }
@@ -663,6 +669,10 @@ class SearchController {
         header('Cache-Control: public, max-age=120');
         $limit = min(20, max(1, (int)($_GET['limit'] ?? 5)));
     
+        // Abaikan parameter refresh untuk ini karena query berat pada tabel besar
+        $refresh = $_GET['refresh'] ?? null;
+        unset($_GET['refresh']);
+
         $data = \App\Helpers\CacheHelper::remember('popular_searches_' . $limit, 600, function() use ($limit) {
             $pdo   = Database::getConnection();
             $stmt = $pdo->prepare(
@@ -670,7 +680,7 @@ class SearchController {
                  FROM search_logs s1
                  INNER JOIN (
                      SELECT LOWER(TRIM(query)) as lq, COUNT(*) as cnt, MAX(id) as max_id
-                     FROM search_logs
+                     FROM (SELECT * FROM search_logs ORDER BY id DESC LIMIT 10000) sub
                      WHERE LENGTH(TRIM(query)) >= 2
                      GROUP BY LOWER(TRIM(query))
                  ) s2 ON s1.id = s2.max_id
@@ -686,6 +696,8 @@ class SearchController {
                 'detail' => $r['query_detail']
             ], $rows);
         });
+        
+        if ($refresh !== null) $_GET['refresh'] = $refresh;
 
         echo json_encode(['data' => $data]);
     }

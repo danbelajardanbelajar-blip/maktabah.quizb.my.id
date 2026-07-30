@@ -238,24 +238,35 @@ class AskController {
         header('Cache-Control: public, max-age=120');
         $limit = min(20, max(1, (int)($_GET['limit'] ?? 10)));
     
+        // Abaikan parameter refresh untuk ini karena query berat pada tabel besar
+        $refresh = $_GET['refresh'] ?? null;
+        unset($_GET['refresh']);
+
         $data = \App\Helpers\CacheHelper::remember('recent_questions_' . $limit, 600, function() use ($limit) {
             $pdo   = Database::getConnection();
             $stmt = $pdo->prepare(
                 "SELECT question 
                  FROM ask_logs 
                  WHERE LENGTH(TRIM(question)) >= 5
-                 GROUP BY question
-                 ORDER BY MAX(id) DESC
-                 LIMIT :lim"
+                 ORDER BY id DESC LIMIT 200"
             );
-            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
             $stmt->execute();
         
             $rows = $stmt->fetchAll();
-            return array_map(fn($r) => [
-                'query' => $r['question']
-            ], $rows);
+            $unique = [];
+            $result = [];
+            foreach ($rows as $r) {
+                $lq = strtolower(trim($r['question']));
+                if (!isset($unique[$lq])) {
+                    $unique[$lq] = true;
+                    $result[] = ['query' => $r['question']];
+                    if (count($result) == $limit) break;
+                }
+            }
+            return $result;
         });
+        
+        if ($refresh !== null) $_GET['refresh'] = $refresh;
 
         echo json_encode(['data' => $data]);
     }

@@ -11,6 +11,10 @@ use Exception;
 
 class StatsController {
     public function handleStats(): void {
+        // Abaikan parameter refresh untuk stats karena query COUNT sangat berat
+        $refresh = $_GET['refresh'] ?? null;
+        unset($_GET['refresh']);
+        
         $data = \App\Helpers\CacheHelper::remember('home_stats', 600, function() {
             $pdo = Database::getConnection();
             
@@ -33,6 +37,8 @@ class StatsController {
                 'total_visits'      => $totalVisits
             ];
         });
+        
+        if ($refresh !== null) $_GET['refresh'] = $refresh;
 
         // Sedang Online (distinct IPs in last 5 minutes) - jangan dicache terlalu lama
         $pdo = Database::getConnection();
