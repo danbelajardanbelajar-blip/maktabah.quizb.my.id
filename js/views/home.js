@@ -12,6 +12,7 @@ if (!window.refreshHomeData) {
 }
 
 export async function renderHome() {
+  const isDark = document.documentElement.classList.contains('dark');
   app().innerHTML = `
     <!-- Hero -->
     <section class="hero-bg text-white relative overflow-hidden">
@@ -19,7 +20,7 @@ export async function renderHome() {
       <div class="absolute z-50 flex md:hidden items-center gap-2" style="top: 16px; right: 16px;">
         <button onclick="window.setTheme(document.documentElement.classList.contains('dark')?'light':'dark')"
           class="mobile-btn-click p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Gelap/Terang">
-          <i data-lucide="sun" class="w-5 h-5 transition-transform duration-300"></i>
+          <i id="mobile-theme-icon" data-lucide="${isDark ? 'moon' : 'sun'}" class="w-5 h-5 transition-transform duration-300"></i>
         </button>
         <button onclick="window.refreshHomeData(this)"
           class="mobile-btn-click p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Refresh Data">
