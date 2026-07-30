@@ -16,7 +16,7 @@ export async function renderHome() {
     <!-- Hero -->
     <section class="hero-bg text-white relative overflow-hidden">
       <!-- Tombol Mobile (Gelap/Terang & Refresh) khusus di halaman Home -->
-      <div class="absolute z-50 flex md:hidden items-center gap-2" style="top: 40px; right: 24px; margin-top: 10px;">
+      <div class="absolute z-50 flex md:hidden items-center gap-2" style="top: 1px; right: 1px;">
         <button onclick="window.setTheme(document.documentElement.classList.contains('dark')?'light':'dark')"
           class="p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all flex items-center justify-center" title="Gelap/Terang">
           <i data-lucide="sun" class="w-5 h-5"></i>
