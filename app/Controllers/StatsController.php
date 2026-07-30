@@ -40,10 +40,12 @@ class StatsController {
         
         if ($refresh !== null) $_GET['refresh'] = $refresh;
 
-        // Sedang Online (distinct IPs in last 5 minutes) - jangan dicache terlalu lama
-        $pdo = Database::getConnection();
-        $onlineUsers = (int)$pdo->query("SELECT COUNT(DISTINCT ip_address) FROM user_activity_log WHERE created_at >= NOW() - INTERVAL 5 MINUTE")->fetchColumn();
-        if ($onlineUsers < 1) $onlineUsers = 1;
+        // Sedang Online (distinct IPs in last 5 minutes) - cache 60 detik saja
+        $onlineUsers = \App\Helpers\CacheHelper::remember('online_users', 60, function() {
+            $pdo = Database::getConnection();
+            $count = (int)$pdo->query("SELECT COUNT(DISTINCT ip_address) FROM user_activity_log WHERE created_at >= NOW() - INTERVAL 5 MINUTE")->fetchColumn();
+            return $count < 1 ? 1 : $count;
+        });
         
         $data['online_users'] = $onlineUsers;
 

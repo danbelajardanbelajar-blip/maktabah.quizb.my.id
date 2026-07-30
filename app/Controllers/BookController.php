@@ -686,6 +686,9 @@ class BookController {
 
     public function handlePopularBooks(): void {
         try {
+            $refresh = $_GET['refresh'] ?? null;
+            unset($_GET['refresh']);
+
             $books = \App\Helpers\CacheHelper::remember('popular_books', 600, function() {
                 $pdo = Database::getConnection();
                 $stmt = $pdo->prepare(
