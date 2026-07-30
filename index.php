@@ -1243,10 +1243,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </a>
 
       <!-- Tombol Lainnya -->
-      <a href="javascript:void(0)" onclick="openMoreModal()" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline">
+      <button type="button" onclick="openMoreModal()" class="bnav-item flex-1 flex flex-col items-center justify-center gap-0.5 no-underline focus:outline-none appearance-none">
         <i data-lucide="menu" class="w-5 h-5"></i>
         <span class="text-[10px] font-medium">Lainnya</span>
-      </a>
+      </button>
 
     </div>
   </nav>
