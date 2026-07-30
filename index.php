@@ -1070,6 +1070,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
                   <i data-lucide="search" class="w-4 h-4 text-amber-700/80"></i> Pencarian
                 </a>
+                <a href="/admin/ask-logs" data-route="/admin/ask-logs"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
+                  <i data-lucide="bot" class="w-4 h-4 text-amber-700/80"></i> Tanya AI
+                </a>
                 <a href="/admin/download-logs" data-route="/admin/download-logs"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-cream-dark transition-colors">
                   <i data-lucide="download" class="w-4 h-4 text-amber-700/80"></i> Download
