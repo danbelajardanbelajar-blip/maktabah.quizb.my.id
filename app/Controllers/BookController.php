@@ -637,9 +637,12 @@ class BookController {
             
             try {
                 // Auto-migrate to add source if it doesn't exist yet
-                $pdo->exec("ALTER TABLE download_logs ADD COLUMN source ENUM('maktabah', 'scholarium') NOT NULL DEFAULT 'maktabah' AFTER book_title");
+                $pdo->exec("ALTER TABLE download_logs ADD COLUMN source ENUM('maktabah', 'scholarium', 'archive.org') NOT NULL DEFAULT 'maktabah' AFTER book_title");
             } catch (\Exception $e) {
-                // ignore if column already exists
+                // if it exists, modify to ensure archive.org is supported
+                try {
+                    $pdo->exec("ALTER TABLE download_logs MODIFY COLUMN source ENUM('maktabah', 'scholarium', 'archive.org') NOT NULL DEFAULT 'maktabah'");
+                } catch (\Exception $e2) {}
             }
         } catch (\Exception $e) {
             // ignore creation failures
@@ -651,6 +654,21 @@ class BookController {
         $title = trim($_POST['name'] ?? '');
         if ($id > 0 && $title !== '') {
             $this->logDownloadBook($id, $title, 'scholarium');
+        }
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'ok']);
+    }
+
+    public function handleLogDownloadArchiveOrg(): void {
+        $id = trim($_POST['id'] ?? '');
+        // Extract numeric part or generate hash for bkid (since bkid must be int)
+        // Archive IDs are usually strings. We can use a hash.
+        $intId = hexdec(substr(md5($id), 0, 8)) % 2147483647; 
+        if ($intId === 0) $intId = 1;
+        
+        $title = trim($_POST['name'] ?? '');
+        if ($id !== '' && $title !== '') {
+            $this->logDownloadBook((int)$intId, $title, 'archive.org');
         }
         header('Content-Type: application/json');
         echo json_encode(['status' => 'ok']);

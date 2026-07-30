@@ -704,7 +704,7 @@ function archiveCardStagger(b, i, q = '') {
   
   return `
     <div class="book-card search-card-stagger bg-white rounded-2xl shadow-card p-4 flex flex-col gap-2 cursor-pointer border border-transparent hover:border-gold/30 hover:shadow-[0_16px_40px_rgba(201,168,76,.12)] transition-all"
-         style="animation-delay:${i*40}ms" onclick="if(window.logVisitorActivity) window.logVisitorActivity('click_archive_org', {title: '${escHtml(name).replace(/'/g, "\\'")}', identifier: '${b.identifier}'}); window.open('${link}', '_blank')">
+         style="animation-delay:${i*40}ms" onclick="window.trackArchiveOrgDownload(event, '${b.identifier}', '${escHtml(name).replace(/'/g, "\\'")}', '${link}')">
       <div class="arabic text-primary font-semibold text-sm leading-snug line-clamp-2">${nameHtml}</div>
       <div class="text-slate-600 text-[10px] line-clamp-1 leading-tight">${escHtml(creator)} ${date ? '· ' + escHtml(date) : ''}</div>
       <div class="flex items-center justify-between mt-auto pt-2 border-t border-cream-dark">
@@ -715,7 +715,7 @@ function archiveCardStagger(b, i, q = '') {
           <a href="${link}" target="_blank"
              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-blue-600/30 text-blue-600 hover:bg-blue-600/10 transition"
              title="Kunjungi Archive.org"
-             aria-label="Kunjungi Archive.org" onclick="event.stopPropagation(); if(window.logVisitorActivity) window.logVisitorActivity('click_archive_org', {title: '${escHtml(name).replace(/'/g, "\\'")}', identifier: '${b.identifier}'});">
+             aria-label="Kunjungi Archive.org" onclick="window.trackArchiveOrgDownload(event, '${b.identifier}', '${escHtml(name).replace(/'/g, "\\'")}', null)">
             <i data-lucide="external-link" class="w-3.5 h-3.5 shrink-0"></i>
             <span class="text-[10px] font-bold">Kunjungi</span>
           </a>
@@ -910,8 +910,17 @@ window.trackScholariumDownload = function(e, id, name, link) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ id, name })
   }).catch(()=>{});
-  window.open(link, '_blank');
+  if (link) window.open(link, '_blank');
 };
+
+window.trackArchiveOrgDownload = function(e, id, name, link) {
+  if (e) e.stopPropagation();
+  apiFetch({ action: 'log_download_archive_org' }, {
+    method: 'POST',
+    body: JSON.stringify({ id: id, name: name })
+  }).catch(err => console.error('Log error', err));
+  if (link) window.open(link, '_blank');
+}
 
 // ── PDF card with stagger animation ─────────────────────────
 function pdfCardStagger(b, i, q = '') {
