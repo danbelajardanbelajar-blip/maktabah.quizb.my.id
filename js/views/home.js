@@ -23,8 +23,8 @@ if (!window.refreshHomeData) {
         localStorage.setItem(k, keepData[k]);
       });
       
-      // Reload ulang seluruh web secara total dari server
-      window.location.reload(true);
+      // Reload ulang seluruh web secara total (tanpa memicu external browser di WebView)
+      window.location.href = window.location.pathname + window.location.search;
   };
 }
 
