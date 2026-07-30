@@ -83,13 +83,7 @@ function localNavigate(path, push = true) {
   }
 
   const handler = routes[base] || View_404.render404;
-  
-  // Jangan hapus isi app-content jika kita merender home page dan ada SSR hero (mengurangi CLS)
-  const isSsrHome = base === '/' && document.getElementById('hero-search-ssr');
-  if (!isSsrHome) {
-    Core.app().innerHTML = '';
-  }
-  
+  Core.app().innerHTML = '';
   if (typeof window.closeCatDropdown === 'function') window.closeCatDropdown();
   handler(new URLSearchParams(path.includes('?') ? path.split('?')[1] : ''));
   
