@@ -32,13 +32,17 @@ class PerformanceHelper {
         // Web App Manifest
         $html .= "<link rel=\"manifest\" href=\"/manifest.json\" />\n";
         $html .= "<meta name=\"theme-color\" content=\"#14532D\" />\n";
+        
+        // Preload Amiri bold font for LCP Hero Text
+        $html .= "<link rel=\"preload\" as=\"font\" href=\"https://fonts.gstatic.com/s/amiri/v30/J7acnpd8CGxBHp2VkZY4.ttf\" type=\"font/ttf\" crossorigin />\n";
 
         return $html;
     }
 
     public function applyLazyLoading($html) {
-        // Find all <img> tags that don't have loading attribute and add loading="lazy"
-        $html = preg_replace_callback('/<img\s+(?![^>]*loading=)([^>]+)>/i', function($matches) {
+        // Find all <img> tags that don't have loading attribute and add loading="lazy",
+        // except those with fetchpriority="high"
+        $html = preg_replace_callback('/<img\s+(?![^>]*loading=)(?![^>]*fetchpriority="high")([^>]+)>/i', function($matches) {
             return "<img loading=\"lazy\" {$matches[1]}>";
         }, $html);
         return $html;
