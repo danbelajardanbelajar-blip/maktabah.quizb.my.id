@@ -1307,10 +1307,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <i data-lucide="shield" class="w-5 h-5 text-amber-600"></i>
           Kebijakan Privasi
         </a>
-        <a href="/katalog" data-route="/katalog" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-          <i data-lucide="book" class="w-5 h-5 text-amber-600"></i>
-          Katalog
-        </a>
       </div>
     </div>
   </div>
