@@ -416,6 +416,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta name="google-site-verification" content="Mf1jf_wj_XAyYcuKEMWcKVjPTy8hWToL3lUYzQA6_Kc" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
+  <link rel="preload" as="image" href="/favicon.png" />
   <link rel="canonical" href="<?= htmlspecialchars($seoUrl) ?>" />
   
   <title><?= htmlspecialchars($seoTitle) ?></title>
