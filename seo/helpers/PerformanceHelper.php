@@ -21,6 +21,7 @@ class PerformanceHelper {
         
         // DNS Prefetch & Preconnect
         $domains = [
+            'https://fonts.googleapis.com',
             'https://fonts.gstatic.com'
         ];
         
@@ -34,7 +35,7 @@ class PerformanceHelper {
         $html .= "<meta name=\"theme-color\" content=\"#14532D\" />\n";
         
         // Preload Amiri bold font for LCP Hero Text
-        $html .= "<link rel=\"preload\" as=\"font\" href=\"https://fonts.gstatic.com/s/amiri/v30/J7acnpd8CGxBHp2VkZY4.ttf\" type=\"font/ttf\" crossorigin />\n";
+        $html .= "<link rel=\"preload\" as=\"font\" href=\"https://fonts.gstatic.com/s/amiri/v30/J7acnpd8CGxBHp2VkaY6zp5yGw.woff2\" type=\"font/woff2\" crossorigin />\n";
 
         return $html;
     }
