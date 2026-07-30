@@ -92,12 +92,6 @@ function localNavigate(path, push = true) {
 
   Core.setActiveNav(base);
   Core.updateReaderMenus(base);
-  
-  const navRefreshBtn = document.getElementById('nav-refresh-btn');
-  if (navRefreshBtn) {
-    if (base === '/') navRefreshBtn.classList.remove('hidden');
-    else navRefreshBtn.classList.add('hidden');
-  }
 
   if (push && window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
   Core.reicons();
