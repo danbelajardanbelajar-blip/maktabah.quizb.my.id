@@ -1,7 +1,7 @@
 import * as Core from './core/core.js';
 import { navigate, handleAuthError, apiFetch, escHtml } from './core/core.js';
 
-import * as View_home from './views/home.js?v=7';
+import * as View_home from './views/home.js?v=8';
 import * as View_katalog from './views/katalog.js';
 import * as View_kategori__daftar_kategori__kitab_per_kategori from './views/kategori__daftar_kategori__kitab_per_kategori.js';
 import * as View_settings from './views/settings.js';

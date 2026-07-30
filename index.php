@@ -494,6 +494,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     #app-content { animation: fadeIn .3s ease; text-align: justify; text-justify: inter-word; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
+    /* Mobile Buttons Click Effects */
+    .mobile-btn-click:active {
+      transform: scale(0.90) !important;
+      background-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    .mobile-btn-click:active i[data-lucide="sun"] {
+      transform: rotate(90deg) !important;
+      transition: transform 0.2s;
+    }
+
     /* Card hover */
     .book-card { transition: transform .2s ease, box-shadow .2s ease; }
     .book-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(22,101,52,.16); }

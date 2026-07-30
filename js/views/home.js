@@ -18,11 +18,11 @@ export async function renderHome() {
       <!-- Tombol Mobile (Gelap/Terang & Refresh) khusus di halaman Home -->
       <div class="absolute z-50 flex md:hidden items-center gap-2" style="top: 16px; right: 16px;">
         <button onclick="window.setTheme(document.documentElement.classList.contains('dark')?'light':'dark')"
-          class="group p-2.5 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 active:scale-90 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Gelap/Terang">
-          <i data-lucide="sun" class="w-5 h-5 group-active:rotate-90 transition-transform duration-300"></i>
+          class="mobile-btn-click p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Gelap/Terang">
+          <i data-lucide="sun" class="w-5 h-5 transition-transform duration-300"></i>
         </button>
         <button onclick="window.refreshHomeData(this)"
-          class="p-2.5 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 active:scale-90 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Refresh Data">
+          class="mobile-btn-click p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Refresh Data">
           <i data-lucide="refresh-cw" class="w-5 h-5"></i>
         </button>
       </div>
