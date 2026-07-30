@@ -917,7 +917,8 @@ window.trackArchiveOrgDownload = function(e, id, name, link) {
   if (e) e.stopPropagation();
   apiFetch({ action: 'log_download_archive_org' }, {
     method: 'POST',
-    body: JSON.stringify({ id: id, name: name })
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ id, name })
   }).catch(err => console.error('Log error', err));
   if (link) window.open(link, '_blank');
 }

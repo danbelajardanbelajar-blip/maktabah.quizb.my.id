@@ -4,7 +4,7 @@ import { navigate, handleAuthError, apiFetch, escHtml } from './core/core.js';
 import * as View_home from './views/home.js?v=13';
 import * as View_katalog from './views/katalog.js';
 import * as View_kategori__daftar_kategori__kitab_per_kategori from './views/kategori__daftar_kategori__kitab_per_kategori.js';
-import * as View_settings from './views/settings.js?v=14';
+import * as View_settings from './views/settings.js?v=15';
 import * as View_detail_kitab__reader from './views/detail_kitab__reader.js';
 import * as View_about from './views/about.js';
 import * as View_kebijakan_privasi from './views/kebijakan_privasi.js';
