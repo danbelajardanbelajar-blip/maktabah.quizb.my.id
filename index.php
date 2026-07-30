@@ -1382,10 +1382,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       </div>
     </div>
-    <div class="border-t border-white/10 py-4 text-center text-xs text-white/80">
-      &copy; <?= date('Y') ?> المكتبة السنية &mdash; Semua hak dilindungi.
-      &ensp;&middot;&ensp;
-      <a href="/privacy" data-route="/privacy" class="underline underline-offset-4 text-white/90 hover:text-white transition-colors">Kebijakan Privasi</a>
+    <div class="border-t border-white/10 py-5 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 text-xs">
+      <span class="text-white/80">&copy; <?= date('Y') ?> المكتبة السنية &mdash; Semua hak dilindungi.</span>
+      <span class="hidden md:block w-1 h-1 rounded-full bg-white/30"></span>
+      <a href="/privacy" data-route="/privacy" class="text-white/90 hover:text-white transition-colors">Kebijakan Privasi</a>
     </div>
   </footer>
 
