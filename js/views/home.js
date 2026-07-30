@@ -5,9 +5,26 @@ if (!window.refreshHomeData) {
   window.refreshHomeData = async function(btn) {
       const icon = btn.querySelector('i');
       if (icon) icon.classList.add('animate-spin');
-      window.forceRefreshApi = true;
-      await renderHome();
-      window.forceRefreshApi = false;
+      
+      // Simpan data penting (akun/cookie tidak ikut terhapus di sini)
+      const keysToKeep = ['favorite_books', 'maktabah_recent_books', 'siteSettings', 'readerFonts'];
+      const keepData = {};
+      keysToKeep.forEach(k => {
+        const val = localStorage.getItem(k);
+        if (val !== null) keepData[k] = val;
+      });
+      
+      // Bersihkan seluruh cache JS
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Kembalikan data penting
+      Object.keys(keepData).forEach(k => {
+        localStorage.setItem(k, keepData[k]);
+      });
+      
+      // Reload ulang seluruh web secara total dari server
+      window.location.reload(true);
   };
 }
 
