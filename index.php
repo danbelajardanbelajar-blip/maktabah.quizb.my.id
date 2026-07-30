@@ -962,6 +962,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     html.dark .theme-pill { background: rgba(212,197,160,.08); }
     html.dark .theme-btn.active { background: #1c2f1e; color: #d4c5a0; }
     html.dark .sdw-label { color: rgba(212,197,160,.45); }
+    
+    /* Full screen desktop overrides (menghilangkan margin di kanan/kiri layar) */
+    @media (min-width: 1024px) {
+      .max-w-7xl { max-width: 100% !important; }
+    }
   </style>
 </head>
 
