@@ -87,6 +87,9 @@ function localNavigate(path, push = true) {
   if (typeof window.closeCatDropdown === 'function') window.closeCatDropdown();
   handler(new URLSearchParams(path.includes('?') ? path.split('?')[1] : ''));
   
+  const heroWrapper = document.getElementById('ssr-hero-wrapper');
+  if (heroWrapper) heroWrapper.style.display = (base === '/') ? '' : 'none';
+  
   const footer = document.getElementById('app-footer');
   if (footer) footer.style.display = '';
 

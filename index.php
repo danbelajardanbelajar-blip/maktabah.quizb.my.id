@@ -1158,13 +1158,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 
   <!-- ===================== MAIN SPA CONTAINER ===================== -->
-  <main id="app-content" class="flex-1 pt-16 pb-20 md:pb-0">
-    <?php
-      $req_uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-      if ($req_uri === '/' || $req_uri === ''):
-    ?>
+  <?php
+    $req_uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+  ?>
+  
+  <div id="ssr-hero-wrapper" style="<?= ($req_uri === '/' || $req_uri === '') ? '' : 'display:none;' ?>">
     <!-- SSR Hero for instant LCP on Homepage -->
     <section class="hero-bg text-white relative overflow-hidden">
+      <!-- Tombol Mobile (Gelap/Terang & Refresh) khusus di halaman Home -->
+      <div class="absolute z-50 flex md:hidden items-center gap-2" style="top: 16px; right: 16px;">
+        <button onclick="window.setTheme(document.documentElement.classList.contains('dark')?'light':'dark')"
+          class="mobile-btn-click p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Gelap/Terang">
+          <i id="mobile-theme-icon-ssr" data-lucide="sun" class="w-5 h-5 transition-transform duration-300"></i>
+        </button>
+        <button onclick="window.refreshHomeData ? window.refreshHomeData(this) : window.location.reload()"
+          class="mobile-btn-click p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Refresh Data">
+          <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+        </button>
+      </div>
       <!-- Decorative background glow -->
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none"></div>
       
@@ -1185,10 +1196,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="absolute -inset-1 bg-gradient-to-r from-gold/30 via-primary-light/30 to-gold/30 rounded-3xl blur opacity-40 group-hover:opacity-70 transition duration-1000 group-hover:duration-300"></div>
           <div class="relative flex items-center">
             <i data-lucide="search" class="absolute left-4 md:left-6 w-5 h-5 text-slate-600"></i>
-            <input id="hero-search-ssr" type="text" placeholder="Cari teks, judul, atau pengarang..."
-              onkeydown="if(event.key==='Enter' && this.value.trim()){ window.location.href='/search?q=' + encodeURIComponent(this.value.trim()); }"
+            <input id="hero-search" type="text" placeholder="Cari teks, judul, atau pengarang..."
+              onkeydown="if(event.key==='Enter' && this.value.trim()){ if(window.navigate) { window.navigate('/search?q=' + encodeURIComponent(this.value.trim())); } else { window.location.href='/search?q=' + encodeURIComponent(this.value.trim()); } }"
               class="w-full pl-12 md:pl-14 pr-28 md:pr-36 py-4 md:py-5 rounded-2xl text-ink text-sm md:text-base bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus:outline-none focus:ring-2 focus:ring-gold transition-all placeholder:text-gray-400" />
-            <button onclick="var q=document.getElementById('hero-search-ssr').value.trim(); if(q) window.location.href='/search?q='+encodeURIComponent(q);" 
+            <button onclick="var q=document.getElementById('hero-search').value.trim(); if(q) { if(window.navigate) { window.navigate('/search?q='+encodeURIComponent(q)); } else { window.location.href='/search?q='+encodeURIComponent(q); } }" 
               class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] text-gold px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs md:text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)]">
               Cari <span class="hidden md:inline">Kitab</span>
             </button>
@@ -1196,14 +1207,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
 
         <!-- stats -->
-        <div class="mt-14 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm text-white/80 font-medium">
+        <div id="hero-stats" class="mt-14 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm text-white/80 font-medium">
           <span class="flex items-center gap-2 bg-white/5 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/10 shadow-lg"><i data-lucide="book-open" class="w-4 h-4 text-gold"></i> Memuat statistik…</span>
         </div>
       </div>
       <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"></div>
     </section>
-    <?php else: ?>
+  </div>
+  
+  <main id="app-content" class="flex-1 pt-16 pb-20 md:pb-0">
     <!-- JS renders pages here -->
+    <?php if ($req_uri !== '/' && $req_uri !== ''): ?>
     <div id="page-loader" class="flex items-center justify-center min-h-[60vh]">
       <div class="flex flex-col items-center gap-3">
         <div class="w-10 h-10 border-3 border-gold/30 border-t-gold rounded-full animate-spin" style="border-width:3px"></div>

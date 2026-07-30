@@ -34,55 +34,7 @@ export async function renderHome() {
   const isDark = document.documentElement.classList.contains('dark');
   
   app().innerHTML = `
-    <!-- Hero -->
-    <section class="hero-bg text-white relative overflow-hidden">
-      <!-- Tombol Mobile (Gelap/Terang & Refresh) khusus di halaman Home -->
-      <div class="absolute z-50 flex md:hidden items-center gap-2" style="top: 16px; right: 16px;">
-        <button onclick="window.setTheme(document.documentElement.classList.contains('dark')?'light':'dark')"
-          class="mobile-btn-click p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Gelap/Terang">
-          <i id="mobile-theme-icon" data-lucide="${isDark ? 'sun' : 'moon'}" class="w-5 h-5 transition-transform duration-300"></i>
-        </button>
-        <button onclick="window.refreshHomeData(this)"
-          class="mobile-btn-click p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-200 ease-out flex items-center justify-center" title="Refresh Data">
-          <i data-lucide="refresh-cw" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <!-- Decorative background glow -->
-      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none"></div>
-      
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center relative z-10">
-        <!-- Badge -->
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-gold text-xs font-semibold tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(201,162,39,0.15)] backdrop-blur-md">
-          <span class="w-1.5 h-1.5 rounded-full bg-gold animate-pulse"></span>
-          Perpustakaan Digital Islam
-        </div>
-        
-        <div class="arabic text-gold text-5xl md:text-7xl font-bold mb-4 leading-tight drop-shadow-[0_4px_24px_rgba(201,162,39,0.4)]">المكتبة السنية</div>
-        <p class="text-white/80 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-light tracking-wide leading-relaxed">
-          Eksplorasi ribuan literatur klasik dan khazanah keilmuan Islam dalam genggaman Anda.
-        </p>
-        
-        <!-- Search -->
-        <div class="max-w-2xl mx-auto relative group">
-          <div class="absolute -inset-1 bg-gradient-to-r from-gold/30 via-primary-light/30 to-gold/30 rounded-3xl blur opacity-40 group-hover:opacity-70 transition duration-1000 group-hover:duration-300"></div>
-          <div class="relative flex items-center">
-            <i data-lucide="search" class="absolute left-4 md:left-6 w-5 h-5 text-slate-600"></i>
-            <input id="hero-search" type="text" placeholder="Cari teks, judul, atau pengarang..."
-              class="w-full pl-12 md:pl-14 pr-28 md:pr-36 py-4 md:py-5 rounded-2xl text-ink text-sm md:text-base bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus:outline-none focus:ring-2 focus:ring-gold transition-all placeholder:text-gray-400" />
-            <button id="hero-search-btn" class="absolute right-2 bg-gradient-to-r from-[#166534] to-[#14532D] hover:from-[#15803D] hover:to-[#166534] text-gold px-4 md:px-6 py-2 md:py-3 rounded-xl text-xs md:text-sm font-bold tracking-wider transition-all shadow-[0_4px_12px_rgba(22,101,52,0.4)] hover:shadow-[0_6px_20px_rgba(201,162,39,0.3)]">
-              Cari <span class="hidden md:inline">Kitab</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- stats -->
-        <div id="hero-stats" class="mt-14 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm text-white/80 font-medium">
-          <span class="flex items-center gap-2 bg-white/5 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/10 shadow-lg"><i data-lucide="book-open" class="w-4 h-4 text-gold"></i> Memuat statistik…</span>
-        </div>
-      </div>
-      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"></div>
-    </section>
+    <!-- Hero is handled by SSR in index.php -->
 
     <!-- Pencarian Terpopuler, Terbaru & Pertanyaan Terbaru -->
     <div class="w-full bg-cream py-8">
