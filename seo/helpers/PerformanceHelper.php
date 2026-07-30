@@ -20,22 +20,15 @@ class PerformanceHelper {
         $html = "";
         
         // DNS Prefetch & Preconnect
-        $domains = [
-            'https://fonts.googleapis.com',
-            'https://fonts.gstatic.com'
-        ];
-        
-        foreach ($domains as $domain) {
-            $html .= "<link rel=\"dns-prefetch\" href=\"{$domain}\" />\n";
-            $html .= "<link rel=\"preconnect\" href=\"{$domain}\" crossorigin />\n";
-        }
+        // No longer needed for Google Fonts as we self-host them now
+
 
         // Web App Manifest
         $html .= "<link rel=\"manifest\" href=\"/manifest.json\" />\n";
         $html .= "<meta name=\"theme-color\" content=\"#14532D\" />\n";
         
         // Preload Amiri bold font for LCP Hero Text
-        $html .= "<link rel=\"preload\" as=\"font\" href=\"https://fonts.gstatic.com/s/amiri/v30/J7acnpd8CGxBHp2VkaY6zp5yGw.woff2\" type=\"font/woff2\" crossorigin />\n";
+        $html .= "<link rel=\"preload\" as=\"font\" href=\"/fonts/amiri-700-arabic.woff2\" type=\"font/woff2\" crossorigin />\n";
 
         return $html;
     }
