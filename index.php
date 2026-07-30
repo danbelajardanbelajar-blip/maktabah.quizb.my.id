@@ -994,7 +994,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
 
         <!-- Search + Settings + Auth (desktop) -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 sm:gap-2">
+          <!-- Refresh btn (Mobile Home only) -->
+          <button id="nav-refresh-btn" onclick="if(window.refreshHomeData) window.refreshHomeData(this)"
+            class="hidden md:hidden p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Refresh Data" aria-label="Refresh Data">
+            <i data-lucide="refresh-cw" class="w-5 h-5 text-primary"></i>
+          </button>
+          
           <button id="nav-search-btn" class="p-2 rounded-lg hover:bg-cream-dark transition-colors" title="Cari Kitab" aria-label="Cari Kitab">
             <i data-lucide="search" class="w-5 h-5 text-primary"></i>
           </button>
