@@ -1286,14 +1286,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </a>
         <?php endif; ?>
         
-        <a href="/about" data-route="/about" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-          <i data-lucide="info" class="w-5 h-5 text-amber-600"></i>
-          Tentang
+        <a href="/katalog" data-route="/katalog" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+          <i data-lucide="book-open" class="w-5 h-5 text-amber-600"></i>
+          Katalog
         </a>
+        
         <a href="/settings" data-route="/settings" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
           <i data-lucide="settings-2" class="w-5 h-5 text-amber-600"></i>
           Setting
         </a>
+
+        <hr style="border:none; border-top:1px solid #e5e7eb; margin: 4px 0;" />
+        
+        <a href="/about" data-route="/about" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+          <i data-lucide="info" class="w-5 h-5 text-amber-600"></i>
+          Tentang
+        </a>
+        
         <a href="/privacy" data-route="/privacy" onclick="closeMoreModal()" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-radius:12px; text-decoration:none; color:#1f2937; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
           <i data-lucide="shield" class="w-5 h-5 text-amber-600"></i>
           Kebijakan Privasi
