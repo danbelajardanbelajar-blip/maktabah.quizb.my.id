@@ -543,6 +543,9 @@ export function buildArabicRegexStr(term) {
       if (!result.endsWith('\\s+')) {
         result += '\\s+';
       }
+    } else if (/[اأإآءئؤ]/.test(char)) {
+      // Anggap semua variasi Alif dan Hamzah sama persis untuk highlight
+      result += '[اأإآءئؤ]' + "['’]?" + diacritics;
     } else {
       // Sisipkan opsional apostrof setelah setiap karakter untuk pencarian yang mengabaikan tanda petik
       result += escapeRegex(char) + "['’]?" + diacritics;

@@ -67,7 +67,7 @@ class SearchHelper {
      * Ini memastikan pencarian "احياء" juga cocok dengan "إحياء"
      */
     public static function getAlefVariants(string $text): array {
-        $alefs = ['ا', 'أ', 'إ', 'آ'];
+        $alefs = ['ا', 'أ', 'إ', 'آ', 'ء', 'ئ', 'ؤ'];
         $chars = mb_str_split($text, 1, 'UTF-8');
         $results = [''];
         $alefCount = 0;
@@ -75,8 +75,8 @@ class SearchHelper {
         foreach ($chars as $char) {
             if (in_array($char, $alefs)) {
                 $alefCount++;
-                // Batasi kombinasi agar tidak terlalu berat memori (maks 3 alif / 64 variasi)
-                if ($alefCount <= 3) {
+                // Batasi kombinasi agar tidak terlalu berat memori (maks 2 alif/hamzah / 49 variasi)
+                if ($alefCount <= 2) {
                     $newResults = [];
                     foreach ($results as $res) {
                         foreach ($alefs as $a) {
