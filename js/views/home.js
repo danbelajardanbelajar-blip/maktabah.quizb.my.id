@@ -24,7 +24,7 @@ if (!window.refreshHomeData) {
       });
       
       // Reload total halaman
-      window.location.reload();
+      window.location.reload(true);
   };
 }
 
