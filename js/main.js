@@ -1,21 +1,21 @@
-import * as Core from './core/core.js';
-import { navigate, handleAuthError, apiFetch, escHtml } from './core/core.js';
+import * as Core from './core/core.js?v=100';
+import { navigate, handleAuthError, apiFetch, escHtml } from './core/core.js?v=100';
 
-import * as View_home from './views/home.js?v=13';
-import * as View_katalog from './views/katalog.js';
-import * as View_kategori__daftar_kategori__kitab_per_kategori from './views/kategori__daftar_kategori__kitab_per_kategori.js';
-import * as View_settings from './views/settings.js?v=15';
-import * as View_detail_kitab__reader from './views/detail_kitab__reader.js';
-import * as View_about from './views/about.js';
-import * as View_kebijakan_privasi from './views/kebijakan_privasi.js';
-import * as View_feedback from './views/feedback.js';
-import * as View_404 from './views/404.js';
-import * as View_dashboard from './views/dashboard.js';
-import * as View_favorit from './views/favorit.js';
-import * as View_my_activity from './views/my_activity.js';
-import * as View_notifications from './views/notifications.js';
-import * as View_agreement from './views/agreement.js';
-import * as View_ask from './views/ask.js';
+import * as View_home from './views/home.js?v=100';
+import * as View_katalog from './views/katalog.js?v=100';
+import * as View_kategori__daftar_kategori__kitab_per_kategori from './views/kategori__daftar_kategori__kitab_per_kategori.js?v=100';
+import * as View_settings from './views/settings.js?v=100';
+import * as View_detail_kitab__reader from './views/detail_kitab__reader.js?v=100';
+import * as View_about from './views/about.js?v=100';
+import * as View_kebijakan_privasi from './views/kebijakan_privasi.js?v=100';
+import * as View_feedback from './views/feedback.js?v=100';
+import * as View_404 from './views/404.js?v=100';
+import * as View_dashboard from './views/dashboard.js?v=100';
+import * as View_favorit from './views/favorit.js?v=100';
+import * as View_my_activity from './views/my_activity.js?v=100';
+import * as View_notifications from './views/notifications.js?v=100';
+import * as View_agreement from './views/agreement.js?v=100';
+import * as View_ask from './views/ask.js?v=100';
 
 // Expose to window for admin.js and index.php
 Core.setNavigate(localNavigate);
