@@ -207,7 +207,7 @@ export function closeUpdateNotice() {
   }
 }
 
-function createUpdateNoticeOverlay() {
+function createUpdateNoticeOverlay(versionName = LATEST_APK_VERSION_NAME) {
   if (document.getElementById('update-notice-overlay')) return;
 
   const overlay = el('div', 'update-notice-overlay');
@@ -220,8 +220,8 @@ function createUpdateNoticeOverlay() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" style="color:#f8e6c1;"><path d="M12 5v14m7-7H5"/></svg>
         </div>
         <div style="flex:1;">
-          <div style="font-size:1rem;font-weight:700;letter-spacing:.01em;margin-bottom:6px;">Update Terbaru Tersedia! (v${LATEST_APK_VERSION_NAME})</div>
-          <p style="margin:0;font-size:.95rem;line-height:1.6;color:rgba(255,255,255,.84);">Versi ${LATEST_APK_VERSION_NAME} telah diterbitkan dengan pembaruan penting untuk pengalaman aplikasi yang lebih baik.</p>
+          <div style="font-size:1rem;font-weight:700;letter-spacing:.01em;margin-bottom:6px;">Update Terbaru Tersedia! (v${versionName})</div>
+          <p style="margin:0;font-size:.95rem;line-height:1.6;color:rgba(255,255,255,.84);">Versi ${versionName} telah diterbitkan dengan pembaruan penting untuk pengalaman aplikasi yang lebih baik.</p>
         </div>
       </div>
       <div style="padding:20px 24px 24px;background:#faf8f3;color:#1c1c1e;">
@@ -266,7 +266,7 @@ function getMaktabahAppVersion() {
   return null;
 }
 
-export function showUpdateNoticeIfNeeded() {
+export async function showUpdateNoticeIfNeeded() {
   if (hasDismissedUpdateNotice()) return;
   
   const appVersion = getMaktabahAppVersion();
@@ -274,10 +274,22 @@ export function showUpdateNoticeIfNeeded() {
   // Jika bukan dari APK Maktabah Turats, jangan tampilkan (Desktop & Chrome Android)
   if (appVersion === null) return;
   
-  // Jika versi 11 ke atas, jangan tampilkan
+  try {
+    const res = await fetch('/latest_apk.json?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (appVersion < data.latest_build) {
+        createUpdateNoticeOverlay(data.latest_version_name);
+      }
+      return;
+    }
+  } catch (e) {
+    console.error('Failed to fetch latest APK version', e);
+  }
+
+  // Fallback jika fetch gagal (tetap menggunakan variabel hardcoded)
   if (appVersion >= 11) return;
   
-  // Jika versi <= 10, tampilkan
   createUpdateNoticeOverlay();
 }
 
