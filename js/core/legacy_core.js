@@ -224,10 +224,10 @@ function showUpdateNoticeIfNeeded() {
   // Jika bukan dari APK Maktabah Turats, jangan tampilkan (Desktop & Chrome Android)
   if (appVersion === null) return;
   
-  // Jika versi 9 ke atas, jangan tampilkan
-  if (appVersion >= 9) return;
+  // Jika versi 11 ke atas, jangan tampilkan
+  if (appVersion >= 11) return;
   
-  // Jika versi <= 8, tampilkan
+  // Jika versi <= 10, tampilkan
   createUpdateNoticeOverlay();
 }
 
