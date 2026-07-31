@@ -183,9 +183,9 @@ export function handleAuthError(error, fallbackMsg = 'Akses ditolak. Diperlukan 
   return false;
 }
 
-export const UPDATE_NOTICE_SESSION_KEY = 'updateNoticeDismissedV1';
+export const UPDATE_NOTICE_SESSION_KEY = 'updateNoticeDismissedV2';
 const UPDATE_NOTICE_PLAYSTORE_URL = 'https://play.google.com/store/apps/details?id=com.maktabah.premium';
-const LATEST_APK_VERSION_NAME = '1.0.8';
+const LATEST_APK_VERSION_NAME = '1.0.11';
 
 export function isMobileViewport() {
   return window.matchMedia('(max-width: 767px)').matches;

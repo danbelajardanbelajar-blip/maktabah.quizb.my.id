@@ -133,9 +133,9 @@ function handleAuthError(error, fallbackMsg = 'Akses ditolak. Diperlukan hak adm
   return false;
 }
 
-const UPDATE_NOTICE_SESSION_KEY = 'updateNoticeDismissedV1';
+const UPDATE_NOTICE_SESSION_KEY = 'updateNoticeDismissedV2';
 const UPDATE_NOTICE_PLAYSTORE_URL = 'https://play.google.com/store/apps/details?id=com.maktabah.premium';
-const LATEST_APK_VERSION_NAME = '1.0.8';
+const LATEST_APK_VERSION_NAME = '1.0.11';
 
 function isMobileViewport() {
   return window.matchMedia('(max-width: 767px)').matches;
