@@ -18,17 +18,28 @@ class SearchController {
         if (strlen($q) < 2) { echo json_encode(['data' => []]); return; }
     
         $qClean = str_replace(["'", "’"], "", $q);
-        $like = '%' . $qClean . '%';
+        $words = preg_split('/\s+/u', $qClean);
+        $likeConds = [];
+        $params = [];
+        foreach ($words as $i => $w) {
+            if (strlen($w) > 0) {
+                $likeConds[] = "REPLACE(REPLACE(c.name, '''', ''), '’', '') LIKE :lk$i";
+                $params[":lk$i"] = "%$w%";
+            }
+        }
+        $whereSql = implode(' OR ', $likeConds);
+        if (!$whereSql) $whereSql = '1=0';
+
         $stmt = $pdo->prepare(
             "SELECT c.id, c.name, COUNT(b.bkid) AS book_count
              FROM categories c
              LEFT JOIN books b ON b.category_id = c.id
-             WHERE REPLACE(REPLACE(c.name, '''', ''), '’', '') LIKE :lk
+             WHERE $whereSql
              GROUP BY c.id
              ORDER BY book_count DESC
              LIMIT 20"
         );
-        $stmt->execute([':lk' => $like]);
+        $stmt->execute($params);
         echo json_encode(['data' => $stmt->fetchAll()]);
     }
 
@@ -51,7 +62,17 @@ class SearchController {
         $qStar      = SearchHelper::booleanSearchTerm($qRaw);
         
         $qClean = str_replace(["'", "’"], "", $q);
-        $like       = '%' . implode('%', preg_split('/\s+/', $qClean)) . '%';
+        $words = preg_split('/\s+/u', $qClean);
+        $likeConds = [];
+        $params = [];
+        foreach ($words as $i => $w) {
+            if (strlen($w) > 0) {
+                $likeConds[] = "REPLACE(REPLACE(b.title, '''', ''), '’', '') LIKE :lk$i";
+                $params[":lk$i"] = "%$w%";
+            }
+        }
+        $likeSql = implode(' OR ', $likeConds);
+        if (!$likeSql) $likeSql = "1=0";
     
         // --- Cache hit (page 1 only) ---
         if ($page === 1) {
@@ -82,11 +103,13 @@ class SearchController {
             "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name
              FROM books b
              WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
-                OR REPLACE(REPLACE(b.title, '''', ''), '’', '') LIKE :qClean
+                OR ($likeSql)
              LIMIT :lim OFFSET :off"
         );
         $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
-        $stmt->bindValue(':qClean', $like, PDO::PARAM_STR);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v, PDO::PARAM_STR);
+        }
         $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
         $stmt->execute();
