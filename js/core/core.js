@@ -532,8 +532,8 @@ export function buildArabicRegexStr(term) {
   const diacriticsRegex = /[\u064B-\u065F\u0670\u06D6-\u06ED\u06DF-\u06E8\u06EA-\u06ED]/g;
   const diacritics = '[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\u06DF-\\u06E8\\u06EA-\\u06ED]*';
   
-  // Hapus semua harokat dari kata kunci yang diinputkan pengguna
-  const cleanTerm = String(term).replace(diacriticsRegex, '');
+  // Hapus semua harokat dan tanda petik/apostrof dari kata kunci yang diinputkan pengguna
+  const cleanTerm = String(term).replace(diacriticsRegex, '').replace(/['’]/g, '');
   
   let result = '';
   for (let i = 0; i < cleanTerm.length; i++) {
@@ -544,7 +544,8 @@ export function buildArabicRegexStr(term) {
         result += '\\s+';
       }
     } else {
-      result += escapeRegex(char) + diacritics;
+      // Sisipkan opsional apostrof setelah setiap karakter untuk pencarian yang mengabaikan tanda petik
+      result += escapeRegex(char) + "['’]?" + diacritics;
     }
   }
   return result;

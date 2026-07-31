@@ -17,12 +17,13 @@ class SearchController {
         $q         = SearchHelper::searchPhraseText($qRaw);
         if (strlen($q) < 2) { echo json_encode(['data' => []]); return; }
     
-        $like = '%' . $q . '%';
+        $qClean = str_replace(["'", "’"], "", $q);
+        $like = '%' . $qClean . '%';
         $stmt = $pdo->prepare(
             "SELECT c.id, c.name, COUNT(b.bkid) AS book_count
              FROM categories c
              LEFT JOIN books b ON b.category_id = c.id
-             WHERE c.name LIKE :lk
+             WHERE REPLACE(REPLACE(c.name, '''', ''), '’', '') LIKE :lk
              GROUP BY c.id
              ORDER BY book_count DESC
              LIMIT 20"
@@ -48,8 +49,9 @@ class SearchController {
     
         $hash       = 'books:' . hash('sha256', strtolower($qRaw));
         $qStar      = SearchHelper::booleanSearchTerm($qRaw);
-        $like       = '%' . $q . '%';
-        $phraseLike = preg_match('/\s+/u', $q) ? $like : null;
+        
+        $qClean = str_replace(["'", "’"], "", $q);
+        $like       = '%' . implode('%', preg_split('/\s+/', $qClean)) . '%';
     
         // --- Cache hit (page 1 only) ---
         if ($page === 1) {
@@ -80,9 +82,11 @@ class SearchController {
             "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name
              FROM books b
              WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
+                OR REPLACE(REPLACE(b.title, '''', ''), '’', '') LIKE :qClean
              LIMIT :lim OFFSET :off"
         );
         $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+        $stmt->bindValue(':qClean', $like, PDO::PARAM_STR);
         $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
         $stmt->execute();
