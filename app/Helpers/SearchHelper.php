@@ -114,6 +114,41 @@ class SearchHelper {
         }
 
         if (strpos($q, ' ') !== false) {
+            $escaped = self::ftEscape($q);
+            $variants = self::getAlefVariants($escaped);
+            if (count($variants) > 1) {
+                $parts = array_map(function($v) { return '"' . $v . '"'; }, $variants);
+                return '+(' . implode(' ', $parts) . ')';
+            }
+            return '+"' . $escaped . '"';
+        }
+
+        $clean = self::ftEscape($q);
+        if ($clean === '') return '';
+        
+        $variants = self::getAlefVariants($clean);
+        if (count($variants) > 1) {
+            $parts = array_map(function($v) { return $v . '*'; }, $variants);
+            $group = '(' . implode(' ', $parts) . ')';
+            return mb_strlen($clean) <= 2 ? $group : '+' . $group;
+        }
+        
+        if (mb_strlen($clean) <= 2) {
+            return $clean . '*';
+        } else {
+            return '+' . $clean . '*';
+        }
+    }
+
+    public static function booleanSearchTermOr(string $q): string {
+        $q = trim($q);
+        if ($q === '') return '';
+        
+        if (self::isPhraseQuery($q)) {
+            return self::booleanSearchTerm($q);
+        }
+
+        if (strpos($q, ' ') !== false) {
             $words = preg_split('/\s+/u', $q);
             $parts = [];
             foreach ($words as $word) {
@@ -136,15 +171,9 @@ class SearchHelper {
         $variants = self::getAlefVariants($clean);
         if (count($variants) > 1) {
             $parts = array_map(function($v) { return $v . '*'; }, $variants);
-            $group = '(' . implode(' ', $parts) . ')';
-            return mb_strlen($clean) <= 2 ? $group : '+' . $group;
+            return '(' . implode(' ', $parts) . ')';
         }
-        
-        if (mb_strlen($clean) <= 2) {
-            return $clean . '*';
-        } else {
-            return '+' . $clean . '*';
-        }
+        return $clean . '*';
     }
 
     public static function booleanQueryFromFieldsOr(array $fields): string {

@@ -59,7 +59,7 @@ class SearchController {
         }
     
         $hash       = 'books:' . hash('sha256', strtolower($qRaw));
-        $qStar      = SearchHelper::booleanSearchTerm($qRaw);
+        $qStar      = SearchHelper::booleanSearchTermOr($qRaw);
         
         $qClean = str_replace(["'", "’"], "", $q);
         $words = preg_split('/\s+/u', $qClean);
@@ -837,23 +837,38 @@ class SearchController {
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
 
-            $like = '%' . $q . '%';
+            $qClean = str_replace(["'", "’"], "", $q);
+            $words = preg_split('/\s+/u', $qClean);
+            $likeConds = [];
+            $params = [];
+            foreach ($words as $i => $w) {
+                if (strlen($w) > 0) {
+                    $likeConds[] = "REPLACE(REPLACE(name, '''', ''), '’', '') LIKE :q$i";
+                    $params[":q$i"] = "%$w%";
+                }
+            }
+            $likeSql = implode(' OR ', $likeConds);
+            if (!$likeSql) $likeSql = "1=0";
             
             $stmt = $pdo->prepare(
                 "SELECT id, drive_id, parent_id, name, type, link, level_depth, path_visual
                  FROM library_tree
-                 WHERE type = 'FILE' AND name LIKE :q
+                 WHERE type = 'FILE' AND ($likeSql)
                  ORDER BY name ASC
                  LIMIT :lim OFFSET :off"
             );
-            $stmt->bindValue(':q', $like, PDO::PARAM_STR);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v, PDO::PARAM_STR);
+            }
             $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
             $stmt->execute();
             $data = $stmt->fetchAll();
 
-            $countStmt = $pdo->prepare("SELECT COUNT(*) FROM library_tree WHERE type = 'FILE' AND name LIKE :q");
-            $countStmt->bindValue(':q', $like, PDO::PARAM_STR);
+            $countStmt = $pdo->prepare("SELECT COUNT(*) FROM library_tree WHERE type = 'FILE' AND ($likeSql)");
+            foreach ($params as $k => $v) {
+                $countStmt->bindValue($k, $v, PDO::PARAM_STR);
+            }
             $countStmt->execute();
             $total = (int)$countStmt->fetchColumn();
 
