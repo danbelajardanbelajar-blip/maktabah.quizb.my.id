@@ -1,4 +1,4 @@
-import { $, $$, el, app, reicons, mobileFeedbackBanner, apiFetch, bookCard, navigate } from '../core/core.js';
+import { $, $$, el, app, reicons, mobileFeedbackBanner, apiFetch, bookCard, navigate } from '../core/core.js?v=2';
 
 export async function renderFavorit() {
   app().innerHTML = `

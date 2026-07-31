@@ -1,4 +1,4 @@
-import { apiFetch, navigate, app, reicons, escHtml, showPromptModal } from '../core/core.js';
+import { apiFetch, navigate, app, reicons, escHtml, showPromptModal } from '../core/core.js?v=2';
 
 export async function renderMyActivity() {
   if (!window.SESSION_USER) {

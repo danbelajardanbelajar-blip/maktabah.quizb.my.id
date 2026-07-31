@@ -1,6 +1,6 @@
-import { apiFetch, app, reicons, escHtml, paginationHtml, handleAuthError } from '../../core/core.js';
+import { apiFetch, app, reicons, escHtml, paginationHtml, handleAuthError } from '../../core/core.js?v=2';
 import { adminGuard, adminPost, adminToast, adminSpinner, adminNavBar, autoDir, bindAutoDir } from '../../core/AdminUtils.js';
-import { bookCard } from '../../core/core.js';
+import { bookCard } from '../../core/core.js?v=2';
 
 // ══════════════════════════════════════════════════════════════
 //  KELOLA KITAB  /admin/books

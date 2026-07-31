@@ -1,5 +1,5 @@
 // PAGE: KATEGORI  (daftar kategori + kitab per-kategori)
-import * as Core from '../core/legacy_core.js';
+import * as Core from '../core/legacy_core.js?v=2';
 
 let kategoriState = { selectedCat: null, catName: '', page: 1 };
 

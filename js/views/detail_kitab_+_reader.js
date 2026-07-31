@@ -1,5 +1,5 @@
 // PAGE: DETAIL KITAB + READER
-import * as Core from '../core/legacy_core.js';
+import * as Core from '../core/legacy_core.js?v=2';
 
 
 // Reader state (module-level so nav buttons can reference it)

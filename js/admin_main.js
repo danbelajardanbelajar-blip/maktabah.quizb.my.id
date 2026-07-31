@@ -33,7 +33,7 @@ if (typeof window.routes !== 'undefined') {
 document.addEventListener('DOMContentLoaded', () => {
   const base = location.pathname.split('?')[0];
   if (adminRoutes[base] && typeof window.navigate === 'function') {
-    // If core.js hasn't triggered navigation yet, this will cover it.
+    // If core.js?v=2 hasn't triggered navigation yet, this will cover it.
     window.navigate(location.pathname + location.search, false);
   }
 });

@@ -1,4 +1,4 @@
-import { app, reicons, escHtml } from '../core/core.js';
+import { app, reicons, escHtml } from '../core/core.js?v=2';
 
 // ══════════════════════════════════════════════════════════════
 //  DASHBOARD

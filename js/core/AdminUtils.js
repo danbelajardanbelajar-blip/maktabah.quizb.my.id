@@ -1,4 +1,4 @@
-import { app, reicons, escHtml } from './core.js';
+import { app, reicons, escHtml } from './core.js?v=2';
 
 export const _RTL_RE = /[֑-߿יִ-﷽ﹰ-ﻼ]/;
 export function autoDir(el, text) {

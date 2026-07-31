@@ -1,5 +1,5 @@
-import * as Core from './core/core.js?v=100';
-import { navigate, handleAuthError, apiFetch, escHtml } from './core/core.js?v=100';
+import * as Core from './core/core.js?v=2?v=100';
+import { navigate, handleAuthError, apiFetch, escHtml } from './core/core.js?v=2?v=100';
 
 import * as View_home from './views/home.js?v=100';
 import * as View_katalog from './views/katalog.js?v=100';
