@@ -1567,24 +1567,37 @@ class AdminController {
 
         // Map search types to friendly names
         $typeMapping = [
-            'basic' => 'Judul',
             'category' => 'Kategori',
+            'basic' => 'Judul',
+            'advanced' => 'Pencarian Lanjut (Advanced)',
+            'scholarium_pdf' => 'PDF Scholarium',
+            'archive_org' => 'Archive.org',
             'content' => 'Isi Kitab',
             'content_in_book' => 'Isi Dalam Kitab',
-            'scholarium' => 'Isi Kitab Tersebar',
-            'scholarium_pdf' => 'PDF',
-            'archive_org' => 'Archive'
+            'scholarium' => 'Isi Kitab Tersebar'
         ];
 
         $searchResult = [];
+        // Initialize all mapped types with 0 so they always appear as cards
+        foreach ($typeMapping as $dbType => $friendlyName) {
+            $searchResult[$friendlyName] = [
+                'success' => 0,
+                'failure' => 0,
+                'total' => 0
+            ];
+        }
+
         foreach ($searchStats as $stat) {
             $type = $stat['search_type'];
             $friendlyName = $typeMapping[$type] ?? $type;
-            $searchResult[$friendlyName] = [
-                'success' => (int)$stat['success_count'],
-                'failure' => (int)$stat['failure_count'],
-                'total' => (int)$stat['total_count']
-            ];
+            
+            if (!isset($searchResult[$friendlyName])) {
+                $searchResult[$friendlyName] = ['success' => 0, 'failure' => 0, 'total' => 0];
+            }
+            
+            $searchResult[$friendlyName]['success'] += (int)$stat['success_count'];
+            $searchResult[$friendlyName]['failure'] += (int)$stat['failure_count'];
+            $searchResult[$friendlyName]['total'] += (int)$stat['total_count'];
         }
 
         // 2. AI Ask Analytics
