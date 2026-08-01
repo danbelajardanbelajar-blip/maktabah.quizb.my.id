@@ -15,10 +15,16 @@ use App\Helpers\RateLimiter;
 // POST / mutating: hanya izinkan same-origin — tidak perlu header CORS sama sekali
 // karena browser akan block cross-origin POST tanpa header dari server.
 $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$action = $_GET['action'] ?? '';
 
 if ($requestMethod === 'GET' || $requestMethod === 'HEAD') {
     header('Access-Control-Allow-Origin: *');
-    header('Cache-Control: public, max-age=60');
+    if (strpos($action, 'admin_') === 0) {
+        // Admin endpoints harus real-time, jangan di-cache
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+    } else {
+        header('Cache-Control: public, max-age=60');
+    }
 } else {
     // Untuk POST/PUT/DELETE: header Cache-Control no-store, tanpa CORS wildcard
     header('Cache-Control: no-store, no-cache, must-revalidate');
