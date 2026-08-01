@@ -46,7 +46,12 @@ class SearchController {
              LIMIT 20"
         );
         $stmt->execute($params);
-        echo json_encode(['data' => $stmt->fetchAll()]);
+        $results = $stmt->fetchAll();
+        $skipLog = !empty($_GET['skip_log']) || !empty($_POST['skip_log']);
+        if (!$skipLog) {
+            \App\Helpers\SearchHelper::logSearchQuery('category', $qRaw, count($results));
+        }
+        echo json_encode(['data' => $results]);
     }
 
     public function handleSearchBooks(): void {
@@ -256,6 +261,10 @@ class SearchController {
             )->execute([':h' => $hash, ':qt' => $q, ':rj' => json_encode($rows)]);
         }
     
+        $skipLog = !empty($_GET['skip_log']) || !empty($_POST['skip_log']);
+        if ($page === 1 && !$skipLog) {
+            \App\Helpers\SearchHelper::logSearchQuery('content', $qRaw, count($rows));
+        }
         echo json_encode([
             'data'        => $rows,
             'page'        => $page,
@@ -568,6 +577,10 @@ class SearchController {
             ];
         }
     
+        $skipLog = !empty($_GET['skip_log']) || !empty($_POST['skip_log']);
+        if (!$skipLog) {
+            \App\Helpers\SearchHelper::logSearchQuery('content_in_book', $qRaw, count($results));
+        }
         echo json_encode(['found' => true, 'data' => $results]);
     }
 
@@ -895,6 +908,10 @@ class SearchController {
             $total = (int)$countStmt->fetchColumn();
 
             $has_more = (count($data) === $limit);
+            $skipLog = !empty($_GET['skip_log']) || !empty($_POST['skip_log']);
+            if ($page === 1 && !$skipLog) {
+                \App\Helpers\SearchHelper::logSearchQuery('scholarium_pdf', $qRaw, $total);
+            }
             echo json_encode([
                 'data'        => $data,
                 'total'       => $total,
