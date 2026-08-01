@@ -231,6 +231,39 @@ class AskController {
             }
         }
         
+        // [TAMBAHAN] Cek jika pengguna bertanya tentang ketersediaan judul buku/katalog
+        if (!empty($qWords)) {
+            $likeConds = [];
+            $params = [];
+            foreach (array_slice(array_values($qWords), 0, 4) as $i => $w) { // batasi 4 kata agar tidak terlalu ketat
+                $likeConds[] = "REPLACE(REPLACE(title, '''', ''), '’', '') LIKE :lk_bk$i";
+                $params[":lk_bk$i"] = "%$w%";
+            }
+            $bookSql = implode(' AND ', $likeConds);
+            $stmtBooks = $pdo->prepare("SELECT title, author FROM books WHERE $bookSql LIMIT 5");
+            foreach ($params as $k => $v) {
+                $stmtBooks->bindValue($k, $v, PDO::PARAM_STR);
+            }
+            $stmtBooks->execute();
+            $matchedBooks = $stmtBooks->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($matchedBooks)) {
+                $catalogText = "INFORMASI KATALOG PERPUSTAKAAN (DAFTAR KITAB YANG TERSEDIA):\n";
+                foreach ($matchedBooks as $mb) {
+                    $catalogText .= "- Judul: " . $mb['title'] . (!empty($mb['author']) ? " (Karya: " . $mb['author'] . ")" : "") . "\n";
+                }
+                $catalogText .= "CATATAN UNTUK AI: Jika pengguna bertanya apakah kitab/buku tersebut ada di perpustakaan, jawablah ADA berdasarkan daftar di atas.";
+                
+                array_unshift($contextData, [
+                    'bkid' => 0,
+                    'title' => 'Sistem Informasi Katalog Maktabah',
+                    'match_juz' => '-',
+                    'match_page' => '-',
+                    'snippet' => $catalogText
+                ]);
+            }
+        }
+        
         return $contextData;
     }
 
