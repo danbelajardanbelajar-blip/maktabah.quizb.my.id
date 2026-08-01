@@ -29,14 +29,17 @@ class SearchController {
         }
         $whereSql = implode(' OR ', $likeConds);
         if (!$whereSql) $whereSql = '1=0';
+        $andSql = implode(' AND ', $likeConds);
+        if (!$andSql) $andSql = '1=0';
 
         $stmt = $pdo->prepare(
-            "SELECT c.id, c.name, COUNT(b.bkid) AS book_count
+            "SELECT c.id, c.name, COUNT(b.bkid) AS book_count,
+                    (CASE WHEN ($andSql) THEN 1 ELSE 0 END) AS is_and_match
              FROM categories c
              LEFT JOIN books b ON b.category_id = c.id
              WHERE $whereSql
              GROUP BY c.id
-             ORDER BY book_count DESC
+             ORDER BY is_and_match DESC, book_count DESC
              LIMIT 20"
         );
         $stmt->execute($params);
@@ -73,6 +76,8 @@ class SearchController {
         }
         $likeSql = implode(' OR ', $likeConds);
         if (!$likeSql) $likeSql = "1=0";
+        $andSql = implode(' AND ', $likeConds);
+        if (!$andSql) $andSql = "1=0";
     
         // --- Cache hit (page 1 only) ---
         if ($page === 1) {
@@ -100,10 +105,12 @@ class SearchController {
     
         // --- Query ---
         $stmt = $pdo->prepare(
-            "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name
+            "SELECT b.bkid, b.title, b.author, b.pages, b.iso, b.category_id, b.category_name,
+                    (CASE WHEN ($andSql) THEN 1 ELSE 0 END) AS is_and_match
              FROM books b
              WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
                 OR ($likeSql)
+             ORDER BY is_and_match DESC, MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE) DESC, b.bkid DESC
              LIMIT :lim OFFSET :off"
         );
         $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
@@ -849,12 +856,15 @@ class SearchController {
             }
             $likeSql = implode(' OR ', $likeConds);
             if (!$likeSql) $likeSql = "1=0";
+            $andSql = implode(' AND ', $likeConds);
+            if (!$andSql) $andSql = "1=0";
             
             $stmt = $pdo->prepare(
-                "SELECT id, drive_id, parent_id, name, type, link, level_depth, path_visual
+                "SELECT id, drive_id, parent_id, name, type, link, level_depth, path_visual,
+                        (CASE WHEN ($andSql) THEN 1 ELSE 0 END) AS is_and_match
                  FROM library_tree
                  WHERE type = 'FILE' AND ($likeSql)
-                 ORDER BY name ASC
+                 ORDER BY is_and_match DESC, name ASC
                  LIMIT :lim OFFSET :off"
             );
             foreach ($params as $k => $v) {
