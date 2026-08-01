@@ -20,16 +20,19 @@ class SearchController {
         $qClean = str_replace(["'", "’"], "", $q);
         $words = preg_split('/\s+/u', $qClean);
         $likeConds = [];
+        $andConds = [];
         $params = [];
         foreach ($words as $i => $w) {
             if (strlen($w) > 0) {
                 $likeConds[] = "REPLACE(REPLACE(c.name, '''', ''), '’', '') LIKE :lk$i";
+                $andConds[] = "REPLACE(REPLACE(c.name, '''', ''), '’', '') LIKE :lka$i";
                 $params[":lk$i"] = "%$w%";
+                $params[":lka$i"] = "%$w%";
             }
         }
         $whereSql = implode(' OR ', $likeConds);
         if (!$whereSql) $whereSql = '1=0';
-        $andSql = implode(' AND ', $likeConds);
+        $andSql = implode(' AND ', $andConds);
         if (!$andSql) $andSql = '1=0';
 
         $stmt = $pdo->prepare(
@@ -67,16 +70,19 @@ class SearchController {
         $qClean = str_replace(["'", "’"], "", $q);
         $words = preg_split('/\s+/u', $qClean);
         $likeConds = [];
+        $andConds = [];
         $params = [];
         foreach ($words as $i => $w) {
             if (strlen($w) > 0) {
                 $likeConds[] = "REPLACE(REPLACE(b.title, '''', ''), '’', '') LIKE :lk$i";
+                $andConds[] = "REPLACE(REPLACE(b.title, '''', ''), '’', '') LIKE :lka$i";
                 $params[":lk$i"] = "%$w%";
+                $params[":lka$i"] = "%$w%";
             }
         }
         $likeSql = implode(' OR ', $likeConds);
         if (!$likeSql) $likeSql = "1=0";
-        $andSql = implode(' AND ', $likeConds);
+        $andSql = implode(' AND ', $andConds);
         if (!$andSql) $andSql = "1=0";
     
         // --- Cache hit (page 1 only) ---
@@ -110,10 +116,11 @@ class SearchController {
              FROM books b
              WHERE MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE)
                 OR ($likeSql)
-             ORDER BY is_and_match DESC, MATCH(b.title) AGAINST (:q2 IN BOOLEAN MODE) DESC, b.bkid DESC
+             ORDER BY is_and_match DESC, MATCH(b.title) AGAINST (:q3 IN BOOLEAN MODE) DESC, b.bkid DESC
              LIMIT :lim OFFSET :off"
         );
         $stmt->bindValue(':q2',  $qStar, PDO::PARAM_STR);
+        $stmt->bindValue(':q3',  $qStar, PDO::PARAM_STR);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v, PDO::PARAM_STR);
         }
@@ -847,16 +854,19 @@ class SearchController {
             $qClean = str_replace(["'", "’"], "", $q);
             $words = preg_split('/\s+/u', $qClean);
             $likeConds = [];
+            $andConds = [];
             $params = [];
             foreach ($words as $i => $w) {
                 if (strlen($w) > 0) {
                     $likeConds[] = "REPLACE(REPLACE(name, '''', ''), '’', '') LIKE :q$i";
+                    $andConds[] = "REPLACE(REPLACE(name, '''', ''), '’', '') LIKE :qa$i";
                     $params[":q$i"] = "%$w%";
+                    $params[":qa$i"] = "%$w%";
                 }
             }
             $likeSql = implode(' OR ', $likeConds);
             if (!$likeSql) $likeSql = "1=0";
-            $andSql = implode(' AND ', $likeConds);
+            $andSql = implode(' AND ', $andConds);
             if (!$andSql) $andSql = "1=0";
             
             $stmt = $pdo->prepare(
@@ -876,8 +886,10 @@ class SearchController {
             $data = $stmt->fetchAll();
 
             $countStmt = $pdo->prepare("SELECT COUNT(*) FROM library_tree WHERE type = 'FILE' AND ($likeSql)");
-            foreach ($params as $k => $v) {
-                $countStmt->bindValue($k, $v, PDO::PARAM_STR);
+            foreach ($words as $i => $w) {
+                if (strlen($w) > 0) {
+                    $countStmt->bindValue(":q$i", "%$w%", PDO::PARAM_STR);
+                }
             }
             $countStmt->execute();
             $total = (int)$countStmt->fetchColumn();
