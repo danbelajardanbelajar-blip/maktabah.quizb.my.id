@@ -65,10 +65,11 @@ class AIService {
             }
 
             if ($httpCode !== 200 || !$response) {
-                return "Error: Gagal menghubungi server AI (Code: $httpCode). Detail: $curlError";
+                $lastError = "Gagal menghubungi server AI (Code: $httpCode). Detail: $curlError";
+                continue; // Coba API Key berikutnya
             }
 
-            // Jika sukses (tidak 429 dan tidak error lain), keluar dari loop dan proses response
+            // Jika sukses, keluar dari loop dan proses response
             break;
         }
 
@@ -158,7 +159,6 @@ class AIService {
                 $data = json_decode($response, true);
                 if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
                     $text = trim($data['candidates'][0]['content']['parts'][0]['text']);
-                    // Bersihkan dari kutipan atau format yang tidak perlu
                     $text = preg_replace('/```.*?```/s', '', $text);
                     $text = str_replace(["\n", "\r", '"', "'", "`"], ' ', $text);
                     return trim($text);

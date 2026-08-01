@@ -42,9 +42,9 @@ class AskController {
                 }
             }
 
-            // Gunakan jawaban dari log jika ada, agar instan dan tanpa loading panjang
+            // Gunakan jawaban dari log jika ada dan valid (bukan pesan error), agar instan dan tanpa loading panjang
             $isCached = false;
-            if ($cachedLog && !empty($cachedLog['response'])) {
+            if ($cachedLog && !empty($cachedLog['response']) && strpos($cachedLog['response'], 'Error:') !== 0 && strpos($cachedLog['response'], 'Maaf,') !== 0) {
                 $aiResponse = $cachedLog['response'];
                 $isCached = true;
             } else {
@@ -63,8 +63,8 @@ class AskController {
                 ];
             }
 
-            // Catat Log ke database HANYA jika bukan dari cache
-            if (!$isCached) {
+            // Catat Log ke database HANYA jika bukan dari cache dan BUKAN error
+            if (!$isCached && strpos($aiResponse, 'Error:') !== 0 && strpos($aiResponse, 'Maaf,') !== 0) {
                 try {
                     $user = $_SESSION['user'] ?? null;
                     $userId = $user ? $user['id'] : null;
