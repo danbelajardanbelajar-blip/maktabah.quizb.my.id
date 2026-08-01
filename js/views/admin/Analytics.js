@@ -135,7 +135,7 @@ function renderCharts(data) {
  */
 function renderPieChart(percentages, colors, labels) {
     if (percentages.reduce((a,b) => a+b, 0) === 0) {
-        return `<div class="w-40 h-40 rounded-full bg-slate-100 flex items-center justify-center text-xs text-slate-400 text-center p-4">Tidak ada data</div>`;
+        return `<div class="rounded-full bg-slate-100 flex items-center justify-center text-xs text-slate-400 text-center p-4 mx-auto my-4" style="width: 160px; height: 160px;">Tidak ada data</div>`;
     }
 
     let gradientStops = [];
@@ -152,7 +152,7 @@ function renderPieChart(percentages, colors, labels) {
     const gradient = gradientStops.join(', ');
 
     return `
-      <div class="relative w-40 h-40 rounded-full shadow-inner" style="background: conic-gradient(${gradient});">
+      <div class="relative rounded-full shadow-inner mx-auto my-4" style="width: 160px; height: 160px; background: conic-gradient(${gradient});">
       </div>
     `;
 }
