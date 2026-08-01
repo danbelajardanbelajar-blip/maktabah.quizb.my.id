@@ -115,15 +115,21 @@ class AskController {
         $stopWords = ['siapa', 'apa', 'kapan', 'dimana', 'bagaimana', 'kenapa', 'mengapa', 'apakah', 'berapa'];
         
         // Pecah kata dan ambil yang panjangnya > 2 (hapus kata hubung pendek) serta bukan stop-word
-        $qWords = array_filter(explode(' ', $qClean), function($w) use ($stopWords) { 
+        $qWordsFull = array_values(array_filter(explode(' ', $qClean), function($w) use ($stopWords) { 
             return mb_strlen($w, 'UTF-8') > 2 && !in_array(mb_strtolower($w, 'UTF-8'), $stopWords); 
-        });
+        }));
         
-        if (empty($qWords)) {
-            $qBool = SearchHelper::ftEscape($qRaw); 
+        if (empty($qWordsFull)) {
+            $qBool = SearchHelper::ftEscape($qRaw);
+            $qWords = $qWordsFull;
         } else {
-            // Ambil maksimal 4 kata pertama agar pencarian tidak terlalu ketat (hasil 0) jika kalimatnya sangat panjang
-            $qWords = array_slice(array_values($qWords), 0, 4);
+            // Urutkan kata berdasarkan panjangnya (kata panjang biasanya lebih spesifik/krusial)
+            $sortedWordsForBool = $qWordsFull;
+            usort($sortedWordsForBool, function($a, $b) {
+                return mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8');
+            });
+            // Ambil maksimal 5 kata terpanjang agar pencarian boolean tidak terlalu ketat namun tetap spesifik
+            $qWords = array_slice($sortedWordsForBool, 0, 5);
             $qBool = '+' . implode(' +', $qWords);
         }
 
@@ -132,14 +138,9 @@ class AskController {
             // Hanya mewajibkan 1 kata terpanjang, sisanya opsional (TANPA wildcard * agar query tidak timeout)
             $qBoolBroad = '';
             if (!empty($qWords)) {
-                $sortedWords = $qWords;
-                usort($sortedWords, function($a, $b) {
-                    return mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8');
-                });
-                
-                $qBoolBroad = '+' . $sortedWords[0];
-                for ($i = 1; $i < count($sortedWords); $i++) {
-                    $qBoolBroad .= ' ' . $sortedWords[$i];
+                $qBoolBroad = '+' . $qWords[0];
+                for ($i = 1; $i < count($qWords); $i++) {
+                    $qBoolBroad .= ' ' . $qWords[$i];
                 }
             } else {
                 $qBoolBroad = SearchHelper::ftEscape($qRaw);
@@ -232,18 +233,10 @@ class AskController {
         }
         
         // [TAMBAHAN] Cek jika pengguna bertanya tentang ketersediaan judul buku/katalog
-        if (!empty($qWords)) {
-            $likeConds = [];
-            $params = [];
-            foreach (array_slice(array_values($qWords), 0, 4) as $i => $w) { // batasi 4 kata agar tidak terlalu ketat
-                $likeConds[] = "REPLACE(REPLACE(title, '''', ''), '’', '') LIKE :lk_bk$i";
-                $params[":lk_bk$i"] = "%$w%";
-            }
-            $bookSql = implode(' AND ', $likeConds);
-            $stmtBooks = $pdo->prepare("SELECT title, author FROM books WHERE $bookSql LIMIT 5");
-            foreach ($params as $k => $v) {
-                $stmtBooks->bindValue($k, $v, PDO::PARAM_STR);
-            }
+        if (!empty($qRaw)) {
+            // Gunakan NATURAL LANGUAGE MODE agar bisa menemukan judul buku meskipun ada kata-kata tambahan dalam pertanyaan
+            $stmtBooks = $pdo->prepare("SELECT title, author FROM books WHERE MATCH(title) AGAINST(:qRaw IN NATURAL LANGUAGE MODE) LIMIT 5");
+            $stmtBooks->bindValue(':qRaw', $qRaw, PDO::PARAM_STR);
             $stmtBooks->execute();
             $matchedBooks = $stmtBooks->fetchAll(PDO::FETCH_ASSOC);
 
