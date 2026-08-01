@@ -133,9 +133,52 @@ class AskController {
             $qBool = '+' . implode(' +', $qWords);
         }
 
+        $matchedBkids = [];
+        $catalogText = "";
+        
+        // 1. Cek jika pengguna bertanya tentang ketersediaan judul buku/katalog
+        if (!empty($qRaw)) {
+            // Gunakan NATURAL LANGUAGE MODE agar bisa menemukan judul buku
+            $stmtBooks = $pdo->prepare("SELECT bkid, title, author FROM books WHERE MATCH(title) AGAINST(:qRaw IN NATURAL LANGUAGE MODE) LIMIT 5");
+            $stmtBooks->bindValue(':qRaw', $qRaw, PDO::PARAM_STR);
+            $stmtBooks->execute();
+            $matchedBooks = $stmtBooks->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($matchedBooks)) {
+                $catalogText = "INFORMASI KATALOG PERPUSTAKAAN (DAFTAR KITAB YANG TERSEDIA):\n";
+                foreach ($matchedBooks as $mb) {
+                    $matchedBkids[] = (int)$mb['bkid'];
+                    $catalogText .= "- Judul: " . $mb['title'] . (!empty($mb['author']) ? " (Karya: " . $mb['author'] . ")" : "") . "\n";
+                }
+                $catalogText .= "CATATAN UNTUK AI: Jika pengguna bertanya apakah kitab/buku tersebut ada di perpustakaan, jawablah ADA berdasarkan daftar di atas.";
+            }
+        }
+
+        $topRows = [];
+
+        // 2. Jika ada buku yang cocok dengan judul, cari secara SPESIFIK di dalam buku-buku tersebut
+        // Menggunakan mode opsional (tanpa +) agar kata dari judul tidak memblokir pencarian isi
+        if (!empty($matchedBkids)) {
+            $bkidList = implode(',', $matchedBkids);
+            $qBoolOptional = implode(' ', $qWordsFull); 
+            if (!empty($qBoolOptional)) {
+                $stmtMatched = $pdo->prepare(
+                    "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
+                     FROM book_content
+                     WHERE bkid IN ($bkidList) AND MATCH(content) AGAINST (:q2 IN BOOLEAN MODE)
+                     ORDER BY rel DESC, bkid ASC, page ASC
+                     LIMIT :lim"
+                );
+                $stmtMatched->bindValue(':q1', $qBoolOptional, PDO::PARAM_STR);
+                $stmtMatched->bindValue(':q2', $qBoolOptional, PDO::PARAM_STR);
+                $stmtMatched->bindValue(':lim', $limit, PDO::PARAM_INT);
+                $stmtMatched->execute();
+                $topRows = array_merge($topRows, $stmtMatched->fetchAll());
+            }
+        }
+
+        // 3. Pencarian Umum (Strict & Fallback)
         if ($retry > 0) {
-            // Mode luas: BOOLEAN MODE yang dilonggarkan (menghindari timeout NATURAL LANGUAGE MODE)
-            // Hanya mewajibkan 1 kata terpanjang, sisanya opsional (TANPA wildcard * agar query tidak timeout)
             $qBoolBroad = '';
             if (!empty($qWords)) {
                 $qBoolBroad = '+' . $qWords[0];
@@ -157,9 +200,8 @@ class AskController {
             $step1->bindValue(':q2', $qBoolBroad, PDO::PARAM_STR);
             $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
             $step1->execute();
-            $topRows = $step1->fetchAll();
+            $topRows = array_merge($topRows, $step1->fetchAll());
         } else {
-            // Mode ketat: BOOLEAN MODE
             $step1 = $pdo->prepare(
                 "SELECT bkid, page, MATCH(content) AGAINST (:q1 IN BOOLEAN MODE) AS rel
                  FROM book_content
@@ -171,31 +213,43 @@ class AskController {
             $step1->bindValue(':q2',  $qBool, PDO::PARAM_STR);
             $step1->bindValue(':lim', $limit, PDO::PARAM_INT);
             $step1->execute();
-            $topRows = $step1->fetchAll();
-        }
+            $generalRows = $step1->fetchAll();
+            $topRows = array_merge($topRows, $generalRows);
 
-        // Fallback pencarian (hanya jika mode ketat/retry 0 dan kosong)
-        if ($retry === 0 && empty($topRows) && strpos($qBool, '+') !== false && count($qWords) > 1) {
-            $sortedWords = $qWords;
-            usort($sortedWords, function($a, $b) {
-                return mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8');
-            });
-            
-            // Hapus wildcard * agar pencarian fallback tidak menyebabkan max_statement_time exceeded
-            $qBoolFallback = '+' . $sortedWords[0];
-            for ($i = 1; $i < count($sortedWords); $i++) {
-                $qBoolFallback .= ' ' . $sortedWords[$i];
+            if (empty($generalRows) && strpos($qBool, '+') !== false && count($qWords) > 1) {
+                $sortedWords = $qWords;
+                usort($sortedWords, function($a, $b) {
+                    return mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8');
+                });
+                
+                $qBoolFallback = '+' . $sortedWords[0];
+                for ($i = 1; $i < count($sortedWords); $i++) {
+                    $qBoolFallback .= ' ' . $sortedWords[$i];
+                }
+                
+                $step1->bindValue(':q1',  $qBoolFallback, PDO::PARAM_STR);
+                $step1->bindValue(':q2',  $qBoolFallback, PDO::PARAM_STR);
+                $step1->execute();
+                $topRows = array_merge($topRows, $step1->fetchAll());
             }
-            
-            $step1->bindValue(':q1',  $qBoolFallback, PDO::PARAM_STR);
-            $step1->bindValue(':q2',  $qBoolFallback, PDO::PARAM_STR);
-            $step1->execute();
-            $topRows = $step1->fetchAll();
         }
 
         $contextData = [];
         
         if (!empty($topRows)) {
+            // Deduplikasi topRows berdasarkan bkid dan page
+            $uniqueRows = [];
+            foreach ($topRows as $tr) {
+                $key = $tr['bkid'] . '_' . $tr['page'];
+                if (!isset($uniqueRows[$key])) {
+                    $uniqueRows[$key] = $tr;
+                }
+            }
+            $topRows = array_values($uniqueRows);
+
+            // Batasi jumlah row akhir agar tidak terlalu besar
+            $topRows = array_slice($topRows, 0, $limit);
+
             $pairConds  = [];
             $pairParams = [];
             foreach ($topRows as $i => $r) {
@@ -232,29 +286,14 @@ class AskController {
             }
         }
         
-        // [TAMBAHAN] Cek jika pengguna bertanya tentang ketersediaan judul buku/katalog
-        if (!empty($qRaw)) {
-            // Gunakan NATURAL LANGUAGE MODE agar bisa menemukan judul buku meskipun ada kata-kata tambahan dalam pertanyaan
-            $stmtBooks = $pdo->prepare("SELECT title, author FROM books WHERE MATCH(title) AGAINST(:qRaw IN NATURAL LANGUAGE MODE) LIMIT 5");
-            $stmtBooks->bindValue(':qRaw', $qRaw, PDO::PARAM_STR);
-            $stmtBooks->execute();
-            $matchedBooks = $stmtBooks->fetchAll(PDO::FETCH_ASSOC);
-
-            if (!empty($matchedBooks)) {
-                $catalogText = "INFORMASI KATALOG PERPUSTAKAAN (DAFTAR KITAB YANG TERSEDIA):\n";
-                foreach ($matchedBooks as $mb) {
-                    $catalogText .= "- Judul: " . $mb['title'] . (!empty($mb['author']) ? " (Karya: " . $mb['author'] . ")" : "") . "\n";
-                }
-                $catalogText .= "CATATAN UNTUK AI: Jika pengguna bertanya apakah kitab/buku tersebut ada di perpustakaan, jawablah ADA berdasarkan daftar di atas.";
-                
-                array_unshift($contextData, [
-                    'bkid' => 0,
-                    'title' => 'Sistem Informasi Katalog Maktabah',
-                    'match_juz' => '-',
-                    'match_page' => '-',
-                    'snippet' => $catalogText
-                ]);
-            }
+        if (!empty($catalogText)) {
+            array_unshift($contextData, [
+                'bkid' => 0,
+                'title' => 'Sistem Informasi Katalog Maktabah',
+                'match_juz' => '-',
+                'match_page' => '-',
+                'snippet' => $catalogText
+            ]);
         }
         
         return $contextData;
