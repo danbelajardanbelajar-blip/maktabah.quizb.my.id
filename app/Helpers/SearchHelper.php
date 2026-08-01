@@ -140,6 +140,42 @@ class SearchHelper {
         }
     }
 
+    public static function booleanSearchTermAnd(string $q): string {
+        $q = trim($q);
+        if ($q === '') return '';
+        
+        if (self::isPhraseQuery($q)) {
+            return self::booleanSearchTerm($q);
+        }
+
+        if (strpos($q, ' ') !== false) {
+            $words = preg_split('/\s+/u', $q);
+            $parts = [];
+            foreach ($words as $word) {
+                $cleanWord = self::ftEscape($word);
+                if ($cleanWord === '') continue;
+                $variants = self::getAlefVariants($cleanWord);
+                if (count($variants) > 1) {
+                    $vParts = array_map(function($v) { return $v . '*'; }, $variants);
+                    $parts[] = '+(' . implode(' ', $vParts) . ')';
+                } else {
+                    $parts[] = '+' . $cleanWord . '*';
+                }
+            }
+            return implode(' ', $parts);
+        }
+
+        $clean = self::ftEscape($q);
+        if ($clean === '') return '';
+        
+        $variants = self::getAlefVariants($clean);
+        if (count($variants) > 1) {
+            $parts = array_map(function($v) { return $v . '*'; }, $variants);
+            return '+(' . implode(' ', $parts) . ')';
+        }
+        return '+' . $clean . '*';
+    }
+
     public static function booleanSearchTermOr(string $q): string {
         $q = trim($q);
         if ($q === '') return '';

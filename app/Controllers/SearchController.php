@@ -30,7 +30,7 @@ class SearchController {
                 $params[":lka$i"] = "%$w%";
             }
         }
-        $whereSql = implode(' OR ', $likeConds);
+        $whereSql = implode(' AND ', $andConds);
         if (!$whereSql) $whereSql = '1=0';
         $andSql = implode(' AND ', $andConds);
         if (!$andSql) $andSql = '1=0';
@@ -70,7 +70,7 @@ class SearchController {
         }
     
         $hash       = 'books:' . hash('sha256', strtolower($qRaw));
-        $qStar      = SearchHelper::booleanSearchTermOr($qRaw);
+        $qStar      = SearchHelper::booleanSearchTermAnd($qRaw);
         
         $qClean = str_replace(["'", "’"], "", $q);
         $words = preg_split('/\s+/u', $qClean);
@@ -85,7 +85,7 @@ class SearchController {
                 $params[":lka$i"] = "%$w%";
             }
         }
-        $likeSql = implode(' OR ', $likeConds);
+        $likeSql = implode(' AND ', $andConds);
         if (!$likeSql) $likeSql = "1=0";
         $andSql = implode(' AND ', $andConds);
         if (!$andSql) $andSql = "1=0";
@@ -877,7 +877,7 @@ class SearchController {
                     $params[":qa$i"] = "%$w%";
                 }
             }
-            $likeSql = implode(' OR ', $likeConds);
+            $likeSql = implode(' AND ', $andConds);
             if (!$likeSql) $likeSql = "1=0";
             $andSql = implode(' AND ', $andConds);
             if (!$andSql) $andSql = "1=0";

@@ -1365,7 +1365,8 @@ async function execSearch() {
 
   // 5. Internet Archive search (parallel)
   let _abortArchive = new AbortController();
-  const archiveUrl = `https://archive.org/advancedsearch.php?q=title:(${encodeURIComponent(q)})+AND+mediatype:(texts)&fl[]=identifier,title,creator,date&rows=5&page=${searchState.archivePage || 1}&output=json`;
+  const archiveQ = q.split(/\s+/).filter(Boolean).join(' AND ');
+  const archiveUrl = `https://archive.org/advancedsearch.php?q=title:(${encodeURIComponent(archiveQ)})+AND+mediatype:(texts)&fl[]=identifier,title,creator,date&rows=5&page=${searchState.archivePage || 1}&output=json`;
   fetch(archiveUrl, { signal: _abortArchive.signal })
     .then(r => r.json()).then(res => {
       if ($('#search-input')?.value.trim() !== q) return;
@@ -1466,7 +1467,8 @@ window.goSearchArchivePage = function(p) {
   const q = searchState.q, body = $('#sec-archive-body');
   if (body) body.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${skeletonCards(2)}</div>`;
   let _abortArchiveLocal = new AbortController();
-  const archiveUrl = `https://archive.org/advancedsearch.php?q=title:(${encodeURIComponent(q)})+AND+mediatype:(texts)&fl[]=identifier,title,creator,date&rows=5&page=${p}&output=json`;
+  const archiveQ = q.split(/\s+/).filter(Boolean).join(' AND ');
+  const archiveUrl = `https://archive.org/advancedsearch.php?q=title:(${encodeURIComponent(archiveQ)})+AND+mediatype:(texts)&fl[]=identifier,title,creator,date&rows=5&page=${p}&output=json`;
   
   fetch(archiveUrl, { signal: _abortArchiveLocal.signal })
     .then(r => r.json()).then(res => {
