@@ -1,5 +1,5 @@
-import * as Books from './views/admin/Books.js';
-import * as Categories from './views/admin/Categories.js';
+import * as AdminBooks from './views/admin/Books.js';
+import * as AdminCategories from './views/admin/Categories.js';
 import * as History from './views/admin/History.js';
 import * as Activity from './views/admin/Activity.js';
 import * as SearchLogs from './views/admin/SearchLogs.js';
@@ -8,12 +8,12 @@ import * as DownloadLogs from './views/admin/DownloadLogs.js';
 import * as Submissions from './views/admin/Submissions.js';
 import * as Requests from './views/admin/Requests.js';
 import * as Feedbacks from './views/admin/Feedbacks.js';
+import * as Analytics from './views/admin/Analytics.js';
 
-// Merge routes
-const adminRoutes = {
+export const adminRoutes = {
   '/admin':            () => window.navigate('/admin/books', true),
-  '/admin/books':      Books.renderAdminBooks,
-  '/admin/categories': Categories.renderAdminCategories,
+  '/admin/books':      AdminBooks.renderAdminBooks,
+  '/admin/categories': AdminCategories.renderAdminCategories,
   '/admin/content':    () => window.navigate('/admin/books', true),
   '/admin/history':     History.renderAdminHistory,
   '/admin/activity':    Activity.renderAdminActivity,
@@ -23,6 +23,7 @@ const adminRoutes = {
   '/admin/submissions': Submissions.renderAdminSubmissions,
   '/admin/requests':    Requests.renderAdminRequests,
   '/admin/feedback':    Feedbacks.renderAdminFeedbacks,
+  '/admin/analytics':   Analytics.renderAnalytics
 };
 
 if (typeof window.routes !== 'undefined') {

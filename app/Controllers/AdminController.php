@@ -1546,4 +1546,76 @@ class AdminController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    public function handleAdminGetAnalytics(): void {
+        AuthHelper::requireAdmin();
+        $pdo = Database::getConnection();
+
+        // 1. Search Analytics
+        // Group by search_type and count successes (result_count > 0) vs failures (result_count = 0)
+        $searchQuery = "
+            SELECT 
+                search_type,
+                SUM(CASE WHEN result_count > 0 THEN 1 ELSE 0 END) as success_count,
+                SUM(CASE WHEN result_count = 0 THEN 1 ELSE 0 END) as failure_count,
+                COUNT(*) as total_count
+            FROM search_logs
+            GROUP BY search_type
+        ";
+        $stmtSearch = $pdo->query($searchQuery);
+        $searchStats = $stmtSearch->fetchAll(PDO::FETCH_ASSOC);
+
+        // Map search types to friendly names
+        $typeMapping = [
+            'basic' => 'Judul',
+            'category' => 'Kategori',
+            'content' => 'Isi Kitab',
+            'content_in_book' => 'Isi Dalam Kitab',
+            'scholarium' => 'Isi Kitab Tersebar',
+            'scholarium_pdf' => 'PDF',
+            'archive_org' => 'Archive'
+        ];
+
+        $searchResult = [];
+        foreach ($searchStats as $stat) {
+            $type = $stat['search_type'];
+            $friendlyName = $typeMapping[$type] ?? $type;
+            $searchResult[$friendlyName] = [
+                'success' => (int)$stat['success_count'],
+                'failure' => (int)$stat['failure_count'],
+                'total' => (int)$stat['total_count']
+            ];
+        }
+
+        // 2. AI Ask Analytics
+        // We will classify the response based on keywords
+        $aiQuery = "SELECT response FROM ask_logs";
+        $stmtAi = $pdo->query($aiQuery);
+        
+        $aiStats = [
+            'terjawab' => 0,
+            'tidak_bisa_menjawab' => 0,
+            'error' => 0
+        ];
+
+        while ($row = $stmtAi->fetch(PDO::FETCH_ASSOC)) {
+            $resp = mb_strtolower($row['response']);
+            if (strpos($resp, 'error:') !== false || strpos($resp, 'curl error') !== false || strpos($resp, 'cURL error') !== false) {
+                $aiStats['error']++;
+            } elseif (strpos($resp, 'maaf') !== false || strpos($resp, 'mohon maaf') !== false || strpos($resp, 'لم أجد') !== false || strpos($resp, 'tidak dapat saya temukan') !== false || strpos($resp, 'saya tidak dapat menemukan') !== false || strpos($resp, 'belum ada di pangkalan data') !== false) {
+                $aiStats['tidak_bisa_menjawab']++;
+            } else {
+                $aiStats['terjawab']++;
+            }
+        }
+        $aiStats['total'] = $aiStats['terjawab'] + $aiStats['tidak_bisa_menjawab'] + $aiStats['error'];
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'search' => $searchResult,
+                'ai' => $aiStats
+            ]
+        ]);
+    }
 }

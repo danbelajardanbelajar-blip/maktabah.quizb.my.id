@@ -157,6 +157,7 @@ $router->add('admin_delete_submission', 'AdminController', 'handleAdminDeleteSub
 $router->add('admin_get_requests', 'AdminController', 'handleAdminGetRequests');
 $router->add('admin_update_request_status', 'AdminController', 'handleAdminUpdateRequestStatus');
 $router->add('admin_delete_request', 'AdminController', 'handleAdminDeleteRequest');
+$router->add('admin_get_analytics', 'AdminController', 'handleAdminGetAnalytics');
 
 // Submissions, Requests & Feedback
 $router->add('submit_file', 'SubmissionController', 'handleSubmitFile');
