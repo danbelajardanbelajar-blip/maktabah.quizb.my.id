@@ -1,6 +1,5 @@
-import { app, reicons, escHtml } from '../../core/core.js?v=2';
+import { app, reicons, escHtml, apiFetch } from '../../core/core.js?v=2';
 import { adminNavBar } from '../../core/AdminUtils.js?v=2';
-import { apiGet } from '../../core/api.js?v=2';
 
 export async function renderAnalytics() {
   const u = window.SESSION_USER;
@@ -28,7 +27,7 @@ export async function renderAnalytics() {
   reicons();
 
   try {
-    const res = await apiGet('admin_get_analytics');
+    const res = await apiFetch({ action: 'admin_get_analytics' });
     if (!res.success) throw new Error(res.error || 'Gagal memuat data');
     
     renderCharts(res.data);
@@ -136,7 +135,7 @@ function renderCharts(data) {
  */
 function renderPieChart(percentages, colors, labels) {
     if (percentages.reduce((a,b) => a+b, 0) === 0) {
-        return \`<div class="w-40 h-40 rounded-full bg-slate-100 flex items-center justify-center text-xs text-slate-400 text-center p-4">Tidak ada data</div>\`;
+        return `<div class="w-40 h-40 rounded-full bg-slate-100 flex items-center justify-center text-xs text-slate-400 text-center p-4">Tidak ada data</div>`;
     }
 
     let gradientStops = [];
@@ -146,14 +145,14 @@ function renderPieChart(percentages, colors, labels) {
         if (percentages[i] === 0) continue;
         const start = currentDegree;
         const end = currentDegree + percentages[i];
-        gradientStops.push(\`\${colors[i]} \${start}% \${end}%\`);
+        gradientStops.push(`${colors[i]} ${start}% ${end}%`);
         currentDegree = end;
     }
 
     const gradient = gradientStops.join(', ');
 
-    return \`
-      <div class="relative w-40 h-40 rounded-full shadow-inner" style="background: conic-gradient(\${gradient});">
+    return `
+      <div class="relative w-40 h-40 rounded-full shadow-inner" style="background: conic-gradient(${gradient});">
       </div>
-    \`;
+    `;
 }
