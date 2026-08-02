@@ -30,7 +30,7 @@ class SearchController {
                 $params[":lka$i"] = "%$w%";
             }
         }
-        $whereSql = implode(' AND ', $andConds);
+        $whereSql = implode(' AND ', $likeConds);
         if (!$whereSql) $whereSql = '1=0';
         $andSql = implode(' AND ', $andConds);
         if (!$andSql) $andSql = '1=0';
@@ -85,7 +85,7 @@ class SearchController {
                 $params[":lka$i"] = "%$w%";
             }
         }
-        $likeSql = implode(' AND ', $andConds);
+        $likeSql = implode(' AND ', $likeConds);
         if (!$likeSql) $likeSql = "1=0";
         $andSql = implode(' AND ', $andConds);
         if (!$andSql) $andSql = "1=0";
@@ -877,7 +877,7 @@ class SearchController {
                     $params[":qa$i"] = "%$w%";
                 }
             }
-            $likeSql = implode(' AND ', $andConds);
+            $likeSql = implode(' AND ', $likeConds);
             if (!$likeSql) $likeSql = "1=0";
             $andSql = implode(' AND ', $andConds);
             if (!$andSql) $andSql = "1=0";
