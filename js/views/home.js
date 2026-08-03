@@ -138,7 +138,7 @@ export async function renderHome() {
             <h3 class="text-white font-bold text-base leading-snug mb-1">Kirimkan atau Request Hasil Bahsul Masail atau Kitab</h3>
             <p class="text-white/65 text-xs leading-relaxed mb-4">Bagikan karya Anda atau ajukan permohonan kitab/hasil kajian untuk koleksi perpustakaan digital ini.</p>
             <div class="flex flex-wrap gap-3">
-              <button onclick="handleSubmitCTA()"
+              <button onclick="navigate('/submit-file')"
                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-700 text-white font-semibold text-sm shadow hover:bg-gold-light transition-colors">
                 <i data-lucide="send" class="w-4 h-4"></i>
                 Kirimkan File
