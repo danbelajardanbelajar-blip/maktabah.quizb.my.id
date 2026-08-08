@@ -52,6 +52,18 @@ export function renderAsk(params) {
             </div>
           </div>
           
+          <!-- Recent Questions -->
+          <div id="ask-recent-questions" class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800/50">
+            <h3 class="text-sm font-bold text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-2">
+              <i data-lucide="history" class="w-4 h-4"></i> Pertanyaan Terbaru User
+            </h3>
+            <div id="recent-questions-list" class="flex flex-wrap gap-2">
+              <div class="h-6 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
+              <div class="h-6 w-32 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
+              <div class="h-6 w-20 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
+            </div>
+          </div>
+          
         </div>
       </div>
     </div>
@@ -265,4 +277,32 @@ export function renderAsk(params) {
   if (autoSubmit && input.value.trim().length >= 5) {
     form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
   }
+
+  // Fetch recent questions
+  const recentList = $('#recent-questions-list');
+  fetch('/api.php?action=recent_questions&limit=10')
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.data && data.data.length > 0) {
+        recentList.innerHTML = data.data.map(item => `
+          <button type="button" class="recent-q-btn px-3 py-1.5 text-xs text-left bg-gray-50 dark:bg-[#1a231f] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gold/10 hover:text-amber-700 hover:border-gold/30 transition-all line-clamp-1 max-w-full">
+            ${window.escHtml(item.query)}
+          </button>
+        `).join('');
+        
+        recentList.querySelectorAll('.recent-q-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            input.value = this.innerText;
+            input.style.height = 'auto';
+            input.style.height = (input.scrollHeight) + 'px';
+            form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          });
+        });
+      } else {
+        document.getElementById('ask-recent-questions').style.display = 'none';
+      }
+    })
+    .catch(() => {
+      document.getElementById('ask-recent-questions').style.display = 'none';
+    });
 }
