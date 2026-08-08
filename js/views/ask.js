@@ -285,7 +285,7 @@ export function renderAsk(params) {
     .then(data => {
       if (data && data.data && data.data.length > 0) {
         recentList.innerHTML = data.data.map(item => `
-          <button type="button" class="recent-q-btn px-3 py-1.5 text-xs text-left bg-gray-50 dark:bg-[#1a231f] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gold/10 hover:text-amber-700 hover:border-gold/30 transition-all line-clamp-1 max-w-full">
+          <button type="button" class="recent-q-btn px-3 py-1.5 text-xs text-left bg-gray-50 dark:bg-[#1a231f] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gold/10 hover:text-amber-700 hover:border-gold/30 transition-all truncate max-w-full inline-block">
             ${window.escHtml(item.query)}
           </button>
         `).join('');
