@@ -294,25 +294,25 @@ async function renderAdminSubmissions() {
         let actBtns = (r.status === 'pending' ? reviewBtn : viewBtn) + replyBtn + deleteBtn;
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
-          + '<td class="px-4 py-3"><div class="font-medium text-primary line-clamp-1">' + escHtml(r.file_name) + '</div>'
+          + '<td class="px-4 py-3 max-w-0 w-full"><div class="font-medium text-primary truncate" title="' + escHtml(r.file_name) + '">' + escHtml(r.file_name) + '</div>'
           + '<div class="text-slate-600 text-xs mt-0.5">' + fmtSize(r.file_size) + ' · ' + (r.created_at||'').slice(0,10) + '</div>'
-          + (r.review_note ? '<div class="text-slate-600 text-xs italic mt-0.5 line-clamp-1">“' + escHtml(r.review_note) + '”</div>' : '')
+          + (r.review_note ? '<div class="text-slate-600 text-xs italic mt-0.5 truncate" title="' + escHtml(r.review_note) + '">“' + escHtml(r.review_note) + '”</div>' : '')
           + '</td>'
-          + '<td class="px-4 py-3 hidden sm:table-cell"><div class="text-slate-600 text-xs line-clamp-1">' + escHtml(r.user_name) + '</div><div class="text-slate-600 text-xs">' + escHtml(r.user_email) + '</div></td>'
-          + '<td class="px-4 py-3 hidden md:table-cell text-slate-600 text-xs">' + (r.file_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
-          + '<td class="px-4 py-3 hidden lg:table-cell text-slate-600 text-xs">' + escHtml(r.category_name || '—') + '</td>'
-          + '<td class="px-4 py-3 text-center">' + statusBadge(r.status) + '</td>'
-          + '<td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-1">' + actBtns + '</div></td>'
+          + '<td class="px-4 py-3 hidden sm:table-cell max-w-[150px]"><div class="text-slate-600 text-xs truncate" title="' + escHtml(r.user_name) + '">' + escHtml(r.user_name) + '</div><div class="text-slate-600 text-xs truncate" title="' + escHtml(r.user_email) + '">' + escHtml(r.user_email) + '</div></td>'
+          + '<td class="px-4 py-3 hidden md:table-cell text-slate-600 text-xs w-24">' + (r.file_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
+          + '<td class="px-4 py-3 hidden lg:table-cell text-slate-600 text-xs w-24 truncate">' + escHtml(r.category_name || '—') + '</td>'
+          + '<td class="px-4 py-3 text-center w-24">' + statusBadge(r.status) + '</td>'
+          + '<td class="px-4 py-3 text-center w-32"><div class="flex items-center justify-center gap-1">' + actBtns + '</div></td>'
           + '</tr>';
       }).join('');
-      wrap.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm">'
+      wrap.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm table-fixed">'
         + '<thead class="bg-cream border-b border-cream-dark text-slate-500 text-xs"><tr>'
         + '<th class="px-4 py-3 text-left font-semibold">Nama File</th>'
-        + '<th class="px-4 py-3 text-left font-semibold hidden sm:table-cell">Pengirim</th>'
-        + '<th class="px-4 py-3 text-left font-semibold hidden md:table-cell">Tipe</th>'
-        + '<th class="px-4 py-3 text-left font-semibold hidden lg:table-cell">Kategori</th>'
-        + '<th class="px-4 py-3 text-center font-semibold">Status</th>'
-        + '<th class="px-4 py-3 text-center font-semibold w-24">Aksi</th>'
+        + '<th class="px-4 py-3 text-left font-semibold hidden sm:table-cell w-1/4 max-w-[150px]">Pengirim</th>'
+        + '<th class="px-4 py-3 text-left font-semibold hidden md:table-cell w-24">Tipe</th>'
+        + '<th class="px-4 py-3 text-left font-semibold hidden lg:table-cell w-24">Kategori</th>'
+        + '<th class="px-4 py-3 text-center font-semibold w-24">Status</th>'
+        + '<th class="px-4 py-3 text-center font-semibold w-32">Aksi</th>'
         + '</tr></thead><tbody class="divide-y divide-cream-dark">' + rowsHtml + '</tbody></table></div>';
       pag.innerHTML = res.pages > 1
         ? '<span>' + res.total + ' kiriman</span><div class="flex gap-1">'

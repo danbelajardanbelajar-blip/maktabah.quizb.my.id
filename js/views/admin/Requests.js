@@ -132,22 +132,22 @@ async function renderAdminRequests() {
         actBtns += deleteBtn;
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
-          + '<td class="px-4 py-3 overflow-hidden"><div class="font-medium text-primary line-clamp-1 break-words" title="' + escHtml(r.title) + '">' + escHtml(r.title) + '</div>'
+          + '<td class="px-4 py-3 max-w-0 w-full"><div class="font-medium text-primary truncate" title="' + escHtml(r.title) + '">' + escHtml(r.title) + '</div>'
           + '<div class="text-slate-600 text-xs mt-0.5">' + (r.author_or_category ? escHtml(r.author_or_category) + ' · ' : '') + (r.created_at||'').slice(0,10) + '</div>'
-          + (r.description ? '<div class="text-slate-600 text-xs mt-0.5 line-clamp-2 break-all" title="' + escHtml(r.description) + '">“' + escHtml(r.description) + '”</div>' : '')
-          + (r.admin_reply ? '<div class="text-gold text-[10px] mt-1 bg-gold/5 p-1 rounded border border-gold/20 break-words">Balasan: ' + escHtml(r.admin_reply) + '</div>' : '')
+          + (r.description ? '<div class="text-slate-600 text-xs mt-0.5 truncate" title="' + escHtml(r.description) + '">“' + escHtml(r.description) + '”</div>' : '')
+          + (r.admin_reply ? '<div class="text-gold text-[10px] mt-1 bg-gold/5 p-1 rounded border border-gold/20 truncate" title="' + escHtml(r.admin_reply) + '">Balasan: ' + escHtml(r.admin_reply) + '</div>' : '')
           + '</td>'
-          + '<td class="px-4 py-3"><div class="text-slate-600 text-xs truncate" title="' + escHtml(r.user_email) + '">' + escHtml(r.user_email) + '</div></td>'
-          + '<td class="px-4 py-3 hidden md:table-cell text-slate-600 text-xs">' + (r.request_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
-          + '<td class="px-4 py-3 text-center">' + statusBadge(r.status) + '</td>'
-          + '<td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-1">' + actBtns + '</div></td>'
+          + '<td class="px-4 py-3 max-w-[150px]"><div class="text-slate-600 text-xs truncate" title="' + escHtml(r.user_email) + '">' + escHtml(r.user_email) + '</div></td>'
+          + '<td class="px-4 py-3 hidden md:table-cell text-slate-600 text-xs w-24">' + (r.request_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
+          + '<td class="px-4 py-3 text-center w-24">' + statusBadge(r.status) + '</td>'
+          + '<td class="px-4 py-3 text-center w-32"><div class="flex items-center justify-center gap-1">' + actBtns + '</div></td>'
           + '</tr>';
       }).join('');
-      wrap.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm table-fixed min-w-[800px]">'
+      wrap.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm table-fixed">'
         + '<thead class="bg-cream border-b border-cream-dark text-slate-500 text-xs"><tr>'
-        + '<th class="px-4 py-3 text-left font-semibold w-1/3">Judul Request</th>'
-        + '<th class="px-4 py-3 text-left font-semibold w-1/4">Email</th>'
-        + '<th class="px-4 py-3 text-left font-semibold hidden md:table-cell w-32">Tipe</th>'
+        + '<th class="px-4 py-3 text-left font-semibold">Judul Request</th>'
+        + '<th class="px-4 py-3 text-left font-semibold w-1/4 max-w-[150px]">Email</th>'
+        + '<th class="px-4 py-3 text-left font-semibold hidden md:table-cell w-24">Tipe</th>'
         + '<th class="px-4 py-3 text-center font-semibold w-24">Status</th>'
         + '<th class="px-4 py-3 text-center font-semibold w-32">Aksi</th>'
         + '</tr></thead><tbody class="divide-y divide-cream-dark">' + rowsHtml + '</tbody></table></div>';
