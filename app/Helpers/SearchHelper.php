@@ -46,12 +46,7 @@ class SearchHelper {
         } catch (\Exception $e) {}
     }
 
-    public static function stripHarakat(string $text): string {
-        return preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}\x{06DF}-\x{06E8}\x{06EA}-\x{06ED}]/u', '', $text);
-    }
-
     public static function ftEscape(string $q): string {
-        $q = self::stripHarakat($q);
         return preg_replace('/[+\-><()~*"@]+/', ' ', $q);
     }
 
@@ -119,22 +114,52 @@ class SearchHelper {
         }
 
         if (strpos($q, ' ') !== false) {
+            $escaped = self::ftEscape($q);
+            $variants = self::getAlefVariants($escaped);
+            if (count($variants) > 1) {
+                $parts = array_map(function($v) { return '"' . $v . '"'; }, $variants);
+                return '+(' . implode(' ', $parts) . ')';
+            }
+            return '+"' . $escaped . '"';
+        }
+
+        $clean = self::ftEscape($q);
+        if ($clean === '') return '';
+        
+        $variants = self::getAlefVariants($clean);
+        if (count($variants) > 1) {
+            $parts = array_map(function($v) { return $v . '*'; }, $variants);
+            $group = '(' . implode(' ', $parts) . ')';
+            return mb_strlen($clean) <= 2 ? $group : '+' . $group;
+        }
+        
+        if (mb_strlen($clean) <= 2) {
+            return $clean . '*';
+        } else {
+            return '+' . $clean . '*';
+        }
+    }
+
+    public static function booleanSearchTermAnd(string $q): string {
+        $q = trim($q);
+        if ($q === '') return '';
+        
+        if (self::isPhraseQuery($q)) {
+            return self::booleanSearchTerm($q);
+        }
+
+        if (strpos($q, ' ') !== false) {
             $words = preg_split('/\s+/u', $q);
             $parts = [];
             foreach ($words as $word) {
                 $cleanWord = self::ftEscape($word);
                 if ($cleanWord === '') continue;
-                
-                // Words 2 chars or less are often ignored by FULLTEXT, so we don't strictly require them with '+'
-                $prefix = mb_strlen($cleanWord) <= 2 ? '' : '+';
-                
                 $variants = self::getAlefVariants($cleanWord);
                 if (count($variants) > 1) {
                     $vParts = array_map(function($v) { return $v . '*'; }, $variants);
-                    $group = '(' . implode(' ', $vParts) . ')';
-                    $parts[] = $prefix ? $prefix . $group : $group;
+                    $parts[] = '+(' . implode(' ', $vParts) . ')';
                 } else {
-                    $parts[] = $prefix . $cleanWord . '*';
+                    $parts[] = '+' . $cleanWord . '*';
                 }
             }
             return implode(' ', $parts);
@@ -143,19 +168,12 @@ class SearchHelper {
         $clean = self::ftEscape($q);
         if ($clean === '') return '';
         
-        $prefix = mb_strlen($clean) <= 2 ? '' : '+';
         $variants = self::getAlefVariants($clean);
         if (count($variants) > 1) {
             $parts = array_map(function($v) { return $v . '*'; }, $variants);
-            $group = '(' . implode(' ', $parts) . ')';
-            return $prefix ? $prefix . $group : $group;
+            return '+(' . implode(' ', $parts) . ')';
         }
-        
-        return $prefix . $clean . '*';
-    }
-
-    public static function booleanSearchTermAnd(string $q): string {
-        return self::booleanSearchTerm($q);
+        return '+' . $clean . '*';
     }
 
     public static function booleanSearchTermOr(string $q): string {

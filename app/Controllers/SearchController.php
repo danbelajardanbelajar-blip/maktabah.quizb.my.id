@@ -637,17 +637,16 @@ class SearchController {
     
         // 3. Content
         $contOffset = ($contPage - 1) * $limit;
-        $qStar = SearchHelper::booleanSearchTerm($q);
         $stmtCont = $pdo->prepare(
             "SELECT bc.bkid, bc.juz AS match_juz, bc.page AS match_page, b.title, b.author, b.category_name,
                     bc.content AS snippet
              FROM book_content bc
              JOIN books b ON b.bkid = bc.bkid
-             WHERE MATCH(bc.content) AGAINST (:q IN BOOLEAN MODE)
+             WHERE bc.content LIKE :lk
              ORDER BY bc.bkid DESC, bc.page ASC
              LIMIT :lim OFFSET :off"
         );
-        $stmtCont->bindValue(':q',  $qStar, PDO::PARAM_STR);
+        $stmtCont->bindValue(':lk',  $like, PDO::PARAM_STR);
         $stmtCont->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmtCont->bindValue(':off', $contOffset, PDO::PARAM_INT);
         $stmtCont->execute();
@@ -660,9 +659,9 @@ class SearchController {
         }, $content);
     
         $stmtContCount = $pdo->prepare(
-            "SELECT COUNT(*) FROM book_content WHERE MATCH(content) AGAINST (:q IN BOOLEAN MODE)"
+            "SELECT COUNT(*) FROM book_content WHERE content LIKE :lk"
         );
-        $stmtContCount->execute([':q' => $qStar]);
+        $stmtContCount->execute([':lk' => $like]);
         $contTotal = (int)$stmtContCount->fetchColumn();
     
         // Cek did_you_mean untuk memberikan saran kata (selalu cek)
