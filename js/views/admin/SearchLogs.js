@@ -139,17 +139,17 @@ async function renderAdminSearchLogs() {
 
       grid.innerHTML = `
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+          <table class="w-full text-sm table-fixed min-w-[800px]">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap">Waktu</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Jenis</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Query</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 text-right">Hasil</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">IP</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">User</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Browser</th>
-                <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500">Aksi</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-20">Jenis</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 max-w-0 w-full">Query</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 text-right w-20">Hasil</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">IP</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-24">User</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">Browser</th>
+                <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 w-20">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
@@ -176,9 +176,9 @@ async function renderAdminSearchLogs() {
                 return `<tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3">${typeBadge(r.search_type)}</td>
-                  <td class="px-4 py-3 max-w-xs">
-                    <div class="font-medium text-primary text-xs truncate" title="${escHtml(r.query)}">${escHtml(r.query)}</div>
-                    ${r.query_detail ? `<div class="text-slate-600 text-xs truncate mt-0.5">${escHtml(r.query_detail)}</div>` : ''}
+                  <td class="px-4 py-3 max-w-0 w-full">
+                    <div class="font-medium text-primary text-xs break-words whitespace-normal" title="${escHtml(r.query)}">${escHtml(r.query)}</div>
+                    ${r.query_detail ? `<div class="text-slate-600 text-xs break-words whitespace-normal mt-0.5">${escHtml(r.query_detail)}</div>` : ''}
                   </td>
                   <td class="px-4 py-3 text-right">
                     <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold
@@ -186,9 +186,9 @@ async function renderAdminSearchLogs() {
                       ${escHtml(String(r.result_count))}
                     </span>
                   </td>
-                  <td class="px-4 py-3 font-mono text-xs text-slate-500">${escHtml(r.visitor_ip||'—')}</td>
-                  <td class="px-4 py-3 text-xs text-slate-600">${escHtml(r.user_name||'Tamu')}</td>
-                  <td class="px-4 py-3 text-xs text-slate-600">${escHtml(browserShort)}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500 break-words whitespace-normal">${escHtml(r.visitor_ip||'—')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 break-words whitespace-normal">${escHtml(r.user_name||'Tamu')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 break-words whitespace-normal">${escHtml(browserShort)}</td>
                   <td class="px-4 py-3 text-right">
                     <button onclick="slDelete(${r.id})" class="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus">
                       <i data-lucide="trash-2" class="w-4 h-4"></i>

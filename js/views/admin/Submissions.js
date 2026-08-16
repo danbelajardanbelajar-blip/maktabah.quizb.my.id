@@ -294,13 +294,13 @@ async function renderAdminSubmissions() {
         let actBtns = (r.status === 'pending' ? reviewBtn : viewBtn) + replyBtn + deleteBtn;
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
-          + '<td class="px-4 py-3 max-w-0 w-full"><div class="font-medium text-primary truncate" title="' + escHtml(r.file_name) + '">' + escHtml(r.file_name) + '</div>'
+          + '<td class="px-4 py-3 max-w-0 w-full"><div class="font-medium text-primary break-words whitespace-normal">' + escHtml(r.file_name) + '</div>'
           + '<div class="text-slate-600 text-xs mt-0.5">' + fmtSize(r.file_size) + ' · ' + (r.created_at||'').slice(0,10) + '</div>'
-          + (r.review_note ? '<div class="text-slate-600 text-xs italic mt-0.5 truncate" title="' + escHtml(r.review_note) + '">“' + escHtml(r.review_note) + '”</div>' : '')
+          + (r.review_note ? '<div class="text-slate-600 text-xs italic mt-0.5 break-words whitespace-normal">“' + escHtml(r.review_note) + '”</div>' : '')
           + '</td>'
-          + '<td class="px-4 py-3 hidden sm:table-cell max-w-[150px]"><div class="text-slate-600 text-xs truncate" title="' + escHtml(r.user_name) + '">' + escHtml(r.user_name) + '</div><div class="text-slate-600 text-xs truncate" title="' + escHtml(r.user_email) + '">' + escHtml(r.user_email) + '</div></td>'
+          + '<td class="px-4 py-3 hidden sm:table-cell max-w-[150px]"><div class="text-slate-600 text-xs break-words whitespace-normal">' + escHtml(r.user_name) + '</div><div class="text-slate-600 text-xs break-words whitespace-normal">' + escHtml(r.user_email) + '</div></td>'
           + '<td class="px-4 py-3 hidden md:table-cell text-slate-600 text-xs w-24">' + (r.file_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
-          + '<td class="px-4 py-3 hidden lg:table-cell text-slate-600 text-xs w-24 truncate">' + escHtml(r.category_name || '—') + '</td>'
+          + '<td class="px-4 py-3 hidden lg:table-cell text-slate-600 text-xs w-24 break-words whitespace-normal">' + escHtml(r.category_name || '—') + '</td>'
           + '<td class="px-4 py-3 text-center w-24">' + statusBadge(r.status) + '</td>'
           + '<td class="px-4 py-3 text-center w-32"><div class="flex items-center justify-center gap-1">' + actBtns + '</div></td>'
           + '</tr>';

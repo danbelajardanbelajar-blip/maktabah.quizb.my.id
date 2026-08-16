@@ -111,15 +111,15 @@ async function renderAdminActivity() {
 
       grid.innerHTML = `
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+          <table class="w-full text-sm table-fixed min-w-[800px]">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap">Waktu</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Event</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">User</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Role</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">IP</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Detail</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap w-32">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-24">Event</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">User</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-20">Role</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">IP</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 max-w-0 w-full">Detail</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
@@ -127,10 +127,10 @@ async function renderAdminActivity() {
                 <tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3">${eventBadge(r.event)}</td>
-                  <td class="px-4 py-3 text-xs text-slate-600">${escHtml(r.user_name || 'Guest')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 break-words whitespace-normal">${escHtml(r.user_name || 'Guest')}</td>
                   <td class="px-4 py-3 text-xs text-slate-600">${escHtml(r.user_role || 'user')}</td>
-                  <td class="px-4 py-3 text-xs text-slate-600 font-mono truncate max-w-[120px]">${escHtml(r.ip_address)}</td>
-                  <td class="px-4 py-3 text-xs text-slate-600 max-w-[220px] truncate" title="${escHtml(r.event_data||'')}">${escHtml(r.event_data || '—')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 font-mono break-words whitespace-normal">${escHtml(r.ip_address)}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 max-w-0 w-full break-words whitespace-normal">${escHtml(r.event_data || '—')}</td>
                 </tr>`).join('')}
             </tbody>
           </table>

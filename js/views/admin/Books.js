@@ -185,12 +185,12 @@ async function bksLoad() {
                   <tr class="border-b border-cream-dark/50 hover:bg-cream/40 transition-colors">
                     <td class="px-4 py-3 text-slate-600 font-mono text-xs w-16">#${b.bkid}</td>
                     <td class="px-4 py-3 max-w-0 w-full">
-                      <div class="arabic font-semibold text-primary text-sm leading-snug truncate" title="${escHtml(b.title)}">${escHtml(b.title)}</div>
+                      <div class="arabic font-semibold text-primary text-sm leading-snug break-words whitespace-normal">${escHtml(b.title)}</div>
                     </td>
                     <td class="px-4 py-3 text-slate-500 text-xs hidden sm:table-cell w-1/4 max-w-[150px]">
-                      <div class="truncate" title="${escHtml(b.author||'—')}">${escHtml(b.author||'—')}</div>
+                      <div class="break-words whitespace-normal">${escHtml(b.author||'—')}</div>
                     </td>
-                    <td class="px-4 py-3 hidden md:table-cell w-1/4 max-w-[150px] truncate" title="${escHtml(b.category_name||'—')}">
+                    <td class="px-4 py-3 hidden md:table-cell w-1/4 max-w-[150px] break-words whitespace-normal">
                       ${b.category_name
                         ? `<span class="px-2.5 py-0.5 bg-primary/7 text-slate-600 rounded-full text-xs">${escHtml(b.category_name)}</span>`
                         : `<span class="text-slate-600 text-xs">—</span>`}

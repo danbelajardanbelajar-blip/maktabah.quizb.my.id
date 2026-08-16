@@ -100,15 +100,15 @@ async function renderAdminHistory() {
       };
       grid.innerHTML = `
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+          <table class="w-full text-sm table-fixed min-w-[800px]">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap">Waktu</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Aksi</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Tabel</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">ID Record</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Detail</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Admin</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap w-32">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-24">Aksi</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">Tabel</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-24">ID Record</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 max-w-0 w-full">Detail</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-48">Admin</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
@@ -116,15 +116,15 @@ async function renderAdminHistory() {
                 <tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
                   <td class="px-4 py-3">${actionBadge(r.action)}</td>
-                  <td class="px-4 py-3 font-mono text-xs text-slate-600">${escHtml(r.table_name)}</td>
-                  <td class="px-4 py-3 font-mono text-xs text-slate-600">${escHtml(r.record_id)}</td>
-                  <td class="px-4 py-3 text-xs text-slate-600 max-w-xs truncate" title="${escHtml(r.detail||'')}">${escHtml(r.detail||'—')}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-600 break-words whitespace-normal">${escHtml(r.table_name)}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-600 break-words whitespace-normal">${escHtml(r.record_id)}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 max-w-0 w-full break-words whitespace-normal">${escHtml(r.detail||'—')}</td>
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-2">
                       <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
                         ${escHtml((r.admin_name||'?').charAt(0).toUpperCase())}
                       </div>
-                      <span class="text-xs text-slate-600 truncate max-w-[120px]">${escHtml(r.admin_name||'—')}</span>
+                      <span class="text-xs text-slate-600 break-words whitespace-normal">${escHtml(r.admin_name||'—')}</span>
                     </div>
                   </td>
                 </tr>`).join('')}

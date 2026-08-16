@@ -132,12 +132,12 @@ async function renderAdminRequests() {
         actBtns += deleteBtn;
 
         return '<tr class="hover:bg-cream/60 transition-colors">'
-          + '<td class="px-4 py-3 max-w-0 w-full"><div class="font-medium text-primary truncate" title="' + escHtml(r.title) + '">' + escHtml(r.title) + '</div>'
+          + '<td class="px-4 py-3 max-w-0 w-full"><div class="font-medium text-primary break-words whitespace-normal">' + escHtml(r.title) + '</div>'
           + '<div class="text-slate-600 text-xs mt-0.5">' + (r.author_or_category ? escHtml(r.author_or_category) + ' · ' : '') + (r.created_at||'').slice(0,10) + '</div>'
-          + (r.description ? '<div class="text-slate-600 text-xs mt-0.5 truncate" title="' + escHtml(r.description) + '">“' + escHtml(r.description) + '”</div>' : '')
-          + (r.admin_reply ? '<div class="text-gold text-[10px] mt-1 bg-gold/5 p-1 rounded border border-gold/20 truncate" title="' + escHtml(r.admin_reply) + '">Balasan: ' + escHtml(r.admin_reply) + '</div>' : '')
+          + (r.description ? '<div class="text-slate-600 text-xs mt-0.5 break-words whitespace-normal">“' + escHtml(r.description) + '”</div>' : '')
+          + (r.admin_reply ? '<div class="text-gold text-[10px] mt-1 bg-gold/5 p-1 rounded border border-gold/20 break-words whitespace-normal">Balasan: ' + escHtml(r.admin_reply) + '</div>' : '')
           + '</td>'
-          + '<td class="px-4 py-3 max-w-[150px]"><div class="text-slate-600 text-xs truncate" title="' + escHtml(r.user_email) + '">' + escHtml(r.user_email) + '</div></td>'
+          + '<td class="px-4 py-3 max-w-[150px]"><div class="text-slate-600 text-xs break-words whitespace-normal">' + escHtml(r.user_email) + '</div></td>'
           + '<td class="px-4 py-3 hidden md:table-cell text-slate-600 text-xs w-24">' + (r.request_type === 'bahsul_masail' ? 'Bahsul Masail' : 'Kitab') + '</td>'
           + '<td class="px-4 py-3 text-center w-24">' + statusBadge(r.status) + '</td>'
           + '<td class="px-4 py-3 text-center w-32"><div class="flex items-center justify-center gap-1">' + actBtns + '</div></td>'

@@ -47,12 +47,12 @@ async function renderAdminFeedbacks() {
         <div class="border border-gold/15 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-start ${isPending ? 'bg-cream/20' : 'bg-white'}">
           <div>
             <div class="flex items-center gap-3 mb-1">
-              <span class="font-bold text-primary">${escHtml(it.email)}</span>
+              <span class="font-bold text-primary break-words whitespace-normal">${escHtml(it.email)}</span>
               ${statCol[it.status] || ''}
               <span class="text-xs text-slate-600">${new Date(it.created_at).toLocaleString()}</span>
             </div>
-            <p class="text-slate-600 whitespace-pre-wrap">${escHtml(it.content)}</p>
-            ${it.admin_reply ? `<div class="mt-2 text-xs bg-gold/10 p-2 rounded border border-gold/20 text-gold-dark font-medium">Balasan: ${escHtml(it.admin_reply)}</div>` : ''}
+            <p class="text-slate-600 whitespace-pre-wrap break-words">${escHtml(it.content)}</p>
+            ${it.admin_reply ? `<div class="mt-2 text-xs bg-gold/10 p-2 rounded border border-gold/20 text-gold-dark font-medium break-words whitespace-normal">Balasan: ${escHtml(it.admin_reply)}</div>` : ''}
           </div>
           <div class="flex items-center gap-2 shrink-0">
             ${isPending ? `<button onclick="updateFbStat(${it.id}, 'read')" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 text-xs font-semibold">Tandai Dibaca</button>` : ''}

@@ -125,30 +125,30 @@ async function renderAdminDownloadLogs() {
 
       grid.innerHTML = `
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+          <table class="w-full text-sm table-fixed min-w-[800px]">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">Waktu</th>
                 <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Kitab</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">User / Role</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">IP</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Perangkat / Browser</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-1/4 max-w-[200px]">User / Role</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">IP</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-1/4 max-w-[200px]">Perangkat / Browser</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
               ${d.rows.map(r => `
                 <tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">${escHtml(r.created_at)}</td>
-                  <td class="px-4 py-3 text-xs text-slate-600 max-w-[240px] truncate" title="${escHtml(r.book_title)}">
+                  <td class="px-4 py-3 text-xs text-slate-600 max-w-0 w-full break-words whitespace-normal">
                     ${r.source === 'scholarium' ? '<span class="inline-block text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider mr-1">Scholarium</span>' : r.source === 'archive.org' ? '<span class="inline-block text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider mr-1">Archive.org</span>' : ''}
                     #${escHtml(String(r.bkid))} — ${escHtml(r.book_title)}
                   </td>
-                  <td class="px-4 py-3 text-xs text-slate-600">
+                  <td class="px-4 py-3 text-xs text-slate-600 break-words whitespace-normal">
                     ${escHtml(r.user_name || 'Guest')}<br>
                     <span class="text-slate-600">${escHtml(r.user_email || '—')} · ${escHtml(r.user_role || 'user')}</span>
                   </td>
-                  <td class="px-4 py-3 font-mono text-xs text-slate-500 truncate max-w-[140px]">${escHtml(r.ip_address)}</td>
-                  <td class="px-4 py-3 text-xs text-slate-600 max-w-[320px] truncate" title="${escHtml(r.user_agent)}">${escHtml(r.user_agent)}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500 break-words whitespace-normal max-w-[140px]">${escHtml(r.ip_address)}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 break-words whitespace-normal max-w-[200px]">${escHtml(r.user_agent)}</td>
                 </tr>`).join('')}
             </tbody>
           </table>

@@ -96,25 +96,25 @@ async function renderAdminAskLogs() {
 
       grid.innerHTML = `
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+          <table class="w-full text-sm table-fixed min-w-[800px]">
             <thead class="bg-cream/60 border-b border-gold/15">
               <tr>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap">Waktu</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">Pertanyaan & Jawaban AI</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">IP</th>
-                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500">User</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 whitespace-nowrap w-32">Waktu</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 max-w-0 w-full">Pertanyaan & Jawaban AI</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">IP</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 w-32">User</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold/8">
               ${d.rows.map(r => {
                 return `<tr class="hover:bg-cream/30 transition-colors">
                   <td class="px-4 py-3 text-slate-500 whitespace-nowrap text-xs align-top">${escHtml(r.created_at)}</td>
-                  <td class="px-4 py-3 max-w-lg align-top">
-                    <div class="font-bold text-primary text-sm mb-2"><span class="text-xs text-slate-500 uppercase mr-1">Q:</span> ${escHtml(r.question)}</div>
-                    <div class="text-slate-600 text-xs mt-1 whitespace-pre-wrap max-h-32 overflow-y-auto pr-2 bg-gray-50 p-2 rounded-lg border border-gray-100">${escHtml(r.response || '')}</div>
+                  <td class="px-4 py-3 max-w-0 w-full align-top">
+                    <div class="font-bold text-primary text-sm mb-2 break-words whitespace-normal"><span class="text-xs text-slate-500 uppercase mr-1">Q:</span> ${escHtml(r.question)}</div>
+                    <div class="text-slate-600 text-xs mt-1 whitespace-pre-wrap max-h-32 overflow-y-auto pr-2 bg-gray-50 p-2 rounded-lg border border-gray-100 break-words">${escHtml(r.response || '')}</div>
                   </td>
-                  <td class="px-4 py-3 font-mono text-xs text-slate-500 align-top">${escHtml(r.visitor_ip||'—')}</td>
-                  <td class="px-4 py-3 text-xs text-slate-600 align-top">${escHtml(r.user_name||'Tamu')}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500 align-top break-words whitespace-normal">${escHtml(r.visitor_ip||'—')}</td>
+                  <td class="px-4 py-3 text-xs text-slate-600 align-top break-words whitespace-normal">${escHtml(r.user_name||'Tamu')}</td>
                 </tr>`;
               }).join('')}
             </tbody>
