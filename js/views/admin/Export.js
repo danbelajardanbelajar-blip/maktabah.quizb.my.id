@@ -10,19 +10,13 @@ export async function renderAdminExport() {
 
   app().innerHTML = `
     ${adminNavBar('/admin/export')}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <i data-lucide="database" class="w-6 h-6 text-green-700"></i>
-            Export Database
-          </h2>
-          <p class="text-gray-500 text-sm mt-1">Export kategori dan kitab ke format SQLite (maktabah.db)</p>
-        </div>
-        <button id="btn-export-selected" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-green-900/20 transition-all opacity-50 cursor-not-allowed" disabled>
-          <i data-lucide="download" class="w-4 h-4"></i>
-          Export Terpilih
-        </button>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 pb-32">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <i data-lucide="database" class="w-6 h-6 text-green-700"></i>
+          Export Database
+        </h2>
+        <p class="text-gray-500 text-sm mt-1">Export kategori dan kitab ke format SQLite (maktabah.db)</p>
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -32,12 +26,23 @@ export async function renderAdminExport() {
             <span class="text-sm font-medium text-gray-700">Pilih Semua</span>
           </label>
         </div>
-        <div id="export-list" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto p-4">
+        <div id="export-list" class="divide-y divide-gray-100 p-4">
           <div class="py-12 text-center text-gray-400">
             <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
             <p>Memuat data...</p>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Sticky Bottom Bar for Export Button -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-end px-4 sm:px-10">
+      <div class="flex items-center gap-4">
+        <span id="selected-count" class="text-sm font-medium text-gray-600">0 kitab terpilih</span>
+        <button id="btn-export-selected" class="bg-green-700 hover:bg-green-800 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg transition-all" disabled>
+          <i data-lucide="download" class="w-4 h-4"></i>
+          Export Terpilih
+        </button>
       </div>
     </div>
   `;
@@ -51,6 +56,7 @@ async function loadExportData() {
   const listEl = document.getElementById('export-list');
   const checkAll = document.getElementById('check-all');
   const btnExport = document.getElementById('btn-export-selected');
+  const countEl = document.getElementById('selected-count');
   
   try {
     const res = await fetch('/api.php?action=export_data');
@@ -69,33 +75,38 @@ async function loadExportData() {
     }
     
     listEl.innerHTML = categories.map(cat => `
-      <div class="py-3">
-        <label class="flex items-center gap-2 cursor-pointer mb-2">
-          <input type="checkbox" class="cat-check w-4 h-4 text-green-600 rounded border-gray-300" data-cat-id="${cat.id}">
-          <span class="font-bold text-gray-800 text-sm">${cat.name} (${cat.books.length} kitab)</span>
-        </label>
-        <div class="pl-6 flex flex-col gap-1">
+      <details class="py-3 group">
+        <summary class="flex items-center gap-2 cursor-pointer mb-2 outline-none select-none list-none [&::-webkit-details-marker]:hidden">
+          <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 group-open:rotate-90 transition-transform"></i>
+          <label class="flex items-center gap-2 cursor-pointer w-full" onclick="event.stopPropagation()">
+            <input type="checkbox" class="cat-check w-4 h-4 text-green-600 rounded border-gray-300" data-cat-id="${cat.id}">
+            <span class="font-bold text-gray-800 text-sm">${cat.name} <span class="text-xs font-normal text-gray-500 ml-1">(${cat.books.length} kitab)</span></span>
+          </label>
+        </summary>
+        <div class="pl-8 flex flex-col gap-1.5 mt-2">
           ${cat.books.map(b => `
-            <label class="flex items-center gap-2 cursor-pointer">
+            <label class="flex items-center gap-2 cursor-pointer py-0.5 hover:bg-gray-50 rounded px-1 -ml-1">
               <input type="checkbox" class="book-check w-3.5 h-3.5 text-green-600 rounded border-gray-300" data-book-id="${b.bkid}" data-cat-id="${cat.id}">
               <span class="text-sm text-gray-600">${b.title}</span>
             </label>
           `).join('')}
         </div>
-      </div>
+      </details>
     `).join('');
     
+    if (window.lucide) window.lucide.createIcons();
+
     const catChecks = document.querySelectorAll('.cat-check');
     const bookChecks = document.querySelectorAll('.book-check');
     
     function updateBtn() {
       const selected = document.querySelectorAll('.book-check:checked').length;
+      countEl.textContent = \`\${selected} kitab terpilih\`;
+      
       if (selected > 0) {
         btnExport.disabled = false;
-        btnExport.classList.remove('opacity-50', 'cursor-not-allowed');
       } else {
         btnExport.disabled = true;
-        btnExport.classList.add('opacity-50', 'cursor-not-allowed');
       }
     }
     
