@@ -37,6 +37,7 @@ function renderDashboard() {
         ${isAdmin ? dashCard('/admin/history',    'history',   'CRUD History',      'Jejak perubahan admin',        true)  : ''}
         ${isAdmin ? dashCard('/admin/activity',   'activity',  'Aktivitas',         'Kunjungan & login/logout',     true)  : ''}
         ${isAdmin ? dashCard('/admin/analytics',  'pie-chart', 'Analisis',          'Laporan & statistik pencarian',true)  : ''}
+        ${isAdmin ? dashCard('/admin/export',     'database',  'Export Data',       'Export kitab ke SQLite',       true)  : ''}
         ${isAdmin ? dashCard('/admin/search-logs','search',    'Pencarian',         'Riwayat pencarian pengguna',   true)  : ''}
         ${isAdmin ? dashCard('/admin/ask-logs',   'bot',       'Tanya AI',          'Riwayat pertanyaan AI',        true)  : ''}
         ${isAdmin ? dashCard('/admin/download-logs','download','Download',          'Riwayat unduhan kitab',        true)  : ''}

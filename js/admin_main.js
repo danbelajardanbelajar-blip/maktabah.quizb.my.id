@@ -9,6 +9,7 @@ import * as Submissions from './views/admin/Submissions.js';
 import * as Requests from './views/admin/Requests.js';
 import * as Feedbacks from './views/admin/Feedbacks.js';
 import * as Analytics from './views/admin/Analytics.js';
+import * as ExportData from './views/admin/Export.js';
 
 export const adminRoutes = {
   '/admin':            () => window.navigate('/admin/books', true),
@@ -23,7 +24,8 @@ export const adminRoutes = {
   '/admin/submissions': Submissions.renderAdminSubmissions,
   '/admin/requests':    Requests.renderAdminRequests,
   '/admin/feedback':    Feedbacks.renderAdminFeedbacks,
-  '/admin/analytics':   Analytics.renderAnalytics
+  '/admin/analytics':   Analytics.renderAnalytics,
+  '/admin/export':      ExportData.renderAdminExport
 };
 
 if (typeof window.routes !== 'undefined') {

@@ -113,9 +113,13 @@ $router->add('book_toc', 'BookController', 'handleGetBookToc');
 
 // Categories
 $router->add('categories', 'CategoryController', 'handleCategories');
+$router->add('search_categories', 'SearchController', 'handleSearchCategories');
+
+// Export
+$router->add('export_data', 'ExportController', 'getExportData');
+$router->add('do_export', 'ExportController', 'doExport');
 
 // Search
-$router->add('search_categories', 'SearchController', 'handleSearchCategories');
 $router->add('search_books', 'SearchController', 'handleSearchBooks');
 $router->add('search_content', 'SearchController', 'handleSearchContent');
 $router->add('search_advanced', 'SearchController', 'handleSearchAdvanced');
