@@ -1264,6 +1264,30 @@ $jsAdminVer = @filemtime(__DIR__ . '/js/admin_main.js') ?: '1';
     </div>
   </nav>
 
+  <!-- ===================== MIGRATION BETA MODAL ===================== -->
+  <div id="migration-modal-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(15,34,24,.85);backdrop-filter:blur(5px);align-items:center;justify-content:center;opacity:0;transition:opacity 0.4s ease;">
+    <div id="migration-modal" style="background:#F8FAF9;border-radius:1.5rem;padding:2.5rem 1.5rem 2rem;width:90%;max-width:400px;box-shadow:0 20px 50px rgba(0,0,0,.3);text-align:center;transform:scale(0.95);transition:transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;">
+      <button onclick="closeMigrationModal()" style="position:absolute;top:16px;right:16px;background:rgba(20,83,45,.1);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#14532D;">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+      <div style="background:linear-gradient(135deg, #a16207, #ca8a04);color:#fff;width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;box-shadow:0 8px 20px rgba(201,162,39,.3);">
+        <i data-lucide="sparkles" style="width:32px;height:32px;"></i>
+      </div>
+      <h3 style="font-family:'Amiri',serif;font-size:1.75rem;color:#14532D;margin-bottom:0.75rem;font-weight:700;">Pengalaman Baru!</h3>
+      <p style="color:rgba(20,83,45,.8);font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem;">
+        Kami sedang memigrasi dan mengembangkan website ini ke versi yang lebih canggih & responsif.<br><br>Maukah Anda mencoba versi beta web baru kami?
+      </p>
+      <div style="display:flex; flex-direction:column; gap:0.75rem;">
+        <a href="https://books.quizb.my.id" style="background:#14532D;color:#fff;border:none;padding:0.85rem 2rem;border-radius:99px;font-weight:700;font-size:1rem;cursor:pointer;width:100%;box-shadow:0 4px 15px rgba(20,83,45,.2);text-decoration:none;display:inline-block;box-sizing:border-box;">
+          Coba Web Baru (Beta)
+        </a>
+        <button onclick="closeMigrationModal()" style="background:transparent;color:#14532D;border:1px solid rgba(20,83,45,.3);padding:0.85rem 2rem;border-radius:99px;font-weight:700;font-size:1rem;cursor:pointer;width:100%;box-sizing:border-box;">
+          Lanjutkan di Sini
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== APK UPDATE MODAL ===================== -->
   <div id="apk-update-modal-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,34,24,.8);backdrop-filter:blur(4px);align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s ease;">
     <div id="apk-update-modal" style="background:#F8FAF9;border-radius:1.5rem;padding:2rem 1.5rem;width:90%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,.2);text-align:center;transform:translateY(20px);transition:transform 0.3s ease;">
@@ -1637,6 +1661,34 @@ $jsAdminVer = @filemtime(__DIR__ . '/js/admin_main.js') ?: '1';
           lucide.createIcons();
         });
       }
+
+      window.closeMigrationModal = function() {
+        const overlay = document.getElementById('migration-modal-overlay');
+        const modal = document.getElementById('migration-modal');
+        if (overlay && modal) {
+          overlay.style.opacity = '0';
+          modal.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            overlay.style.display = 'none';
+            localStorage.setItem('migration_prompt_seen', '1');
+          }, 400);
+        }
+      };
+
+      // Show Migration Beta prompt after 1 second if haven't seen yet
+      setTimeout(() => {
+        if (!localStorage.getItem('migration_prompt_seen')) {
+          const overlay = document.getElementById('migration-modal-overlay');
+          const modal = document.getElementById('migration-modal');
+          if (overlay && modal) {
+            overlay.style.display = 'flex';
+            void overlay.offsetWidth; // trigger reflow
+            overlay.style.opacity = '1';
+            modal.style.transform = 'scale(1)';
+            if (window.lucide) lucide.createIcons();
+          }
+        }
+      }, 1000);
 
       // Check for APK update (only show once)
       setTimeout(() => {
