@@ -59,8 +59,8 @@ async function loadExportData() {
   const countEl = document.getElementById('selected-count');
   
   try {
-    const res = await fetch('/api.php?action=export_data');
-    const json = await res.json();
+    const data = await apiFetch({ action: 'export_data' });
+    const json = data;
     
     if (json.status !== 'success') {
       listEl.innerHTML = `<div class="text-red-500 p-4 text-center">Gagal memuat data.</div>`;
@@ -153,20 +153,19 @@ async function loadExportData() {
       if (window.lucide) window.lucide.createIcons();
       
       try {
-        const res = await fetch('/api.php?action=do_export', {
+        const data = await apiFetch({ action: 'do_export' }, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ book_ids: selectedBooks })
         });
         
-        const data = await res.json();
         if (data.status === 'success') {
           window.location.href = data.url;
         } else {
-          alert('Gagal mengekspor: ' + data.message);
+          alert('Gagal mengekspor: ' + (data.message || data.error || 'Unknown error'));
         }
       } catch (err) {
-        alert('Terjadi kesalahan koneksi.');
+        alert('Terjadi kesalahan: ' + (err.message || 'Koneksi gagal.'));
       }
       
       btnExport.innerHTML = originalText;

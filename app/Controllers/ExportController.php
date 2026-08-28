@@ -24,6 +24,9 @@ class ExportController {
     }
 
     public function doExport() {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+        
         $input = json_decode(file_get_contents('php://input'), true);
         $bookIds = $input['book_ids'] ?? [];
         
