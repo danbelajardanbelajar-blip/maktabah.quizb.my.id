@@ -1,33 +1,42 @@
+import { app, reicons, escHtml, apiFetch } from '../../core/core.js?v=2';
+import { adminNavBar } from '../../core/AdminUtils.js?v=2';
+
 export async function renderAdminExport() {
-  const content = document.getElementById('admin-content');
-  if (!content) return;
+  const u = window.SESSION_USER;
+  if (!u || u.role !== 'admin') {
+    window.location.href = '/';
+    return;
+  }
 
-  content.innerHTML = `
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <i data-lucide="database" class="w-6 h-6 text-green-700"></i>
-          Export Database
-        </h2>
-        <p class="text-gray-500 text-sm mt-1">Export kategori dan kitab ke format SQLite (maktabah.db)</p>
+  app().innerHTML = `
+    ${adminNavBar('/admin/export')}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <i data-lucide="database" class="w-6 h-6 text-green-700"></i>
+            Export Database
+          </h2>
+          <p class="text-gray-500 text-sm mt-1">Export kategori dan kitab ke format SQLite (maktabah.db)</p>
+        </div>
+        <button id="btn-export-selected" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-green-900/20 transition-all opacity-50 cursor-not-allowed" disabled>
+          <i data-lucide="download" class="w-4 h-4"></i>
+          Export Terpilih
+        </button>
       </div>
-      <button id="btn-export-selected" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-green-900/20 transition-all opacity-50 cursor-not-allowed" disabled>
-        <i data-lucide="download" class="w-4 h-4"></i>
-        Export Terpilih
-      </button>
-    </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" id="check-all" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500">
-          <span class="text-sm font-medium text-gray-700">Pilih Semua</span>
-        </label>
-      </div>
-      <div id="export-list" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto p-4">
-        <div class="py-12 text-center text-gray-400">
-          <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
-          <p>Memuat data...</p>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="check-all" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500">
+            <span class="text-sm font-medium text-gray-700">Pilih Semua</span>
+          </label>
+        </div>
+        <div id="export-list" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto p-4">
+          <div class="py-12 text-center text-gray-400">
+            <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
+            <p>Memuat data...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -76,7 +85,6 @@ async function loadExportData() {
       </div>
     `).join('');
     
-    // Logic for checkboxes
     const catChecks = document.querySelectorAll('.cat-check');
     const bookChecks = document.querySelectorAll('.book-check');
     
@@ -121,7 +129,6 @@ async function loadExportData() {
       });
     });
     
-    // Export action
     btnExport.addEventListener('click', async () => {
       const selectedBooks = Array.from(document.querySelectorAll('.book-check:checked')).map(b => b.dataset.bookId);
       
