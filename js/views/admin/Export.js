@@ -39,7 +39,7 @@ export async function renderAdminExport() {
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50 flex justify-end px-4 sm:px-10">
       <div class="flex items-center gap-4">
         <span id="selected-count" class="text-sm font-medium text-gray-600">0 kitab terpilih</span>
-        <button id="btn-process-db" class="bg-green-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md transition-all" style="display:flex !important; opacity: 0.5;" disabled>
+        <button id="btn-process-db" class="px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md transition-all" style="background-color: #14532D; color: #ffffff; display: flex !important; opacity: 0.5;" disabled>
           <i data-lucide="download" class="w-4 h-4"></i>
           Ekspor File
         </button>
