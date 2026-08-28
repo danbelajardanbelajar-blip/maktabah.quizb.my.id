@@ -101,7 +101,7 @@ async function loadExportData() {
     
     function updateBtn() {
       const selected = document.querySelectorAll('.book-check:checked').length;
-      countEl.textContent = \`\${selected} kitab terpilih\`;
+      countEl.textContent = `${selected} kitab terpilih`;
       
       if (selected > 0) {
         btnExport.disabled = false;
