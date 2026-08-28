@@ -108,15 +108,21 @@ class ExportController {
             }
             $sqlite->commit();
             
-            // 4. Export Titles
-            $titleStmt = $mysql->prepare("SELECT id, bkid, title, level FROM titles WHERE bkid IN ($placeholders)");
-            $titleStmt->execute($bookIds);
-            $insertTitle = $sqlite->prepare("INSERT INTO titles (id, lvl, sub, tit, book_id) VALUES (?, ?, ?, ?, ?)");
-            $sqlite->beginTransaction();
-            while ($t = $titleStmt->fetch(PDO::FETCH_ASSOC)) {
-                $insertTitle->execute([$t['id'], $t['level'], 0, $t['title'], $t['bkid']]);
+            // 4. Export Titles (Wrap in try-catch to avoid crashing if table doesn't exist)
+            try {
+                $titleStmt = $mysql->prepare("SELECT id, bkid, title, level FROM book_toc WHERE bkid IN ($placeholders)");
+                $titleStmt->execute($bookIds);
+                $insertTitle = $sqlite->prepare("INSERT INTO titles (id, lvl, sub, tit, book_id) VALUES (?, ?, ?, ?, ?)");
+                $sqlite->beginTransaction();
+                while ($t = $titleStmt->fetch(PDO::FETCH_ASSOC)) {
+                    $insertTitle->execute([$t['id'], (int)$t['level'], 0, $t['title'], $t['bkid']]);
+                }
+                $sqlite->commit();
+            } catch (\Exception $e) {
+                if ($sqlite->inTransaction()) {
+                    $sqlite->rollBack();
+                }
             }
-            $sqlite->commit();
             
             // Close sqlite connection
             $sqlite = null;
