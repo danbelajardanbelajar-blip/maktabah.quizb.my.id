@@ -36,12 +36,12 @@ export async function renderAdminExport() {
     </div>
 
     <!-- Sticky Bottom Bar for Export Button -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-end px-4 sm:px-10">
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50 flex justify-end px-4 sm:px-10">
       <div class="flex items-center gap-4">
         <span id="selected-count" class="text-sm font-medium text-gray-600">0 kitab terpilih</span>
-        <button id="btn-export-selected" class="bg-green-700 hover:bg-green-800 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg transition-all" disabled>
+        <button id="btn-process-db" class="bg-green-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md transition-all" style="display:flex !important; opacity: 0.5;" disabled>
           <i data-lucide="download" class="w-4 h-4"></i>
-          Export Terpilih
+          Ekspor File
         </button>
       </div>
     </div>
@@ -55,7 +55,7 @@ export async function renderAdminExport() {
 async function loadExportData() {
   const listEl = document.getElementById('export-list');
   const checkAll = document.getElementById('check-all');
-  const btnExport = document.getElementById('btn-export-selected');
+  const btnExport = document.getElementById('btn-process-db');
   const countEl = document.getElementById('selected-count');
   
   try {
@@ -105,8 +105,12 @@ async function loadExportData() {
       
       if (selected > 0) {
         btnExport.disabled = false;
+        btnExport.style.opacity = '1';
+        btnExport.style.cursor = 'pointer';
       } else {
         btnExport.disabled = true;
+        btnExport.style.opacity = '0.5';
+        btnExport.style.cursor = 'not-allowed';
       }
     }
     
